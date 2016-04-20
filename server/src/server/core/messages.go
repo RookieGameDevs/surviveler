@@ -9,18 +9,13 @@ import (
 	"io"
 )
 
-// value used to check the length of a client message befoe allocating
+// value used to check the length of a client message before allocating
 // a buffer, in case the received size was wrong
 const MaxIncomingMsgLength uint16 = 0x4ff
 
 // message header: 2 bytes
 type MsgHeader struct {
 	Length uint16 // Length of the whole msg without the Length field
-}
-
-// message footer: 4 bytes
-type MsgFooter struct {
-	Checksum uint32 // Checksum of the whole msg without Length and Checksum fields
 }
 
 // Message Type

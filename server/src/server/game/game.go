@@ -34,7 +34,7 @@ func StartGameServer() {
 	}
 	srv := core.NewServer(config, &SurvCallback{})
 
-	// starts service
+	// starts server (listening goroutine)
 	go srv.Start(listener, time.Second)
 	fmt.Println("listening:", listener.Addr())
 
@@ -43,7 +43,7 @@ func StartGameServer() {
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
 	fmt.Println("Signal: ", <-chSig)
 
-	// stops service
+	// stops server
 	srv.Stop()
 }
 
