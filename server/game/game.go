@@ -13,7 +13,7 @@ import (
 
 const (
 	CONN_HOST        = ""
-	CONN_PORT        = "3333"
+	CONN_PORT        = "1234"
 	MAX_OUT_CHANNELS = 100
 	MAX_IN_CHANNELS  = 100
 )
