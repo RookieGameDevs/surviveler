@@ -74,7 +74,7 @@ class SurvClient(object):
         # - 64b/8B timestamp
         # - ?B msgpack buffer
         # - 32b/4B checksum
-        length = struct.pack('!H', 8 + 2 + 2 + len(buf) + 4)
+        length = struct.pack('!H', 8 + 2 + 2 + len(buf))
 
         # add 16 bits packet length
         pkt.extend(length)
@@ -91,11 +91,7 @@ class SurvClient(object):
         # add msgpack buffer
         pkt.extend(bytes(buf))
 
-        # compute and add the checksum
-        pkt.extend(struct.pack('!I', zlib.adler32(pkt[2:]) & 0xffffffff))
-
         print ('packet: ', pkt)
-
         return pkt
 
     def receive_msg(self):

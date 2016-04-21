@@ -4,16 +4,14 @@ Definition of the basic message types
 package core
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
-	"hash/adler32"
 	"io"
 )
 
 // value used to check the length of a client message befoe allocating
 // a buffer, in case the received size was wrong
-const MaxClientMsgLength uint16 = 0xfff
+const MaxIncomingMsgLength uint16 = 0x4ff
 
 // message header: 2 bytes
 type MsgHeader struct {
@@ -35,7 +33,6 @@ type IncomingMsg struct {
 	Origin    int16   // client Id
 	Type      MsgType // the message type
 	Buffer    []byte  // variable size buffer
-	MsgFooter
 }
 
 // server -> client message
@@ -44,76 +41,51 @@ type OutgoingMsg struct {
 	Timestamp   uint64 // message timestamp (emission time)
 	Destination int16  // client Id
 	Buffer      []byte // variable size buffer
-	MsgFooter
 }
 
+// Decode reads a stream and decodes it into an IncomingMsg struct
 func (in *IncomingMsg) Decode(reader io.Reader) error {
 
 	var err error
 
+	// Decode header, fail if decoded length is invalid
 	in.MsgHeader.Decode(reader)
-
-	// Check length
-	if in.Length > MaxClientMsgLength {
-		return fmt.Errorf("Warning: Message Length(%v) > %v", in.Length, MaxClientMsgLength)
+	if in.Length > MaxIncomingMsgLength {
+		return fmt.Errorf("Invalid IncomingMsg.Length: (%v) > %v", in.Length, MaxIncomingMsgLength)
 	}
-
-	// Extract the needed number of bytes and fill the buffer with it
-	msgbuf := make([]byte, in.Length, in.Length)
-	_, err = reader.Read(msgbuf)
-	if err != nil {
-		return fmt.Errorf("ClientMsg.Decode: %v", err)
-	}
-
-	// Following reads will be performed on the buffer reader
-	bufreader := bytes.NewReader(msgbuf)
 
 	// Read Timestamp
-	err = binary.Read(bufreader, binary.BigEndian, &in.Timestamp)
+	err = binary.Read(reader, binary.BigEndian, &in.Timestamp)
 	if err != nil {
-		return fmt.Errorf("ClientMsg.Timestamp: %v", in.Timestamp)
+		return fmt.Errorf("IncomingMsg.Timestamp: %v", err)
 	}
 
 	// Read Origin
-	err = binary.Read(bufreader, binary.BigEndian, &in.Origin)
+	err = binary.Read(reader, binary.BigEndian, &in.Origin)
 	if err != nil {
-		return fmt.Errorf("ClientMsg.Origin: %v", in.Origin)
+		return fmt.Errorf("IncomingMsg.Origin: %v", err)
 	}
 
 	// Read MsgType
-	err = binary.Read(bufreader, binary.BigEndian, &in.Type)
+	err = binary.Read(reader, binary.BigEndian, &in.Type)
 	if err != nil {
-		return fmt.Errorf("ClientMsg.Type: %v", in.Type)
+		return fmt.Errorf("IncomingMsg.Type: %v", err)
 	}
 
 	/*
 	 * Read Buffer (Total Length - various fields):
-	 *- Timestamp: 8B
-	 *- Origin: 2B
-	 *- MsgType: 2B
-	 *- Checksum: 4B
-	 *- Total: 16B
+	 *- Timestamp + Origin + MsgType (8 + 2 + 2) = 12Bytes
 	 */
-	in.Buffer = make([]byte, in.Length-16, in.Length-16)
-	_, err = bufreader.Read(in.Buffer)
+	in.Buffer = make([]byte, in.Length-12, in.Length-12)
+	_, err = reader.Read(in.Buffer)
 	if err != nil {
-		return fmt.Errorf("Decoding ClientMsg, Reading ClientMsg.Buffer: ")
+		return fmt.Errorf("IncomingMsg.Buffer: %v", err)
 	}
-
-	//fmt.Println(hex.Dump(in.Buffer))
-
-	in.MsgFooter.Decode(bufreader)
-
-	// Compute Checksum of the whole message (minus Checksum part)
-	computed_checksum := adler32.Checksum(msgbuf[:in.Length-4])
-	if computed_checksum != in.Checksum {
-		return fmt.Errorf("Checksum error")
-	}
-	fmt.Println("Checksum OK")
 
 	return nil
 }
 
+// Decode reads a stream and decodes it into an MsgHeader struct
 func (hdr *MsgHeader) Decode(reader io.Reader) error {
 
 	var err error
@@ -121,21 +93,7 @@ func (hdr *MsgHeader) Decode(reader io.Reader) error {
 	// read Length
 	err = binary.Read(reader, binary.BigEndian, &hdr.Length)
 	if err != nil {
-		return fmt.Errorf("Decoding MsgHeader.Length: %v\n", err)
-	}
-	fmt.Printf("MsgHeader.Length: %v\n", hdr.Length)
-
-	return nil
-}
-
-func (ftr *MsgFooter) Decode(reader io.Reader) error {
-
-	var err error
-
-	// read Checksum
-	err = binary.Read(reader, binary.BigEndian, &ftr.Checksum)
-	if err != nil {
-		return fmt.Errorf("Decoding MsgFooter.Checksum: %v\n", err)
+		return fmt.Errorf("MsgHeader.Length: %v", err)
 	}
 
 	return nil
