@@ -119,7 +119,7 @@ class SurvClient(object):
 
 if __name__ == '__main__':
     try:
-        client = SurvClient('localhost', 3333)
+        client = SurvClient('localhost', 1234)
         client.connect()
 
         # create msg of type MsgA
