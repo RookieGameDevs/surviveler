@@ -94,6 +94,8 @@ class SurvClient(object):
         print ('packet: ', pkt)
         return pkt
 
+
+    # recevie message pack packet
     def receive_msg(self):
         try:
             unpacker = Unpacker()
@@ -107,6 +109,16 @@ class SurvClient(object):
         except Exception as e:
             pass
             print("exception in receive_msg: ", e)
+
+    def receive_helloworld(self):
+        try:
+            buf = self.sock.recv(10)
+            if not buf:
+                return
+            print(buf)
+        except Exception as e:
+            pass
+            print("exception in receive_helloworld: ", e)
 
     def close(self):
         if self.sock is not None:
@@ -127,6 +139,7 @@ if __name__ == '__main__':
 
         while True:
             client.send(a)
+            client.receive_helloworld()
             # client.receive_msg()
             time.sleep(1)
 

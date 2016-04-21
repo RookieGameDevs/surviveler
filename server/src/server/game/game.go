@@ -32,7 +32,7 @@ func StartGameServer() {
 		MaxOutgoingChannels: MAX_OUT_CHANNELS,
 		MaxIncomingChannels: MAX_IN_CHANNELS,
 	}
-	srv := core.NewServer(config, &SurvCallback{})
+	srv := core.NewServer(config, &SurvCallback{}, &IncomingMsgReader{})
 
 	// starts server (listening goroutine)
 	go srv.Start(listener, time.Second)
@@ -48,15 +48,39 @@ func StartGameServer() {
 }
 
 type SurvCallback struct {
+	Addr net.Addr
 }
 
 func (this *SurvCallback) OnConnect(c *core.Conn) bool {
-	addr := c.GetRawConn().RemoteAddr()
-	fmt.Println("OnConnect:", addr)
+
+	this.Addr = c.GetRawConn().RemoteAddr()
+	fmt.Println("OnConnect:", this.Addr)
+
+	// start a goroutine that spams client with player position!
+	go func() {
+		var msg OutgoingMsg
+		msg.Timestamp = 1234
+		msg.Buffer = []byte("Hello World")
+		msg.Length = uint16(len(msg.Buffer) + 8)
+		for {
+			switch {
+			case c.IsClosed():
+				return
+			default:
+				err := c.AsyncSendMessage(msg, time.Second)
+				if err != nil {
+					fmt.Printf("Error in AsyncSendMessage: %v\n", err)
+				}
+				fmt.Println("Sent msg in AsyncSendMessage")
+				time.Sleep(200 * time.Millisecond)
+			}
+		}
+	}()
+
 	return true
 }
 
-func (this *SurvCallback) OnIncomingMsg(c *core.Conn, p core.IncomingMsg) bool {
+func (this *SurvCallback) OnIncomingMsg(c *core.Conn, msg core.Message) bool {
 	fmt.Println("OnIncomingMsg")
 	return true
 }
