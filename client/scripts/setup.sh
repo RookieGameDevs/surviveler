@@ -4,7 +4,7 @@
 echo "setting up virtual env..."
 virtualenv --python=$(which python3) --no-site-packages . >/dev/null
 if [ $? -ne 0 ]; then
-    exit
+    exit 1
 fi
 
 # make the environment active
@@ -16,17 +16,14 @@ for pkg in ${tools[@]}; do
     echo "updating $pkg..."
     pip install -U $pkg >/dev/null
     if [ $? -ne 0 ]; then
-        exit
+        exit 1
     fi
 done
 
 # install packages listed in dependencies.txt
-deps=$(cat dependencies.txt | grep -v "^#")
-for pkg in ${deps[@]}; do
-    echo "installing $pkg..."
-    pip install $pkg >/dev/null
-    if [ $? -ne 0 ]; then
-        echo "failed to install $pkg"
-        break
-    fi
-done
+echo "installing requirements..."
+pip install -r requirements.txt >/dev/null
+if [ $? -ne 0 ]; then
+    echo "installation failed"
+    exit 1
+fi

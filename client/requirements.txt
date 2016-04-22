@@ -1,0 +1,4 @@
+pdb==0.1
+PySDL2==0.9.3
+python-gnupg==0.3.8
+PyYAML==3.11

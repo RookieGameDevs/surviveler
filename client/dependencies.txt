@@ -1,3 +1,0 @@
-# Project dependencies, listed as one package per line.
-# Lines starting with number sign (#) are ignored.
-pdb
