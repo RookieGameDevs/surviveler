@@ -27,7 +27,7 @@ def main(config):
     renderer = Renderer(1024, 768)
     conn = Connection(config)
     client = Client(renderer, conn)
-    client.update()
+    client.start()
 
 
 if __name__ == '__main__':

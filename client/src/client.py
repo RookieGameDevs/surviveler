@@ -3,7 +3,7 @@ class Client:
         self.renderer = renderer
         self.connection = connection
 
-    def update(self):
+    def start(self):
         while True:
             data = self.connection.read() or None
             if data:
