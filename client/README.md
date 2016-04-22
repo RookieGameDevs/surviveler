@@ -9,3 +9,10 @@ script:
 ```
 scripts/setup.sh
 ```
+
+# Running
+To start the client, run the following script from client's top directory:
+
+```
+scripts/run.sh
+```
