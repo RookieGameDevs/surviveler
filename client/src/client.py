@@ -1,0 +1,29 @@
+import sdl2 as sdl
+from contextlib import ContextDecorator
+
+
+class sdl2context(ContextDecorator):
+    def __enter__(self):
+        sdl.SDL_Init(sdl.SDL_INIT_VIDEO)
+        return self
+
+    def __exit__(self, *exc):
+        sdl.SDL_Quit()
+        return False
+
+
+class Client:
+    def __init__(self, win_width, win_height):
+        self.window = sdl.SDL_CreateWindow(
+            b"Surviveler",
+            sdl.SDL_WINDOWPOS_CENTERED,
+            sdl.SDL_WINDOWPOS_CENTERED,
+            win_width,
+            win_height,
+            sdl.SDL_WINDOW_SHOWN)
+
+    def start(self):
+        sdl.SDL_Delay(5000)
+
+    def quit(self):
+        sdl.SDL_DestroyWindow(self.window)
