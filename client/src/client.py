@@ -1,5 +1,5 @@
-import sdl2 as sdl
 from contextlib import ContextDecorator
+import sdl2 as sdl
 
 
 class sdl2context(ContextDecorator):
