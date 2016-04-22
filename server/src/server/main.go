@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.com/rookiegamedevs/surviveler/server/game"
+	"server/game"
 )
 
 func main() {
