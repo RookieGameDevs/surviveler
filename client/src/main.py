@@ -24,7 +24,7 @@ class sdl2context(ContextDecorator):
 
 @sdl2context()
 def main(config):
-    renderer = Renderer(1024, 768)
+    renderer = Renderer(config['Renderer'])
     conn = Connection(config)
     client = Client(renderer, conn)
     client.start()

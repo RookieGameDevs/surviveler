@@ -3,7 +3,10 @@ import sdl2 as sdl
 
 class Renderer:
 
-    def __init__(self, width, height, depth=24):
+    def __init__(self, config):
+        width = int(config['width'])
+        height = int(config['height'])
+
         self.window = sdl.SDL_CreateWindow(
             b"Surviveler",
             sdl.SDL_WINDOWPOS_CENTERED,
