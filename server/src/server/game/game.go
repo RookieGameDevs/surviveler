@@ -1,12 +1,15 @@
 package game
 
 import (
-	"server/core"
+	"bitbucket.com/rookiegamedevs/surviveler/server/core"
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
 	"runtime"
+	"server/core"
 	"syscall"
 	"time"
 )
@@ -60,7 +63,19 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 	go func() {
 		var msg OutgoingMsg
 		msg.Timestamp = 1234
-		msg.Buffer = []byte("Hello World")
+
+		// create a buffer to contain a (X,Y) position: 2 x uint16 position: 4 Bytes
+		var xpos, ypos uint16
+		xpos = 10
+		ypos = 15
+
+		bbuf := bytes.NewBuffer(make([]byte, 0, 4))
+		binary.Write(bbuf, binary.BigEndian, xpos)
+		binary.Write(bbuf, binary.BigEndian, ypos)
+		msg.Buffer = bbuf.Bytes()
+
+		//msg.Buffer = []byte("Hello World")
+		// Length is the buffer length + timestamp length
 		msg.Length = uint16(len(msg.Buffer) + 8)
 		for {
 			switch {
