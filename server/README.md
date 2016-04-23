@@ -1,4 +1,4 @@
-# Surviveler. The award winning game. Probably.
+# Surviveler server.
 
 ## Requirements
 
@@ -9,27 +9,24 @@ Go 1.6 is preferred, or Go 1.5 with [**Vendor Experiment**](https://medium.com/@
 ### Go dependencies management
 
 It is the developer responsibility to maintain the content of the *version
-controlled* `surviveler/server/vendor` directory.
+controlled* `src/server/vendor` directory.
 
 ## Build
 
-Inside `surviveler/server` directory, this will build and place the server
-executable in `$GOBIN`
+Set your `$GOPATH` to /path/to/surviveler/server directory (where this README
+file is located) and then issue:
 
 ```
 go install
 ```
 
+On success, as for any other Go project, `bin/` and `pkg/` directories will be
+created where binaries and build files will be placed.
+
 ## Run
 
-From $GOPATH/bin:
+To start the server, just run
 
 ```
-./server
-```
-
-Or, easier, if you have $GOPATH/bin in your `$PATH`, from anywhere:
-
-```
-server
+bin/server
 ```

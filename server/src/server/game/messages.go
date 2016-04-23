@@ -1,7 +1,7 @@
 package game
 
 import (
-	"bitbucket.com/rookiegamedevs/surviveler/server/core"
+	"server/core"
 )
 
 // Types of messages sent by the client
