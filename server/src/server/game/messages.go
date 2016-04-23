@@ -1,8 +1,6 @@
 package game
 
-import (
-	"server/core"
-)
+import ()
 
 // Types of messages sent by the client
 const (

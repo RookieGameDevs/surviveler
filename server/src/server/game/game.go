@@ -1,7 +1,6 @@
 package game
 
 import (
-	"bitbucket.com/rookiegamedevs/surviveler/server/core"
 	"bytes"
 	"encoding/binary"
 	"fmt"

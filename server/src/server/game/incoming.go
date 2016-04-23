@@ -4,10 +4,10 @@
 package game
 
 import (
-	"bitbucket.com/rookiegamedevs/surviveler/server/core"
 	"encoding/binary"
 	"fmt"
 	"net"
+	"server/core"
 )
 
 // value used to check the length of a client message before allocating
