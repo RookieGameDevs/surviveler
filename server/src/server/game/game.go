@@ -73,7 +73,6 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 		binary.Write(bbuf, binary.BigEndian, ypos)
 		msg.Buffer = bbuf.Bytes()
 
-		//msg.Buffer = []byte("Hello World")
 		// Length is the buffer length + timestamp length
 		msg.Length = uint16(len(msg.Buffer) + 8)
 		for {
