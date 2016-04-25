@@ -51,7 +51,7 @@ class Connection:
         ip, port = config['ServerIPAddress'], config.getint('ServerPort')
         LOG.info('Connecting to {}:{}'.format(ip, port))
         self.socket = socket.create_connection((ip, port))
-        self.socket.settimeout(config.getfloat('SocketTimeout'))
+        self.socket.setblocking(False)
         self.chunk_size = config.getint('ChunkSize')
 
         self.header = None
@@ -74,12 +74,20 @@ class Connection:
         :return: tuple (msgtype, encoded_payload) if available
         :rtype: tuple or None
         """
-        if self.header is None:
+        def read(size):
             try:
-                self.header = parse_header(self.socket.recv(HEADER_LENGTH))
-                LOG.debug('Received header: type={} size={}'.format(self.header[0], self.header[1]))
-            except (socket.timeout, BlockingIOError):
+                data = self.socket.recv(size)
+                return data
+            except BlockingIOError:
                 pass
+
+        if self.header is None:
+            header = read(HEADER_LENGTH)
+            if header is None:
+                return
+            self.header = parse_header(header)
+            LOG.debug('Received header: type={} size={}'.format(self.header[0], self.header[1]))
+
         if self.header is not None:
             while True:
                 self.payload = self.payload or bytearray()
@@ -87,20 +95,19 @@ class Connection:
                 if len(self.payload) == self.header[1]:
                     break
 
-                try:
-                    size = (
-                        self.chunk_size
-                        if self.chunk_size <= self.header[1] - len(self.payload)
-                        else self.header[1] - len(self.payload)
-                    )
-                    self.payload.extend(self.socket.recv(size))
+                size = (
+                    self.chunk_size
+                    if self.chunk_size <= self.header[1] - len(self.payload)
+                    else self.header[1] - len(self.payload)
+                )
+                data = read(size)
+                if data:
+                    self.payload.extend(data)
                     LOG.debug('Received payload: {} bytes'.format(size))
-                except (socket.timeout, BlockingIOError):
-                    break
 
         if self.header is not None and self.payload is not None and len(self.payload) == self.header[1]:
             # Returns the tuple (msgtype, payload)
             msgtype, payload = self.header[0], self.payload
-            self.header, self.payload = None, bytearray()
+            self.header, self.payload = None, None
             LOG.debug('Received message {}'.format(msgtype))
             return msgtype, payload
