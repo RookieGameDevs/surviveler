@@ -1,7 +1,9 @@
 click==6.6
 IPy==0.83
 msgpack-python==0.4.7
+numpy==1.11.0
 pdb==0.1
+PyOpenGL==3.1.0
 PySDL2==0.9.3
 python-gnupg==0.3.8
 PyYAML==3.11
