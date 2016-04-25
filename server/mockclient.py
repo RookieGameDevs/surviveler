@@ -140,14 +140,18 @@ class SurvClient(object):
         try:
             buf = self.sock.recv(2)
             length = struct.unpack('!H', buf)[0]
-            print ("receive_msgpack, length: ", length)
+            print ("receive_msgpack, msg type: ", length)
 
-            buf = self.sock.recv(8)
-            timestamp = struct.unpack('!Q', buf)[0]
-            print ("receive_msgpack, timestamp: ", timestamp)
+            buf = self.sock.recv(4)
+            length = struct.unpack('!i', buf)[0]
+            print ("receive_msgpack, payload length: ", length)
 
-            buf = self.sock.recv(length-8)
-            buf = struct.unpack('!' + str(length-8) + 'p', buf)[0]
+            # buf = self.sock.recv(8)
+            # timestamp = struct.unpack('!Q', buf)[0]
+            # print ("receive_msgpack, timestamp: ", timestamp)
+
+            buf = self.sock.recv(length)
+            buf = struct.unpack('!' + str(length) + 'p', buf)[0]
             unpacker = Unpacker()
             unpacker.feed(buf)
             for o in unpacker:
