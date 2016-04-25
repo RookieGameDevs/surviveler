@@ -51,8 +51,8 @@ class MockServer(socketserver.BaseRequestHandler):
     def handle(self):
         self.request.setblocking(False)
         try:
+            t = tstamp()
             while True:
-                t0 = datetime.datetime.now()
                 data = self.read()
                 if data:
                     ((t, _), d) = data
@@ -64,12 +64,12 @@ class MockServer(socketserver.BaseRequestHandler):
                         response = struct.pack('!HI', 1, len(data)) + data
                         print('sending response {}'.format(response))
                         self.request.sendall(response)
-
-                dt = datetime.datetime.now() - t0
-                if (dt.microseconds * 1000000 + dt.seconds) >= 1:
-                    time.sleep(1 - (dt.seconds + dt.microseconds/1000000))
-                self.request.sendall(
-                    struct.pack('!HI', 2, 1) + msgpack.packb({}))
+                else:
+                    dt = tstamp() - t
+                    if (dt) >= 10:
+                        self.request.sendall(
+                            struct.pack('!HI', 2, 1) + msgpack.packb({}))
+                        t = tstamp()
         except:
             self.request.close()
             raise
@@ -83,7 +83,7 @@ class MockServer(socketserver.BaseRequestHandler):
     'port',
     required=True, type=click.INT, default=1234, metavar='PORT')
 def main(host, port):
-    server = socketserver.TCPServer((host, port), MockServer)
+    server = socketserver.ForkingTCPServer((host, port), MockServer)
     print('listening on {} {}'.format(host, port))
     server.serve_forever()
 
