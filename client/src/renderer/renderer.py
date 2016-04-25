@@ -54,15 +54,15 @@ class Renderer:
             glGetString(GL_VERSION).decode('utf8'),
             glGetString(GL_SHADING_LANGUAGE_VERSION).decode('utf8')))
 
-        self.gl_setup()
+        self.gl_setup(width, height)
 
-    def gl_setup(self):
+    def gl_setup(self, width, height):
         glClearColor(0, 0, 0, 0)
 
-    def render(self):
+    def render(self, scene):
         glClear(GL_COLOR_BUFFER_BIT)
 
-        # TODO: rendering!
+        scene.render(self)
 
         glFlush()
         sdl.SDL_GL_SwapWindow(self.window)

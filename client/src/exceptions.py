@@ -11,3 +11,8 @@ class SDLError(Exception):
 class OpenGLError(Exception):
     """Generic OpenGL error."""
     pass
+
+
+class ShaderError(Exception):
+    """Shader compile/link error."""
+    pass
