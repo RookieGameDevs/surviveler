@@ -1,9 +1,6 @@
 package game
 
 import (
-	"bytes"
-	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
@@ -12,8 +9,6 @@ import (
 	"server/core"
 	"syscall"
 	"time"
-
-	"github.com/ugorji/go/codec"
 )
 
 const (
@@ -64,49 +59,20 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 	// start a goroutine that spams client with player position!
 	go func() {
 
-		var mh codec.MsgpackHandle
-
-		var msg OutgoingMsg
-
-		// create a buffer to contain a (X,Y) position: 2 x uint16 position: 4 Bytes
-		type Pos struct{ Xpos, Ypos uint16 }
-		pos := Pos{10, 15}
-
 		for {
 			switch {
 			case c.IsClosed():
 				return
 			default:
 
-				var err error
-				t := time.Now()
-				msg.Timestamp = t.Unix()
-
-				// Encode to msgpack
-				bb := new(bytes.Buffer)
-				var enc *codec.Encoder = codec.NewEncoder(bb, &mh)
-				err = enc.Encode(pos)
-				if err != nil {
-					fmt.Printf("Error encoding pos: %v\n", err)
-					return
-				}
-
-				// Encode to network byte order
-				bbuf := bytes.NewBuffer(make([]byte, 0, len(bb.Bytes())))
-				binary.Write(bbuf, binary.BigEndian, bb.Bytes())
-
-				// Copy the buffer
-				msg.Buffer = bbuf.Bytes()
-
-				// Length is the buffer length + timestamp length
-				msg.Length = uint16(len(msg.Buffer) + 8)
+				msg, err := NewOutgoingPosMsg(32, Pos{10, 15})
 
 				err = c.AsyncSendMessage(msg, time.Second)
 				if err != nil {
 					fmt.Printf("Error in AsyncSendMessage: %v\n", err)
 					return
 				}
-				fmt.Println("Sent msg in AsyncSendMessage")
+				fmt.Println("Sent a msg in AsyncSendMessage")
 				time.Sleep(200 * time.Millisecond)
 			}
 		}
