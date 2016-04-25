@@ -8,6 +8,7 @@ import struct
 import zlib
 from io import BytesIO
 
+import msgpack
 from msgpack import Packer, Unpacker
 
 # ZLib compression level
@@ -79,8 +80,8 @@ class SurvClient(object):
         # add 16 bits packet length
         pkt.extend(length)
 
-        # add 64 bits timestamp (unsigned)
-        pkt.extend(struct.pack('!Q', timestamp()))
+        # add 64 bits timestamp (signed)
+        pkt.extend(struct.pack('!q', timestamp()))
 
         # add 16 bits Client Id (unsigned)
         pkt.extend(struct.pack('!H', CLIENT_ID))
@@ -117,26 +118,43 @@ class SurvClient(object):
             print ("receive_msg, length: ", length)
 
             buf = self.sock.recv(8)
-            timestamp = struct.unpack('!Q', buf)[0]
+            timestamp = struct.unpack('!q', buf)[0]
             print ("receive_msg, timestamp: ", timestamp)
 
             buf = self.sock.recv(2)
             xpos = struct.unpack('!H', buf)[0]
             print ("receive_msg, xpos: ", xpos)
 
+            unpacker = Unpacker()
             buf = self.sock.recv(2)
             ypos = struct.unpack('!H', buf)[0]
             print ("receive_msg, ypos: ", ypos)
-
-
-            # buf = self.sock.recv(length-8)
-            # print ("receive_helloworld, buf: ", buf)
             if not buf:
                 return
             print(buf)
         except Exception as e:
             pass
-            print("exception in receive_helloworld: ", e)
+            print("exception in receive_msg: ", e)
+
+    def receive_msgpack(self):
+        try:
+            buf = self.sock.recv(2)
+            length = struct.unpack('!H', buf)[0]
+            print ("receive_msgpack, length: ", length)
+
+            buf = self.sock.recv(8)
+            timestamp = struct.unpack('!Q', buf)[0]
+            print ("receive_msgpack, timestamp: ", timestamp)
+
+            buf = self.sock.recv(length-8)
+            buf = struct.unpack('!' + str(length-8) + 'p', buf)[0]
+            unpacker = Unpacker()
+            unpacker.feed(buf)
+            for o in unpacker:
+                print (o)
+        except Exception as e:
+            pass
+            print("exception in receive_msgpack: ", e)
 
     def close(self):
         if self.sock is not None:
@@ -157,8 +175,7 @@ if __name__ == '__main__':
 
         while True:
             client.send(a)
-            client.receive_msg()
-            # client.receive_msg()
+            client.receive_msgpack()
             time.sleep(1)
 
     except Exception as e:
