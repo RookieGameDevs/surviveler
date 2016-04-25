@@ -1,7 +1,10 @@
 from enum import Enum
 from enum import IntEnum
 from enum import unique
+import logging
 import msgpack
+
+LOG = logging.getLogger(__name__)
 
 
 @unique
@@ -38,14 +41,18 @@ class Message:
 
 class MessageProxy:
     def __init__(self, conn):
+        LOG.info('Initializing message proxy')
         self.conn = conn
 
     def push(self, msg):
+        LOG.debug('Sending message {}'.format(msg))
         self.conn.send(*msg.encode())
 
     def poll(self):
         data = self.conn.recv()
         while data is not None:
             msgtype, payload = data
-            yield Message.decode(msgtype, payload)
+            msg = Message.decode(msgtype, payload)
+            LOG.debug('Received message {}'.format(msg))
+            yield msg
             data = self.conn.recv()
