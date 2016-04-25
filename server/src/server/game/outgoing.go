@@ -11,7 +11,7 @@ import (
 // server -> client message
 type OutgoingMsg struct {
 	Length    uint16 // the message length (Length field excluded)
-	Timestamp uint64 // message timestamp (emission time)
+	Timestamp int64  // message timestamp (emission time)
 	Buffer    []byte // variable size buffer
 }
 
