@@ -4,6 +4,7 @@ from client import Client
 from configparser import ConfigParser
 from connection import Connection
 from contextlib import ContextDecorator
+from message import MessageProxy
 from renderer import Renderer
 import os
 import sdl2 as sdl
@@ -26,7 +27,8 @@ class sdl2context(ContextDecorator):
 def main(config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])
-    client = Client(renderer, conn)
+    proxy = MessageProxy(conn)
+    client = Client(renderer, proxy)
     client.start()
     renderer.shutdown()
 
