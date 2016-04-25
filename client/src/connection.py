@@ -25,6 +25,7 @@ class Connection:
         LOG.info('Connecting to {}:{}'.format(ip, port))
         self.socket = socket.create_connection((ip, port))
         self.socket.settimeout(config.getfloat('SocketTimeout'))
+        self.chunk_size = config.getint('ChunkSize')
 
         self.header = None
         self.payload = None
@@ -38,19 +39,29 @@ class Connection:
             try:
                 self.header = parse_header(self.socket.recv(HEADER_LENGTH))
                 LOG.debug('Received header: type={} size={}'.format(self.header[0], self.header[1]))
-            except socket.timeout:
+            except (socket.timeout, BlockingIOError):
                 pass
         if self.header is not None:
-            try:
-                # FIXME: read chunks
-                self.payload = self.socket.recv(self.header[1])
-                LOG.debug('Received payload: {} bytes'.format(len(self.payload)))
-            except socket.timeout:
-                pass
+            while True:
+                self.payload = self.payload or bytearray()
 
-        if self.payload is not None:
+                if len(self.payload) == self.header[1]:
+                    break
+
+                try:
+                    size = (
+                        self.chunk_size
+                        if self.chunk_size <= self.header[1] - len(self.payload)
+                        else self.header[1] - len(self.payload)
+                    )
+                    self.payload.extend(self.socket.recv(size))
+                    LOG.debug('Received payload: {} bytes'.format(size))
+                except (socket.timeout, BlockingIOError):
+                    break
+
+        if self.header is not None and self.payload is not None and len(self.payload) == self.header[1]:
             # Returns the tuple (msgtype, payload)
             msgtype, payload = self.header[0], self.payload
-            self.header, self.payload = None, None
+            self.header, self.payload = None, bytearray()
             LOG.debug('Received message {}'.format(msgtype))
             return msgtype, payload
