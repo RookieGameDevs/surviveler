@@ -9,6 +9,8 @@ LOG = logging.getLogger(__name__)
 
 
 class Client:
+    """Client class"""
+
     def __init__(self, renderer, proxy):
         self.renderer = renderer
         self.proxy = proxy
@@ -18,6 +20,11 @@ class Client:
         self.sync()
 
     def process_message(self, msg):
+        """Processes a message received from the server.
+
+        :param msg: the message to be processed
+        :type msg: instance of :class:`message.Message`
+        """
         LOG.debug('Processing message {}'.format(msg))
         if self.syncing is not None and msg.msgtype == MessageType.pong:
             now = tstamp()
@@ -28,12 +35,22 @@ class Client:
             pass
 
     def sync(self):
+        """Tries to guess the local delta with the server timestamps.
+
+        Uses a message of type MessageType.ping with a random id to sync with
+        the server clock guessing the lag related to ping.
+        """
         LOG.info('Syncing time with server')
         self.syncing = tstamp()
         msg = Message(MessageType.ping, {MessageField.id: 1})
         self.proxy.push(msg)
 
     def start(self):
+        """Client main loop.
+
+        Polls the MessageProxy and processes each message received from the
+        server, renders the scene.
+        """
         while True:
             for msg in self.proxy.poll():
                 self.process_message(msg)

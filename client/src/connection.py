@@ -9,16 +9,43 @@ HEADER_LENGTH = HEADER.size
 
 
 def parse_header(header):
+    """Uses HEADER struct to unpack the header.
+
+    :param header: the packed header
+    :type header: bytes
+
+    :return: tuple (msgtype, size)
+    :rtype: tuple
+    """
     return HEADER.unpack(header)
 
 
 def create_packet(msgtype, payload):
+    """Uses HEADER struct to prepare the heaader and create the packet
+
+    :param msgtype: the message type
+    :type msgtype: int
+
+    :param payload: the encoded payload
+    :type payload: bytes
+
+    :return: the packet
+    :rtype: bytes
+    """
     header = HEADER.pack(msgtype, len(payload))
     return header + payload
 
 
 class Connection:
-    """Connection management class."""
+    """Application layer handler.
+
+    Handles the communication with the server as the application layer. Uses TCP
+    connection to communicate with the server, and is configurable using the
+    client config file.
+
+    :param config: the network section of the config object
+    :type config: instance of :class:`configparser.SectionProxy`
+    """
 
     def __init__(self, config):
         ip, port = config['ServerIPAddress'], config.getint('ServerPort')
@@ -31,10 +58,22 @@ class Connection:
         self.payload = None
 
     def send(self, msgtype, payload):
-        LOG.debug('Sending message: type={} size={}'.format(msgtype, len(payload)))
+        """Sends a packet via TCP to the server.
+
+        :param msgtype: the message type
+        :type msgtype: int
+
+        :param payload: the encoded payload
+        :type payload: bytes
+        """
         self.socket.sendall(create_packet(msgtype, payload))
 
     def recv(self):
+        """Receives a single packet via TCP from the server.
+
+        :return: tuple (msgtype, encoded_payload) if available
+        :rtype: tuple or None
+        """
         if self.header is None:
             try:
                 self.header = parse_header(self.socket.recv(HEADER_LENGTH))

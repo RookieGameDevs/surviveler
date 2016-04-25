@@ -19,8 +19,13 @@ LOG = logging.getLogger(__name__)
 CONFIG_FILE = os.path.join(os.getcwd(), 'client.ini')
 
 
-def setup_logging(conf):
-    numeric_level = getattr(logging, conf['Level'], None)
+def setup_logging(config):
+    """Setups the logging module
+
+    :param config: the logging section of the config object
+    :type config: instance of :class:`configparser.SectionProxy`
+    """
+    numeric_level = getattr(logging, config['Level'], None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % LOG_LEVEL)
     logging.basicConfig(
