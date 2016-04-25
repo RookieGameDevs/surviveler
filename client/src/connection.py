@@ -4,16 +4,16 @@ import struct
 
 LOG = logging.getLogger(__name__)
 
-# FIXME: put this somewhere else
-HEADER_LENGTH = 6
+HEADER = struct.Struct('!HI')
+HEADER_LENGTH = HEADER.size
 
 
 def parse_header(header):
-    return struct.unpack('!HI', header)
+    return HEADER.unpack(header)
 
 
 def create_packet(msgtype, payload):
-    header = struct.pack('!HI', msgtype, len(payload))
+    header = HEADER.pack(msgtype, len(payload))
     return header + payload
 
 
