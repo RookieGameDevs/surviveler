@@ -1,3 +1,4 @@
+from itertools import count
 from message import Message
 from message import MessageField
 from message import MessageType
@@ -15,9 +16,9 @@ class Client:
         self.renderer = renderer
         self.proxy = proxy
 
-        self.syncing = None
+        self.sync_counter = count()
+        self.syncing = {}
         self.delta = None
-        self.sync()
 
     def process_message(self, msg):
         """Processes a message received from the server.
@@ -25,11 +26,13 @@ class Client:
         :param msg: the message to be processed
         :type msg: instance of :class:`message.Message`
         """
-        LOG.debug('Processing message {}'.format(msg))
-        if self.syncing is not None and msg.msgtype == MessageType.pong:
+        LOG.info('Processing message: {} {}'.format(msg, msg.data))
+        if self.syncing and msg.msgtype == MessageType.pong:
             now = tstamp()
-            self.delta = now - msg.data[MessageField.timestamp] + (now - self.syncing) / 2
-            self.syncing = None
+            initial = self.syncing.pop(msg.data[MessageField.id])
+
+            self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
+
             LOG.info('Synced time with server: delta={}'.format(self.delta))
         else:
             pass
@@ -41,8 +44,9 @@ class Client:
         the server clock guessing the lag related to ping.
         """
         LOG.info('Syncing time with server')
-        self.syncing = tstamp()
-        msg = Message(MessageType.ping, {MessageField.id: 1})
+        sync_id = next(self.sync_counter)
+        self.syncing[sync_id] = tstamp()
+        msg = Message(MessageType.ping, {MessageField.id: sync_id})
         self.proxy.push(msg)
 
     def start(self):
@@ -51,7 +55,12 @@ class Client:
         Polls the MessageProxy and processes each message received from the
         server, renders the scene.
         """
+        self.sync()
+        t = tstamp()
         while True:
+            if tstamp() - t > 1000:
+                self.sync()
+                t = tstamp()
             for msg in self.proxy.poll():
                 self.process_message(msg)
 

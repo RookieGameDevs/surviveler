@@ -87,8 +87,9 @@ class MessageProxy:
         :param msg: the Message object to be pushed
         :type msg: instance of :class:`message.Message`
         """
-        LOG.debug('Sending message {}'.format(msg))
+        LOG.debug('Pushing message: {} {}'.format(msg, str(msg.data)))
         self.conn.send(*msg.encode())
+        LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
 
     def poll(self):
         """Polls the underneath connection and yield all the messages readed.
@@ -100,6 +101,6 @@ class MessageProxy:
         while data is not None:
             msgtype, payload = data
             msg = Message.decode(msgtype, payload)
-            LOG.debug('Received message {}'.format(msg))
+            LOG.debug('Received message: {} {}'.format(msg, str(msg.data)))
             yield msg
             data = self.conn.recv()

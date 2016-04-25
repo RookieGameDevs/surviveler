@@ -56,6 +56,7 @@ class Connection:
 
         self.header = None
         self.payload = None
+        self.buffer = bytearray()
 
     def send(self, msgtype, payload):
         """Sends a packet via TCP to the server.
@@ -66,7 +67,9 @@ class Connection:
         :param payload: the encoded payload
         :type payload: bytes
         """
+        LOG.debug('Writing message: {} {}'.format(msgtype, payload))
         self.socket.sendall(create_packet(msgtype, payload))
+        LOG.debug('Written message: {} {}'.format(msgtype, payload))
 
     def recv(self):
         """Receives a single packet via TCP from the server.
@@ -75,11 +78,16 @@ class Connection:
         :rtype: tuple or None
         """
         def read(size):
-            try:
-                data = self.socket.recv(size)
-                return data
-            except BlockingIOError:
-                pass
+            while True:
+                try:
+                    chunk = min([self.chunk_size, size - len(self.buffer)])
+                    d = self.socket.recv(chunk)
+                    self.buffer.extend(d)
+                    if len(self.buffer) == size:
+                        buff, self.buffer = self.buffer, bytearray()
+                        return buff
+                except BlockingIOError:
+                    return
 
         if self.header is None:
             header = read(HEADER_LENGTH)
@@ -89,25 +97,15 @@ class Connection:
             LOG.debug('Received header: type={} size={}'.format(self.header[0], self.header[1]))
 
         if self.header is not None:
-            while True:
-                self.payload = self.payload or bytearray()
+            payload = read(self.header[1])
+            if payload is None:
+                return None
 
-                if len(self.payload) == self.header[1]:
-                    break
+            self.payload = payload
+            LOG.debug('Received payload: {} bytes'.format(len(payload)))
 
-                size = (
-                    self.chunk_size
-                    if self.chunk_size <= self.header[1] - len(self.payload)
-                    else self.header[1] - len(self.payload)
-                )
-                data = read(size)
-                if data:
-                    self.payload.extend(data)
-                    LOG.debug('Received payload: {} bytes'.format(size))
-
-        if self.header is not None and self.payload is not None and len(self.payload) == self.header[1]:
-            # Returns the tuple (msgtype, payload)
-            msgtype, payload = self.header[0], self.payload
-            self.header, self.payload = None, None
-            LOG.debug('Received message {}'.format(msgtype))
-            return msgtype, payload
+        # Returns the tuple (msgtype, payload)
+        msgtype, payload = self.header[0], self.payload
+        self.header, self.payload = None, None
+        LOG.debug('Received message: {} {}'.format(msgtype, payload))
+        return msgtype, payload
