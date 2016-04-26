@@ -33,7 +33,7 @@ def parse_payload(payload):
 
 
 def create_packet(msgtype, payload):
-    """Uses HEADER struct to prepare the heaader and create the packet
+    """Uses HEADER struct to prepare the header and create the packet
 
     :param msgtype: the message type
     :type msgtype: int
