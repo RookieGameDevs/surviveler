@@ -29,7 +29,9 @@ def parse_payload(payload):
     :return: the local encoded payload body
     :rtype: bytearray
     """
-    return struct.unpack('!{}p'.format(len(payload)), payload)[0]
+    # FIXME: check if we really need to reorder the bytes in network-byte-order
+    # return struct.unpack('!{}p'.format(len(payload)), payload)[0]
+    return payload
 
 
 def create_packet(msgtype, payload):
