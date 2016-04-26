@@ -8,6 +8,7 @@ from OpenGL.GL import glGetString
 from exceptions import ConfigError
 from exceptions import OpenGLError
 from exceptions import SDLError
+from utils import as_utf8
 import sdl2 as sdl
 
 
@@ -51,8 +52,8 @@ class Renderer:
                 gl_major, gl_minor))
 
         print('OpenGL version: {}\nGLSL version: {}'.format(
-            glGetString(GL_VERSION).decode('utf8'),
-            glGetString(GL_SHADING_LANGUAGE_VERSION).decode('utf8')))
+            as_utf8(glGetString(GL_VERSION)),
+            as_utf8(glGetString(GL_SHADING_LANGUAGE_VERSION))))
 
         self.gl_setup(width, height)
 

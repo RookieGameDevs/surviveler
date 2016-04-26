@@ -19,11 +19,9 @@ from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
 from exceptions import ShaderError
 from exceptions import UniformError
+from utils import as_ascii
+from utils import as_utf8
 import numpy as np
-
-
-def str_id(b):
-    return b.decode('ascii')
 
 
 UNIFORM_VALIDATORS = {
@@ -48,7 +46,7 @@ class Shader:
         self.uniforms = {}
         for u_id in range(glGetProgramiv(self.prog, GL_ACTIVE_UNIFORMS)):
             name, size, prim_type = glGetActiveUniform(self.prog, u_id)
-            self.uniforms[str_id(name)] = {
+            self.uniforms[as_ascii(name)] = {
                 'index': u_id,
                 'type': prim_type,
                 'size': size,
@@ -67,7 +65,7 @@ class Shader:
                     if not glGetShaderiv(shader_obj, GL_COMPILE_STATUS):
                         raise ShaderError('Failed to compile shader "{}":\n{}'.format(
                             filename,
-                            glGetShaderInfoLog(shader_obj).decode('utf8')))
+                            as_utf8(glGetShaderInfoLog(shader_obj))))
 
                     return shader_obj
 
