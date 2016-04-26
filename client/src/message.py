@@ -11,14 +11,16 @@ LOG = logging.getLogger(__name__)
 class MessageType(IntEnum):
     ping = 0
     pong = 1
-    # FIXME: Remove me
-    misc = 2
+    # FIXME: find the proper name
+    state = 2
 
 
 @unique
 class MessageField(bytes, Enum):
-    id = b'id'
-    timestamp = b'tstamp'
+    id = b'Id'
+    timestamp = b'Tstamp'
+    x_pos = b'Xpos'
+    y_pos = b'Ypos'
 
 
 class Message:

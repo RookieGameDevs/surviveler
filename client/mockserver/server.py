@@ -58,8 +58,8 @@ class MockServer(socketserver.BaseRequestHandler):
                     ((t, _), d) = data
                     if t == 0:
                         data = msgpack.packb({
-                            'id': d[b'id'],
-                            'tstamp': tstamp()
+                            'Id': d[b'Id'],
+                            'Tstamp': tstamp()
                         })
                         response = struct.pack('!HI', 1, len(data)) + data
                         print('sending response {}'.format(response))

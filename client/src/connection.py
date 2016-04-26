@@ -101,7 +101,7 @@ class Connection:
             if payload is None:
                 return None
 
-            self.payload = payload
+            self.payload = struct.unpack('!{}p'.format(self.header[1]), payload)[0]
             LOG.debug('Received payload: {} bytes'.format(len(payload)))
 
         # Returns the tuple (msgtype, payload)
