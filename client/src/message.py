@@ -11,8 +11,7 @@ LOG = logging.getLogger(__name__)
 class MessageType(IntEnum):
     ping = 0
     pong = 1
-    # FIXME: find the proper name
-    state = 2
+    gamestate = 2
 
 
 @unique
@@ -84,7 +83,7 @@ class MessageProxy:
         self.conn = conn
 
     def push(self, msg):
-        """Pushes the message through the undernath connection
+        """Pushes the message through the underneath connection
 
         :param msg: the Message object to be pushed
         :type msg: instance of :class:`message.Message`
@@ -94,7 +93,7 @@ class MessageProxy:
         LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
 
     def poll(self):
-        """Polls the underneath connection and yield all the messages readed.
+        """Polls the underneath connection and yields all the messages readed.
 
         :return: the Message object to be pushed
         :rtype: instance of :class:`message.Message`
