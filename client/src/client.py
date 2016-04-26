@@ -4,47 +4,32 @@ from message import MessageField
 from message import MessageType
 from message_handlers import get_handlers
 from message_handlers import handler
-from renderer import GeometryNode
-from renderer import Mesh
+from player import Player
 from renderer import Scene
-from renderer import Shader
 from utils import tstamp
 import logging
 
 
 LOG = logging.getLogger(__name__)
 
-TRIANGLE_VERTICES = [
-    +0.0, +0.3, 0.0,
-    -0.3, -0.3, 0.0,
-    +0.3, -0.3, 0.0,
-]
-
-TRIANGLE_INDICES = [
-    0,
-    1,
-    2,
-]
-
 
 class Client:
     """Client class"""
 
     def __init__(self, renderer, proxy):
-        self.renderer = renderer
         self.proxy = proxy
-
         self.sync_counter = count()
         self.syncing = {}
         self.delta = None
 
-        triangle = Mesh(TRIANGLE_VERTICES, TRIANGLE_INDICES)
-        shader = Shader.from_glsl(
-            'data/shaders/simple.vert',
-            'data/shaders/simple.frag')
+        self.renderer = renderer
+        self.scene_setup()
+
+    def scene_setup(self):
+        self.player = Player()
 
         self.scene = Scene()
-        self.scene.root.add_child(GeometryNode(triangle, shader))
+        self.scene.root.add_child(self.player.get_node())
 
     @handler(MessageType.pong)
     def pong_handler(self, msg):
@@ -90,6 +75,7 @@ class Client:
         """
         self.sync()
         t = tstamp()
+        dt = 0.0
         while True:
             if tstamp() - t > 1000:
                 self.sync()
@@ -97,4 +83,6 @@ class Client:
             for msg in self.proxy.poll():
                 self.process_message(msg)
 
+            self.player.update(dt)
             self.renderer.render(self.scene)
+            dt += 0.1

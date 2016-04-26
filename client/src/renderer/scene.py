@@ -48,11 +48,13 @@ class RootNode(AbstractSceneNode):
 
 class GeometryNode(AbstractSceneNode):
 
-    def __init__(self, mesh, shader):
+    def __init__(self, mesh, shader, params=None):
         super(GeometryNode, self).__init__()
         self.mesh = mesh
         self.shader = shader
+        self.params = params or {}
 
     def render(self, rndr, transform):
-        self.shader.use()
+        self.params['transform'] = transform
+        self.shader.use(self.params)
         self.mesh.render(rndr)

@@ -16,3 +16,7 @@ class OpenGLError(Exception):
 class ShaderError(Exception):
     """Shader compile/link error."""
     pass
+
+
+class UniformError(Exception):
+    """Uniform value initialization error."""
