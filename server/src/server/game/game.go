@@ -65,7 +65,7 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 				return
 			default:
 
-				msg, err := NewOutgoingPosMsg(32, Pos{10, 15})
+				msg, err := NewOutgoingPosMsg(2, Pos{10, 15})
 
 				err = c.AsyncSendMessage(msg, time.Second)
 				if err != nil {
