@@ -98,10 +98,11 @@ class MessageProxy:
         :return: the Message object to be pushed
         :rtype: instance of :class:`message.Message`
         """
-        data = self.conn.recv()
-        while data is not None:
+        while True:
+            data = self.conn.recv()
+            if data is None:
+                break
             msgtype, payload = data
             msg = Message.decode(msgtype, payload)
             LOG.debug('Received message: {} {}'.format(msg, str(msg.data)))
             yield msg
-            data = self.conn.recv()
