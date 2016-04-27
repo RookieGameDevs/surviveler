@@ -19,6 +19,7 @@ MESH_INDICES = [
 
 
 class Player:
+    """Game entity which represents a player."""
 
     def __init__(self):
         mesh = Mesh(MESH_VERTICES, MESH_INDICES)
@@ -31,8 +32,20 @@ class Player:
         self.rot_angle = 0.0
 
     def get_node(self):
+        """Returns the scene node associated with player's entity.
+
+        :returns: Geometry node associated with the player.
+        :rtype: :class:`renderer.GeometryNode`
+        """
         return self.scene_node
 
     def update(self, dt):
+        """Update the player.
+
+        This method computes player's game logic as a function of time.
+
+        :param dt: Time delta from last update.
+        :type dt: float
+        """
         self.rot_angle = dt * 2 * pi / 10.0
         self.scene_node.transform = mat4(mat3_rot(Y_AXIS, self.rot_angle))

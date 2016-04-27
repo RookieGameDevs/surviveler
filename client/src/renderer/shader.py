@@ -38,8 +38,22 @@ UNIFORM_SETTERS = {
 
 
 class Shader:
+    """Shader program.
+
+    A shader program performs the actual rendering of the geometry and defines
+    its visual aspects: perspective transformation, color, shading, etc.
+
+    This class abstracts the OpenGL shader program objects and provides a
+    convenient interface for passing data to the pipeline.
+    """
 
     def __init__(self, prog_id):
+        """Constructor.
+
+        :param prog_id: OpenGL program object identifier. Must identify a valid
+            compiled and linked shader program.
+        :type prog_id: int
+        """
         self.prog = prog_id
 
         # create the uniforms map
@@ -54,6 +68,20 @@ class Shader:
 
     @classmethod
     def from_glsl(cls, vert_shader_file, frag_shader_file):
+        """Loads and compiles given shader files into a shader program.
+
+        :param vert_shader_file: File name of the vertex shader.
+        :type vert_shader_file: str
+
+        :param frag_shader_file: File name of the fragment shader.
+        :type frag_shader_file: str
+
+        :returns: Compiled and linked shader.
+        :rtype: :class:`renderer.Shader`
+
+        :raises ShaderError: On I/O error, compile or linking failure or OpenGL
+            error.
+        """
 
         def load_and_compile(filename, shader_type):
             try:
@@ -86,6 +114,14 @@ class Shader:
         return Shader(prog)
 
     def use(self, params):
+        """Makes the shader active and sets up its parameters (uniforms).
+
+        :param params: Mapping of parameter names to their values.
+        :type params: map
+
+        :raises UniformError: On attempt to set an undefined uniform or pass
+            data of wrong type.
+        """
         glUseProgram(self.prog)
 
         # setup uniforms

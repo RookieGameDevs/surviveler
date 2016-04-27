@@ -13,8 +13,21 @@ import sdl2 as sdl
 
 
 class Renderer:
+    """An OpenGL rendering context.
+
+    A renderer abstracts OS-specific details like window creation and OpenGL
+    context set up.
+    """
 
     def __init__(self, config):
+        """Constructor.
+
+        Instantiates a window and sets up an OpenGL context for it, which is
+        immediately made active, using the given configuration data.
+
+        :param config: Renderer-specific configuration.
+        :type config: mapping-like interface.
+        """
         try:
             width = int(config['width'])
             height = int(config['height'])
@@ -58,16 +71,24 @@ class Renderer:
         self.gl_setup(width, height)
 
     def gl_setup(self, width, height):
+        """Private."""
         glClearColor(0, 0, 0, 0)
 
     def render(self, scene):
+        """Renders the given scene.
+
+        :param scene: Scene to render.
+        :type scene: :class:`renderer.Scene`
+        """
         glClear(GL_COLOR_BUFFER_BIT)
-
         scene.render(self)
-
         glFlush()
         sdl.SDL_GL_SwapWindow(self.window)
 
     def shutdown(self):
+        """Shuts down the renderer.
+
+        Destroys the OpenGL context and the window associated with the renderer.
+        """
         sdl.SDL_GL_DeleteContext(self.gl_ctx)
         sdl.SDL_DestroyWindow(self.window)

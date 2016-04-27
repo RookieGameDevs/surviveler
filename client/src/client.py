@@ -26,6 +26,10 @@ class Client:
         self.scene_setup()
 
     def scene_setup(self):
+        """Sets up the scene.
+
+        Creates game entities and sets up the visual scene.
+        """
         self.player = Player()
 
         self.scene = Scene()
