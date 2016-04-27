@@ -17,3 +17,10 @@ and led to some original blasphemic performances:
   `glVertexAttribPointer()` if you have a `glEnableVertexAttribArray()`.
 
 * `glPolygonMode()` accepts only `GL_FRONT_AND_BACK` as `mode` argument.
+
+* `glGetProgramiv()` returns the number of uniforms in the shader program,
+  information for which can be queried by calling `glGetActiveUniform()`,
+  passing it an index (0 < i < number of uniforms). The actual *uniform
+  locations* are **NOT** the indices in that range, and should be queried
+  separately by calling `glGetUniformLocation()`, passing it the uniform name
+  returned by `glGetActiveUniform()`. Yay!

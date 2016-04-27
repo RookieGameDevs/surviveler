@@ -13,6 +13,7 @@ from OpenGL.GL import glGetProgramInfoLog
 from OpenGL.GL import glGetProgramiv
 from OpenGL.GL import glGetShaderInfoLog
 from OpenGL.GL import glGetShaderiv
+from OpenGL.GL import glGetUniformLocation
 from OpenGL.GL import glLinkProgram
 from OpenGL.GL import glShaderSource
 from OpenGL.GL import glUniformMatrix4fv
@@ -33,7 +34,7 @@ UNIFORM_VALIDATORS = {
 
 
 UNIFORM_SETTERS = {
-    GL_FLOAT_MAT4: lambda p, i, v: glUniformMatrix4fv(i, 1, True, v),
+    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, v),
 }
 
 
@@ -61,7 +62,7 @@ class Shader:
         for u_id in range(glGetProgramiv(self.prog, GL_ACTIVE_UNIFORMS)):
             name, size, prim_type = glGetActiveUniform(self.prog, u_id)
             self.uniforms[as_ascii(name)] = {
-                'index': u_id,
+                'loc': glGetUniformLocation(self.prog, name),
                 'type': prim_type,
                 'size': size,
             }
@@ -127,9 +128,16 @@ class Shader:
         # setup uniforms
         for k, v in params.items():
             try:
+                # lookup uniform information
                 uni_info = self.uniforms[k]
+
+                # validate types
                 if not UNIFORM_VALIDATORS[uni_info['type']](v):
                     raise UniformError('Invalid value for uniform "{}"'.format(k))
-                UNIFORM_SETTERS[uni_info['type']](self.prog, uni_info['index'], v)
+
+                # invoke the setter with uniform's location and new value as
+                # arguments
+                UNIFORM_SETTERS[uni_info['type']](uni_info['loc'], v)
+
             except KeyError:
                 raise UniformError('Uniform "{}" not found'.format(k))
