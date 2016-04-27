@@ -20,18 +20,6 @@ def parse_header(header):
     return HEADER.unpack(header)
 
 
-def parse_payload(payload):
-    """Unpach the network-oriented-byte payload.
-
-    :param header: the packed header
-    :type header: bytes
-
-    :return: the local encoded payload body
-    :rtype: bytearray
-    """
-    return struct.unpack('!{}p'.format(len(payload)), payload)[0]
-
-
 def create_packet(msgtype, payload):
     """Uses HEADER struct to prepare the header and create the packet
 
@@ -45,7 +33,7 @@ def create_packet(msgtype, payload):
     :rtype: bytes
     """
     header = HEADER.pack(msgtype, len(payload))
-    return header + struct.pack('!{}p'.format(len(payload)), payload)
+    return header + payload
 
 
 class Connection:
@@ -113,7 +101,7 @@ class Connection:
             if payload is None:
                 return None
 
-            self.payload = parse_payload(payload)
+            self.payload = payload
             LOG.debug('Received payload: {} bytes'.format(len(payload)))
 
         # Returns the tuple (msgtype, payload)

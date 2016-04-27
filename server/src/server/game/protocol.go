@@ -54,10 +54,6 @@ func NewMessage(t MsgType, p interface{}) (*Message, error) {
 		return nil, fmt.Errorf("Error encoding payload: %v\n", err)
 	}
 
-	// Encode to network byte order
-	bbuf := bytes.NewBuffer(make([]byte, 0, len(bb.Bytes())))
-	binary.Write(bbuf, binary.BigEndian, bb.Bytes())
-
 	// Copy the buffer
 	msg.Buffer = bb.Bytes()
 
