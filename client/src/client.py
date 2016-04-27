@@ -20,6 +20,7 @@ class Client:
         self.proxy = proxy
         self.sync_counter = count()
         self.syncing = {}
+        self.last_update = None
         self.delta = None
 
         self.renderer = renderer
@@ -79,8 +80,14 @@ class Client:
         """
         self.sync()
         t = tstamp()
-        dt = 0.0
         while True:
+            # compute time delta
+            now = tstamp()
+            if self.last_update is None:
+                self.last_update = now
+            dt = (now - self.last_update) / 1000.0
+            self.last_update = now
+
             if tstamp() - t > 1000:
                 self.sync()
                 t = tstamp()
@@ -89,4 +96,3 @@ class Client:
 
             self.player.update(dt)
             self.renderer.render(self.scene)
-            dt += 0.1

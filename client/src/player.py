@@ -7,6 +7,8 @@ from renderer import Mesh
 from renderer import Shader
 
 
+WHOLE_ANGLE = 2.0 * pi
+
 MESH_VERTICES = [
     +0.0, +0.3, 0.0,
     -0.3, -0.3, 0.0,
@@ -47,5 +49,8 @@ class Player:
         :param dt: Time delta from last update.
         :type dt: float
         """
-        self.rot_angle = dt * 2 * pi / 10.0
+        self.rot_angle += dt * pi
+        if self.rot_angle >= WHOLE_ANGLE:
+            self.rot_angle -= WHOLE_ANGLE
+
         self.scene_node.transform = mat4(mat3_rot(Y_AXIS, self.rot_angle))
