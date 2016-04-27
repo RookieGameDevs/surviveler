@@ -21,13 +21,12 @@ def handler(msgtype):
 
 
 def get_handlers(msgtype):
-    """Yields all the handlers for a specific msgtype.
+    """Returns all the handlers for a specific msgtype.
 
     :param msgtype: the type of the message
     :type msgtype: :enum:`message.MessageType`
 
-    :return: handler for the given message
-    :rtype: callable
+    :return: handlers for the given message
+    :rtype: list
     """
-    for h in __MESSAGE_HANDLERS[msgtype]:
-        yield h
+    return __MESSAGE_HANDLERS[msgtype]
