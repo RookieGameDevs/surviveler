@@ -24,7 +24,7 @@ class Client:
         """Processes a message received from the server.
 
         :param msg: the message to be processed
-        :type msg: instance of :class:`message.Message`
+        :type msg: :class:`message.Message`
         """
         LOG.info('Processing message: {} {}'.format(msg, msg.data))
         if self.syncing and msg.msgtype == MessageType.pong:

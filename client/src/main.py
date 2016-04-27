@@ -23,7 +23,7 @@ def setup_logging(config):
     """Setups the logging module
 
     :param config: the logging section of the config object
-    :type config: instance of :class:`configparser.SectionProxy`
+    :type config: :class:`configparser.SectionProxy`
     """
     numeric_level = getattr(logging, config['Level'], None)
     if not isinstance(numeric_level, int):

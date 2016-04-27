@@ -58,7 +58,7 @@ class Connection:
     client config file.
 
     :param config: the network section of the config object
-    :type config: instance of :class:`configparser.SectionProxy`
+    :type config: :class:`configparser.SectionProxy`
     """
 
     def __init__(self, config):
