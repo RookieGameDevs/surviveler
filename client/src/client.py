@@ -2,6 +2,8 @@ from itertools import count
 from message import Message
 from message import MessageField
 from message import MessageType
+from message_handlers import get_handlers
+from message_handlers import handler
 from utils import tstamp
 import logging
 
@@ -20,6 +22,20 @@ class Client:
         self.syncing = {}
         self.delta = None
 
+    @handler(MessageType.pong)
+    def pong_handler(self, msg):
+        if self.syncing:
+            now = tstamp()
+            initial = self.syncing.pop(msg.data[MessageField.id])
+
+            self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
+
+            LOG.info('Synced time with server: delta={}'.format(self.delta))
+
+    @handler(MessageType.gamestate)
+    def update_gamestate(self, msg):
+        LOG.debug('Processing and updating gamestate')
+
     def process_message(self, msg):
         """Processes a message received from the server.
 
@@ -27,15 +43,8 @@ class Client:
         :type msg: :class:`message.Message`
         """
         LOG.info('Processing message: {} {}'.format(msg, msg.data))
-        if self.syncing and msg.msgtype == MessageType.pong:
-            now = tstamp()
-            initial = self.syncing.pop(msg.data[MessageField.id])
-
-            self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
-
-            LOG.info('Synced time with server: delta={}'.format(self.delta))
-        else:
-            pass
+        for func in get_handlers(msg.msgtype):
+            func(self, msg)
 
     def sync(self):
         """Tries to guess the local delta with the server timestamps.
