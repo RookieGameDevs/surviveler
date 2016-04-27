@@ -9,13 +9,13 @@ import numpy
 
 def load_obj(filename):
     """
-    Loads `filename` and return a tuple of (vertices, normals, uvs).
+    Loads `filename` and return a tuple of (vertices, normals, uvs, indices).
     Every tuple element is a numpy.float32 array.
 
     :param filename: The .obj file to load.
     :type filename: str
 
-    :returns: The vertices, normals and UVs parsed from the .obj file.
+    :returns: The vertices, normals, UVs and vertex indices parsed from the .obj file.
     :rtype: tuple
     """
     tmp_vertices = []
@@ -25,6 +25,9 @@ def load_obj(filename):
     _vertices = []
     _normals = []
     _uvs = []
+
+    # vertex indices
+    _indices = []
 
     with open(filename) as f:
         for i, line in enumerate(f):
@@ -56,6 +59,7 @@ def load_obj(filename):
 
                 f0_items = f0.split('/')
                 idx0 = int(f0_items[0]) - 1
+                _indices.append(idx0)
                 try:
                     idx1 = int(f0_items[1]) - 1
                 except ValueError:
@@ -68,6 +72,7 @@ def load_obj(filename):
 
                 f1_items = f1.split('/')
                 idx0 = int(f1_items[0]) - 1
+                _indices.append(idx0)
                 try:
                     idx1 = int(f1_items[1]) - 1
                 except ValueError:
@@ -80,6 +85,7 @@ def load_obj(filename):
 
                 f2_items = f2.split('/')
                 idx0 = int(f2_items[0]) - 1
+                _indices.append(idx0)
                 try:
                     idx1 = int(f2_items[1]) - 1
                 except ValueError:
@@ -93,5 +99,6 @@ def load_obj(filename):
     vertices = numpy.array(_vertices, dtype=numpy.float32)
     normals = numpy.array(_normals, dtype=numpy.float32)
     uvs = numpy.array(_uvs, dtype=numpy.float32)
+    indices = numpy.array(_indices, dtype=numpy.int32)
 
-    return vertices, normals, uvs
+    return vertices, normals, uvs, indices
