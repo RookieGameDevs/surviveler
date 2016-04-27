@@ -55,8 +55,8 @@ func NewMessage(t MsgType, p interface{}) (*Message, error) {
 	}
 
 	// Encode to network byte order
-	//bbuf := bytes.NewBuffer(make([]byte, 0, len(bb.Bytes())))
-	//binary.Write(bbuf, binary.BigEndian, bb.Bytes())
+	bbuf := bytes.NewBuffer(make([]byte, 0, len(bb.Bytes())))
+	binary.Write(bbuf, binary.BigEndian, bb.Bytes())
 
 	// Copy the buffer
 	msg.Buffer = bb.Bytes()
