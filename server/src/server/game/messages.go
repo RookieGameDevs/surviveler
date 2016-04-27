@@ -58,7 +58,7 @@ func (mf MsgFactory) DecodePayload(t MsgType, p []byte) (interface{}, error) {
 }
 
 // PositionMsg represents a position in 2D space
-type PositionMsg struct{ Xpos, Ypos uint16 }
+type PositionMsg struct{ Xpos, Ypos float32 }
 
 // Client -> Server time sync message
 type PingMsg struct {

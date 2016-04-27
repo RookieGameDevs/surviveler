@@ -134,5 +134,5 @@ func (this *SurvCallback) OnIncomingMsg(c *core.Conn, cm core.Message) bool {
 }
 
 func (this *SurvCallback) OnClose(c *core.Conn) {
-	fmt.Printf("OnClose(), conn.IsClosed() = %v\n", c.IsClosed())
+	fmt.Printf("Connection closed: %v\n", c.GetRawConn().RemoteAddr())
 }
