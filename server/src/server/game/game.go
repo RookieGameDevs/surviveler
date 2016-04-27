@@ -38,6 +38,7 @@ func StartGameServer() {
 		MaxIncomingChannels: MAX_IN_CHANNELS,
 	}
 
+	// creates the factory and register message types
 	var survCB SurvCallback
 	survCB.MsgFactory = *NewMsgFactory()
 	survCB.MsgFactory.RegisterMsgType(PingId, PingMsg{})
@@ -92,35 +93,37 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 
 func (this *SurvCallback) OnIncomingMsg(c *core.Conn, cm core.Message) bool {
 
-	fmt.Printf("OnIncomingMsg msg:(%T), %v\n", cm, cm)
 	var msg *Message
 	var ok bool
 	if msg, ok = cm.(*Message); !ok {
-		fmt.Printf("Wrong Message assertion\n")
-		return false
+		panic("type assertion")
 	}
 
 	switch msg.Type {
 	case PingId:
+
+		// handle ping
+
 		// temporary: for now we do it here... but it will be handled in
 		// registered handlers using observers/notifiers...
-		fmt.Printf("Received Ping: %v\n", cm)
-		gm := this.MsgFactory.NewMsg(PingId)
-		if ping, ok := gm.(PingMsg); !ok {
+		fmt.Printf("Received Ping: %v\n", msg)
+		iping, err := this.MsgFactory.DecodePayload(PingId, msg.Buffer)
+
+		var ping PingMsg
+		var ok bool
+		if ping, ok = iping.(PingMsg); !ok {
 			panic("type assertion")
-		} else {
-
-			this.MsgFactory.DecodePayload(PingId, msg.Buffer)
-			// send pong
-			pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
-			err = c.AsyncSendMessage(pong, time.Second)
-			if err != nil {
-				fmt.Printf("Error in AsyncSendMessage: %v\n", err)
-				return false
-			}
-			fmt.Println("Sent a Pong")
-
 		}
+		fmt.Printf("Decoded Ping: %v\n", ping)
+
+		// reply pong
+		pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
+		err = c.AsyncSendMessage(pong, time.Second)
+		if err != nil {
+			fmt.Printf("Error in AsyncSendMessage: %v\n", err)
+			return false
+		}
+		fmt.Println("Sent a Pong")
 
 	default:
 		fmt.Printf("Unknown MsgType: %v\n", msg)
