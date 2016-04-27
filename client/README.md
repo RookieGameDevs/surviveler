@@ -50,3 +50,19 @@ Then this command will do the trick.
 From within the virtualenv:
 
     python src/main.py
+
+# Configuration
+It is possible to tweak various parameters of the client using the client.ini
+config file. Some useful parameters that can be changed are:
+
+ * **[Network] ServerIPAddress** if you need to connect on a server hosted elsewher than
+ localhost
+
+ * **[Logging] Level** is the level of logging for the client:
+
+  * *NOTSET*: I have no idea about what this level means, actually.
+  * *DEBUG*: huge amount of noise, useful for debug, useless for production.
+  * *INFO*: main pieces of information about the game. No spam.
+  * *WARNING*: not used yet.
+  * *ERROR*: not used yet.
+  * *CRITICAL*: not used yet.
