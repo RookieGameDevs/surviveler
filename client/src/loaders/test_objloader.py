@@ -10,7 +10,7 @@ import pytest
 def test_n_vertices_and_normals(
     obj_filename, n_vertices_and_normals, indices):
     vertices, normals, uvs, actual_indices = load_obj(
-        'tests/samples/3dmodels/{}'.format(obj_filename))
+        'src/tests/samples/3dmodels/{}'.format(obj_filename))
 
     assert len(vertices) == len(normals) == n_vertices_and_normals * 3
     assert np.all(actual_indices == np.array(indices, dtype=np.int32))
