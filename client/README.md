@@ -16,3 +16,37 @@ To start the client, run the following script from client's top directory:
 ```
 scripts/run.sh
 ```
+
+# Manual setup for fish shell
+
+## Create the appropriate virualenv using virtualfish
+To use the fish shell at your best you should install globally virtualfish with
+
+    pip install virtualfish
+
+Then go inside the `surviveler/client` directory and create a virtualfish env:
+
+    # Create the environment and activate it (python3 is the python executable you
+    # want to use)
+    vf new -p python3 surviveler
+    vf activate surviveler
+
+    # When in surviveler/client with the environment activated you can optionally
+    # connect it so that it's being activated autmatically every time you enter in
+    # the directory
+    vf connect
+
+Congratulations, you have a working environment using virtualfish.
+
+## Manual installing dependencies with pip
+To install all the required dependencies you will have to be inside the
+`surviveler/client` directory and have the environment activated.
+
+Then this command will do the trick.
+
+    pip install -r requirements.txt
+
+## Running the application in the fish shell
+From within the virtualenv:
+
+    python src/main.py
