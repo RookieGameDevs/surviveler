@@ -24,26 +24,20 @@ def timestamp():
     return int(datetime.datetime.now(tz=datetime.timezone.utc).timestamp() * 1000)
 
 
-# Example of client->server msg
-class MsgA(object):
+class Ping(object):
 
     # random example msgtype id
-    MsgTypeId = 23
+    MsgTypeId = 0
 
     def __init__(self, i, s):
-        # an integer
-        self.i = i
-        # a string
-        self.s = s
+        self.Id = i
+        self.Tstamp = s
 
     def msgpack(self):
         """Return the message pack buffer version of itself
         """
-        # this is just an example and the packer should not:
-        # - reside here
-        # - nor be recreated each time we want to pack a message
         packer = Packer()
-        return packer.pack({'TheInteger': self.i, 'TheString': self.s})
+        return packer.pack({'Id': self.Id, 'Tstamp': self.Tstamp})
 
 
 class SurvClient(object):
@@ -61,36 +55,23 @@ class SurvClient(object):
     def send(self, msg):
 
         buf = msg.msgpack()
-        pkt = self._forge_packet(buf, msg.MsgTypeId)
+        pkt = self._forge_packet(msg.MsgTypeId, buf)
         self.sock.sendall(pkt)
 
-    def _forge_packet(self, buf, msgtypeid):
+    def _forge_packet(self, msgtypeid, payload):
         """Forge a generic core packet from a msgpack buffer
-            buf: msgpack'ed buffer to send
         """
         pkt = bytearray()
 
-        # prepend buffer with its length, computed as follow:
-        # NO: - 16b/2B integer packet length
-        # - 64b/8B timestamp
-        # - ?B msgpack buffer
-        # - 32b/4B checksum
-        length = struct.pack('!H', 8 + 2 + 2 + len(buf))
-
-        # add 16 bits packet length
-        pkt.extend(length)
-
-        # add 64 bits timestamp (signed)
-        pkt.extend(struct.pack('!q', timestamp()))
-
-        # add 16 bits Client Id (unsigned)
-        pkt.extend(struct.pack('!H', CLIENT_ID))
-
-        # add 16 bits msg type Id (unsigned)
+        # add unisgned 16 bits Msg Type
         pkt.extend(struct.pack('!H', msgtypeid))
 
+        # add payload length (32 bits unsigned)
+        length = len(payload)
+        pkt.extend(struct.pack('!I', length))
+
         # add msgpack buffer
-        pkt.extend(bytes(buf))
+        pkt.extend(struct.pack('!' + str(length) + 'p', payload))
 
         print ('packet: ', pkt)
         return pkt
@@ -175,7 +156,7 @@ if __name__ == '__main__':
         client.connect()
 
         # create msg of type MsgA
-        a = MsgA(8, 'hello')
+        a = Ping(8, 12345678)
 
         while True:
             client.send(a)

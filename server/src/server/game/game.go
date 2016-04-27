@@ -18,6 +18,11 @@ const (
 	MAX_IN_CHANNELS  = 100
 )
 
+type SurvCallback struct {
+	Addr       net.Addr
+	MsgFactory MsgFactory
+}
+
 func StartGameServer() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -32,7 +37,14 @@ func StartGameServer() {
 		MaxOutgoingChannels: MAX_OUT_CHANNELS,
 		MaxIncomingChannels: MAX_IN_CHANNELS,
 	}
-	srv := core.NewServer(config, &SurvCallback{}, &IncomingMsgReader{})
+
+	var survCB SurvCallback
+	survCB.MsgFactory = *NewMsgFactory()
+	survCB.MsgFactory.RegisterMsgType(PingId, PingMsg{})
+	survCB.MsgFactory.RegisterMsgType(PongId, PongMsg{})
+	survCB.MsgFactory.RegisterMsgType(PositionId, PositionMsg{})
+
+	srv := core.NewServer(config, &survCB, &MsgReader{})
 
 	// starts server (listening goroutine)
 	go srv.Start(listener, time.Second)
@@ -45,10 +57,6 @@ func StartGameServer() {
 
 	// stops server
 	srv.Stop()
-}
-
-type SurvCallback struct {
-	Addr net.Addr
 }
 
 func (this *SurvCallback) OnConnect(c *core.Conn) bool {
@@ -65,14 +73,15 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 				return
 			default:
 
-				msg, err := NewOutgoingPosMsg(2, Pos{10, 15})
+				// temporary: for now spam a position every 200ms
+				msg, err := NewMessage(MsgType(PositionId), PositionMsg{10, 15})
 
 				err = c.AsyncSendMessage(msg, time.Second)
 				if err != nil {
 					fmt.Printf("Error in AsyncSendMessage: %v\n", err)
 					return
 				}
-				fmt.Println("Sent a msg in AsyncSendMessage")
+				fmt.Println("Sent a PositionMsg")
 				time.Sleep(200 * time.Millisecond)
 			}
 		}
@@ -81,8 +90,43 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 	return true
 }
 
-func (this *SurvCallback) OnIncomingMsg(c *core.Conn, msg core.Message) bool {
-	fmt.Println("OnIncomingMsg")
+func (this *SurvCallback) OnIncomingMsg(c *core.Conn, cm core.Message) bool {
+
+	fmt.Printf("OnIncomingMsg msg:(%T), %v\n", cm, cm)
+	var msg *Message
+	var ok bool
+	if msg, ok = cm.(*Message); !ok {
+		fmt.Printf("Wrong Message assertion\n")
+		return false
+	}
+
+	switch msg.Type {
+	case PingId:
+		// temporary: for now we do it here... but it will be handled in
+		// registered handlers using observers/notifiers...
+		fmt.Printf("Received Ping: %v\n", cm)
+		gm := this.MsgFactory.NewMsg(PingId)
+		if ping, ok := gm.(PingMsg); !ok {
+			panic("type assertion")
+		} else {
+
+			this.MsgFactory.DecodePayload(PingId, msg.Buffer)
+			// send pong
+			pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
+			err = c.AsyncSendMessage(pong, time.Second)
+			if err != nil {
+				fmt.Printf("Error in AsyncSendMessage: %v\n", err)
+				return false
+			}
+			fmt.Println("Sent a Pong")
+
+		}
+
+	default:
+		fmt.Printf("Unknown MsgType: %v\n", msg)
+		return false
+	}
+
 	return true
 }
 

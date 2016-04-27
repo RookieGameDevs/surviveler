@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -156,9 +157,10 @@ func (c *Conn) readLoop() {
 		default:
 		}
 
-		// Read and decode incoming message
+		// Read from the connection byte stream and unserialize into a message
 		msg, err := c.srv.msgReader.ReadMessage(c.conn)
 		if err != nil {
+			fmt.Printf("ReadMessage error: %v\n", err)
 			return
 		}
 
