@@ -4,20 +4,19 @@ OBJ file loader.
 Suitable to import 3d models exported from Blender.
 """
 
-import numpy
-
 
 def load_obj(filename):
     """
-    Loads `filename` and return a tuple of (vertices, normals, uvs, indices).
-    Every tuple element is a numpy.float32 array.
+    Loads `filename` and return a tuple of vertices, normals, uvs, indices lists.
 
     :param filename: The .obj file to load.
     :type filename: str
 
-    :returns: The vertices, normals, UVs and vertex indices parsed from the .obj file.
+    :returns: The mesh vertices, normals, UVs and vertex indices parsed from the .obj file.
     :rtype: tuple
     """
+    # TODO: Support compressed files
+
     tmp_vertices = []
     tmp_normals = []
     tmp_uvs = []
