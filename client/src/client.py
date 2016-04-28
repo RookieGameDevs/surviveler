@@ -4,6 +4,8 @@ from message import MessageField
 from message import MessageType
 from message_handlers import get_handlers
 from message_handlers import handler
+from player import Player
+from renderer import Scene
 from utils import tstamp
 import logging
 
@@ -15,12 +17,24 @@ class Client:
     """Client class"""
 
     def __init__(self, renderer, proxy):
-        self.renderer = renderer
         self.proxy = proxy
-
         self.sync_counter = count()
         self.syncing = {}
+        self.last_update = None
         self.delta = None
+
+        self.renderer = renderer
+        self.scene_setup()
+
+    def scene_setup(self):
+        """Sets up the scene.
+
+        Creates game entities and sets up the visual scene.
+        """
+        self.player = Player()
+
+        self.scene = Scene()
+        self.scene.root.add_child(self.player.node)
 
     @handler(MessageType.pong)
     def pong_handler(self, msg):
@@ -67,10 +81,18 @@ class Client:
         self.sync()
         t = tstamp()
         while True:
+            # compute time delta
+            now = tstamp()
+            if self.last_update is None:
+                self.last_update = now
+            dt = (now - self.last_update) / 1000.0
+            self.last_update = now
+
             if tstamp() - t > 1000:
                 self.sync()
                 t = tstamp()
             for msg in self.proxy.poll():
                 self.process_message(msg)
 
-            self.renderer.render()
+            self.player.update(dt)
+            self.renderer.render(self.scene)

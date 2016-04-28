@@ -1,6 +1,24 @@
 from datetime import datetime
 
 
+def as_ascii(b):
+    """Transform a byte array into an ASCII string.
+
+    :param b: byte sequence to convert to string
+    :type b: bytes or bytearray
+    """
+    return b.decode('ascii')
+
+
+def as_utf8(b):
+    """Transform a byte array into an UTF-8 string.
+
+    :param b: byte sequence to convert to string
+    :type b: bytes or bytearray
+    """
+    return b.decode('utf8')
+
+
 def tstamp(dt=None):
     """Returns the number of milliseconds since epoch
 
