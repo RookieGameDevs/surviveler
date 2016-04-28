@@ -52,6 +52,14 @@ class Client:
 
     @handler(MessageType.pong)
     def pong_handler(self, msg):
+        """Handle pong messages
+
+        Sync the client time with the server, setting up the self.delta
+        attribute.
+
+        :param msg: the parsed message payload
+        :type msg: dict
+        """
         if self.syncing:
             now = tstamp()
             initial = self.syncing.pop(msg.data[MessageField.id])
@@ -62,9 +70,16 @@ class Client:
 
     @handler(MessageType.gamestate)
     def update_gamestate(self, msg):
+        """Handle gamestate messages
+
+        This is a temporary implementation that updates the player position
+        directly.
+
+        :param msg: the parsed message payload
+        :type msg: dict
+        """
         LOG.debug('Processing and updating gamestate')
-        self.player.x = msg.data.get(b'Xpos', 0)
-        self.player.y = msg.data.get(b'Ypos', 0)
+        self.player.x, self.player.y = msg[MessageField.x_pos], msg[MessageField.y_pos]
 
     def process_message(self, msg):
         """Processes a message received from the server.

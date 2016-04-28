@@ -25,8 +25,8 @@ class Player:
         self._node = GeometryNode(mesh, shader)
 
         self.rot_angle = 0.0
-        self.x = 0
-        self.y = 0
+        self.x = 0.0
+        self.y = 0.0
 
     @property
     def node(self):
