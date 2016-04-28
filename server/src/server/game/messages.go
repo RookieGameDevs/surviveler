@@ -26,14 +26,12 @@ func NewMsgFactory() *MsgFactory {
 
 // RegisterMsgType registers a new MsgType and associates it to a struct type
 func (mf MsgFactory) RegisterMsgType(t MsgType, i interface{}) {
-
 	// retrieve underlying msg type
 	it := reflect.TypeOf(i)
 	mf.registry[t] = it
 }
 
 func (mf MsgFactory) NewMsg(t MsgType) interface{} {
-
 	if it, ok := mf.registry[t]; ok {
 		return reflect.New(it).Elem().Interface()
 	}
@@ -41,9 +39,7 @@ func (mf MsgFactory) NewMsg(t MsgType) interface{} {
 }
 
 func (mf MsgFactory) DecodePayload(t MsgType, p []byte) (interface{}, error) {
-
 	var mh codec.MsgpackHandle
-
 	// Create a struct having the corresponding underlying type
 	msg := mf.NewMsg(t)
 

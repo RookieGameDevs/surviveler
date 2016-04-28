@@ -70,7 +70,7 @@ func (c *Conn) Close() {
 	})
 }
 
-// IsClosed indicates whether or not the connection is closed
+// IsClosed indicates whether a the connection is closed or not
 func (c *Conn) IsClosed() bool {
 	return atomic.LoadInt32(&c.closeFlag) == 1
 }

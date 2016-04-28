@@ -15,7 +15,7 @@ import (
 
 // value used to check the length of a client message before allocating
 // a buffer, in case the received size was wrong
-const MaxIncomingMsgLength uint32 = 0x4ff
+const MaxIncomingMsgLength uint32 = 1279
 
 type MsgType uint16
 
@@ -28,7 +28,6 @@ type Message struct {
 
 // Serialize transforms a message into a byte slice
 func (msg Message) Serialize() []byte {
-
 	// we know the buffer total size so we can provide it to our bytes.Buffer
 	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Buffer)))
 	binary.Write(bbuf, binary.BigEndian, msg.Type)
@@ -40,7 +39,6 @@ func (msg Message) Serialize() []byte {
 
 // NewMessage creates a message from a message type and a generic payload
 func NewMessage(t MsgType, p interface{}) (*Message, error) {
-
 	var mh codec.MsgpackHandle
 
 	msg := new(Message)
@@ -69,7 +67,6 @@ type MsgReader struct {
 // ReadMessage reads a message from TCP connection. It is its responsability to
 // convert the byte read from the stream into the local byte-order.
 func (this *MsgReader) ReadMessage(conn *net.TCPConn) (core.Message, error) {
-
 	msg := new(Message)
 	var err error
 
@@ -94,9 +91,7 @@ func (this *MsgReader) ReadMessage(conn *net.TCPConn) (core.Message, error) {
 		return nil, fmt.Errorf("Invalid IncomingMsg.Length: (%v) > %v", msg.Length, MaxIncomingMsgLength)
 	}
 
-	/*
-	 * Read Payload Buffer
-	 */
+	//  Read Payload Buffer
 	msg.Buffer = make([]byte, msg.Length, msg.Length)
 	err = binary.Read(conn, binary.BigEndian, &msg.Buffer)
 	if err != nil {
