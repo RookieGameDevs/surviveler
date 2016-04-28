@@ -42,12 +42,14 @@ class Connection:
     Handles the communication with the server as the application layer. Uses TCP
     connection to communicate with the server, and is configurable using the
     client config file.
-
-    :param config: the network section of the config object
-    :type config: :class:`configparser.SectionProxy`
     """
 
     def __init__(self, config):
+        """Constructor.
+
+        :param config: the network section of the config object
+        :type config: :class:`configparser.SectionProxy`
+        """
         ip, port = config['ServerIPAddress'], config.getint('ServerPort')
         LOG.info('Connecting to {}:{}'.format(ip, port))
         self.socket = socket.create_connection((ip, port))

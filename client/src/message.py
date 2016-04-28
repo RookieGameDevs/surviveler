@@ -27,15 +27,16 @@ class Message:
 
     Contains the message data in python format, and can be used to send data
     over the available connection.
-
-    :param msgtype: the type of the message
-    :type msgtype: :enum:`message.MessageType`
-
-    :param data: the relevant data
-    :type data: `dict`
     """
 
     def __init__(self, msgtype, data=None):
+        """Constructor.
+        :param msgtype: the type of the message
+        :type msgtype: :enum:`message.MessageType`
+
+        :param data: the relevant data
+        :type data: `dict`
+        """
         self.msgtype = msgtype
         self.data = data or {}
 
@@ -73,12 +74,14 @@ class Message:
 
 class MessageProxy:
     """Middle level handling message encoding/decoding.
-
-    :param conn: the underneath connection
-    :type conn: :class:`connection.Connection`
     """
 
     def __init__(self, conn):
+        """Constructor.
+
+        :param conn: the underneath connection
+        :type conn: :class:`connection.Connection`
+        """
         LOG.info('Initializing message proxy')
         self.conn = conn
 
