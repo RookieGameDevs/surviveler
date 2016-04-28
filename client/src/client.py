@@ -1,6 +1,5 @@
 from game import Player
-from game.events import PlayerPositionUpdated
-from game.events import send_event
+from game import get_processors
 from itertools import count
 from matlib import Vec3
 from network import Message
@@ -71,18 +70,10 @@ class Client:
             LOG.info('Synced time with server: delta={}'.format(self.delta))
 
     @message_handler(MessageType.gamestate)
-    def update_player_position(self, msg):
-        """Creates and triggers the PlayerPositionUpdated event.
-
-        This is a temporary implementation that updates the player position
-        directly.
-
-        :param msg: the message to be processed
-        :type msg: :class:`message.Message`
-        """
-        x, y = msg.data[MessageField.x_pos], msg.data[MessageField.y_pos]
-        evt = PlayerPositionUpdated(x, y)
-        send_event(evt)
+    def gamestate_handler(self, msg):
+        LOG.debug('Processing gamestate message')
+        for processor in get_processors():
+            processor(msg.data)
 
     def process_message(self, msg):
         """Processes a message received from the server.
