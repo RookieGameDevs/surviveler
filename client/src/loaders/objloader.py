@@ -28,8 +28,8 @@ def load_obj(filename):
     # vertex indices
     indices = []
 
-    with open(filename) as f:
-        for i, line in enumerate(f):
+    with open(filename, 'r') as f:
+        for line in f:
             header, *data = line.split()
 
             if header == 'v':
