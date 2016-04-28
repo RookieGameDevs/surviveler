@@ -14,15 +14,17 @@ type ServerCfg struct {
 type Server struct {
 	config    *ServerCfg      // server configuration
 	callback  ConnEvtHandler  // message callbacks in connection
+	msgReader MessageReader   // customized message reader
 	exitChan  chan struct{}   // notify all goroutines to shutdown
 	waitGroup *sync.WaitGroup // wait for all goroutines
 }
 
 // NewServer creates a server
-func NewServer(cfg *ServerCfg, callback ConnEvtHandler) *Server {
+func NewServer(cfg *ServerCfg, callback ConnEvtHandler, msgReader MessageReader) *Server {
 	return &Server{
 		config:    cfg,
 		callback:  callback,
+		msgReader: msgReader,
 		exitChan:  make(chan struct{}),
 		waitGroup: &sync.WaitGroup{},
 	}

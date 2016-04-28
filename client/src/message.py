@@ -61,7 +61,7 @@ class Message:
         :type payload: bytes
 
         :return: the Message object
-        :rtype: instance of :class:`message.Message`
+        :rtype: :class:`message.Message`
         """
         obj = cls(msgtype, msgpack.unpackb(payload))
         return obj
@@ -75,7 +75,7 @@ class MessageProxy:
     """Middle level handling message encoding/decoding.
 
     :param conn: the underneath connection
-    :type conn: instance of :class:`connection.Connection`
+    :type conn: :class:`connection.Connection`
     """
 
     def __init__(self, conn):
@@ -86,7 +86,7 @@ class MessageProxy:
         """Pushes the message through the underneath connection
 
         :param msg: the Message object to be pushed
-        :type msg: instance of :class:`message.Message`
+        :type msg: :class:`message.Message`
         """
         LOG.debug('Pushing message: {} {}'.format(msg, str(msg.data)))
         self.conn.send(*msg.encode())
@@ -96,7 +96,7 @@ class MessageProxy:
         """Polls the underneath connection and yields all the messages readed.
 
         :return: the Message object to be pushed
-        :rtype: instance of :class:`message.Message`
+        :rtype: :class:`message.Message`
         """
         while True:
             data = self.conn.recv()

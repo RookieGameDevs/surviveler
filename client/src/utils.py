@@ -5,7 +5,7 @@ def tstamp(dt=None):
     """Returns the number of milliseconds since epoch
 
     :param dt: the compared datetime object
-    :type dt: instance of :class:`datetime.datetime` or None
+    :type dt: :class:`datetime.datetime` or None
 
     :return: number of milliseconds since epoch
     :rtype: int

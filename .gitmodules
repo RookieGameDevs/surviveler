@@ -1,0 +1,3 @@
+[submodule "msgpack"]
+	path = server/src/server/vendor/github.com/ugorji/go
+	url = git@github.com:ugorji/go.git
