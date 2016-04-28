@@ -34,7 +34,7 @@ class AbstractSceneNode(ABC):
     """
 
     def __init__(self):
-        self.children = []
+        self._children = []
         self.transform = mat4()
 
     @abstractmethod
@@ -54,13 +54,10 @@ class AbstractSceneNode(ABC):
         """
         pass
 
-    def get_children(self):
-        """Returns children nodes.
-
-        :return: List of children nodes.
-        :rtype: list
-        """
-        return self.children
+    @property
+    def children(self):
+        """List tof children nodes."""
+        return self._children
 
     def add_child(self, node):
         """Add a node as child.
@@ -68,7 +65,7 @@ class AbstractSceneNode(ABC):
         :param node: Node instance to add as child.
         :type node: a class derived from :class:`renderer.scene.AbstractSceneNode`
         """
-        self.children.append(node)
+        self._children.append(node)
 
     def remove_child(self, node):
         """Remove a child node.
@@ -77,7 +74,7 @@ class AbstractSceneNode(ABC):
         :type node: a class derived from :class:`renderer.scene.AbstractSceneNode`
         """
         try:
-            self.children.remove(node)
+            self._children.remove(node)
         except ValueError:
             pass
 
@@ -93,10 +90,10 @@ class RootNode(AbstractSceneNode):
         def render_all(node, parent_transform):
             node.render(rndr, node.transform * parent_transform)
 
-            for child in node.get_children():
+            for child in node.children:
                 render_all(child, node.transform)
 
-        for child in self.get_children():
+        for child in self.children:
             render_all(child, self.transform)
 
 
