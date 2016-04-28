@@ -9,7 +9,11 @@ from exceptions import ConfigError
 from exceptions import OpenGLError
 from exceptions import SDLError
 from utils import as_utf8
+import logging
 import sdl2 as sdl
+
+
+LOG = logging.getLogger(__name__)
 
 
 class Renderer:
@@ -64,8 +68,8 @@ class Renderer:
             raise OpenGLError('Unable to create OpenGL {}.{} context'.format(
                 gl_major, gl_minor))
 
-        print('OpenGL version: {}\nGLSL version: {}'.format(
-            as_utf8(glGetString(GL_VERSION)),
+        LOG.info('OpenGL version: {}'.format(as_utf8(glGetString(GL_VERSION))))
+        LOG.info('GLSL version: {}'.format(
             as_utf8(glGetString(GL_SHADING_LANGUAGE_VERSION))))
 
         self.gl_setup(width, height)
