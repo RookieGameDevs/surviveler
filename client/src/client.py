@@ -1,11 +1,11 @@
+from game import Player
 from itertools import count
 from matlib import Vec3
-from message import Message
-from message import MessageField
-from message import MessageType
-from message_handlers import get_handlers
-from message_handlers import handler
-from player import Player
+from network import Message
+from network import MessageField
+from network import MessageType
+from network import get_handlers
+from network import handler
 from renderer import OrthoCamera
 from renderer import Scene
 from utils import tstamp
@@ -57,8 +57,8 @@ class Client:
         Sync the client time with the server, setting up the self.delta
         attribute.
 
-        :param msg: the parsed message payload
-        :type msg: dict
+        :param msg: the message to be processed
+        :type msg: :class:`message.Message`
         """
         if self.syncing:
             now = tstamp()
@@ -75,11 +75,13 @@ class Client:
         This is a temporary implementation that updates the player position
         directly.
 
-        :param msg: the parsed message payload
-        :type msg: dict
+        :param msg: the message to be processed
+        :type msg: :class:`message.Message`
         """
         LOG.debug('Processing and updating gamestate')
-        self.player.x, self.player.y = msg[MessageField.x_pos], msg[MessageField.y_pos]
+        # TODO: implement the whole gamestate structure
+        data = msg.data
+        self.player.x, self.player.y = data[MessageField.x_pos], data[MessageField.y_pos]
 
     def process_message(self, msg):
         """Processes a message received from the server.
