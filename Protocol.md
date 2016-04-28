@@ -83,8 +83,8 @@ from the server to the clients.
 The **gamestate** payload contains the following data:
     {
         "Tstamp": 12345678,
-        "Xpos": 10,
-        "Ypos": 15
+        "Xpos": 10.0,
+        "Ypos": 15.0
     }
 
  * **Tstamp** (8 bytes int) in his current acception is the number of
@@ -93,8 +93,8 @@ The **gamestate** payload contains the following data:
  to compute the advancement at the time the packet arrives to the client.
  **REFRASE ME**
 
- * **Xpos** (2 bytes unsigned short) the x-axis position in pixel of the center
+ * **Xpos** (4 bytes float) the x-axis position in pixel of the center
  of the entity in the board.
 
- * **Ypos** (2 bytes unsigned short) the y-axis position in pixel of the center
+ * **Ypos** (4 bytes float) the y-axis position in pixel of the center
  of the entity in the board.
