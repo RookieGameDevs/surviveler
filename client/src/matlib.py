@@ -38,7 +38,7 @@ def mat4(t_mat=None, t_vec=None):
     :type t_vec: :class:`numpy.ndarray` or None
 
     :returns: Resulting matrix.
-    :rtype: :class:`numpy.ndarray`
+    :rtype: :class:`numpy.matrix`
     """
     t_mat = t_mat if t_mat is not None else mat3()
     t_vec = t_vec if t_vec is not None else np.array([0.0, 0.0, 0.0], np.float32)
@@ -47,16 +47,16 @@ def mat4(t_mat=None, t_vec=None):
     mat[1][:3] = t_mat[1]
     mat[2][:3] = t_mat[2]
     mat[:, 3][:3] = t_vec
-    return mat
+    return np.matrix(mat)
 
 
 def mat3():
     """Creates a 3x3 identity matrix.
 
     :returns: Resulting matrix.
-    :rtype: :class:`numpy.ndarray`
+    :rtype: :class:`numpy.matrix`
     """
-    return np.identity(3, np.float32)
+    return np.matrix(np.identity(3, np.float32))
 
 
 def mat3_rot(axis, theta):
@@ -72,15 +72,18 @@ def mat3_rot(axis, theta):
     :type theta: float
 
     :returns: The resulting matrix.
-    :rtype: :class:`numpy.ndarray`
+    :rtype: :class:`numpy.matrix`
     """
-    axis = np.asarray(axis)
-    theta = np.asarray(theta)
-    axis = axis / math.sqrt(np.dot(axis, axis))
-    a = math.cos(theta / 2.0)
-    b, c, d = -axis * math.sin(theta / 2.0)
-    aa, bb, cc, dd = a * a, b * b, c * c, d * d
-    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                     [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
+    x = float(axis[0])
+    y = float(axis[1])
+    z = float(axis[2])
+    sin_a = math.sin(theta)
+    cos_a = math.cos(theta)
+    k = 1 - math.cos(theta)
+
+    mat = np.array([
+        [cos_a + k * x * x, k * x * y - z * sin_a, k * x * z + y * sin_a],
+        [k * x * y + z * sin_a, cos_a + k * y * y, k * y * z - x * sin_a],
+        [k * x * z - y * sin_a, k * y * z + x * sin_a, cos_a + k * z * z],
+    ], np.float32)
+    return np.matrix(mat)
