@@ -4,8 +4,8 @@ from matlib import Vec3
 from network import Message
 from network import MessageField
 from network import MessageType
-from network import get_handlers
-from network import handler
+from network import get_message_handlers
+from network import message_handler
 from renderer import OrthoCamera
 from renderer import Scene
 from utils import tstamp
@@ -50,7 +50,7 @@ class Client:
         self.scene = Scene()
         self.scene.root.add_child(self.player.node)
 
-    @handler(MessageType.pong)
+    @message_handler(MessageType.pong)
     def pong_handler(self, msg):
         """Handle pong messages
 
@@ -68,9 +68,9 @@ class Client:
 
             LOG.info('Synced time with server: delta={}'.format(self.delta))
 
-    @handler(MessageType.gamestate)
-    def update_gamestate(self, msg):
-        """Handle gamestate messages
+    @message_handler(MessageType.gamestate)
+    def update_player_position(self, msg):
+        """Creates and triggers the PlayerPositionUpdated event.
 
         This is a temporary implementation that updates the player position
         directly.
@@ -90,7 +90,7 @@ class Client:
         :type msg: :class:`message.Message`
         """
         LOG.info('Processing message: {} {}'.format(msg, msg.data))
-        for func in get_handlers(msg.msgtype):
+        for func in get_message_handlers(msg.msgtype):
             func(self, msg)
 
     def sync(self):
