@@ -1,4 +1,6 @@
 from game import Player
+from game.events import PlayerPositionUpdated
+from game.events import send_event
 from itertools import count
 from matlib import Vec3
 from network import Message
@@ -78,10 +80,9 @@ class Client:
         :param msg: the message to be processed
         :type msg: :class:`message.Message`
         """
-        LOG.debug('Processing and updating gamestate')
-        # TODO: implement the whole gamestate structure
-        data = msg.data
-        self.player.x, self.player.y = data[MessageField.x_pos], data[MessageField.y_pos]
+        x, y = msg.data[MessageField.x_pos], msg.data[MessageField.y_pos]
+        evt = PlayerPositionUpdated(x, y)
+        send_event(evt)
 
     def process_message(self, msg):
         """Processes a message received from the server.

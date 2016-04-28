@@ -1,3 +1,5 @@
+from game.events import PlayerPositionUpdated
+from game.events import subscribe
 from loaders import load_obj
 from math import pi
 from matlib import Mat4
@@ -6,6 +8,10 @@ from matlib import Y
 from renderer import GeometryNode
 from renderer import Mesh
 from renderer import Shader
+import logging
+
+
+LOG = logging.getLogger(__name__)
 
 
 WHOLE_ANGLE = 2.0 * pi
@@ -48,3 +54,14 @@ class Player:
         self._node.transform = (
             Mat4.trans(Vec3(self.x, self.y, 0)) *
             Mat4.rot(Y, self.rot_angle))
+
+
+@subscribe(PlayerPositionUpdated)
+def update_player_position(evt):
+    """Updates the player position
+
+    Gets all the relevant data from the event.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    # TODO: query the gametree for the player
+    # TODO: update the player position
