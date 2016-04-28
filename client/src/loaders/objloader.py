@@ -28,33 +28,48 @@ def load_obj(filename):
     # vertex indices
     indices = []
 
+    def do_nothing(arg):
+        pass
+
+    def parse_vector(data):
+        return [float(component) for component in data]
+
+    def parse_vertex(data):
+        tmp_vertices.append(parse_vector(data))
+
+    def parse_texture(data):
+        tmp_uvs.append(parse_vector(data))
+
+    def parse_normal(data):
+        tmp_normals.append(parse_vector(data))
+
+    def parse_face(data):
+        for face in data:
+            face_items = face.split('/')
+            idx0 = int(face_items[0]) - 1
+            indices.append(idx0)
+            try:
+                idx1 = int(face_items[1]) - 1
+            except ValueError:
+                pass
+            else:
+                uvs += tmp_uvs[idx1]
+            idx2 = int(face_items[2]) - 1
+            vertices.extend(tmp_vertices[idx0])
+            normals.extend(tmp_normals[idx2])
+
+
+    func_map = {
+        'v' : parse_vertex,
+        'vt': parse_texture,
+        'vn': parse_normal,
+        'f' : parse_face,
+    }
+
     with open(filename, 'r') as f:
         for line in f:
             header, *data = line.split()
 
-            if header == 'v':
-                tmp_vertices.append([float(x) for x in data])
-
-            if header == 'vt':
-                tmp_uvs.append([float(x) for x in data])
-
-            if header == 'vn':
-                tmp_normals.append([float(x) for x in data])
-
-            if header == 'f':
-
-                for face in data:
-                    face_items = face.split('/')
-                    idx0 = int(face_items[0]) - 1
-                    indices.append(idx0)
-                    try:
-                        idx1 = int(face_items[1]) - 1
-                    except ValueError:
-                        pass
-                    else:
-                        uvs += tmp_uvs[idx1]
-                    idx2 = int(face_items[2]) - 1
-                    vertices += tmp_vertices[idx0]
-                    normals += tmp_normals[idx2]
+            func_map.get(header, do_nothing)(data)
 
     return vertices, normals, uvs, indices
