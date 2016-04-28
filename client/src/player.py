@@ -29,17 +29,14 @@ class Player:
             'data/shaders/simple.vert',
             'data/shaders/simple.frag')
 
-        self.scene_node = GeometryNode(mesh, shader)
+        self._node = GeometryNode(mesh, shader)
 
         self.rot_angle = 0.0
 
-    def get_node(self):
-        """Returns the scene node associated with player's entity.
-
-        :returns: Geometry node associated with the player.
-        :rtype: :class:`renderer.GeometryNode`
-        """
-        return self.scene_node
+    @property
+    def node(self):
+        """Scene node associated with player's entity."""
+        return self._node
 
     def update(self, dt):
         """Update the player.
@@ -53,4 +50,4 @@ class Player:
         if self.rot_angle >= WHOLE_ANGLE:
             self.rot_angle -= WHOLE_ANGLE
 
-        self.scene_node.transform = mat4(mat3_rot(Y_AXIS, self.rot_angle))
+        self._node.transform = mat4(mat3_rot(Y_AXIS, self.rot_angle))

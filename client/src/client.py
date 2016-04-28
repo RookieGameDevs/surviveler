@@ -34,7 +34,7 @@ class Client:
         self.player = Player()
 
         self.scene = Scene()
-        self.scene.root.add_child(self.player.get_node())
+        self.scene.root.add_child(self.player.node)
 
     @handler(MessageType.pong)
     def pong_handler(self, msg):
