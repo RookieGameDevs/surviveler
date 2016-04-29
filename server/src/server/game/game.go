@@ -6,10 +6,13 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"server/core"
+	"server/network"
 	"syscall"
 	"time"
 )
+
+type Game struct {
+}
 
 const (
 	CONN_HOST        = ""
@@ -33,7 +36,7 @@ func StartGameServer() {
 	FatalError(err, "Listening TCP")
 
 	// creates a server
-	config := &core.ServerCfg{
+	config := &network.ServerCfg{
 		MaxOutgoingChannels: MAX_OUT_CHANNELS,
 		MaxIncomingChannels: MAX_IN_CHANNELS,
 	}
@@ -45,22 +48,24 @@ func StartGameServer() {
 	survCB.MsgFactory.RegisterMsgType(PongId, PongMsg{})
 	survCB.MsgFactory.RegisterMsgType(PositionId, PositionMsg{})
 
-	srv := core.NewServer(config, &survCB, &MsgReader{})
+	srv := network.NewServer(config, &survCB, &MsgReader{})
 
 	// starts server (listening goroutine)
 	go srv.Start(listener, time.Second)
 	fmt.Println("listening:", listener.Addr())
 
-	// catchs system signal
+	// register outselves to termination signal
 	chSig := make(chan os.Signal)
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
+
+	// blocks on termination signals
 	fmt.Println("Signal: ", <-chSig)
 
 	// stops server
 	srv.Stop()
 }
 
-func (this *SurvCallback) OnConnect(c *core.Conn) bool {
+func (this *SurvCallback) OnConnect(c *network.Conn) bool {
 
 	this.Addr = c.GetRawConn().RemoteAddr()
 	fmt.Println("OnConnect:", this.Addr)
@@ -91,7 +96,7 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 	return true
 }
 
-func (this *SurvCallback) OnIncomingMsg(c *core.Conn, cm core.Message) bool {
+func (this *SurvCallback) OnIncomingMsg(c *network.Conn, cm network.Message) bool {
 
 	var msg *Message
 	var ok bool
@@ -133,6 +138,6 @@ func (this *SurvCallback) OnIncomingMsg(c *core.Conn, cm core.Message) bool {
 	return true
 }
 
-func (this *SurvCallback) OnClose(c *core.Conn) {
+func (this *SurvCallback) OnClose(c *network.Conn) {
 	fmt.Printf("Connection closed: %v\n", c.GetRawConn().RemoteAddr())
 }

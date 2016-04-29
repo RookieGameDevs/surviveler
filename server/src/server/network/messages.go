@@ -1,7 +1,7 @@
 /*
-	Message interfaces
+	Network message handling interfaces
 */
-package core
+package network
 
 import (
 	"net"

@@ -1,4 +1,7 @@
-package core
+/*
+	Server
+*/
+package network
 
 import (
 	"net"

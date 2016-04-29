@@ -1,6 +1,6 @@
 /*
 	Surviveler Protocol Implementation
-	Implements the necessary interfaces for core.Server and core.Conn
+	Implements the necessary interfaces for server.Server and server.Conn
 */
 package game
 
@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"github.com/ugorji/go/codec"
 	"net"
-	"server/core"
+	"server/network"
 )
 
 // value used to check the length of a client message before allocating
@@ -66,7 +66,7 @@ type MsgReader struct {
 
 // ReadMessage reads a message from TCP connection. It is its responsability to
 // convert the byte read from the stream into the local byte-order.
-func (this *MsgReader) ReadMessage(conn *net.TCPConn) (core.Message, error) {
+func (this *MsgReader) ReadMessage(conn *net.TCPConn) (network.Message, error) {
 	msg := new(Message)
 	var err error
 
