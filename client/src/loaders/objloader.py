@@ -9,6 +9,18 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
+class OBJLoaderError(Exception):
+    pass
+
+
+class OBJFormatError(OBJLoaderError):
+    pass
+
+
+class OBJTypeError(OBJFormatError):
+    pass
+
+
 def load_obj(filename):
     """Loads `filename` and return a tuple of vertices, normals, uvs, indices
     lists.
@@ -35,17 +47,26 @@ def load_obj(filename):
         """Handler for unused rows (comments, object names, etc - see samples)."""
         pass
 
-    def parse_vector(data):
-        return [float(component) for component in data]
+    def parse_vector(data, xargs):
+        if len(data) == xargs:
+            try:
+                return [float(component) for component in data]
+            except ValueError:
+                raise OBJTypeError(
+                    'Expected float values for {} vector. '
+                    'Got values: {}'.format(header, data))
+
+        raise OBJFormatError(
+            'Expected {} arguments for {} vector: got {}'.format(xargs, header, len(data)))
 
     def parse_vertex(data):
-        tmp_vertices.append(parse_vector(data))
+        tmp_vertices.append(parse_vector(data, 3))
 
     def parse_texture(data):
-        tmp_uvs.append(parse_vector(data))
+        tmp_uvs.append(parse_vector(data, 2))
 
     def parse_normal(data):
-        tmp_normals.append(parse_vector(data))
+        tmp_normals.append(parse_vector(data, 3))
 
     def parse_face(data):
         for face in data:
