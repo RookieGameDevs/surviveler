@@ -64,8 +64,8 @@ func NewMessage(t MsgType, p interface{}) (*Message, error) {
 type MsgReader struct {
 }
 
-// ReadMessage reads a message from TCP connection. It is its responsability to
-// convert the byte read from the stream into the local byte-order.
+// ReadMessage reads a message from a TCP connection. Performs the conversion
+// from network to local byte order.
 func (this *MsgReader) ReadMessage(conn *net.TCPConn) (network.Message, error) {
 	msg := new(Message)
 	var err error
@@ -88,7 +88,8 @@ func (this *MsgReader) ReadMessage(conn *net.TCPConn) (network.Message, error) {
 		return nil, fmt.Errorf("Invalid IncomingMsg.Length: 0")
 	}
 	if msg.Length > MaxIncomingMsgLength {
-		return nil, fmt.Errorf("Invalid IncomingMsg.Length: (%v) > %v", msg.Length, MaxIncomingMsgLength)
+		return nil, fmt.Errorf("Invalid IncomingMsg.Length: (%v) > %v",
+			msg.Length, MaxIncomingMsgLength)
 	}
 
 	//  Read Payload Buffer
