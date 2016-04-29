@@ -21,11 +21,22 @@ var (
 type Conn struct {
 	srv          *Server
 	conn         *net.TCPConn  // underlying tcp connection
+	userData     interface{}   // associated user data
 	closeOnce    sync.Once     // close the conn, once, per instance
 	closeFlag    int32         // close flag
 	closeChan    chan struct{} // close chanel
 	outgoingChan chan Message  // chanel sending outgoing messages
 	incomingChan chan Message  // chanel receiving incoming messages
+}
+
+// GetUserData retrieves the associated user data
+func (c *Conn) GetUserData() interface{} {
+	return c.userData
+}
+
+// SetUserData associates user data with the connection
+func (c *Conn) SetUserData(data interface{}) {
+	c.userData = data
 }
 
 // ConnEvtHandler is the interface that handles connection events
