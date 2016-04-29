@@ -2,17 +2,9 @@ package game
 
 import (
 	"fmt"
-	"net"
-	"os"
-	"os/signal"
 	"runtime"
 	"server/network"
-	"syscall"
-	"time"
 )
-
-type Game struct {
-}
 
 const (
 	CONN_HOST        = ""
@@ -21,123 +13,54 @@ const (
 	MAX_IN_CHANNELS  = 100
 )
 
-type SurvCallback struct {
-	Addr       net.Addr
-	MsgFactory MsgFactory
+type GameCfg struct {
+	Port string
 }
 
-func StartGameServer() {
+/*
+ * Game is the main game structure. It also implements the
+ * network.ConnEvtHandler interface
+ */
+type Game struct {
+	cfg        GameCfg        // configuration settings
+	msgFactory MsgFactory     // message factory
+	server     network.Server // tcp server instance
+	clients    ClientRegistry // manage the connected clients
+}
+
+// Setup initializes the different game subsystems
+func (g *Game) Setup(cfg GameCfg) {
+	g.cfg = cfg
+
+	// setup go runtime
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// creates a tcp listener
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", CONN_HOST+":"+CONN_PORT)
-	FatalError(err, "Resolving addr")
-	listener, err := net.ListenTCP("tcp", tcpAddr)
-	FatalError(err, "Listening TCP")
+	// register the client-server message types
+	g.registerMsgTypes()
 
-	// creates a server
-	config := &network.ServerCfg{
-		MaxOutgoingChannels: MAX_OUT_CHANNELS,
-		MaxIncomingChannels: MAX_IN_CHANNELS,
-	}
+	// setup client registry
+	g.clients.Init()
+}
 
-	// creates the factory and register message types
-	var survCB SurvCallback
-	survCB.MsgFactory = *NewMsgFactory()
-	survCB.MsgFactory.RegisterMsgType(PingId, PingMsg{})
-	survCB.MsgFactory.RegisterMsgType(PongId, PongMsg{})
-	survCB.MsgFactory.RegisterMsgType(PositionId, PositionMsg{})
+// Start starts the server and game loops
+func (g *Game) Start() {
+	g.startServer()
+}
 
-	srv := network.NewServer(config, &survCB, &MsgReader{})
+// Stop stops kicks all clients and stop the various loops
+func (g *Game) Stop() {
+	fmt.Println("Stopping the game...")
 
-	// starts server (listening goroutine)
-	go srv.Start(listener, time.Second)
-	fmt.Println("listening:", listener.Addr())
-
-	// register outselves to termination signal
-	chSig := make(chan os.Signal)
-	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
-
-	// blocks on termination signals
-	fmt.Println("Signal: ", <-chSig)
+	// TODO: kick the clients
 
 	// stops server
-	srv.Stop()
+	g.server.Stop()
 }
 
-func (this *SurvCallback) OnConnect(c *network.Conn) bool {
-
-	this.Addr = c.GetRawConn().RemoteAddr()
-	fmt.Println("OnConnect:", this.Addr)
-
-	// start a goroutine that spams client with player position!
-	go func() {
-
-		for {
-			switch {
-			case c.IsClosed():
-				return
-			default:
-
-				// temporary: for now spam a position every 200ms
-				msg, err := NewMessage(MsgType(PositionId), PositionMsg{7, 9})
-
-				err = c.AsyncSendMessage(msg, time.Second)
-				if err != nil {
-					fmt.Printf("Error in AsyncSendMessage: %v\n", err)
-					return
-				}
-				fmt.Println("Sent a PositionMsg")
-				time.Sleep(200 * time.Millisecond)
-			}
-		}
-	}()
-
-	return true
-}
-
-func (this *SurvCallback) OnIncomingMsg(c *network.Conn, cm network.Message) bool {
-
-	var msg *Message
-	var ok bool
-	if msg, ok = cm.(*Message); !ok {
-		panic("type assertion")
-	}
-
-	switch msg.Type {
-	case PingId:
-
-		// handle ping
-
-		// temporary: for now we do it here... but it will be handled in
-		// registered handlers using observers/notifiers...
-		fmt.Printf("Received Ping: %v\n", msg)
-		iping, err := this.MsgFactory.DecodePayload(PingId, msg.Buffer)
-
-		var ping PingMsg
-		var ok bool
-		if ping, ok = iping.(PingMsg); !ok {
-			panic("type assertion")
-		}
-		fmt.Printf("Decoded Ping: %v\n", ping)
-
-		// reply pong
-		pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
-		err = c.AsyncSendMessage(pong, time.Second)
-		if err != nil {
-			fmt.Printf("Error in AsyncSendMessage: %v\n", err)
-			return false
-		}
-		fmt.Println("Sent a Pong")
-
-	default:
-		fmt.Printf("Unknown MsgType: %v\n", msg)
-		return false
-	}
-
-	return true
-}
-
-func (this *SurvCallback) OnClose(c *network.Conn) {
-	fmt.Printf("Connection closed: %v\n", c.GetRawConn().RemoteAddr())
+func (g *Game) registerMsgTypes() {
+	// creates the factory and register message types
+	g.msgFactory = *NewMsgFactory()
+	g.msgFactory.RegisterMsgType(PingId, PingMsg{})
+	g.msgFactory.RegisterMsgType(PongId, PongMsg{})
+	g.msgFactory.RegisterMsgType(PositionId, PositionMsg{})
 }
