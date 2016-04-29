@@ -20,7 +20,6 @@ def load_obj(filename):
         .obj file.
     :rtype: tuple
     """
-
     tmp_vertices = []
     tmp_normals = []
     tmp_uvs = []
@@ -33,6 +32,7 @@ def load_obj(filename):
     indices = []
 
     def do_nothing(arg):
+        """Handler for unused rows (comments, object names, etc - see samples)."""
         pass
 
     def parse_vector(data):
