@@ -10,13 +10,17 @@ type ClientRegistry struct {
 	nextId  uint16                   // next available client id (1 based)
 }
 
-// Init initializes the ClientRegistry
+/*
+ * Init initializes the ClientRegistry
+ */
 func (reg *ClientRegistry) Init() {
 	reg.clients = make(map[uint16]*network.Conn, 0)
 	reg.nextId = 0
 }
 
-// registerClient creates a new client and gives it an id
+/*
+ * registerClient creates a new client and gives it an id
+ */
 func (reg *ClientRegistry) registerClient(c *network.Conn) {
 	// we have a new client, assign him an id.
 	clientId := reg.nextId
@@ -33,7 +37,9 @@ func (reg *ClientRegistry) registerClient(c *network.Conn) {
 		clientId, c.GetRawConn().RemoteAddr())
 }
 
-// getClientId returns the client Id associated to a connection, or panic...
+/*
+ * getClientId returns the client Id associated to a connection, or panic...
+ */
 func (reg *ClientRegistry) getClientId(c *network.Conn) uint16 {
 	// retrieve the client id from the connection
 	clientId := c.GetUserData().(uint16)
@@ -43,7 +49,9 @@ func (reg *ClientRegistry) getClientId(c *network.Conn) uint16 {
 	return clientId
 }
 
-// kick shouts "get the fuck out of my server now!"
+/*
+ * kick says out loud "get the fuck out of my server now!"
+ */
 func (reg *ClientRegistry) kick() {
 
 	for k, v := range reg.clients {

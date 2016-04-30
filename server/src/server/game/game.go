@@ -12,6 +12,9 @@ const (
 	MAX_IN_CHANNELS  = 100
 )
 
+/*
+ * GameCfg contains all the configurable server-specific game settings
+ */
 type GameCfg struct {
 	Port string
 }
@@ -60,7 +63,6 @@ func (g *Game) Start() {
  * Stop kicks all clients and stops the various loops
  */
 func (g *Game) Stop() {
-
 	// stop ticking
 	fmt.Println("Stop heartbeat")
 	g.ticker.Stop()

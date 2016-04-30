@@ -13,20 +13,26 @@ import (
 	"server/network"
 )
 
-// value used to check the length of a client message before allocating
-// a buffer, in case the received size was wrong
+/*
+ * value used to check the length of a client message before allocating
+ * a buffer, in case the received size was wrong
+ */
 const MaxIncomingMsgLength uint32 = 1279
 
 type MsgType uint16
 
-// client -> server message
+/*
+ * client -> server message
+ */
 type Message struct {
 	Type   MsgType // the message type
 	Length uint32  // the payload length
 	Buffer []byte  // payload buffer
 }
 
-// Serialize transforms a message into a byte slice
+/*
+ * Serialize transforms a message into a byte slice
+ */
 func (msg Message) Serialize() []byte {
 	// we know the buffer total size so we can provide it to our bytes.Buffer
 	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Buffer)))
@@ -37,7 +43,9 @@ func (msg Message) Serialize() []byte {
 	return bbuf.Bytes()
 }
 
-// NewMessage creates a message from a message type and a generic payload
+/*
+ * NewMessage creates a message from a message type and a generic payload
+ */
 func NewMessage(t MsgType, p interface{}) (*Message, error) {
 	var mh codec.MsgpackHandle
 
@@ -64,8 +72,10 @@ func NewMessage(t MsgType, p interface{}) (*Message, error) {
 type MsgReader struct {
 }
 
-// ReadMessage reads a message from a TCP connection. Performs the conversion
-// from network to local byte order.
+/*
+ * ReadMessage reads a message from a TCP connection. Performs the conversion
+ * from network to local byte order.
+ */
 func (this *MsgReader) ReadMessage(conn *net.TCPConn) (network.Message, error) {
 	msg := new(Message)
 	var err error

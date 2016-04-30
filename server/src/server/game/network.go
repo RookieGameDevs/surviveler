@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+/*
+ * startServer creates the TCP server and starts the listening goroutine
+ */
 func (g *Game) startServer() {
 	// creates a tcp listener
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+g.cfg.Port)
@@ -26,9 +29,12 @@ func (g *Game) startServer() {
 	fmt.Println("Server is ready, listening at:", listener.Addr())
 }
 
-// OnConnect is called at connection initialization, once by connection
+/*
+ * OnConnect gets called by the server at connection initialization, once by
+ * connection. This gives us the chance to register a new client and perform
+ * the client initialization
+ */
 func (g *Game) OnConnect(c *network.Conn) bool {
-
 	// register our new client
 	g.clients.registerClient(c)
 
@@ -58,6 +64,10 @@ func (g *Game) OnConnect(c *network.Conn) bool {
 	return true
 }
 
+/*
+ * OnIncomingMsg gets called by the server each time a message is ready to be
+ * read on the connection
+ */
 func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	clientId := g.clients.getClientId(c)
 	fmt.Printf("Received message from client, id %v addr %v\n",
@@ -98,6 +108,11 @@ func (g *Game) handlePing(c *network.Conn, msg *Message) error {
 	return nil
 }
 
+/*
+ * OnClose gets called by the server at connection closing, once by
+ * connection. This gives us the chance to unregister a new client and perform
+ * client cleanup
+ */
 func (g *Game) OnClose(c *network.Conn) {
 	fmt.Printf("Connection closed: %v\n", c.GetRawConn().RemoteAddr())
 }

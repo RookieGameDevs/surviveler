@@ -9,15 +9,19 @@ import (
 	"time"
 )
 
-// Error types
+/*
+ * Error types
+ */
 var (
 	ErrClosedConnection = errors.New("connection already closed")
 	ErrBlockingWrite    = errors.New("blocking tcp write")
 	ErrBlockingRead     = errors.New("blocking tcp read")
 )
 
-// Conn is an opaque structure, holding the underlying TCP connection, the
-// message channels and the logic for resources cleanup and synchronization
+/*
+ * Conn is an opaque structure, holding the underlying TCP connection, the
+ * message channels and the logic for resources cleanup and synchronization
+ */
 type Conn struct {
 	srv          *Server
 	conn         *net.TCPConn  // underlying tcp connection
@@ -29,17 +33,23 @@ type Conn struct {
 	incomingChan chan Message  // chanel receiving incoming messages
 }
 
-// GetUserData retrieves the associated user data
+/*
+ * GetUserData retrieves the associated user data
+ */
 func (c *Conn) GetUserData() interface{} {
 	return c.userData
 }
 
-// SetUserData associates user data with the connection
+/*
+ * SetUserData associates user data with the connection
+ */
 func (c *Conn) SetUserData(data interface{}) {
 	c.userData = data
 }
 
-// ConnEvtHandler is the interface that handles connection events
+/*
+ * ConnEvtHandler is the interface that handles connection events
+ */
 type ConnEvtHandler interface {
 	// OnConnect is called once per connection. A false return value indicates
 	// the connection should be closed.
@@ -53,7 +63,9 @@ type ConnEvtHandler interface {
 	OnClose(*Conn)
 }
 
-// newConn returns a new Conn instance
+/*
+ * newConn returns a new Conn instance
+ */
 func newConn(conn *net.TCPConn, srv *Server) *Conn {
 	return &Conn{
 		srv:          srv,
@@ -64,12 +76,16 @@ func newConn(conn *net.TCPConn, srv *Server) *Conn {
 	}
 }
 
-// GetRawConn returns the underlying net.TCPConn from the Conn
+/*
+ * GetRawConn returns the underlying net.TCPConn from the Conn
+ */
 func (c *Conn) GetRawConn() *net.TCPConn {
 	return c.conn
 }
 
-// Close closes the connection
+/*
+ * Close closes the connection
+ */
 func (c *Conn) Close() {
 	c.closeOnce.Do(func() {
 		atomic.StoreInt32(&c.closeFlag, 1)
@@ -81,12 +97,16 @@ func (c *Conn) Close() {
 	})
 }
 
-// IsClosed indicates whether a the connection is closed or not
+/*
+ * IsClosed indicates whether a the connection is closed or not
+ */
 func (c *Conn) IsClosed() bool {
 	return atomic.LoadInt32(&c.closeFlag) == 1
 }
 
-// AsyncSendMessage sends a message (guaranteed unblocking, or return error)
+/*
+ * AsyncSendMessage sends a message (guaranteed unblocking, or return error)
+ */
 func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) {
 	if c.IsClosed() {
 		return ErrClosedConnection
@@ -121,7 +141,9 @@ func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) 
 	}
 }
 
-// StartLoops starts the various goroutines for current connection
+/*
+ * StartLoops starts the various goroutines for current connection
+ */
 func (c *Conn) StartLoops() {
 	if !c.srv.callback.OnConnect(c) {
 		return
@@ -149,8 +171,10 @@ func (c *Conn) StartLoops() {
 	}()
 }
 
-// readLoop loops forever and reads incoming message from the client, while
-// handling server exit and connection closing
+/*
+ * readLoop loops forever and reads incoming message from the client, while
+ * handling server exit and connection closing
+ */
 func (c *Conn) readLoop() {
 	defer func() {
 		recover()
@@ -180,8 +204,10 @@ func (c *Conn) readLoop() {
 	}
 }
 
-// writeLoop loops forever and writes outgoing packet to the client, while
-// handling server exit and connection closing
+/*
+ * writeLoop loops forever and writes outgoing packet to the client, while
+ * handling server exit and connection closing
+ */
 func (c *Conn) writeLoop() {
 	defer func() {
 		recover()
@@ -207,7 +233,9 @@ func (c *Conn) writeLoop() {
 	}
 }
 
-// handleLoop loops forever and handles connection/server specific events
+/*
+ * handleLoop loops forever and handles connection/server specific events
+ */
 func (c *Conn) handleLoop() {
 	defer func() {
 		recover()

@@ -5,7 +5,9 @@ import (
 	"time"
 )
 
-// FatalError logs a fatal error and exits
+/*
+ * FatalError logs a fatal error and exits
+ */
 func FatalError(err error, ctx string) {
 
 	if err != nil {
@@ -13,7 +15,9 @@ func FatalError(err error, ctx string) {
 	}
 }
 
-// MakeTimestamp returns the current timestamp in milliseconds
+/*
+ * MakeTimestamp returns the current timestamp in milliseconds
+ */
 func MakeTimestamp() int64 {
 	return time.Now().UnixNano() / int64(time.Millisecond)
 }
