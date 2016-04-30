@@ -8,8 +8,6 @@ import (
 )
 
 const (
-	CONN_HOST        = ""
-	CONN_PORT        = "1234"
 	MAX_OUT_CHANNELS = 100
 	MAX_IN_CHANNELS  = 100
 )
@@ -30,15 +28,18 @@ type Game struct {
 	ticker     time.Ticker    // our tick source
 }
 
-// Setup initializes the different game subsystems
+/*
+ *Setup initializes the different game subsystems
+ */
 func (g *Game) Setup(cfg GameCfg) {
 	g.cfg = cfg
 
 	// setup go runtime
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// register the client-server message types
-	g.registerMsgTypes()
+	// register the message types
+	g.msgFactory = *NewMsgFactory()
+	g.msgFactory.RegisterMsgTypes()
 
 	// setup client registry
 	g.clients.Init()
@@ -47,13 +48,17 @@ func (g *Game) Setup(cfg GameCfg) {
 	g.ticker = *time.NewTicker(time.Millisecond * 100)
 }
 
-// Start starts the server and game loops
+/*
+ * Start starts the server and game loops
+ */
 func (g *Game) Start() {
 	g.startServer()
 	g.loop()
 }
 
-// Stop stops kicks all clients and stop the various loops
+/*
+ * Stop kicks all clients and stops the various loops
+ */
 func (g *Game) Stop() {
 
 	// stop ticking
@@ -67,12 +72,4 @@ func (g *Game) Stop() {
 	// stop server
 	fmt.Println("Stop server")
 	g.server.Stop()
-}
-
-func (g *Game) registerMsgTypes() {
-	// creates the factory and register message types
-	g.msgFactory = *NewMsgFactory()
-	g.msgFactory.RegisterMsgType(PingId, PingMsg{})
-	g.msgFactory.RegisterMsgType(PongId, PongMsg{})
-	g.msgFactory.RegisterMsgType(PositionId, PositionMsg{})
 }

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// FatalError logs a fatal error and exitd$ simply check
+// FatalError logs a fatal error and exits
 func FatalError(err error, ctx string) {
 
 	if err != nil {
