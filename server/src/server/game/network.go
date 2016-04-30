@@ -60,32 +60,17 @@ func (g *Game) OnConnect(c *network.Conn) bool {
 
 func (g *Game) OnIncomingMsg(c *network.Conn, cm network.Message) bool {
 
-	client := g.clients.getClient(c)
+	clientId := g.clients.getClientId(c)
 	fmt.Printf("Received message from client, id %v addr %v\n",
-		client.Id, c.GetRawConn().RemoteAddr())
+		clientId, c.GetRawConn().RemoteAddr())
 
-	var msg *Message
-	var ok bool
-	if msg, ok = cm.(*Message); !ok {
-		panic("type assertion")
-	}
+	msg := cm.(*Message)
 
-	switch msg.Type {
-	case PingId:
-
-		// handle ping
-
-		// temporary: for now we do it here... but it will be handled in
-		// registered handlers using observers/notifiers...
+	// ping is the only message that requires an immediate reply
+	if msg.Type == PingId {
 		fmt.Printf("Received Ping: %v\n", msg)
 		iping, err := g.msgFactory.DecodePayload(PingId, msg.Buffer)
-
-		var ping PingMsg
-		var ok bool
-		if ping, ok = iping.(PingMsg); !ok {
-			panic("type assertion")
-		}
-		fmt.Printf("Decoded Ping: %v\n", ping)
+		ping := iping.(PingMsg)
 
 		// reply pong
 		pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
@@ -95,10 +80,6 @@ func (g *Game) OnIncomingMsg(c *network.Conn, cm network.Message) bool {
 			return false
 		}
 		fmt.Println("Sent a Pong")
-
-	default:
-		fmt.Printf("Unknown MsgType: %v\n", msg)
-		return false
 	}
 
 	return true
