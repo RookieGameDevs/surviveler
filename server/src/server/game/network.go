@@ -58,31 +58,44 @@ func (g *Game) OnConnect(c *network.Conn) bool {
 	return true
 }
 
-func (g *Game) OnIncomingMsg(c *network.Conn, cm network.Message) bool {
-
+func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	clientId := g.clients.getClientId(c)
 	fmt.Printf("Received message from client, id %v addr %v\n",
 		clientId, c.GetRawConn().RemoteAddr())
 
-	msg := cm.(*Message)
+	msg := netmsg.(*Message)
 
-	// ping is the only message that requires an immediate reply
 	if msg.Type == PingId {
-		fmt.Printf("Received Ping: %v\n", msg)
-		iping, err := g.msgFactory.DecodePayload(PingId, msg.Buffer)
-		ping := iping.(PingMsg)
-
-		// reply pong
-		pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
-		err = c.AsyncSendMessage(pong, time.Second)
-		if err != nil {
-			fmt.Printf("Error in AsyncSendMessage: %v\n", err)
+		// ping requires an immediate pong reply
+		if err := g.handlePing(c, msg); err != nil {
+			fmt.Printf("Error calling handlePing: %v\n", err)
 			return false
 		}
-		fmt.Println("Sent a Pong")
+	}
+	return true
+}
+
+/*
+ * handlePing processes the PingMsg as it needs an immediate PongMsg response
+ */
+func (g *Game) handlePing(c *network.Conn, msg *Message) error {
+	// decode ping msg payload into an interface
+	iping, err := g.msgFactory.DecodePayload(PingId, msg.Buffer)
+	if err != nil {
+		return err
 	}
 
-	return true
+	ping := iping.(PingMsg)
+	fmt.Printf("Received Ping: %v\n", ping)
+
+	// reply pong
+	pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
+	err = c.AsyncSendMessage(pong, time.Second)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Sent a Pong")
+	return nil
 }
 
 func (g *Game) OnClose(c *network.Conn) {
