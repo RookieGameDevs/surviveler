@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"runtime"
 	"server/network"
+	"time"
 )
 
 const (
@@ -26,6 +27,7 @@ type Game struct {
 	msgFactory MsgFactory     // message factory
 	server     network.Server // tcp server instance
 	clients    ClientRegistry // manage the connected clients
+	ticker     time.Ticker    // our tick source
 }
 
 // Setup initializes the different game subsystems
@@ -40,20 +42,30 @@ func (g *Game) Setup(cfg GameCfg) {
 
 	// setup client registry
 	g.clients.Init()
+
+	// set up the game ticker
+	g.ticker = *time.NewTicker(time.Millisecond * 100)
 }
 
 // Start starts the server and game loops
 func (g *Game) Start() {
 	g.startServer()
+	g.loop()
 }
 
 // Stop stops kicks all clients and stop the various loops
 func (g *Game) Stop() {
-	fmt.Println("Stopping the game...")
 
-	// TODO: kick the clients
+	// stop ticking
+	fmt.Println("Stop heartbeat")
+	g.ticker.Stop()
 
-	// stops server
+	// kick the clients
+	fmt.Println("Kick clients")
+	g.clients.kick()
+
+	// stop server
+	fmt.Println("Stop server")
 	g.server.Stop()
 }
 
