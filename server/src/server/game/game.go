@@ -2,8 +2,11 @@ package game
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"runtime"
 	"server/network"
+	"syscall"
 	"time"
 )
 
@@ -57,19 +60,23 @@ func (g *Game) Setup(cfg GameCfg) {
 func (g *Game) Start() {
 	g.startServer()
 	g.loop()
+
+	// be notified of termination signals
+	chSig := make(chan os.Signal)
+	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
+
+	// wait for termination signals
+	fmt.Println("Received signal: ", <-chSig)
+	g.Stop()
 }
 
 /*
- * Stop kicks all clients and stops the various loops
+ * Stop cleanups the server and exists the various loops
  */
 func (g *Game) Stop() {
 	// stop ticking
 	fmt.Println("Stop heartbeat")
 	g.ticker.Stop()
-
-	// kick the clients
-	fmt.Println("Kick clients")
-	g.clients.kick()
 
 	// stop server
 	fmt.Println("Stop server")
