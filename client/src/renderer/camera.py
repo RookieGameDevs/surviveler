@@ -1,10 +1,7 @@
 from abc import ABC
 from abc import abstractproperty
 from matlib import UP
-from matlib import mat4
-from matlib import vec3_mag
-from matlib import vec3_unit
-import numpy as np
+from matlib import Mat4
 
 
 class Camera(ABC):
@@ -16,30 +13,30 @@ class Camera(ABC):
     """
 
     def __init__(self):
-        self.look_t = mat4()
+        self.look_t = Mat4()
 
     def look_at(self, eye, center, up=UP):
         """Sets up camera look transformation.
 
         :param eye: Eye (camera position) coordinates.
-        :type eye: :class:`numpy.ndarray`
+        :type eye: :class:`matlib.Vec3`
 
         :param eye: Look at (scene center) coordinates.
-        :type eye: :class:`numpy.ndarray`
+        :type eye: :class:`matlib.Vec3`
 
         :param up: Up vector.
-        :type up: :class:`numpy.ndarray`
+        :type up: :class:`matlib.Vec3`
         """
         t = center - eye
-        z = vec3_mag(t)
-        f = vec3_unit(t)
-        s = np.cross(f, up)
-        if vec3_mag(s) == 0:
+        z = t.mag()
+        f = t.unit()
+        s = f.cross(up)
+        if s.mag() == 0:
             raise ValueError(
                 'Look direction vector must be different from up vector')
 
-        u = np.cross(vec3_unit(s), f)
-        self.look_t = np.matrix([
+        u = s.unit().cross(f)
+        self.look_t = Mat4([
             [s[0],  s[1],  s[2],  0],
             [u[0],  u[1],  u[2],  0],
             [-f[0], -f[1], -f[2], z],
@@ -72,11 +69,11 @@ class OrthoCamera(Camera):
         tx = -(self.r + self.l) / (self.r - self.l)
         ty = -(self.t + self.b) / (self.t - self.b)
         tz = -(self.f + self.n) / (self.f - self.n)
-        proj_mat = np.matrix([
+        proj_mat = Mat4([
             [sx, 0,  0,  tx],
             [0,  sy, 0,  ty],
             [0,  0,  sz, tz],
             [0,  0,  0,  1],
-        ], np.float32)
+        ])
 
-        return np.matrix(proj_mat * self.look_t, np.float32)
+        return proj_mat * self.look_t

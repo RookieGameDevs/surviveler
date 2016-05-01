@@ -1,6 +1,5 @@
 from OpenGL.GL import GL_ACTIVE_UNIFORMS
 from OpenGL.GL import GL_COMPILE_STATUS
-from OpenGL.GL import GL_FALSE
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FRAGMENT_SHADER
 from OpenGL.GL import GL_LINK_STATUS
@@ -21,16 +20,14 @@ from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
 from exceptions import ShaderError
 from exceptions import UniformError
+from matlib import Mat4
 from utils import as_ascii
 from utils import as_utf8
 import numpy as np
 
 
 UNIFORM_VALIDATORS = {
-    GL_FLOAT_MAT4: lambda v: (
-        type(v) == np.matrix and
-        v.dtype == np.float32 and
-        v.shape == (4, 4)),
+    GL_FLOAT_MAT4: lambda v: type(v) == Mat4,
 }
 
 

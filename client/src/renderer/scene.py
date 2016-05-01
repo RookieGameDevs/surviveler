@@ -1,6 +1,6 @@
 from abc import ABC
 from abc import abstractmethod
-from matlib import mat4
+from matlib import Mat4
 
 
 class SceneRenderContext:
@@ -57,7 +57,7 @@ class AbstractSceneNode(ABC):
 
     def __init__(self):
         self._children = []
-        self.transform = mat4()
+        self.transform = Mat4()
 
     @abstractmethod
     def render(self, ctx, transform):
@@ -72,7 +72,7 @@ class AbstractSceneNode(ABC):
         :param transform: Node's computed transformation matrix. Not to be
             confused with `self.transform`, which describes node's local
             transformation.
-        :type transform: :class:`numpy.ndarray`
+        :type transform: :class:`matlib.Mat4`
         """
         pass
 

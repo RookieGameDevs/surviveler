@@ -1,7 +1,6 @@
 from math import pi
-from matlib import Y_AXIS
-from matlib import mat3_rot
-from matlib import mat4
+from matlib import Y
+from matlib import Mat4
 from renderer import GeometryNode
 from renderer import Mesh
 from renderer import Shader
@@ -50,4 +49,4 @@ class Player:
         if self.rot_angle >= WHOLE_ANGLE:
             self.rot_angle -= WHOLE_ANGLE
 
-        self._node.transform = mat4(mat3_rot(Y_AXIS, self.rot_angle))
+        self._node.transform = Mat4.rot(Y, self.rot_angle)

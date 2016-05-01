@@ -1,5 +1,5 @@
 from itertools import count
-from matlib import vec3
+from matlib import Vec3
 from message import Message
 from message import MessageField
 from message import MessageType
@@ -34,7 +34,7 @@ class Client:
             fov_units,   # top plane
             -fov_units,  # bottom plane
             10)          # view distance
-        self.camera.look_at(vec3(0, 0, 5), vec3(0, 0, 0))
+        self.camera.look_at(Vec3(0, 0, 5), Vec3(0, 0, 0))
 
         self.scene_setup()
 
