@@ -1,4 +1,4 @@
 #!/bin/bash
 
 source bin/activate
-py.test src
+PYTHONPATH=$PWD/src py.test src
