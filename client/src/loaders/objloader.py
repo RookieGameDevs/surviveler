@@ -3,6 +3,10 @@ OBJ file loader.
 
 Suitable to import 3d models exported from Blender.
 """
+import logging
+
+
+LOG = logging.getLogger(__name__)
 
 
 def load_obj(filename):
@@ -45,26 +49,32 @@ def load_obj(filename):
 
     def parse_face(data):
         for face in data:
-            face_items = face.split('/')
-            idx0 = int(face_items[0]) - 1
-            indices.append(idx0)
-            vertices.extend(tmp_vertices[idx0])
-
             try:
-                idx1 = int(face_items[1]) - 1
-            except IndexError:
-                # No UVs info
-                pass
-            else:
-                uvs.append(tmp_uvs[idx1])
+                # convert index values to integers and normalize them to 0 base,
+                # set missing indices to -1
+                face_items = [int(i) - 1 if i else -1 for i in face.split('/')]
+                if not face_items:
+                    raise ValueError('invalid face spec')
 
-            try:
-                idx2 = int(face_items[2]) - 1
-            except IndexError:
-                # No normals info
-                pass
-            else:
-                normals.extend(tmp_normals[idx2])
+                # clamp items array to 3 elements
+                if len(face_items) < 3:
+                    face_items.extend([-1] * (3 - len(face_items)))
+
+            except (ValueError, TypeError) as err:
+                LOG.warn('Failed to parse face {}:'.format(face, err))
+                continue
+
+            vert_idx = face_items[0]
+            indices.append(vert_idx)
+            vertices.extend(tmp_vertices[vert_idx])
+
+            uv_idx = face_items[1]
+            if uv_idx >= 0:
+                uvs.append(tmp_uvs[uv_idx])
+
+            norm_idx = face_items[2]
+            if norm_idx >= 0:
+                normals.extend(tmp_normals[norm_idx])
 
     func_map = {
         'v': parse_vertex,
