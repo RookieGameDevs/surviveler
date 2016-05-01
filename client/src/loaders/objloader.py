@@ -67,8 +67,11 @@ def load_obj(filename):
 
     with open(filename, 'r') as f:
         for line in f:
-            header, data = line.split()
-
-            func_map.get(header, do_nothing)(data)
+            data = line.split()
+            try:
+                header, values = data[0], data[1:]
+            except IndexError:
+                continue
+            func_map.get(header, do_nothing)(values)
 
     return vertices, normals, uvs, indices
