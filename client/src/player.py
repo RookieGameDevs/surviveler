@@ -1,7 +1,8 @@
+from loaders import load_obj
 from math import pi
-from matlib import Y
 from matlib import Mat4
 from matlib import Vec3
+from matlib import Y
 from renderer import GeometryNode
 from renderer import Mesh
 from renderer import Shader
@@ -9,22 +10,14 @@ from renderer import Shader
 
 WHOLE_ANGLE = 2.0 * pi
 
-MESH_VERTICES = [
-    +0.0, +0.7, 0.0,
-    -0.7, -0.7, 0.0,
-    +0.7, -0.7, 0.0,
-]
-
-MESH_INDICES = [
-    0, 1, 2,
-]
-
 
 class Player:
     """Game entity which represents a player."""
 
     def __init__(self):
-        mesh = Mesh(MESH_VERTICES, MESH_INDICES)
+        vertices, _, _, indices = load_obj('data/models/player.obj')
+
+        mesh = Mesh(vertices, indices)
         shader = Shader.from_glsl(
             'data/shaders/simple.vert',
             'data/shaders/simple.frag')
