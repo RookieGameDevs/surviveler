@@ -1,8 +1,8 @@
 package game
 
 import (
-	"fmt"
-	"time"
+	log "github.com/Sirupsen/logrus"
+	"runtime"
 )
 
 /*
@@ -10,13 +10,21 @@ import (
  */
 func (g *Game) loop() {
 
-	for range g.ticker.C {
-		time.Sleep(2 * time.Millisecond)
+	go func() {
 
-		// handles player actions
-
-		// send game state to connected clients
-
-	}
-	fmt.Println("game loop just ended")
+		quit := false
+		for !quit {
+			select {
+			case <-g.loopCloseChan:
+				// quit immediately
+				quit = true
+			case msg := <-g.msgChan:
+				log.WithField("msg", msg).Debug("Message received")
+			default:
+				// let the world spin
+				runtime.Gosched()
+			}
+		}
+		log.Debug("Game loop just ended")
+	}()
 }

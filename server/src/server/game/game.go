@@ -28,15 +28,17 @@ type GameCfg struct {
  * network.ConnEvtHandler interface
  */
 type Game struct {
-	cfg        GameCfg        // configuration settings
-	msgFactory MsgFactory     // message factory
-	server     network.Server // tcp server instance
-	clients    ClientRegistry // manage the connected clients
-	ticker     time.Ticker    // our tick source
+	cfg           GameCfg        // configuration settings
+	msgFactory    MsgFactory     // message factory
+	server        network.Server // tcp server instance
+	clients       ClientRegistry // manage the connected clients
+	ticker        time.Ticker    // our tick source
+	msgChan       chan Message   // conducts the Message to the game loop
+	loopCloseChan chan struct{}  // indicates to the game loop that it may exit
 }
 
 /*
- *Setup initializes the different game subsystems
+ * Setup initializes the different game subsystems
  */
 func (g *Game) Setup(cfg GameCfg) {
 	g.cfg = cfg
@@ -56,8 +58,9 @@ func (g *Game) Setup(cfg GameCfg) {
 	// setup client registry
 	g.clients.Init()
 
-	// set up the game ticker
-	g.ticker = *time.NewTicker(time.Millisecond * 100)
+	// init channels
+	g.msgChan = make(chan Message)
+	g.loopCloseChan = make(chan struct{})
 }
 
 /*
@@ -66,25 +69,27 @@ func (g *Game) Setup(cfg GameCfg) {
 func (g *Game) Start() {
 
 	log.Info("Starting Surviveler server")
+
+	// start everything
 	g.startServer()
-	//g.loop()
+	g.loop()
 
 	// be notified of termination signals
 	chSig := make(chan os.Signal)
+	defer close(chSig)
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
-
-	// wait for termination signals
 	log.WithField("signal", <-chSig).Info("Received termination signal")
-	g.Stop()
+
+	g.stop()
 }
 
 /*
- * Stop cleanups the server and exists the various loops
+ * stop cleanups the server and exits the various loops
  */
-func (g *Game) Stop() {
-	// stop ticking
-	log.Info("Stopping game heartbeat")
-	g.ticker.Stop()
+func (g *Game) stop() {
+	// stop game loop
+	log.Info("Stopping game loop")
+	g.loopCloseChan <- struct{}{}
 
 	// stop server
 	log.Info("Stopping server")
