@@ -5,7 +5,6 @@ import (
 )
 
 func main() {
-
 	// game setup
 	cfg := game.GameCfg{
 		Port:  "1234",
