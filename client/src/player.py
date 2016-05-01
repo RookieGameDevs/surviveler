@@ -10,9 +10,9 @@ from renderer import Shader
 WHOLE_ANGLE = 2.0 * pi
 
 MESH_VERTICES = [
-    +0.0, +0.3, 0.0,
-    -0.3, -0.3, 0.0,
-    +0.3, -0.3, 0.0,
+    +0.0, +0.7, 0.0,
+    -0.7, -0.7, 0.0,
+    +0.7, -0.7, 0.0,
 ]
 
 MESH_INDICES = [
