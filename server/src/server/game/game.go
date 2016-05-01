@@ -56,7 +56,7 @@ func (g *Game) Setup(cfg GameCfg) {
 	g.msgFactory.RegisterMsgTypes()
 
 	// setup client registry
-	g.clients.Init()
+	g.clients.init()
 
 	// init channels
 	g.msgChan = make(chan Message)
@@ -77,6 +77,7 @@ func (g *Game) Start() {
 	// be notified of termination signals
 	chSig := make(chan os.Signal)
 	defer close(chSig)
+
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
 	log.WithField("signal", <-chSig).Info("Received termination signal")
 
@@ -90,6 +91,10 @@ func (g *Game) stop() {
 	// stop game loop
 	log.Info("Stopping game loop")
 	g.loopCloseChan <- struct{}{}
+	defer close(g.loopCloseChan)
+
+	// close client connections
+	g.clients.kickAll()
 
 	// stop server
 	log.Info("Stopping server")
