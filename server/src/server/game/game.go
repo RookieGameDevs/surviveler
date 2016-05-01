@@ -1,7 +1,7 @@
 package game
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
 	"runtime"
@@ -19,7 +19,8 @@ const (
  * GameCfg contains all the configurable server-specific game settings
  */
 type GameCfg struct {
-	Port string
+	Port  string
+	Debug bool
 }
 
 /*
@@ -40,6 +41,11 @@ type Game struct {
 func (g *Game) Setup(cfg GameCfg) {
 	g.cfg = cfg
 
+	// setup logger
+	if g.cfg.Debug {
+		log.StandardLogger().Level = log.DebugLevel
+	}
+
 	// setup go runtime
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
@@ -58,15 +64,17 @@ func (g *Game) Setup(cfg GameCfg) {
  * Start starts the server and game loops
  */
 func (g *Game) Start() {
+
+	log.Info("Starting Surviveler server")
 	g.startServer()
-	g.loop()
+	//g.loop()
 
 	// be notified of termination signals
 	chSig := make(chan os.Signal)
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
 
 	// wait for termination signals
-	fmt.Println("Received signal: ", <-chSig)
+	log.WithField("signal", <-chSig).Info("Received termination signal")
 	g.Stop()
 }
 
@@ -75,10 +83,10 @@ func (g *Game) Start() {
  */
 func (g *Game) Stop() {
 	// stop ticking
-	fmt.Println("Stop heartbeat")
+	log.Info("Stopping game heartbeat")
 	g.ticker.Stop()
 
 	// stop server
-	fmt.Println("Stop server")
+	log.Info("Stopping server")
 	g.server.Stop()
 }

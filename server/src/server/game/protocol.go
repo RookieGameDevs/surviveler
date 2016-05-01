@@ -83,31 +83,27 @@ func (this *MsgReader) ReadMessage(conn *net.TCPConn) (network.Message, error) {
 	// Read MsgType
 	err = binary.Read(conn, binary.BigEndian, &msg.Type)
 	if err != nil {
-		return nil, fmt.Errorf("IncomingMsg.Type: %v", err)
+		return nil, fmt.Errorf("Error while reading Message.Type: %v", err)
 	}
-	fmt.Printf("IncomingMsg.Type: %v\n", msg.Type)
 
 	// Read message length
 	err = binary.Read(conn, binary.BigEndian, &msg.Length)
 	if err != nil {
-		return nil, fmt.Errorf("IncomingMsg.Length: %v", err)
+		return nil, fmt.Errorf("Error while reading Message.Length: %v", err)
 	}
-	fmt.Printf("IncomingMsg.Length: %v\n", msg.Length)
 
 	if msg.Length == 0 {
-		return nil, fmt.Errorf("Invalid IncomingMsg.Length: 0")
+		return nil, fmt.Errorf("Invalid Message.Length: 0")
 	}
 	if msg.Length > MaxIncomingMsgLength {
-		return nil, fmt.Errorf("Invalid IncomingMsg.Length: (%v) > %v",
-			msg.Length, MaxIncomingMsgLength)
+		return nil, fmt.Errorf("Invalid (too big) Message.Length: %v", msg.Length)
 	}
 
 	//  Read Payload Buffer
 	msg.Buffer = make([]byte, msg.Length, msg.Length)
 	err = binary.Read(conn, binary.BigEndian, &msg.Buffer)
 	if err != nil {
-		return nil, fmt.Errorf("IncomingMsg.Buffer: %v", err)
+		return nil, fmt.Errorf("Error while reading payload: %v", err)
 	}
-	fmt.Printf("IncomingMsg.Buffer: %v\n", msg.Buffer)
 	return msg, nil
 }

@@ -4,7 +4,7 @@
 package game
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 	"reflect"
 )
@@ -50,10 +50,12 @@ func (mf MsgFactory) registerMsgType(t MsgType, i interface{}) {
  * newMsg returns a new (zero'ed) message struct
  */
 func (mf MsgFactory) newMsg(t MsgType) interface{} {
-	if it, ok := mf.registry[t]; ok {
-		return reflect.New(it).Elem().Interface()
+	var it reflect.Type
+	var ok bool
+	if it, ok = mf.registry[t]; !ok {
+		log.WithField("msgtype", t).Panic("Unknown message type")
 	}
-	panic(fmt.Sprintf("MsgFactory: MsgType %v not found\n", t))
+	return reflect.New(it).Elem().Interface()
 }
 
 /*
@@ -68,7 +70,8 @@ func (mf MsgFactory) DecodePayload(t MsgType, p []byte) (interface{}, error) {
 	var dec *codec.Decoder = codec.NewDecoderBytes(p, &mh)
 	err := dec.Decode(&msg)
 	if err != nil {
-		return nil, fmt.Errorf("Error decoding payload: %v\n", err)
+		log.WithError(err).Error("Couldn't decode payload")
+		return nil, err
 	}
 
 	return msg, nil

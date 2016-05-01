@@ -1,7 +1,7 @@
 package game
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"net"
 	"server/network"
 	"time"
@@ -13,9 +13,13 @@ import (
 func (g *Game) startServer() {
 	// creates a tcp listener
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+g.cfg.Port)
-	FatalError(err, "Resolving addr")
+	if err != nil {
+		log.WithError(err).Fatal("Couldn't resolve address")
+	}
 	listener, err := net.ListenTCP("tcp", tcpAddr)
-	FatalError(err, "Listening TCP")
+	if err != nil {
+		log.WithError(err).Fatal("Couldn't initiate TCP listening")
+	}
 
 	// creates a server
 	config := &network.ServerCfg{
@@ -26,7 +30,7 @@ func (g *Game) startServer() {
 
 	// starts the server in a listening goroutine
 	go g.server.Start(listener, time.Second)
-	fmt.Println("Server is ready, listening at:", listener.Addr())
+	log.WithField("addr", listener.Addr()).Info("Server ready , starting to listen")
 }
 
 /*
@@ -52,10 +56,10 @@ func (g *Game) OnConnect(c *network.Conn) bool {
 
 				err = c.AsyncSendMessage(msg, time.Second)
 				if err != nil {
-					fmt.Printf("Error in AsyncSendMessage: %v\n", err)
+					log.WithError(err).Error("Couldn't send async message")
 					return
 				}
-				fmt.Println("Sent a PositionMsg")
+				log.Debug("Sent a PositionMsg")
 				time.Sleep(200 * time.Millisecond)
 			}
 		}
@@ -70,15 +74,16 @@ func (g *Game) OnConnect(c *network.Conn) bool {
  */
 func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	clientId := g.clients.getClientId(c)
-	fmt.Printf("Received message from client, id %v addr %v\n",
-		clientId, c.GetRawConn().RemoteAddr())
+	log.WithFields(log.Fields{
+		"id":   clientId,
+		"addr": c.GetRawConn().RemoteAddr(),
+	}).Debug("Received message")
 
 	msg := netmsg.(*Message)
-
 	if msg.Type == PingId {
 		// ping requires an immediate pong reply
 		if err := g.handlePing(c, msg); err != nil {
-			fmt.Printf("Error calling handlePing: %v\n", err)
+			log.WithError(err).Error("Couldn't handle ping")
 			return false
 		}
 	}
@@ -96,7 +101,7 @@ func (g *Game) handlePing(c *network.Conn, msg *Message) error {
 	}
 
 	ping := iping.(PingMsg)
-	fmt.Printf("Received Ping: %v\n", ping)
+	log.WithField("msg", ping).Debug("Received ping")
 
 	// reply pong
 	pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
@@ -104,7 +109,7 @@ func (g *Game) handlePing(c *network.Conn, msg *Message) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Sent a Pong")
+	log.WithField("msg", ping).Debug("Sent pong")
 	return nil
 }
 
@@ -114,5 +119,5 @@ func (g *Game) handlePing(c *network.Conn, msg *Message) error {
  * client cleanup
  */
 func (g *Game) OnClose(c *network.Conn) {
-	fmt.Printf("Connection closed: %v\n", c.GetRawConn().RemoteAddr())
+	log.WithField("addr", c.GetRawConn().RemoteAddr()).Debug("Connection closed")
 }

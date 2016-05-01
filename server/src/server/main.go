@@ -5,9 +5,11 @@ import (
 )
 
 func main() {
+
 	// game setup
 	cfg := game.GameCfg{
-		Port: "1234",
+		Port:  "1234",
+		Debug: true,
 	}
 
 	surviveler := new(game.Game)

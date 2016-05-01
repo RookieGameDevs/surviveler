@@ -1,7 +1,7 @@
 package game
 
 import (
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"server/network"
 	"sync"
 )
@@ -23,8 +23,7 @@ func (reg *ClientRegistry) Init() {
 /*
  * registerClient creates a new client and gives it an id
  */
-func (reg *ClientRegistry) registerClient(c *network.Conn) {
-
+func (reg *ClientRegistry) registerClient(client *network.Conn) {
 	var clientId uint16
 
 	// protect :
@@ -34,19 +33,21 @@ func (reg *ClientRegistry) registerClient(c *network.Conn) {
 
 	// we have a new client, assign him an id.
 	clientId = reg.nextId
-	reg.clients[clientId] = c
+	reg.clients[clientId] = client
 
 	// record the client id inside the connection, this is needed for later
 	// retriving the clientId when we just have a connection
-	c.SetUserData(clientId)
+	client.SetUserData(clientId)
 
 	// Note: for now we just stupidly increment the next available id.
 	//        We will have other problems to solve before this overflows...
 	reg.nextId++
 	reg.mutex.Unlock()
 
-	fmt.Printf("Accepted a new client, id %v addr %v\n",
-		clientId, c.GetRawConn().RemoteAddr())
+	log.WithFields(log.Fields{
+		"id":   clientId,
+		"addr": client.GetRawConn().RemoteAddr(),
+	}).Info("Accepted a new client")
 }
 
 /*
@@ -59,7 +60,7 @@ func (reg *ClientRegistry) getClientId(c *network.Conn) uint16 {
 	// protect client map access
 	reg.mutex.Lock()
 	if _, ok := reg.clients[clientId]; !ok {
-		panic(fmt.Sprintf("Unknown client id %v\n", clientId))
+		log.WithField("id", clientId).Panic("Unknown client")
 	}
 	reg.mutex.Unlock()
 	return clientId
@@ -69,14 +70,19 @@ func (reg *ClientRegistry) getClientId(c *network.Conn) uint16 {
  * kick says out loud "get the fuck out of my server now!"
  */
 func (reg *ClientRegistry) kickClient(clientId uint16) {
+	log.WithField("id", clientId).Debug("About to kick client")
 
 	// protect client map access
 	reg.mutex.Lock()
 	client, ok := reg.clients[clientId]
 	if !ok {
-		panic(fmt.Sprintf("Unknown client id %v\n", clientId))
+		log.WithField("id", clientId).Panic("Unknown client")
 	}
 	client.Close()
 	reg.mutex.Unlock()
-	fmt.Printf("Kicking client %v %v", clientId, client.GetRawConn().RemoteAddr())
+
+	log.WithFields(log.Fields{
+		"id":   clientId,
+		"addr": client.GetRawConn().RemoteAddr(),
+	}).Info("Kicked client")
 }
