@@ -48,15 +48,23 @@ def load_obj(filename):
             face_items = face.split('/')
             idx0 = int(face_items[0]) - 1
             indices.append(idx0)
+            vertices.extend(tmp_vertices[idx0])
+
             try:
                 idx1 = int(face_items[1]) - 1
-            except ValueError:
+            except IndexError:
+                # No UVs info
                 pass
             else:
                 uvs.append(tmp_uvs[idx1])
-            idx2 = int(face_items[2]) - 1
-            vertices.extend(tmp_vertices[idx0])
-            normals.extend(tmp_normals[idx2])
+
+            try:
+                idx2 = int(face_items[2]) - 1
+            except IndexError:
+                # No normals info
+                pass
+            else:
+                normals.extend(tmp_normals[idx2])
 
     func_map = {
         'v': parse_vertex,
