@@ -6,16 +6,16 @@ Suitable to import 3d models exported from Blender.
 
 
 def load_obj(filename):
-    """
-    Loads `filename` and return a tuple of vertices, normals, uvs, indices lists.
+    """Loads `filename` and return a tuple of vertices, normals, uvs, indices
+    lists.
 
     :param filename: The .obj file to load.
     :type filename: str
 
-    :returns: The mesh vertices, normals, UVs and vertex indices parsed from the .obj file.
+    :returns: The mesh vertices, normals, UVs and vertex indices parsed from the
+        .obj file.
     :rtype: tuple
     """
-    # TODO: Support compressed files
 
     tmp_vertices = []
     tmp_normals = []
@@ -53,22 +53,21 @@ def load_obj(filename):
             except ValueError:
                 pass
             else:
-                uvs += tmp_uvs[idx1]
+                uvs.append(tmp_uvs[idx1])
             idx2 = int(face_items[2]) - 1
             vertices.extend(tmp_vertices[idx0])
             normals.extend(tmp_normals[idx2])
 
-
     func_map = {
-        'v' : parse_vertex,
+        'v': parse_vertex,
         'vt': parse_texture,
         'vn': parse_normal,
-        'f' : parse_face,
+        'f': parse_face,
     }
 
     with open(filename, 'r') as f:
         for line in f:
-            header, *data = line.split()
+            header, data = line.split()
 
             func_map.get(header, do_nothing)(data)
 
