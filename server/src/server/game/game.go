@@ -75,7 +75,7 @@ func (this *SurvCallback) OnConnect(c *core.Conn) bool {
 			default:
 
 				// temporary: for now spam a position every 200ms
-				msg, err := NewMessage(MsgType(PositionId), PositionMsg{10, 15})
+				msg, err := NewMessage(MsgType(PositionId), PositionMsg{7, 9})
 
 				err = c.AsyncSendMessage(msg, time.Second)
 				if err != nil {

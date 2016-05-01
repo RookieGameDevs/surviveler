@@ -61,6 +61,8 @@ class Client:
     @handler(MessageType.gamestate)
     def update_gamestate(self, msg):
         LOG.debug('Processing and updating gamestate')
+        self.player.x = msg.data.get(b'Xpos', 0)
+        self.player.y = msg.data.get(b'Ypos', 0)
 
     def process_message(self, msg):
         """Processes a message received from the server.

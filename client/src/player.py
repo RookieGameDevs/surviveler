@@ -1,6 +1,7 @@
 from math import pi
 from matlib import Y
 from matlib import Mat4
+from matlib import Vec3
 from renderer import GeometryNode
 from renderer import Mesh
 from renderer import Shader
@@ -31,6 +32,8 @@ class Player:
         self._node = GeometryNode(mesh, shader)
 
         self.rot_angle = 0.0
+        self.x = 0
+        self.y = 0
 
     @property
     def node(self):
@@ -49,4 +52,6 @@ class Player:
         if self.rot_angle >= WHOLE_ANGLE:
             self.rot_angle -= WHOLE_ANGLE
 
-        self._node.transform = Mat4.rot(Y, self.rot_angle)
+        self._node.transform = (
+            Mat4.trans(Vec3(self.x, self.y, 0)) *
+            Mat4.rot(Y, self.rot_angle))
