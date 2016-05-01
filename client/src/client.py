@@ -1,10 +1,12 @@
 from itertools import count
+from matlib import vec3
 from message import Message
 from message import MessageField
 from message import MessageType
 from message_handlers import get_handlers
 from message_handlers import handler
 from player import Player
+from renderer import OrthoCamera
 from renderer import Scene
 from utils import tstamp
 import logging
@@ -24,6 +26,16 @@ class Client:
         self.delta = None
 
         self.renderer = renderer
+
+        fov_units = 15.0
+        self.camera = OrthoCamera(
+            -fov_units,  # left plane
+            fov_units,   # right plane
+            fov_units,   # top plane
+            -fov_units,  # bottom plane
+            10)          # view distance
+        self.camera.look_at(vec3(0, 0, 5), vec3(0, 0, 0))
+
         self.scene_setup()
 
     def scene_setup(self):
@@ -95,4 +107,7 @@ class Client:
                 self.process_message(msg)
 
             self.player.update(dt)
-            self.renderer.render(self.scene)
+
+            self.renderer.clear()
+            self.scene.render(self.renderer, self.camera)
+            self.renderer.present()

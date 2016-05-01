@@ -78,14 +78,12 @@ class Renderer:
         """Private."""
         glClearColor(0, 0, 0, 0)
 
-    def render(self, scene):
-        """Renders the given scene.
-
-        :param scene: Scene to render.
-        :type scene: :class:`renderer.Scene`
-        """
+    def clear(self):
+        """Clear buffers."""
         glClear(GL_COLOR_BUFFER_BIT)
-        scene.render(self)
+
+    def present(self):
+        """Present updated buffers to screen."""
         glFlush()
         sdl.SDL_GL_SwapWindow(self.window)
 

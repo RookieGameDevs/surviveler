@@ -27,6 +27,40 @@ Y_AXIS = vec3(0.0, 1.0, 0.0)
 #: Predefined vector for Z axis
 Z_AXIS = vec3(0.0, 0.0, 1.0)
 
+#: Predefined vector for up direction
+UP = Y_AXIS
+#: Predefined vector for forward direction
+FORWARD = -Z_AXIS
+#: Predefined vector for right direction
+RIGHT = X_AXIS
+
+
+def vec3_mag(v):
+    """Returns the magnitude of a vector.
+
+    :param v: Vector.
+    :type v: :class:`numpy.ndarray`
+
+    :returns: Vector's magnitude.
+    :rtype: float
+    """
+    return np.sqrt(np.sum(i * i for i in v))
+
+
+def vec3_unit(v):
+    """Returns the normalized (unit) version of a vector.
+
+    :param v: Original vector.
+    :type v: :class:`numpy.ndarray`
+
+    :returns: Normalized vector
+    :rtype: :class:`numpy.ndarray`
+    """
+    mag = vec3_mag(v)
+    if mag > 0:
+        return v / mag
+    return v
+
 
 def mat4(t_mat=None, t_vec=None):
     """Creates a 4x4 homogeneous transformation matrix.
