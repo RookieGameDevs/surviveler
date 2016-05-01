@@ -28,12 +28,13 @@ class Client:
         self.renderer = renderer
 
         fov_units = 15.0
+        ratio = renderer.height / float(renderer.width)
         self.camera = OrthoCamera(
-            -fov_units,  # left plane
-            fov_units,   # right plane
-            fov_units,   # top plane
-            -fov_units,  # bottom plane
-            10)          # view distance
+            -fov_units,          # left plane
+            fov_units,           # right plane
+            fov_units * ratio,   # top plane
+            -fov_units * ratio,  # bottom plane
+            10)                  # view distance
         self.camera.look_at(Vec3(0, 0, 5), Vec3(0, 0, 0))
 
         self.scene_setup()
