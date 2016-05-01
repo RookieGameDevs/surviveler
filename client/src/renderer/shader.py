@@ -35,7 +35,7 @@ UNIFORM_VALIDATORS = {
 
 
 UNIFORM_SETTERS = {
-    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, GL_FALSE, np.asarray(v)),
+    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, np.asarray(v)),
 }
 
 
