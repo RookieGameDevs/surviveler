@@ -96,7 +96,7 @@ def load_obj(filename):
                     face_items.extend([-1] * (3 - len(face_items)))
 
             except (ValueError, TypeError) as err:
-                LOG.warn('Failed to parse face {}:'.format(face, err))
+                LOG.warn('Failed to parse face {}: {}'.format(face, err))
                 continue
 
             vert_idx = face_items[0]
