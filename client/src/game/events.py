@@ -5,7 +5,7 @@ from collections import defaultdict
 __SUBSCRIBED = defaultdict(list)
 
 
-def subscribe(event):
+def subscriber(event):
     """Decorator for event handlers.
 
     :param event: the event to be handled

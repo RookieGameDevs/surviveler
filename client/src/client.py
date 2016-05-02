@@ -46,10 +46,8 @@ class Client:
 
         Creates game entities and sets up the visual scene.
         """
-        self.player = Player()
-
         self.scene = Scene()
-        self.scene.root.add_child(self.player.node)
+        self.player = Player(self.scene.root)
 
     @message_handler(MessageType.pong)
     def pong_handler(self, msg):
