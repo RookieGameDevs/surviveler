@@ -2,88 +2,136 @@ import math
 import numpy as np
 
 
-def vec3(x, y, z):
-    """Shorthand function which creates a vector with 3 components.
+class Vec3(np.ndarray):
+    """Vector with X,Y,Z components."""
 
-    :param x: Value for X coordinate.
-    :type x: float
+    def __new__(cls, x=0, y=0, z=0):
+        """Constructor.
 
-    :param y: Value for Y coordinate.
-    :type y: float
+        :param x: X component value.
+        :type x: float
 
-    :param z: Value for Z coordinate.
-    :type z: float
+        :param y: Y component value.
+        :type y: float
 
-    :returns: The resulting vector.
-    :rtype: :class:`numpy.ndarray`
-    """
-    return np.array([x, y, z], np.float32)
+        :param z: Z component value.
+        :type z: float
+
+        NOTE: due to the mechanics of subclassing `numpy.ndarray`, the
+        `__new__()` method is overriden instead of `__init__()`.
+        """
+        vec = np.ndarray.__new__(cls, shape=(3,), dtype=np.float32)
+        vec[0] = x
+        vec[1] = y
+        vec[2] = z
+        return vec
+
+    def cross(self, other):
+        """Returns cross product vector.
+
+        :param other: The vector to perform cross product by.
+        :type other: :class:`matlib.Vec3`
+
+        :returns: Normalized vector.
+        :rtype: :class:`matlib.Vec3`
+        """
+        x, y, z = np.cross(self, other)
+        return Vec3(x, y, z)
+
+    def dot(self, other):
+        """Returns dot product with another vector.
+
+        :param other: The vector to perform dot product by.
+        :type other: :class:`matlib.Vec3`
+
+        :returns: Dot product.
+        :rtype: float
+        """
+        x, y, z = np.dot(self, other)
+        return Vec3(x, y, z)
+
+    def mag(self):
+        """Returns the magnitude of a vector.
+
+        :returns: Vector's magnitude.
+        :rtype: float
+        """
+        return np.sqrt(np.sum(i * i for i in self))
+
+    def unit(self):
+        """Returns the normalized (unit) version of the vector.
+
+        :returns: Normalized vector.
+        :rtype: :class:`matlib.Vec3`
+        """
+        return self / self.mag()
+
+
+class Mat4(np.matrix):
+    """Matrix 4x4."""
+
+    def __new__(cls, rows=None):
+        return np.matrix.__new__(cls, rows or np.eye(4), np.float32)
+
+    @classmethod
+    def rot(cls, axis, theta):
+        """Creates a rotation matrix given an axis and angle.
+
+        Returns the rotation matrix associated with counterclockwise rotation
+        about the given axis by theta radians.
+
+        :param axis: Three component vector which describes an axis.
+        :type axis: :class:`matlib.Vec3`
+
+        :param theta: Angle in radians.
+        :type theta: float
+
+        :returns: The resulting matrix.
+        :rtype: :class:`matlib.Mat4`
+        """
+        x = float(axis[0])
+        y = float(axis[1])
+        z = float(axis[2])
+        sin_a = math.sin(theta)
+        cos_a = math.cos(theta)
+        k = 1 - math.cos(theta)
+
+        return Mat4([
+            [cos_a + k * x * x, k * x * y - z * sin_a, k * x * z + y * sin_a, 0],
+            [k * x * y + z * sin_a, cos_a + k * y * y, k * y * z - x * sin_a, 0],
+            [k * x * z - y * sin_a, k * y * z + x * sin_a, cos_a + k * z * z, 0],
+            [0, 0, 0, 1],
+        ])
+
+    @classmethod
+    def trans(cls, v):
+        """Creates a translation matrix given the translation vector.
+
+        :param v: Translation vector.
+        :type v: :class:`matlib.Vec3`
+
+        :returns: The resulting matrix.
+        :rtype: :class:`matlib.Mat4`
+        """
+        mat = Mat4()
+        mat.A[:, 3][:3] = v
+        return mat
 
 
 #: Predefined vector for X axis
-X_AXIS = vec3(1.0, 0.0, 0.0)
+X = Vec3(1.0, 0.0, 0.0)
+
 #: Predefined vector for Y axis
-Y_AXIS = vec3(0.0, 1.0, 0.0)
+Y = Vec3(0.0, 1.0, 0.0)
+
 #: Predefined vector for Z axis
-Z_AXIS = vec3(0.0, 0.0, 1.0)
+Z = Vec3(0.0, 0.0, 1.0)
 
+#: Predefined vector for up direction
+UP = Y
 
-def mat4(t_mat=None, t_vec=None):
-    """Creates a 4x4 homogeneous transformation matrix.
+#: Predefined vector for forward direction
+FORWARD = -Z
 
-    :param t_mat: Transformation 3x3 matrix or None for identity.
-    :type t_mat: instance of :class:`numpy.ndarray` or None
-
-    :param t_vec: Translation vector or None for no translation.
-    :type t_vec: :class:`numpy.ndarray` or None
-
-    :returns: Resulting matrix.
-    :rtype: :class:`numpy.matrix`
-    """
-    t_mat = t_mat if t_mat is not None else mat3()
-    t_vec = t_vec if t_vec is not None else np.array([0.0, 0.0, 0.0], np.float32)
-    mat = np.identity(4, np.float32)
-    mat[0][:3] = t_mat[0]
-    mat[1][:3] = t_mat[1]
-    mat[2][:3] = t_mat[2]
-    mat[:, 3][:3] = t_vec
-    return np.matrix(mat)
-
-
-def mat3():
-    """Creates a 3x3 identity matrix.
-
-    :returns: Resulting matrix.
-    :rtype: :class:`numpy.matrix`
-    """
-    return np.matrix(np.identity(3, np.float32))
-
-
-def mat3_rot(axis, theta):
-    """Creates a 3x3 rotation matrix given an axis and angle.
-
-    Returns the rotation matrix associated with counterclockwise rotation
-    about the given axis by theta radians.
-
-    :param axis: Three component vector which describes an axis.
-    :type axis: :class:`numpy.ndarray`
-
-    :param theta: Angle in radians.
-    :type theta: float
-
-    :returns: The resulting matrix.
-    :rtype: :class:`numpy.matrix`
-    """
-    x = float(axis[0])
-    y = float(axis[1])
-    z = float(axis[2])
-    sin_a = math.sin(theta)
-    cos_a = math.cos(theta)
-    k = 1 - math.cos(theta)
-
-    mat = np.array([
-        [cos_a + k * x * x, k * x * y - z * sin_a, k * x * z + y * sin_a],
-        [k * x * y + z * sin_a, cos_a + k * y * y, k * y * z - x * sin_a],
-        [k * x * z - y * sin_a, k * y * z + x * sin_a, cos_a + k * z * z],
-    ], np.float32)
-    return np.matrix(mat)
+#: Predefined vector for right direction
+RIGHT = X

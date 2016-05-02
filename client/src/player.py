@@ -1,7 +1,8 @@
+from loaders import load_obj
 from math import pi
-from matlib import Y_AXIS
-from matlib import mat3_rot
-from matlib import mat4
+from matlib import Mat4
+from matlib import Vec3
+from matlib import Y
 from renderer import GeometryNode
 from renderer import Mesh
 from renderer import Shader
@@ -9,22 +10,14 @@ from renderer import Shader
 
 WHOLE_ANGLE = 2.0 * pi
 
-MESH_VERTICES = [
-    +0.0, +0.3, 0.0,
-    -0.3, -0.3, 0.0,
-    +0.3, -0.3, 0.0,
-]
-
-MESH_INDICES = [
-    0, 1, 2,
-]
-
 
 class Player:
     """Game entity which represents a player."""
 
     def __init__(self):
-        mesh = Mesh(MESH_VERTICES, MESH_INDICES)
+        vertices, _, _, indices = load_obj('data/models/player.obj')
+
+        mesh = Mesh(vertices, indices)
         shader = Shader.from_glsl(
             'data/shaders/simple.vert',
             'data/shaders/simple.frag')
@@ -32,6 +25,8 @@ class Player:
         self._node = GeometryNode(mesh, shader)
 
         self.rot_angle = 0.0
+        self.x = 0
+        self.y = 0
 
     @property
     def node(self):
@@ -50,4 +45,6 @@ class Player:
         if self.rot_angle >= WHOLE_ANGLE:
             self.rot_angle -= WHOLE_ANGLE
 
-        self._node.transform = mat4(mat3_rot(Y_AXIS, self.rot_angle))
+        self._node.transform = (
+            Mat4.trans(Vec3(self.x, self.y, 0)) *
+            Mat4.rot(Y, self.rot_angle))

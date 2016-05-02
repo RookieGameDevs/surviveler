@@ -1,10 +1,13 @@
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
+from OpenGL.GL import GL_FRONT_AND_BACK
+from OpenGL.GL import GL_LINE
 from OpenGL.GL import GL_SHADING_LANGUAGE_VERSION
 from OpenGL.GL import GL_VERSION
 from OpenGL.GL import glClear
 from OpenGL.GL import glClearColor
 from OpenGL.GL import glFlush
 from OpenGL.GL import glGetString
+from OpenGL.GL import glPolygonMode
 from exceptions import ConfigError
 from exceptions import OpenGLError
 from exceptions import SDLError
@@ -72,20 +75,29 @@ class Renderer:
         LOG.info('GLSL version: {}'.format(
             as_utf8(glGetString(GL_SHADING_LANGUAGE_VERSION))))
 
+        self._width = width
+        self._height = height
         self.gl_setup(width, height)
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
 
     def gl_setup(self, width, height):
         """Private."""
         glClearColor(0, 0, 0, 0)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
-    def render(self, scene):
-        """Renders the given scene.
-
-        :param scene: Scene to render.
-        :type scene: :class:`renderer.Scene`
-        """
+    def clear(self):
+        """Clear buffers."""
         glClear(GL_COLOR_BUFFER_BIT)
-        scene.render(self)
+
+    def present(self):
+        """Present updated buffers to screen."""
         glFlush()
         sdl.SDL_GL_SwapWindow(self.window)
 

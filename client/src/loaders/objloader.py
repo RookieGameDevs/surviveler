@@ -3,6 +3,29 @@ OBJ file loader.
 
 Suitable to import 3d models exported from Blender.
 """
+import logging
+
+
+LOG = logging.getLogger(__name__)
+
+KEYWORD_DESC = {
+    'v': 'vertex',
+    'vt': 'UV',
+    'vn': 'normal',
+    'f': 'face',
+}
+
+
+class OBJLoaderError(Exception):
+    pass
+
+
+class OBJFormatError(OBJLoaderError):
+    pass
+
+
+class OBJTypeError(OBJFormatError):
+    pass
 
 
 def load_obj(filename):
@@ -16,7 +39,6 @@ def load_obj(filename):
         .obj file.
     :rtype: tuple
     """
-
     tmp_vertices = []
     tmp_normals = []
     tmp_uvs = []
@@ -28,35 +50,67 @@ def load_obj(filename):
     # vertex indices
     indices = []
 
-    def do_nothing(arg):
-        pass
+    def do_nothing(lineno, keyword, data):
+        """Handler for unused rows (comments, object names, etc - see samples)."""
+        LOG.debug('Skipped line {}: {} {}'.format(
+            lineno, keyword, ' '.join(data)))
 
-    def parse_vector(data):
-        return [float(component) for component in data]
-
-    def parse_vertex(data):
-        tmp_vertices.append(parse_vector(data))
-
-    def parse_texture(data):
-        tmp_uvs.append(parse_vector(data))
-
-    def parse_normal(data):
-        tmp_normals.append(parse_vector(data))
-
-    def parse_face(data):
-        for face in data:
-            face_items = face.split('/')
-            idx0 = int(face_items[0]) - 1
-            indices.append(idx0)
+    def parse_vector(lineno, keyword, data, xargs):
+        kwd_desc = KEYWORD_DESC[keyword]
+        if len(data) == xargs:
             try:
-                idx1 = int(face_items[1]) - 1
+                return [float(component) for component in data]
             except ValueError:
-                pass
-            else:
-                uvs.append(tmp_uvs[idx1])
-            idx2 = int(face_items[2]) - 1
-            vertices.extend(tmp_vertices[idx0])
-            normals.extend(tmp_normals[idx2])
+                raise OBJTypeError(
+                    'Line {lineno}: expected float values for {kwd_desc} data. '
+                    'Got values: {data}'.format(**locals()))
+
+        actual_length = len(data)
+        raise OBJFormatError(
+            'Line {lineno}: expected {xargs} arguments for {kwd_desc} data. '
+            'Got: {actual_length}'.format(**locals()))
+
+    def parse_vertex(lineno, keyword, data):
+        tmp_vertices.append(parse_vector(lineno, keyword, data, 3))
+
+    def parse_texture(lineno, keyword, data):
+        tmp_uvs.append(parse_vector(lineno, keyword, data, 2))
+
+    def parse_normal(lineno, keyword, data):
+        tmp_normals.append(parse_vector(lineno, keyword, data, 3))
+
+    def parse_face(lineno, keyword, data):
+        if len(data) != 3:
+            raise OBJFormatError(
+                'Line {lineno}: only triangle faces are supported'.format(lineno))
+
+        for face in data:
+            try:
+                # convert index values to integers and normalize them to 0 base,
+                # set missing indices to -1
+                face_items = [int(i) - 1 if i else -1 for i in face.split('/')]
+                if not face_items:
+                    raise ValueError('invalid face spec')
+
+                # clamp items array to 3 elements
+                if len(face_items) < 3:
+                    face_items.extend([-1] * (3 - len(face_items)))
+
+            except (ValueError, TypeError) as err:
+                LOG.warn('Failed to parse face {}: {}'.format(face, err))
+                continue
+
+            vert_idx = face_items[0]
+            indices.append(len(indices))
+            vertices.extend(tmp_vertices[vert_idx])
+
+            uv_idx = face_items[1]
+            if uv_idx >= 0:
+                uvs.append(tmp_uvs[uv_idx])
+
+            norm_idx = face_items[2]
+            if norm_idx >= 0:
+                normals.extend(tmp_normals[norm_idx])
 
     func_map = {
         'v': parse_vertex,
@@ -65,13 +119,14 @@ def load_obj(filename):
         'f': parse_face,
     }
 
-    with open(filename, 'r') as f:
-        for line in f:
+    with open(filename, 'r') as fp:
+        for lineno, line in enumerate(fp):
             data = line.split()
             try:
-                header, values = data[0], data[1:]
+                keyword, values = data[0], data[1:]
             except IndexError:
+                # skip empty lines
                 continue
-            func_map.get(header, do_nothing)(values)
+            func_map.get(keyword, do_nothing)(lineno, keyword, values)
 
     return vertices, normals, uvs, indices

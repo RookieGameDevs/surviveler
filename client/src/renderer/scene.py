@@ -1,6 +1,32 @@
 from abc import ABC
 from abc import abstractmethod
-from matlib import mat4
+from matlib import Mat4
+
+
+class SceneRenderContext:
+    """Rendering context which is active during the current rendering pass."""
+
+    def __init__(self, rndr, cam):
+        """Constructor.
+
+        :param rndr: Active renderer.
+        :type rndr: :class:`renderer.Renderer`
+
+        :param cam: Current camera.
+        :type cam: :class:`renderer.Camera`
+        """
+        self._renderer = rndr
+        self._camera = cam
+
+    @property
+    def renderer(self):
+        """Active renderer."""
+        return self._renderer
+
+    @property
+    def camera(self):
+        """Camera to use."""
+        return self._camera
 
 
 class Scene:
@@ -13,13 +39,17 @@ class Scene:
     def __init__(self):
         self.root = RootNode()
 
-    def render(self, rndr):
+    def render(self, rndr, cam):
         """Render the scene using the given renderer.
 
-        :param rndr: Renderer to use
+        :param rndr: Renderer to use.
         :type rndr: :class:`renderer.Renderer`
+
+        :param cam: Camera to use.
+        :type cam: :class:`renderer.Camera`
         """
-        self.root.render(rndr, mat4())
+        ctx = SceneRenderContext(rndr, cam)
+        self.root.render(ctx)
 
 
 class AbstractSceneNode(ABC):
@@ -35,22 +65,22 @@ class AbstractSceneNode(ABC):
 
     def __init__(self):
         self._children = []
-        self.transform = mat4()
+        self.transform = Mat4()
 
     @abstractmethod
-    def render(self, rndr, transform):
+    def render(self, ctx, transform):
         """Renders the node.
 
         This method should perform all rendering related calls, for which the
         passed computed transform should be used.
 
-        :param rndr: Renderer to use.
-        :type rndr: :class:`renderer.Renderer`
+        :param ctx: Current render context.
+        :type ctx: :class:`SceneRenderContext`
 
         :param transform: Node's computed transformation matrix. Not to be
             confused with `self.transform`, which describes node's local
             transformation.
-        :type transform: :class:`numpy.ndarray`
+        :type transform: :class:`matlib.Mat4`
         """
         pass
 
@@ -85,10 +115,10 @@ class RootNode(AbstractSceneNode):
     chaining.
     """
 
-    def render(self, rndr, transform):
+    def render(self, ctx, transform=None):
 
         def render_all(node, parent_transform):
-            node.render(rndr, node.transform * parent_transform)
+            node.render(ctx, node.transform * parent_transform)
 
             for child in node.children:
                 render_all(child, node.transform)
@@ -120,7 +150,8 @@ class GeometryNode(AbstractSceneNode):
         self.shader = shader
         self.params = params or {}
 
-    def render(self, rndr, transform):
+    def render(self, ctx, transform):
         self.params['transform'] = transform
+        self.params['projection'] = ctx.camera.transform
         self.shader.use(self.params)
-        self.mesh.render(rndr)
+        self.mesh.render(ctx.renderer)

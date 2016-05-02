@@ -1,10 +1,12 @@
 from itertools import count
+from matlib import Vec3
 from message import Message
 from message import MessageField
 from message import MessageType
 from message_handlers import get_handlers
 from message_handlers import handler
 from player import Player
+from renderer import OrthoCamera
 from renderer import Scene
 from utils import tstamp
 import logging
@@ -24,6 +26,18 @@ class Client:
         self.delta = None
 
         self.renderer = renderer
+
+        # field of view in game units
+        fov_units = 15.0
+        aspect_ratio = renderer.height / float(renderer.width)
+        self.camera = OrthoCamera(
+            -fov_units,                 # left plane
+            fov_units,                  # right plane
+            fov_units * aspect_ratio,   # top plane
+            -fov_units * aspect_ratio,  # bottom plane
+            10)                         # view distance
+        self.camera.look_at(Vec3(0, 0, 5), Vec3(0, 0, 0))
+
         self.scene_setup()
 
     def scene_setup(self):
@@ -49,6 +63,8 @@ class Client:
     @handler(MessageType.gamestate)
     def update_gamestate(self, msg):
         LOG.debug('Processing and updating gamestate')
+        self.player.x = msg.data.get(b'Xpos', 0)
+        self.player.y = msg.data.get(b'Ypos', 0)
 
     def process_message(self, msg):
         """Processes a message received from the server.
@@ -95,4 +111,7 @@ class Client:
                 self.process_message(msg)
 
             self.player.update(dt)
-            self.renderer.render(self.scene)
+
+            self.renderer.clear()
+            self.scene.render(self.renderer, self.camera)
+            self.renderer.present()
