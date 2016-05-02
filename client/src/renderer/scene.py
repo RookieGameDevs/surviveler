@@ -7,6 +7,14 @@ class SceneRenderContext:
     """Rendering context which is active during the current rendering pass."""
 
     def __init__(self, rndr, cam):
+        """Constructor.
+
+        :param rndr: Active renderer.
+        :type rndr: :class:`renderer.Renderer`
+
+        :param cam: Current camera.
+        :type cam: :class:`renderer.Camera`
+        """
         self._renderer = rndr
         self._camera = cam
 
