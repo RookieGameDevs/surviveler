@@ -102,7 +102,6 @@ class Client:
         server, renders the scene.
         """
         self.sync()
-        t = tstamp()
         while True:
             # compute time delta
             now = tstamp()
@@ -111,9 +110,6 @@ class Client:
             dt = (now - self.last_update) / 1000.0
             self.last_update = now
 
-            if tstamp() - t > 1000:
-                self.sync()
-                t = tstamp()
             for msg in self.proxy.poll():
                 self.process_message(msg)
 
