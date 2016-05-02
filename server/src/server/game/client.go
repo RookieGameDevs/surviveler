@@ -9,7 +9,7 @@ import (
 type ClientRegistry struct {
 	clients map[uint16]*network.Conn // one for each client connection
 	nextId  uint16                   // next available client id (1 based)
-	mutex   sync.Mutex               // protect from concurrent map accesses (data races)
+	mutex   sync.RWMutex             // protect from concurrent map accesses (data races)
 }
 
 /*
@@ -26,23 +26,23 @@ func (reg *ClientRegistry) init() {
 func (reg *ClientRegistry) registerClient(client *network.Conn) {
 	var clientId uint16
 
-	// protect :
-	// - increment of the next available id
-	// - client map access
+	// protect:
+	// - increment the next available id
+	// - client map write
 	reg.mutex.Lock()
 
 	// we have a new client, assign him an id.
 	clientId = reg.nextId
+	reg.nextId++
 	reg.clients[clientId] = client
+
+	// Note: for now we just stupidly increment the next available id.
+	//        We will have other problems to solve before this overflows...
+	reg.mutex.Unlock()
 
 	// record the client id inside the connection, this is needed for later
 	// retriving the clientId when we just have a connection
 	client.SetUserData(clientId)
-
-	// Note: for now we just stupidly increment the next available id.
-	//        We will have other problems to solve before this overflows...
-	reg.nextId++
-	reg.mutex.Unlock()
 
 	log.WithFields(log.Fields{
 		"id":   clientId,
@@ -58,11 +58,11 @@ func (reg *ClientRegistry) getClientId(c *network.Conn) uint16 {
 	clientId := c.GetUserData().(uint16)
 
 	// protect client map access
-	reg.mutex.Lock()
+	reg.mutex.RLock()
 	if _, ok := reg.clients[clientId]; !ok {
 		log.WithField("id", clientId).Panic("Unknown client")
 	}
-	reg.mutex.Unlock()
+	reg.mutex.RUnlock()
 	return clientId
 }
 
