@@ -1,5 +1,5 @@
 from game import Player
-from game import get_processors
+from game import process_gamestate
 from itertools import count
 from matlib import Vec3
 from network import Message
@@ -77,8 +77,7 @@ class Client:
         :type msg: :class:`message.Message`
         """
         LOG.debug('Processing gamestate message')
-        for processor in get_processors():
-            processor(msg.data)
+        process_gamestate(msg.data)
 
     def process_message(self, msg):
         """Processes a message received from the server.

@@ -16,13 +16,11 @@ def processor(f):
     return f
 
 
-def get_processors():
-    """Returns all the gamestate processors.
-
-    :return: gamestate processors
-    :rtype: list
+def process_gamestate(gamestate):
+    """Calls all the registered processors passing the gamestate as parameter.
     """
-    return __PROCESSORS
+    for proc in __PROCESSORS:
+        proc(gamestate)
 
 
 @processor
