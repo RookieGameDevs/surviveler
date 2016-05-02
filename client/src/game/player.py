@@ -33,7 +33,6 @@ class Player(Entity):
             'data/shaders/simple.vert',
             'data/shaders/simple.frag')
 
-        # FIXME: not sure if I like this.
         renderable = Renderable(parent_node, mesh, shader)
         super(Player, self).__init__(renderable)
 
