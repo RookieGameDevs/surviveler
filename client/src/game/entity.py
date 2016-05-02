@@ -24,15 +24,19 @@ class Entity(ABC):
         self.ENTITIES[self.e_id] = self
         self._components = {}
         for comp in components:
-            self[type(comp)] = comp
+            comp.entity = self
+            self._components[type(comp)] = comp
 
     def __getitem__(self, key):
-        return self._components[key]
+        """Item getter.
 
-    def __setitem__(self, key, value):
-        """Sets the parent entity to the component while adding it"""
-        value.entity = self
-        self._components[key] = value
+        Get the specified component from the entity. An entity can have at most
+        a component of each type.
+
+        :param key: The class of the component.
+        :type key: :class:`game.component.Component`
+        """
+        return self._components[key]
 
     @abstractmethod
     def update(self, dt):
