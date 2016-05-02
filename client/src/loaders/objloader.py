@@ -50,9 +50,10 @@ def load_obj(filename):
     # vertex indices
     indices = []
 
-    def do_nothing(*args):
+    def do_nothing(lineno, keyword, data):
         """Handler for unused rows (comments, object names, etc - see samples)."""
-        pass
+        LOG.debug('Skipped line {}: {} {}'.format(
+            lineno, keyword, ' '.join(data)))
 
     def parse_vector(lineno, keyword, data, xargs):
         kwd_desc = KEYWORD_DESC[keyword]
@@ -124,6 +125,7 @@ def load_obj(filename):
             try:
                 keyword, values = data[0], data[1:]
             except IndexError:
+                # skip empty lines
                 continue
             func_map.get(keyword, do_nothing)(lineno, keyword, values)
 
