@@ -69,6 +69,13 @@ class Client:
 
     @message_handler(MessageType.gamestate)
     def gamestate_handler(self, msg):
+        """Handle gamestate messages
+
+        Handle the gamestate messages, actually spawning all the processors.
+
+        :param msg: the message to be processed
+        :type msg: :class:`message.Message`
+        """
         LOG.debug('Processing gamestate message')
         for processor in get_processors():
             processor(msg.data)

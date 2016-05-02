@@ -19,6 +19,13 @@ def subscriber(event):
 
 
 def send_event(event):
+    """Emits the given event.
+
+    Calls all the event handlers subscribed to the specified event.
+
+    :param event: The event to be emitted.
+    :type event: :class:`game.events.Event`
+    """
     for subscriber in __SUBSCRIBED[type(event)]:
         subscriber(event)
 

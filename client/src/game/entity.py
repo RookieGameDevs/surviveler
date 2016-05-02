@@ -9,15 +9,13 @@ class Entity(ABC):
     #: mapping of all the entities where the key is the entity id, and the value
     # is the entity itself
     ENTITIES = {}
+
+    #: count iterator for incremental unique internal ids for each created
+    # entity.
     count = count()
 
     def __init__(self, *components):
         """Constructor.
-
-        TODO: define the type of e_id
-
-        :param e_id: The unique ideitifier of the entity.
-        :type e_id: TBD.
 
         :param components: List of components for this entity.
         :type components: sequence of :class:`game.component.Component`
