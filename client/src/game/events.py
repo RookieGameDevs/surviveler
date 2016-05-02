@@ -36,11 +36,19 @@ class Event(ABC):
 
 
 class PlayerPositionUpdated(Event):
-    """Temporary event.
+    """Player position updated.
 
-    This event is here just to test the whole event handling machine.
+    Event emitted when the position of the Player changed.
     """
     def __init__(self, x, y):
+        """Constructor.
+
+        :param x: The position on x-axis.
+        :type x: float
+
+        :param y: The position on y-axis.
+        :type y: float
+        """
         self.x, self.y = x, y
 
     def __str__(self):

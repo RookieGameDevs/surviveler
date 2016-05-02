@@ -24,15 +24,12 @@ def process_gamestate(gamestate):
 
 
 @processor
-def update_user_position(data):
+def update_user_position(gamestate):
     """Creates and triggers the PlayerPositionUpdated event.
 
-    This is a temporary implementation that updates the player position
-    directly.
-
-    :param data: the gamestate
-    :type data: dict
+    :param gamestate: the gamestate
+    :type gamestate: dict
     """
-    x, y = data[MessageField.x_pos], data[MessageField.y_pos]
+    x, y = gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]
     evt = PlayerPositionUpdated(x, y)
     send_event(evt)
