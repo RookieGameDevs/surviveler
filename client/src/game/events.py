@@ -11,7 +11,6 @@ def subscriber(event):
     :param event: the event to be handled
     :type event: :class:`Event`
     """
-    # TODO: check that event is actually an Event instance
     def wrap(f):
         __SUBSCRIBED[event].append(f)
         return f

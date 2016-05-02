@@ -14,7 +14,6 @@ def message_handler(msgtype):
     :param msgtype: the type of the message
     :type msgtype: :enum:`message.MessageType`
     """
-    # TODO: check msgtype is actually one of MessageType values
     def wrap(f):
         __MESSAGE_HANDLERS[msgtype].append(f)
         return f
