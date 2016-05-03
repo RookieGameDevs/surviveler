@@ -40,7 +40,7 @@ func (g *Game) startServer() {
  */
 func (g *Game) OnConnect(c *network.Conn) bool {
 	// register our new client
-	clientId := g.clients.registerClient(c)
+	clientId := g.clients.register(c)
 
 	// fake the reception of a NewPlayerMsg
 	if msg, err := NewMessage(MsgType(NewPlayerId), NewPlayerMsg{"batman"}); err == nil {
@@ -58,7 +58,7 @@ func (g *Game) OnConnect(c *network.Conn) bool {
  * read on the connection
  */
 func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
-	clientId := g.clients.getClientId(c)
+	clientId := c.GetUserData().(uint16)
 	log.WithFields(log.Fields{
 		"id":   clientId,
 		"addr": c.GetRawConn().RemoteAddr(),
