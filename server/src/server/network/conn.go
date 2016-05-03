@@ -26,7 +26,7 @@ type Conn struct {
 	srv          *Server
 	conn         *net.TCPConn  // underlying tcp connection
 	userData     interface{}   // associated user data
-	closeOnce    sync.Once     // close the conn, once, per instance
+	closeOnce    sync.Once     // close the connection, once, per instance
 	closeFlag    int32         // close flag
 	closeChan    chan struct{} // close chanel
 	outgoingChan chan Message  // chanel sending outgoing messages
@@ -44,6 +44,7 @@ func (c *Conn) GetUserData() interface{} {
  * SetUserData associates user data with the connection
  */
 func (c *Conn) SetUserData(data interface{}) {
+	// TODO: protect again more than one call, using sync.Once
 	c.userData = data
 }
 
@@ -59,7 +60,7 @@ type ConnEvtHandler interface {
 	// A false return value indicates the connection should be closed.
 	OnIncomingMsg(*Conn, Message) bool
 
-	// OnClose is called when the connection has been closed
+	// OnClose is called when the connection has been closed, once per connection.
 	OnClose(*Conn)
 }
 
@@ -88,11 +89,18 @@ func (c *Conn) GetRawConn() *net.TCPConn {
  */
 func (c *Conn) Close() {
 	c.closeOnce.Do(func() {
+		// atomically set to 1, so concurrent accesses always have the latest value
 		atomic.StoreInt32(&c.closeFlag, 1)
+
+		// close all the channels
 		close(c.closeChan)
 		close(c.outgoingChan)
 		close(c.incomingChan)
+
+		// close the underlying TCP connection
 		c.conn.Close()
+
+		// finally raise the callback
 		c.srv.callback.OnClose(c)
 	})
 }
@@ -101,6 +109,7 @@ func (c *Conn) Close() {
  * IsClosed indicates whether a the connection is closed or not
  */
 func (c *Conn) IsClosed() bool {
+	// again, atomatically read it, so that concurrent accesses always have the latest value
 	return atomic.LoadInt32(&c.closeFlag) == 1
 }
 
@@ -124,6 +133,7 @@ func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) 
 			return nil
 
 		default:
+			// in case of no timeout, raise an error if we couldn't send immediately
 			return ErrBlockingWrite
 		}
 
@@ -133,9 +143,11 @@ func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) 
 			return nil
 
 		case <-c.closeChan:
+			//  tried to send on a closed connection
 			return ErrClosedConnection
 
 		case <-time.After(timeout):
+			// in case a timeout, raise an error once it has elapsed
 			return ErrBlockingWrite
 		}
 	}
@@ -183,9 +195,11 @@ func (c *Conn) readLoop() {
 
 	for {
 		select {
+		// handle server exit
 		case <-c.srv.exitChan:
 			return
 
+		// handle connection close
 		case <-c.closeChan:
 			return
 
@@ -216,16 +230,20 @@ func (c *Conn) writeLoop() {
 
 	for {
 		select {
+		// handle server exit
 		case <-c.srv.exitChan:
 			return
 
+		// handle connection close
 		case <-c.closeChan:
 			return
 
+		// handle an outgoing message
 		case msg := <-c.outgoingChan:
 			if c.IsClosed() {
 				return
 			}
+			// write the serialized message on the underlying TCP connection
 			if _, err := c.conn.Write(msg.Serialize()); err != nil {
 				return
 			}
@@ -244,12 +262,15 @@ func (c *Conn) handleLoop() {
 
 	for {
 		select {
+		// handle server exit
 		case <-c.srv.exitChan:
 			return
 
+		// handle connection close
 		case <-c.closeChan:
 			return
 
+		// handle incoming message
 		case msg := <-c.incomingChan:
 			if c.IsClosed() {
 				return
