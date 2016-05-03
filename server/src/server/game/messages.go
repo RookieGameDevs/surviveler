@@ -6,7 +6,7 @@ package game
 const (
 	PingId MsgType = 0 + iota
 	PongId
-	PositionId
+	GameStateId
 )
 
 /*
@@ -30,13 +30,22 @@ type PingMsg struct {
 type PongMsg PingMsg
 
 /*
- * TEMP: entity position message in 2D space
- */
-type PositionMsg struct{ Xpos, Ypos float32 }
-
-/*
  * Indicates a new player is joining current session
  */
 type NewPlayerMsg struct {
 	Name string
+}
+
+type GameStateMsg struct {
+	Tstamp int64
+	Xpos   float32
+	Ypos   float32
+	Action ActionMsg
+}
+
+type ActionMsg struct {
+	ActionType   uint16
+	TargetTstamp int64
+	Xpos         float32
+	Ypos         float32
 }
