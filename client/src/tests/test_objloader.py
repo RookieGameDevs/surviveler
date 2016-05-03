@@ -6,9 +6,9 @@ import pytest
 
 
 @pytest.mark.parametrize("obj_filename,n_vertices_and_normals,indices", [
-    ('triangle.obj', 3, (1, 0, 2)),
-    ('square.obj', 6, (0, 3, 2, 0, 1, 3)),  # 3 * 2 triangles
-    ('pyramid.obj', 12, (0, 1, 2, 2, 1, 3, 3, 1, 0, 0, 2, 3)),
+    ('triangle.obj', 3, range(3)),
+    ('square.obj', 6, range(6)),  # 3 * 2 triangles
+    ('pyramid.obj', 12, range(12)),
 ])
 def test_good_files(
     obj_filename, n_vertices_and_normals, indices):
