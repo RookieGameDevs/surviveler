@@ -36,6 +36,7 @@ class Player(Entity):
             'data/shaders/simple.frag')
 
         renderable = Renderable(parent_node, mesh, shader)
+        renderable.node.params['color'] = Vec3(0.04, 0.67, 0.87)
         movable = Movable((0.0, 0.0))
         super(Player, self).__init__(renderable, movable)
 
