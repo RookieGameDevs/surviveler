@@ -24,7 +24,8 @@ func (g *Game) sendGameState(gs GameState) {
 
 	msg, err := NewMessage(MsgType(GameStateId), gsMsg)
 	if err != nil {
-		log.WithField("err", err).Debug("Error sending gamestate msg")
+		log.WithField("err", err).Debug("Error creating gamestate msg")
+		return
 	}
 	log.WithField("msg", msg).Debug("Sending gamestate msg")
 	g.clients.sendAll(msg)
