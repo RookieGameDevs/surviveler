@@ -12,6 +12,7 @@ class MessageType(IntEnum):
     ping = 0
     pong = 1
     gamestate = 2
+    move = 3
 
 
 @unique
@@ -20,6 +21,8 @@ class MessageField(bytes, Enum):
     timestamp = b'Tstamp'
     x_pos = b'Xpos'
     y_pos = b'Ypos'
+    action = b'Action'
+    action_type = b'ActionType'
 
 
 class Message:

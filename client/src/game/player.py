@@ -1,5 +1,7 @@
 from game import Entity
+from game import Movable
 from game import Renderable
+from game.events import PlayerActionMove
 from game.events import PlayerPositionUpdated
 from game.events import subscriber
 from loaders import load_obj
@@ -34,11 +36,10 @@ class Player(Entity):
             'data/shaders/simple.frag')
 
         renderable = Renderable(parent_node, mesh, shader)
-        super(Player, self).__init__(renderable)
+        movable = Movable((0.0, 0.0))
+        super(Player, self).__init__(renderable, movable)
 
         self.rot_angle = 0.0
-        self.x = 0.0
-        self.y = 0.0
 
     def update(self, dt):
         """Update the player.
@@ -52,8 +53,10 @@ class Player(Entity):
         if self.rot_angle >= WHOLE_ANGLE:
             self.rot_angle -= WHOLE_ANGLE
 
+        self[Movable].update(dt)
+        x, y = self[Movable].position
         self[Renderable].transform = (
-            Mat4.trans(Vec3(self.x, self.y, 0)) *
+            Mat4.trans(Vec3(x, y, 0)) *
             Mat4.rot(Y, self.rot_angle))
 
 
@@ -70,4 +73,21 @@ def update_player_position(evt):
 
     # FIXME: find a proper way to map server ids with internal ids
     player = Entity.get_entity(0)
-    player.x, player.y = evt.x, evt.y
+    player[Movable].position = evt.x, evt.y
+
+
+@subscriber(PlayerActionMove)
+def move_received(evt):
+    """Set the move action in the player entity.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.PlayerActionMove`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+
+    # FIXME: find a proper way to map server ids with internal ids
+    player = Entity.get_entity(0)
+    player[Movable].position = evt.current_position
+    player[Movable].destination = evt.destination
+    player[Movable].current_tstamp = evt.current_tstamp
+    player[Movable].target_tstamp = evt.target_tstamp

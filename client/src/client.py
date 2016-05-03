@@ -73,10 +73,15 @@ class Client:
 
         Handle the gamestate messages, actually spawning all the processors.
 
+        Convert the server timestamp to the client one. Every timestamp in the
+        gamestate messages payload from now on is to be considered comparable to
+        the local timestamp (as returned by `utils.tstamp` function.
+
         :param msg: the message to be processed
         :type msg: :class:`message.Message`
         """
         LOG.debug('Processing gamestate message')
+        msg.data[MessageField.timestamp] += self.delta or 0
         process_gamestate(msg.data)
 
     def process_message(self, msg):

@@ -1,6 +1,8 @@
+from game.events import PlayerActionMove
 from game.events import PlayerPositionUpdated
 from game.events import send_event
 from network import MessageField
+from network import MessageType
 import logging
 
 
@@ -33,3 +35,22 @@ def update_user_position(gamestate):
     x, y = gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]
     evt = PlayerPositionUpdated(x, y)
     send_event(evt)
+
+
+@processor
+def player_move_action(gamestate):
+    """Checks if the player is actually doing any move action and send the
+    proper event.
+
+    :param gamestate: the gamestate
+    :type gamestate: dict
+    """
+    action = gamestate.get(MessageField.action, None)
+    if action and action.get(MessageField.action_type, None) == MessageType.move:
+        send_event(PlayerActionMove(
+            position=(
+                gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]),
+            destination=(
+                action[MessageField.x_pos], action[MessageField.y_pos]),
+            current_tstamp=gamestate[MessageField.timestamp],
+            target_tstamp=action[MessageField.timestamp]))
