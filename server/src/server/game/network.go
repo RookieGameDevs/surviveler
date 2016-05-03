@@ -40,30 +40,15 @@ func (g *Game) startServer() {
  */
 func (g *Game) OnConnect(c *network.Conn) bool {
 	// register our new client
-	g.clients.registerClient(c)
+	clientId := g.clients.registerClient(c)
 
-	// start a goroutine that spams client with player position!
-	go func() {
-
-		for {
-			switch {
-			case c.IsClosed():
-				return
-			default:
-
-				// temporary: for now spam a position every 200ms
-				msg, err := NewMessage(MsgType(PositionId), PositionMsg{10, 15})
-
-				err = c.AsyncSendMessage(msg, time.Second)
-				if err != nil {
-					log.WithError(err).Error("Couldn't send async message")
-					return
-				}
-				log.Debug("Sent a PositionMsg")
-				time.Sleep(200 * time.Millisecond)
-			}
-		}
-	}()
+	// fake the reception of a NewPlayerMsg
+	if msg, err := NewMessage(MsgType(NewPlayerId), NewPlayerMsg{"batman"}); err == nil {
+		// forward incoming message to the game loop
+		g.msgChan <- ClientMessage{msg, clientId}
+	} else {
+		log.WithError(err).Error("Couldn't create a new message")
+	}
 
 	return true
 }
