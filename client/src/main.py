@@ -3,9 +3,11 @@
 from client import Client
 from configparser import ConfigParser
 from contextlib import ContextDecorator
+from core import InputManager
 from network import Connection
 from network import MessageProxy
 from renderer import Renderer
+import game.actions  # noqa
 import logging
 import os
 import sdl2 as sdl
@@ -50,7 +52,8 @@ def main(config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])
     proxy = MessageProxy(conn)
-    client = Client(renderer, proxy)
+    input_mgr = InputManager()
+    client = Client(renderer, proxy, input_mgr)
     client.start()
     renderer.shutdown()
 

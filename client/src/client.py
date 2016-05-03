@@ -19,13 +19,14 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client class"""
 
-    def __init__(self, renderer, proxy):
+    def __init__(self, renderer, proxy, input_mgr):
         self.proxy = proxy
         self.sync_counter = count()
         self.last_update = None
         self.delta = None
 
         self.renderer = renderer
+        self.input_mgr = input_mgr
 
         # field of view in game units
         fov_units = 15.0
@@ -124,9 +125,12 @@ class Client:
             dt = (now - self.last_update) / 1000.0
             self.last_update = now
 
-            # Poll messages from proxy
+            # poll messages from network
             for msg in self.proxy.poll():
                 self.process_message(msg)
+
+            # process user input
+            self.input_mgr.process_input()
 
             self.player.update(dt)
 
@@ -134,5 +138,5 @@ class Client:
             self.scene.render(self.renderer, self.camera)
             self.renderer.present()
 
-            # Push messages in the proxy queue
+            # push messages in the proxy queue
             self.proxy.push()
