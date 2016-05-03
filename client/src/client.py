@@ -54,11 +54,11 @@ class Client:
             # setup an orthographic camera with given field of view and flipped Y
             # coordinate (Y+ points down)
             self.camera = OrthoCamera(
-                -fov,                 # left plane
+                0,                    # left plane
                 fov,                  # right plane
-                fov * aspect_ratio,   # top plane
-                -fov * aspect_ratio,  # bottom plane
-                fov * 2)              # view distance
+                0,                    # top plane
+                fov * aspect_ratio,   # bottom plane
+                fov)                  # view distance
 
             self.camera.look_at(eye=Vec3(0, -2.5, 5), center=Vec3(0, 0, 0))
 
