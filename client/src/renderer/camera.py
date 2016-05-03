@@ -27,21 +27,20 @@ class Camera(ABC):
         :param up: Up vector.
         :type up: :class:`matlib.Vec3`
         """
-        t = center - eye
-        z = t.mag()
-        f = t.unit()
-        s = f.cross(up)
-        if s.mag() == 0:
+        d = eye - center
+        z = d.unit()
+        x = up.cross(z).unit()
+        if x.mag() == 0:
             raise ValueError(
                 'Look direction vector must be different from up vector')
 
-        u = s.unit().cross(f)
+        y = z.cross(x)
         self.look_t = Mat4([
-            [s[0],  s[1],  s[2],  0],
-            [u[0],  u[1],  u[2],  0],
-            [-f[0], -f[1], -f[2], z],
+            [x[0],  x[1],  x[2],  0],
+            [y[0],  y[1],  y[2],  0],
+            [z[0],  z[1],  z[2],  0],
             [0,     0,     0,     1]
-        ])
+        ]) * Mat4.trans(d)
 
     @abstractproperty
     def transform(self):

@@ -26,7 +26,7 @@ class Client:
     class __Client:
         """Client implementation"""
 
-        def __init__(self, renderer, proxy, input_mgr):
+        def __init__(self, renderer, proxy, input_mgr, game_cfg):
             """Constructor.
 
             :param renderer: The rederer
@@ -38,29 +38,29 @@ class Client:
             :param input_mgr: The input manager
             :type input_mgr: :class:`core.input.InputManager`
             """
+            self.game_cfg = game_cfg
             self.proxy = proxy
             self.sync_counter = count()
             self.last_update = None
             self._syncing = {}
             self.delta = None
-
             self.renderer = renderer
             self.input_mgr = input_mgr
 
             # field of view in game units
-            fov_units = 15.0
+            fov = game_cfg.getint('fov')
             aspect_ratio = renderer.height / float(renderer.width)
 
             # setup an orthographic camera with given field of view and flipped Y
             # coordinate (Y+ points down)
             self.camera = OrthoCamera(
-                -fov_units,                 # left plane
-                fov_units,                  # right plane
-                -fov_units * aspect_ratio,  # top plane
-                fov_units * aspect_ratio,   # bottom plane
-                10)                         # view distance
+                -fov,                 # left plane
+                fov,                  # right plane
+                fov * aspect_ratio,   # top plane
+                -fov * aspect_ratio,  # bottom plane
+                fov * 2)              # view distance
 
-            self.camera.look_at(eye=Vec3(0, -2, 5), center=Vec3(0, 0, 0))
+            self.camera.look_at(eye=Vec3(0, -2.5, 5), center=Vec3(0, 0, 0))
 
             self.scene_setup()
 
@@ -163,7 +163,7 @@ class Client:
                 # push messages in the proxy queue
                 self.proxy.push()
 
-    def __init__(self, renderer, proxy, input_mgr):
+    def __init__(self, renderer, proxy, input_mgr, game_cfg):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
@@ -176,9 +176,12 @@ class Client:
 
         :param input_mgr: The input manager
         :type input_mgr: :class:`core.input.InputManager`
+
+        :param game_cfg: Game configuration
+        :type game_cfg: mapping
         """
         Client.__INSTANCE = self
-        self.__client = Client.__Client(renderer, proxy, input_mgr)
+        self.__client = Client.__Client(renderer, proxy, input_mgr, game_cfg)
 
     @classmethod
     def get_instance(cls):
