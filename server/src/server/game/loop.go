@@ -8,7 +8,7 @@ import (
 )
 
 type GameState struct {
-	players map[uint16]entity.Player
+	players map[uint16]*entity.Player
 }
 
 /*
@@ -26,7 +26,7 @@ func (g *Game) loop() {
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
 	gs := GameState{}
-	gs.players = make(map[uint16]entity.Player)
+	gs.players = make(map[uint16]*entity.Player)
 
 	go func() {
 		for {
@@ -45,12 +45,12 @@ func (g *Game) loop() {
 				case NewPlayerId:
 					// we have a new player
 					nextId := uint16(len(gs.players))
-					gs.players[nextId] = entity.Player{}
+					gs.players[nextId] = new(entity.Player)
 				}
 
 			case <-sendTickChan:
 
-				g.sendGameState(gs)
+				g.sendGameState(&gs)
 
 			case <-tickChan:
 
