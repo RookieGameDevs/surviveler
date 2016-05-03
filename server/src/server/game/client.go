@@ -98,12 +98,32 @@ func (reg *ClientRegistry) kickClient(clientId uint16) {
 func (reg *ClientRegistry) kickAll() {
 	log.Debug("About to kick all clients")
 
-	// protect client map access
+	// protect client map access (read/write)
 	reg.mutex.Lock()
 	for _, client := range reg.clients {
 		client.Close()
 	}
+	// clear the map
+	reg.clients = make(map[uint16]*network.Conn, 0)
 	reg.mutex.Unlock()
 
 	log.Info("Kicked everybody out")
+}
+
+/*
+ * sendAll sends a message to all clients
+ */
+func (reg *ClientRegistry) sendAll(msg *Message) error {
+
+	// protect client map access (read)
+	reg.mutex.RLock()
+	for _, client := range reg.clients {
+		err := client.AsyncSendMessage(msg, time.Millisecond)
+		if err != nil {
+			log.WithError(err).WithField("msg", msg).Error("Error sending message")
+			return err
+		}
+	}
+	reg.mutex.RUnlock()
+	return nil
 }
