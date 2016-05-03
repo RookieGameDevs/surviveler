@@ -88,16 +88,26 @@ class MessageProxy:
         """
         LOG.info('Initializing message proxy')
         self.conn = conn
+        self.msg_queue = []
 
-    def push(self, msg):
-        """Pushes the message through the underneath connection
+    def enqueue(self, msg):
+        """Enqueue the message.
+
+        The message is going to be sent during the next push.
 
         :param msg: the Message object to be pushed
         :type msg: :class:`message.Message`
         """
-        LOG.debug('Pushing message: {} {}'.format(msg, str(msg.data)))
-        self.conn.send(*msg.encode())
-        LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
+        LOG.debug('Enqueueing message: {} {}'.format(msg, str(msg.data)))
+        self.msg_queue.append(msg)
+
+    def push(self):
+        """Pushes the message through the underneath connection"""
+        while len(self.msg_queue):
+            msg = self.msg_queue.pop(0)
+            LOG.debug('Pushing message: {} {}'.format(msg, str(msg.data)))
+            self.conn.send(*msg.encode())
+            LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
 
     def poll(self):
         """Polls the underneath connection and yields all the messages readed.

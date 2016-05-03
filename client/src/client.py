@@ -22,7 +22,6 @@ class Client:
     def __init__(self, renderer, proxy):
         self.proxy = proxy
         self.sync_counter = count()
-        self.syncing = {}
         self.last_update = None
         self.delta = None
 
@@ -48,24 +47,6 @@ class Client:
         """
         self.scene = Scene()
         self.player = Player(self.scene.root)
-
-    @message_handler(MessageType.pong)
-    def pong_handler(self, msg):
-        """Handle pong messages
-
-        Sync the client time with the server, setting up the self.delta
-        attribute.
-
-        :param msg: the message to be processed
-        :type msg: :class:`message.Message`
-        """
-        if self.syncing:
-            now = tstamp()
-            initial = self.syncing.pop(msg.data[MessageField.id])
-
-            self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
-
-            LOG.info('Synced time with server: delta={}'.format(self.delta))
 
     @message_handler(MessageType.gamestate)
     def gamestate_handler(self, msg):
@@ -101,13 +82,30 @@ class Client:
 
         Uses a message of type MessageType.ping with a random id to sync with
         the server clock guessing the lag related to ping.
+
+        NOTE: this method is blocking until we receive the pong message from the
+        server.
         """
         LOG.info('Syncing time with server')
+
+        # Utility function to filter out non-pong messages
+        is_pong = lambda msg: msg.msgtype == MessageType.pong
+
+        # Create, enqueue and push message
         sync_id = next(self.sync_counter)
-        timestamp = tstamp()
-        self.syncing[sync_id] = timestamp
-        msg = Message(MessageType.ping, {MessageField.id: sync_id, MessageField.timestamp: timestamp})
-        self.proxy.push(msg)
+        msg = Message(MessageType.ping, {MessageField.id: sync_id})
+        self.proxy.enqueue(msg)
+        self.proxy.push()
+
+        initial = tstamp()
+
+        # block until a pong message is received
+        while True:
+            for msg in filter(is_pong, self.proxy.poll()):
+                now = tstamp()
+                self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
+                LOG.info('Synced time with server: delta={}'.format(self.delta))
+                return
 
     def start(self):
         """Client main loop.
@@ -115,7 +113,9 @@ class Client:
         Polls the MessageProxy and processes each message received from the
         server, renders the scene.
         """
+        # Sync with server time
         self.sync()
+
         while True:
             # compute time delta
             now = tstamp()
@@ -124,6 +124,7 @@ class Client:
             dt = (now - self.last_update) / 1000.0
             self.last_update = now
 
+            # Poll messages from proxy
             for msg in self.proxy.poll():
                 self.process_message(msg)
 
@@ -132,3 +133,6 @@ class Client:
             self.renderer.clear()
             self.scene.render(self.renderer, self.camera)
             self.renderer.present()
+
+            # Push messages in the proxy queue
+            self.proxy.push()
