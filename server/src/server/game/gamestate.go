@@ -11,12 +11,12 @@ func (g *Game) sendGameState(gs GameState) {
 
 	// create a GameStateMsg from the game state
 	gsMsg := GameStateMsg{
-		Tstamp: 100,
+		Tstamp: MakeTimestamp(),
 		Xpos:   gs.players[0].XPos,
 		Ypos:   gs.players[0].YPos,
 		Action: ActionMsg{
 			ActionType:   0,
-			TargetTstamp: 200,
+			TargetTstamp: MakeTimestamp(),
 			Xpos:         gs.players[0].XPos,
 			Ypos:         gs.players[0].YPos,
 		},
