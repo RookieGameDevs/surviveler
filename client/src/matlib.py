@@ -117,6 +117,23 @@ class Mat4(np.matrix):
         mat.A[:, 3][:3] = v
         return mat
 
+    @classmethod
+    def scale(cls, v):
+        """Creates a scale matrix given scale factors.
+
+        :param v: Scale vector.
+        :type v: :class:`matlib.Vec3`
+
+        :returns: The resulting matrix.
+        :rtype: :class:`matlib.Mat4`
+        """
+        return Mat4([
+            [v[0], 0,    0,    0],
+            [0,    v[1], 0,    0],
+            [0,    0,    v[2], 0],
+            [0,    0,    0,    1],
+        ])
+
 
 #: Predefined vector for X axis
 X = Vec3(1.0, 0.0, 0.0)

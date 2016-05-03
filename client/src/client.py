@@ -1,7 +1,9 @@
 from game import Entity
 from game import Player
+from game import Terrain
 from game import process_gamestate
 from itertools import count
+from matlib import Mat4
 from matlib import Vec3
 from network import get_message_handlers
 from network import Message
@@ -71,6 +73,7 @@ class Client:
             """
             self.scene = Scene()
             self.player = Player(self.scene.root)
+            self.terrain = Terrain(self.scene.root, 30, 30)
 
         def process_message(self, msg):
             """Processes a message received from the server.
