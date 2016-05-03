@@ -2,7 +2,7 @@ package network
 
 import (
 	"errors"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -195,7 +195,7 @@ func (c *Conn) readLoop() {
 		// Read from the connection byte stream and unserialize into a message
 		msg, err := c.srv.msgReader.ReadMessage(c.conn)
 		if err != nil {
-			fmt.Printf("ReadMessage error: %v\n", err)
+			log.WithError(err).Warning("ReadMessage")
 			return
 		}
 
