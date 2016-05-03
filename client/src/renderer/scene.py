@@ -118,7 +118,7 @@ class RootNode(AbstractSceneNode):
     def render(self, ctx, transform=None):
 
         def render_all(node, parent_transform):
-            node.render(ctx, node.transform * parent_transform)
+            node.render(ctx, parent_transform * node.transform)
 
             for child in node.children:
                 render_all(child, node.transform)
