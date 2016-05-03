@@ -3,11 +3,11 @@ from game import Player
 from game import process_gamestate
 from itertools import count
 from matlib import Vec3
+from network import get_message_handlers
 from network import Message
+from network import message_handler
 from network import MessageField
 from network import MessageType
-from network import get_message_handlers
-from network import message_handler
 from renderer import OrthoCamera
 from renderer import Scene
 from utils import tstamp
@@ -50,13 +50,17 @@ class Client:
             # field of view in game units
             fov_units = 15.0
             aspect_ratio = renderer.height / float(renderer.width)
+
+            # setup an orthographic camera with given field of view and flipped Y
+            # coordinate (Y+ points down)
             self.camera = OrthoCamera(
                 -fov_units,                 # left plane
                 fov_units,                  # right plane
-                fov_units * aspect_ratio,   # top plane
-                -fov_units * aspect_ratio,  # bottom plane
+                -fov_units * aspect_ratio,  # top plane
+                fov_units * aspect_ratio,   # bottom plane
                 10)                         # view distance
-            self.camera.look_at(Vec3(0, 0, 5), Vec3(0, 0, 0))
+
+            self.camera.look_at(eye=Vec3(0, -2, 5), center=Vec3(0, 0, 0))
 
             self.scene_setup()
 

@@ -8,7 +8,7 @@ from loaders import load_obj
 from math import pi
 from matlib import Mat4
 from matlib import Vec3
-from matlib import Y
+from matlib import Z
 from renderer import Mesh
 from renderer import Shader
 import logging
@@ -57,7 +57,7 @@ class Player(Entity):
         x, y = self[Movable].position
         self[Renderable].transform = (
             Mat4.trans(Vec3(x, y, 0)) *
-            Mat4.rot(Y, self.rot_angle))
+            Mat4.rot(Z, self.rot_angle))
 
 
 @subscriber(PlayerPositionUpdated)
