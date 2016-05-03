@@ -2,6 +2,7 @@ from abc import ABC
 from abc import abstractproperty
 from matlib import UP
 from matlib import Mat4
+from matlib import Vec3
 
 
 class Camera(ABC):
@@ -57,8 +58,8 @@ class OrthoCamera(Camera):
         self.r = right
         self.t = top
         self.b = bottom
-        self.n = 0
-        self.f = distance
+        self.n = distance / 2
+        self.f = self.n + distance
 
     @property
     def transform(self):
@@ -73,6 +74,6 @@ class OrthoCamera(Camera):
             [0,  sy, 0,  ty],
             [0,  0,  sz, tz],
             [0,  0,  0,  1],
-        ])
+        ]) * Mat4.trans(Vec3(0, 0, self.n))
 
         return proj_mat * self.look_t
