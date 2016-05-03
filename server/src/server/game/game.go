@@ -93,9 +93,6 @@ func (g *Game) stop() {
 	g.loopCloseChan <- struct{}{}
 	defer close(g.loopCloseChan)
 
-	// close client connections
-	g.clients.kickAll()
-
 	// stop server
 	log.Info("Stopping server")
 	g.server.Stop()
