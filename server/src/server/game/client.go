@@ -4,6 +4,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/network"
 	"sync"
+	"time"
 )
 
 type ClientRegistry struct {
@@ -21,9 +22,9 @@ func (reg *ClientRegistry) init() {
 }
 
 /*
- * registerClient creates a new client and gives it an id
+ * registerClient creates a new client, gives it an id and return the id
  */
-func (reg *ClientRegistry) registerClient(client *network.Conn) {
+func (reg *ClientRegistry) registerClient(client *network.Conn) uint16 {
 	var clientId uint16
 
 	// protect:
@@ -48,6 +49,8 @@ func (reg *ClientRegistry) registerClient(client *network.Conn) {
 		"id":   clientId,
 		"addr": client.GetRawConn().RemoteAddr(),
 	}).Info("Accepted a new client")
+
+	return clientId
 }
 
 /*
