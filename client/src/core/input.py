@@ -1,5 +1,5 @@
-from game.events import MouseClickEvent
-from game.events import send_event
+from core.events import MouseClickEvent
+from events import send_event
 import sdl2 as sdl
 import sdl2.ext as sdl_ext
 

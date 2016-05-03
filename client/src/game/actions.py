@@ -1,5 +1,5 @@
-from game.events import MouseClickEvent
-from game.events import subscriber
+from core.events import MouseClickEvent
+from events import subscriber
 import logging
 
 LOG = logging.getLogger(__name__)

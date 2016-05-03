@@ -1,6 +1,6 @@
+from events import send_event
 from game.events import PlayerActionMove
 from game.events import PlayerPositionUpdated
-from game.events import send_event
 from network import MessageField
 from network import MessageType
 import logging
