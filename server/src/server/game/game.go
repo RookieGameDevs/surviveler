@@ -28,13 +28,13 @@ type GameCfg struct {
  * network.ConnEvtHandler interface
  */
 type Game struct {
-	cfg           GameCfg        // configuration settings
-	msgFactory    MsgFactory     // message factory
-	server        network.Server // tcp server instance
-	clients       ClientRegistry // manage the connected clients
-	ticker        time.Ticker    // our tick source
-	msgChan       chan Message   // conducts the Message to the game loop
-	loopCloseChan chan struct{}  // indicates to the game loop that it may exit
+	cfg           GameCfg            // configuration settings
+	msgFactory    MsgFactory         // message factory
+	server        network.Server     // tcp server instance
+	clients       ClientRegistry     // manage the connected clients
+	ticker        time.Ticker        // our tick source
+	msgChan       chan ClientMessage // conducts ClientMessage to the game loop
+	loopCloseChan chan struct{}      // indicates to the game loop that it may exit
 }
 
 /*
@@ -59,7 +59,7 @@ func (g *Game) Setup(cfg GameCfg) {
 	g.clients.init()
 
 	// init channels
-	g.msgChan = make(chan Message)
+	g.msgChan = make(chan ClientMessage)
 	g.loopCloseChan = make(chan struct{})
 }
 
