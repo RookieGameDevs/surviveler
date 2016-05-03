@@ -31,6 +31,15 @@ type Message struct {
 }
 
 /*
+ * ClientMessage is a message sent by the client, to which the server has added
+ * the client Id
+ */
+type ClientMessage struct {
+	*Message
+	clientId uint16 // client Id (set by server)
+}
+
+/*
  * Serialize transforms a message into a byte slice
  */
 func (msg Message) Serialize() []byte {
