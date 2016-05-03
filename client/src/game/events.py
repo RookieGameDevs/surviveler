@@ -52,7 +52,7 @@ class PlayerPositionUpdated(Event):
         self.x, self.y = x, y
 
     def __str__(self):
-        return '<PlayerPositionUpdate({}, {})>'.format(self.x, self.y)
+        return '<PlayerPositionUpdated({}, {})>'.format(self.x, self.y)
 
 
 class PlayerActionMove(Event):

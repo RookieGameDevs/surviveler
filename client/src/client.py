@@ -81,7 +81,9 @@ class Client:
         :type msg: :class:`message.Message`
         """
         LOG.debug('Processing gamestate message')
-        msg.data[MessageField.timestamp] += self.delta or 0
+        # TODO: uncomment me when the server will give back a timestamp in the
+        # gamestate.
+        # msg.data[MessageField.timestamp] += self.delta or 0
         process_gamestate(msg.data)
 
     def process_message(self, msg):

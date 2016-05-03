@@ -48,9 +48,9 @@ def player_move_action(gamestate):
     action = gamestate.get(MessageField.action, None)
     if action and action.get(MessageField.action_type, None) == MessageType.move:
         send_event(PlayerActionMove(
-            position=(
+            current_position=(
                 gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]),
             destination=(
                 action[MessageField.x_pos], action[MessageField.y_pos]),
             current_tstamp=gamestate[MessageField.timestamp],
-            target_tstamp=action[MessageField.timestamp]))
+            target_tstamp=action[MessageField.target_timestamp]))
