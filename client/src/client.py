@@ -1,11 +1,12 @@
+from game import Player
+from game import process_gamestate
 from itertools import count
 from matlib import Vec3
-from message import Message
-from message import MessageField
-from message import MessageType
-from message_handlers import get_handlers
-from message_handlers import handler
-from player import Player
+from network import Message
+from network import MessageField
+from network import MessageType
+from network import get_message_handlers
+from network import message_handler
 from renderer import OrthoCamera
 from renderer import Scene
 from utils import tstamp
@@ -45,13 +46,19 @@ class Client:
 
         Creates game entities and sets up the visual scene.
         """
-        self.player = Player()
-
         self.scene = Scene()
-        self.scene.root.add_child(self.player.node)
+        self.player = Player(self.scene.root)
 
-    @handler(MessageType.pong)
+    @message_handler(MessageType.pong)
     def pong_handler(self, msg):
+        """Handle pong messages
+
+        Sync the client time with the server, setting up the self.delta
+        attribute.
+
+        :param msg: the message to be processed
+        :type msg: :class:`message.Message`
+        """
         if self.syncing:
             now = tstamp()
             initial = self.syncing.pop(msg.data[MessageField.id])
@@ -60,11 +67,17 @@ class Client:
 
             LOG.info('Synced time with server: delta={}'.format(self.delta))
 
-    @handler(MessageType.gamestate)
-    def update_gamestate(self, msg):
-        LOG.debug('Processing and updating gamestate')
-        self.player.x = msg.data.get(b'Xpos', 0)
-        self.player.y = msg.data.get(b'Ypos', 0)
+    @message_handler(MessageType.gamestate)
+    def gamestate_handler(self, msg):
+        """Handle gamestate messages
+
+        Handle the gamestate messages, actually spawning all the processors.
+
+        :param msg: the message to be processed
+        :type msg: :class:`message.Message`
+        """
+        LOG.debug('Processing gamestate message')
+        process_gamestate(msg.data)
 
     def process_message(self, msg):
         """Processes a message received from the server.
@@ -73,7 +86,7 @@ class Client:
         :type msg: :class:`message.Message`
         """
         LOG.info('Processing message: {} {}'.format(msg, msg.data))
-        for func in get_handlers(msg.msgtype):
+        for func in get_message_handlers(msg.msgtype):
             func(self, msg)
 
     def sync(self):
@@ -95,7 +108,6 @@ class Client:
         server, renders the scene.
         """
         self.sync()
-        t = tstamp()
         while True:
             # compute time delta
             now = tstamp()
@@ -104,9 +116,6 @@ class Client:
             dt = (now - self.last_update) / 1000.0
             self.last_update = now
 
-            if tstamp() - t > 1000:
-                self.sync()
-                t = tstamp()
             for msg in self.proxy.poll():
                 self.process_message(msg)
 

@@ -2,9 +2,9 @@
 
 from client import Client
 from configparser import ConfigParser
-from connection import Connection
 from contextlib import ContextDecorator
-from message import MessageProxy
+from network import Connection
+from network import MessageProxy
 from renderer import Renderer
 import logging
 import os

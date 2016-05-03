@@ -8,7 +8,7 @@ LOG = logging.getLogger(__name__)
 __MESSAGE_HANDLERS = defaultdict(list)
 
 
-def handler(msgtype):
+def message_handler(msgtype):
     """Decorator for received message handlers.
 
     :param msgtype: the type of the message
@@ -20,7 +20,7 @@ def handler(msgtype):
     return wrap
 
 
-def get_handlers(msgtype):
+def get_message_handlers(msgtype):
     """Returns all the handlers for a specific msgtype.
 
     :param msgtype: the type of the message
