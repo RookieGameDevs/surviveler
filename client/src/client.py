@@ -19,7 +19,11 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client class"""
 
+    #: The instance of the client
+    __INSTANCE = None
+
     def __init__(self, renderer, proxy, input_mgr):
+        self.__INSTANCE = self
         self.proxy = proxy
         self.sync_counter = count()
         self.last_update = None
@@ -40,6 +44,10 @@ class Client:
         self.camera.look_at(Vec3(0, 0, 5), Vec3(0, 0, 0))
 
         self.scene_setup()
+
+    @classmethod
+    def get_instance(cls):
+        return cls.__INSTANCE
 
     def scene_setup(self):
         """Sets up the scene.
