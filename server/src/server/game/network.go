@@ -75,12 +75,11 @@ func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 }
 
 /*
- * handlePing processes the PingMsg as it needs an immediate PongMsg response
+ * handlePing processes a PingMsg and immediately replies with a PongMsg
  */
 func (g *Game) handlePing(c *network.Conn, msg *Message) error {
 	// decode ping msg payload into an interface
-	iping, err := g.msgFactory.DecodePayload(PingId, msg.Buffer)
-	if err != nil {
+	if iping, err := g.msgFactory.DecodePayload(PingId, msg.Buffer); err != nil {
 		return err
 	}
 
@@ -89,11 +88,10 @@ func (g *Game) handlePing(c *network.Conn, msg *Message) error {
 
 	// reply pong
 	pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
-	err = c.AsyncSendMessage(pong, time.Second)
-	if err != nil {
+	if err = c.AsyncSendMessage(pong, time.Second); err != nil {
 		return err
 	}
-	log.WithField("msg", ping).Debug("Sent pong")
+	log.WithField("msg", pong).Debug("Sent pong")
 	return nil
 }
 
