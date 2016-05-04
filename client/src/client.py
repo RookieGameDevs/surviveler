@@ -97,8 +97,9 @@ class Client:
         """
         LOG.info('Syncing time with server')
         sync_id = next(self.sync_counter)
-        self.syncing[sync_id] = tstamp()
-        msg = Message(MessageType.ping, {MessageField.id: sync_id})
+        timestamp = tstamp()
+        self.syncing[sync_id] = timestamp
+        msg = Message(MessageType.ping, {MessageField.id: sync_id, MessageField.timestamp: timestamp})
         self.proxy.push(msg)
 
     def start(self):
