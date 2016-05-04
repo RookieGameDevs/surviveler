@@ -1,8 +1,9 @@
 from game.components import Component
 from utils import angle
 from utils import distance
-import math
+from utils import tstamp
 import logging
+import math
 
 
 LOG = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class Movable(Component):
         self._position = position
 
         # Current timestamp (for movement interpolation)
-        self.current_tstamp = 0
+        self._current_tstamp = 0
         # Current destination (for movement interpolation)
         self._destination = None
         # Target timestamp (for movement interpolation)
@@ -67,15 +68,6 @@ class Movable(Component):
         """
         return self._destination
 
-    @destination.setter
-    def destination(self, value):
-        """Destination setter.
-
-        :param value: The new position to be used as destination.
-        :type value: tuple or None
-        """
-        self._destination = value
-
     @property
     def target_tstamp(self):
         """Target timestamp getter.
@@ -86,15 +78,44 @@ class Movable(Component):
         """
         return self._target_tstamp
 
-    @target_tstamp.setter
-    def target_tstamp(self, value):
-        """Target timestamp setter.
+    def move(self, position, start_tstamp, destination, target_tstamp):
+        """Initial setup of a movable.
 
-        :param value: The timestamp (local time) in which the movable is
-            expected to be in the destination point.
-        :type value: int or None
+        Computes the initial position, based on the starting position and the dt
+        from the the tstamp when the starting position was calculated on the
+        server.
+
+        :param position: The starting position of the movable.
+        :type position: :class:`tuple`
+
+        :param start_tstamp: The timestamp in which the starting position was
+            calculated
+        :type start_tstamp: :class:`int`
+
+        :param destination: The target destination of the movable.
+        :type destination: :class:`tuple`
+
+        :param target_tstamp: The timestamp in which the movable is expected to
+            be at destination
+        :type target_tstamp: :class:`int`
         """
-        self._target_tstamp = value
+        dst = distance(destination, position)
+        theta = angle(self._position, self._destination)
+        now = tstamp()
+        dst = (
+            tstamp() - start_tstamp *
+            distance(destination, position) /
+            (target_tstamp - start_tstamp))
+
+        # Use the EPSILON tolerance calculation as usual to decide if we really
+        # need to move the movable.
+        self.position = (
+            position[0] + dst * math.cos(theta),
+            position[1] + dst * math.sin(theta))
+
+        self._current_tstamp = now
+        self._destination = destination
+        self._target_tstamp = target_tstamp
 
     def update(self, dt):
         """Movable update function.
@@ -118,16 +139,16 @@ class Movable(Component):
             dst = (
                 ms_dt *
                 distance(self._position, self._destination) /
-                (self._target_tstamp - self.current_tstamp))
+                (self._target_tstamp - self._current_tstamp))
             self._position = (
                 self._position[0] + dst * math.cos(theta),
                 self._position[1] + dst * math.sin(theta))
 
-            self.current_tstamp += ms_dt
+            self._current_tstamp += ms_dt
 
             finished = (
                 distance(self._destination, self._position) < self.EPSILON or
-                self._target_tstamp - self.current_tstamp == 0)
+                self._target_tstamp - self._current_tstamp == 0)
             if finished:
                 # Reset the movable internal data because:
                 #  1. We arrived at the destination (distance < EPSILON)
@@ -136,4 +157,4 @@ class Movable(Component):
                 # internal data.
                 self._position = self._destination
                 self._destination, self._target_tstamp = None, None
-                self.current_tstamp = 0
+                self._current_tstamp = 0

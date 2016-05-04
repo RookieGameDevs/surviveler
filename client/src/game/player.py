@@ -87,7 +87,8 @@ def move_received(evt):
 
     # FIXME: find a proper way to map server ids with internal ids
     player = Entity.get_entity(0)
-    player[Movable].position = evt.current_position
-    player[Movable].destination = evt.destination
-    player[Movable].current_tstamp = evt.current_tstamp
-    player[Movable].target_tstamp = evt.target_tstamp
+    player[Movable].move(
+        position=evt.current_position,
+        start_tstamp=evt.current_tstamp,
+        destination=evt.destination,
+        target_tstamp=evt.target_tstamp)
