@@ -54,6 +54,7 @@ class Connection:
         LOG.info('Connecting to {}:{}'.format(ip, port))
         self.socket = socket.create_connection((ip, port))
         self.socket.setblocking(False)
+        self.socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         self.chunk_size = config.getint('ChunkSize')
 
         self.header = None
