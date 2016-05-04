@@ -32,4 +32,9 @@ def send_event(event):
 class Event(ABC):
     """Abstract base class for all the event classes.
     """
-    pass
+    def __new__(cls, *args, **kwargs):
+        """Injects the client instance in the event object."""
+        from client import Client
+        inst = super(Event, cls).__new__(cls)
+        inst.client = Client.get_instance()
+        return inst

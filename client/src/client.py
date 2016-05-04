@@ -1,3 +1,4 @@
+from game import Entity
 from game import Player
 from game import process_gamestate
 from itertools import count
@@ -16,14 +17,10 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-class Client:
+class _Client:
     """Client class"""
 
-    #: The instance of the client
-    __INSTANCE = None
-
     def __init__(self, renderer, proxy, input_mgr):
-        self.__INSTANCE = self
         self.proxy = proxy
         self.sync_counter = count()
         self.last_update = None
@@ -45,10 +42,6 @@ class Client:
 
         self.scene_setup()
 
-    @classmethod
-    def get_instance(cls):
-        return cls.__INSTANCE
-
     def scene_setup(self):
         """Sets up the scene.
 
@@ -56,25 +49,6 @@ class Client:
         """
         self.scene = Scene()
         self.player = Player(self.scene.root)
-
-    @message_handler(MessageType.gamestate)
-    def gamestate_handler(self, msg):
-        """Handle gamestate messages
-
-        Handle the gamestate messages, actually spawning all the processors.
-
-        Convert the server timestamp to the client one. Every timestamp in the
-        gamestate messages payload from now on is to be considered comparable to
-        the local timestamp (as returned by `utils.tstamp` function.
-
-        :param msg: the message to be processed
-        :type msg: :class:`message.Message`
-        """
-        LOG.debug('Processing gamestate message')
-        # TODO: uncomment me when the server will give back a timestamp in the
-        # gamestate.
-        # msg.data[MessageField.timestamp] += self.delta or 0
-        process_gamestate(msg.data)
 
     def process_message(self, msg):
         """Processes a message received from the server.
@@ -84,7 +58,7 @@ class Client:
         """
         LOG.debug('Processing message: {} {}'.format(msg, msg.data))
         for func in get_message_handlers(msg.msgtype):
-            func(self, msg)
+            func(msg)
 
     def sync(self):
         """Tries to guess the local delta with the server timestamps.
@@ -116,6 +90,25 @@ class Client:
                 LOG.info('Synced time with server: delta={}'.format(self.delta))
                 return
 
+    def dt(self):
+        """Returns the dt from the last update.
+
+        :return: The dt from the last update in seconds
+        :rtype: float
+        """
+        now = tstamp()
+        if self.last_update is None:
+            self.last_update = now
+        dt = (now - self.last_update) / 1000.0
+        self.last_update = now
+        return dt
+
+    def poll_network(self):
+        """Poll the message proxy and process messages when they are complete.
+        """
+        for msg in self.proxy.poll():
+            self.process_message(msg)
+
     def start(self):
         """Client main loop.
 
@@ -127,24 +120,94 @@ class Client:
 
         while True:
             # compute time delta
-            now = tstamp()
-            if self.last_update is None:
-                self.last_update = now
-            dt = (now - self.last_update) / 1000.0
-            self.last_update = now
+            dt = self.dt()
 
             # poll messages from network
-            for msg in self.proxy.poll():
-                self.process_message(msg)
-
+            self.poll_network()
             # process user input
             self.input_mgr.process_input()
 
             self.player.update(dt)
 
+            # rendering
             self.renderer.clear()
             self.scene.render(self.renderer, self.camera)
             self.renderer.present()
-
             # push messages in the proxy queue
             self.proxy.push()
+
+
+class Client:
+    """Client interface"""
+
+    #: The instance of the client
+    __INSTANCE = None
+
+    def __init__(self, renderer, proxy, input_mgr):
+        """Constructor.
+
+        Just passes the arguments to the _Client constructor.
+
+        :param renderer: The rederer
+        :type renderer: :class:`renderer.Renderer`
+
+        :param proxy: The message proxy
+        :type proxy: :class:`network.message.MessageProxy`
+
+        :param input_mgr: The input manager
+        :type input_mgr: :class:`core.input.InputManager`
+        """
+        Client.__INSTANCE = self
+        self.__client = _Client(renderer, proxy, input_mgr)
+
+    @classmethod
+    def get_instance(cls):
+        """Returns the instance of the clint (aka use client as a singleton)."""
+        return cls.__INSTANCE
+
+    def start(self):
+        """Wraps the _Client start method."""
+        self.__client.start()
+
+    @property
+    def proxy(self):
+        """The message proxy."""
+        return self.__client.proxy
+
+    @property
+    def scene(self):
+        """The game scene."""
+        return self.__client.scene
+
+    @property
+    def camera(self):
+        """The camera."""
+        return self.__client.camera
+
+    def get_entity(self, e_id):
+        """Returns the entity object associated with the given entity id.
+
+        :param e_id: The entity id.
+        :type e_id: int
+        """
+        return Entity.get_entity(e_id)
+
+
+@message_handler(MessageType.gamestate)
+def gamestate_handler(msg):
+    """Handle gamestate messages
+
+    Handle the gamestate messages, actually spawning all the processors.
+
+    Convert the server timestamp to the client one. Every timestamp in the
+    gamestate messages payload from now on is to be considered comparable to
+    the local timestamp (as returned by `utils.tstamp` function.
+
+    :param msg: the message to be processed
+    :type msg: :class:`message.Message`
+    """
+    LOG.debug('Processing gamestate message')
+    # TODO: uncomment me when the server will give back a timestamp in the
+    # gamestate.
+    # msg.data[MessageField.timestamp] += self.delta or 0
+    process_gamestate(msg.data)

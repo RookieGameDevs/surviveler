@@ -72,7 +72,7 @@ def update_player_position(evt):
     LOG.debug('Event subscriber: {}'.format(evt))
 
     # FIXME: find a proper way to map server ids with internal ids
-    player = Entity.get_entity(0)
+    player = evt.client.get_entity(0)
     player[Movable].position = evt.x, evt.y
 
 
@@ -86,7 +86,7 @@ def move_received(evt):
     LOG.debug('Event subscriber: {}'.format(evt))
 
     # FIXME: find a proper way to map server ids with internal ids
-    player = Entity.get_entity(0)
+    player = evt.client.get_entity(0)
     player[Movable].move(
         position=evt.current_position,
         start_tstamp=evt.current_tstamp,
