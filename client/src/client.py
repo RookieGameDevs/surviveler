@@ -71,9 +71,6 @@ class _Client:
         """
         LOG.info('Syncing time with server')
 
-        # Utility function to filter out non-pong messages
-        is_pong = lambda msg: msg.msgtype == MessageType.pong
-
         # Create, enqueue and push message
         sync_id = next(self.sync_counter)
         msg = Message(MessageType.ping, {MessageField.id: sync_id})
@@ -83,12 +80,10 @@ class _Client:
         initial = tstamp()
 
         # block until a pong message is received
-        while True:
-            for msg in filter(is_pong, self.proxy.poll()):
-                now = tstamp()
-                self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
-                LOG.info('Synced time with server: delta={}'.format(self.delta))
-                return
+        msg = self.proxy.wait_for(MessageType.pong)
+        now = tstamp()
+        self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
+        LOG.info('Synced time with server: delta={}'.format(self.delta))
 
     def dt(self):
         """Returns the dt from the last update.

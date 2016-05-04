@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import logging
 import socket
 import struct
@@ -73,6 +74,15 @@ class Connection:
         LOG.debug('Writing message: {} {}'.format(msgtype, payload))
         self.socket.sendall(create_packet(msgtype, payload))
         LOG.debug('Written message: {} {}'.format(msgtype, payload))
+
+    @contextmanager
+    def blocking(self):
+        """Contextmanager: set the socket as blocking on demand."""
+        self.socket.setblocking(True)
+        LOG.debug('Blocking socket')
+        yield
+        self.socket.setblocking(False)
+        LOG.debug('Unblocking socket')
 
     def recv(self):
         """Receives a single packet via TCP from the server.

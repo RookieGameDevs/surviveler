@@ -109,7 +109,21 @@ class MessageProxy:
             self.conn.send(*msg.encode())
             LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
 
-    def poll(self):
+    def wait_for(self, msgtype):
+        """Polls the connection waiting for a specific message.
+
+        :param msgtype: The message type we are waiting for
+        :type msgtype: :class:`network.message.MessageType`
+
+        :return: The message.
+        :rtype: :class:`network.message.Message`
+        """
+        with self.conn.blocking():
+            while True:
+                for msg in self.poll(MessageType.pong):
+                    return msg
+
+    def poll(self, msgtype=None):
         """Polls the underneath connection and yields all the messages readed.
 
         :return: the Message object to be pushed
@@ -119,7 +133,10 @@ class MessageProxy:
             data = self.conn.recv()
             if data is None:
                 break
-            msgtype, payload = data
-            msg = Message.decode(msgtype, payload)
+            mt, payload = data
+            if msgtype and mt != msgtype:
+                LOG.debug('Discarded message: {}]'.format(mt))
+                continue
+            msg = Message.decode(mt, payload)
             LOG.debug('Received message: {} {}'.format(msg, str(msg.data)))
             yield msg
