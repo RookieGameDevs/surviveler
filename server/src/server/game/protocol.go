@@ -78,8 +78,7 @@ func NewMessage(t MsgType, p interface{}) (*Message, error) {
 	return msg, nil
 }
 
-type MsgReader struct {
-}
+type MsgReader struct{}
 
 /*
  * ReadMessage reads a message from a TCP connection. Performs the conversion
