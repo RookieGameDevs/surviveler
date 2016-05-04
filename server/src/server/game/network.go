@@ -42,12 +42,11 @@ func (g *Game) OnConnect(c *network.Conn) bool {
 	// register our new client
 	clientId := g.clients.register(c)
 
-	// fake the reception of a NewPlayerMsg
-	if msg, err := NewMessage(MsgType(NewPlayerId), NewPlayerMsg{"batman"}); err == nil {
-		// forward incoming message to the game loop
+	// send a AddPlayerMsg to the game loop (server-only msg)
+	if msg, err := NewMessage(MsgType(AddPlayerId), AddPlayerMsg{"batman"}); err == nil {
 		g.msgChan <- ClientMessage{msg, clientId}
 	} else {
-		log.WithError(err).Error("Couldn't create a new message")
+		log.WithError(err).Fatal("Couldn't create AddPlayerMsg")
 	}
 
 	return true
@@ -104,5 +103,14 @@ func (g *Game) handlePing(c *network.Conn, msg *Message) error {
  * client cleanup
  */
 func (g *Game) OnClose(c *network.Conn) {
+
+	clientId := c.GetUserData().(uint16)
 	log.WithField("addr", c.GetRawConn().RemoteAddr()).Debug("Connection closed")
+
+	// send a DelPlayerMsg to the game loop (server-only msg)
+	if msg, err := NewMessage(MsgType(DelPlayerId), DelPlayerMsg{}); err == nil {
+		g.msgChan <- ClientMessage{msg, clientId}
+	} else {
+		log.WithError(err).Fatal("Couldn't create DelPlayerMsg")
+	}
 }

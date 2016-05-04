@@ -13,7 +13,8 @@ const (
  * Server only messages
  */
 const (
-	NewPlayerId = 1024 + iota
+	AddPlayerId = 1024 + iota
+	DelPlayerId
 )
 
 /*
@@ -30,11 +31,16 @@ type PingMsg struct {
 type PongMsg PingMsg
 
 /*
- * Indicates a new player is joining current session
+ * Indicates a new player joined the game
  */
-type NewPlayerMsg struct {
+type AddPlayerMsg struct {
 	Name string
 }
+
+/*
+ * Indicates that a player may be removed
+ */
+type DelPlayerMsg struct{}
 
 type GameStateMsg struct {
 	Tstamp int64

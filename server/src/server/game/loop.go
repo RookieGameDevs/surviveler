@@ -39,10 +39,13 @@ func (g *Game) loop() {
 				// process client message
 				log.WithField("msg", msg).Debug("Message received")
 				switch msg.Type {
-				case NewPlayerId:
-					// we have a new player
-					nextId := uint16(len(gs.players))
-					gs.players[nextId] = new(entity.Player)
+				case AddPlayerId:
+					// we have a new player, assign her the unique connection id
+					gs.players[msg.clientId] = new(entity.Player)
+				case DelPlayerId:
+					// one less player
+					log.WithField("id", msg.clientId).Info("Removing player from the game state")
+					delete(gs.players, msg.clientId)
 				}
 
 			case <-sendTickChan:

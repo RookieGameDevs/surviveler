@@ -35,7 +35,8 @@ func (mf MsgFactory) RegisterMsgTypes() {
 	mf.registerMsgType(PingId, PingMsg{})
 	mf.registerMsgType(PongId, PongMsg{})
 	mf.registerMsgType(GameStateId, GameStateMsg{})
-	mf.registerMsgType(NewPlayerId, NewPlayerMsg{})
+	mf.registerMsgType(AddPlayerId, AddPlayerMsg{})
+	mf.registerMsgType(DelPlayerId, DelPlayerMsg{})
 }
 
 /*
