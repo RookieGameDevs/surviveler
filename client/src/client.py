@@ -74,7 +74,7 @@ class Client:
         :param msg: the message to be processed
         :type msg: :class:`message.Message`
         """
-        LOG.info('Processing message: {} {}'.format(msg, msg.data))
+        LOG.debug('Processing message: {} {}'.format(msg, msg.data))
         for func in get_message_handlers(msg.msgtype):
             func(self, msg)
 
