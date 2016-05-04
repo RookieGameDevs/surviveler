@@ -88,12 +88,12 @@ func (g *Game) Start() {
  * stop cleanups the server and exits the various loops
  */
 func (g *Game) stop() {
+	// stop server (that closes clients connection)
+	log.Info("Stopping server")
+	g.server.Stop()
+
 	// stop game loop
 	log.Info("Stopping game loop")
 	g.loopCloseChan <- struct{}{}
 	defer close(g.loopCloseChan)
-
-	// stop server
-	log.Info("Stopping server")
-	g.server.Stop()
 }
