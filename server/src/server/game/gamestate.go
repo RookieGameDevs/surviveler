@@ -6,15 +6,24 @@ import (
 )
 
 /*
- * sendGameState sends the whole game state to all the connected clients
+ * GameState is the structure that contains all the complete game state
  */
-func (g *Game) sendGameState(gs *GameState) {
+type GameState struct {
+	players map[uint16]*entity.Player
+}
+
+/*
+ * pack transforms the current game state into a GameStateMsg,
+ * ready to be sent to every connected client
+ */
+func (gs GameState) pack() (*Message, error) {
 
 	// create a GameStateMsg from the game state
 	if len(gs.players) == 0 {
-		log.Info("sendGameState: nothing to send, 0 players")
-		return
+		log.Debug("sendGameState: nothing to pack, 0 players")
+		return nil, nil
 	}
+
 	var ent0 entity.Player
 	ent0 = *gs.players[0]
 
@@ -30,11 +39,12 @@ func (g *Game) sendGameState(gs *GameState) {
 		},
 	}
 
+	// wrap the specialized GameStateMsg into a generic Message
 	msg, err := NewMessage(MsgType(GameStateId), gsMsg)
 	if err != nil {
-		log.WithField("err", err).Debug("Error creating gamestate msg")
-		return
+		log.WithField("err", err).Fatal("Couldn't create Message from gamestate")
+		return nil, err
 	}
-	log.WithField("msg", gsMsg).Debug("Sending gamestate msg")
-	g.clients.sendAll(msg)
+
+	return msg, nil
 }

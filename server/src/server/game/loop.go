@@ -7,10 +7,6 @@ import (
 	"time"
 )
 
-type GameState struct {
-	players map[uint16]*entity.Player
-}
-
 /*
  * loop is the main game loop, it fetches messages from a channel, processes
  * them immediately.
@@ -28,14 +24,15 @@ func (g *Game) loop() {
 	gs := GameState{}
 	gs.players = make(map[uint16]*entity.Player)
 
+	// loop local stop condition
+	quit := false
+
 	go func() {
-		for {
+		for !quit {
 			select {
 
 			case <-g.loopCloseChan:
-
-				log.Debug("Game loop just ended")
-				return
+				quit = true
 
 			case msg := <-g.msgChan:
 
@@ -50,7 +47,17 @@ func (g *Game) loop() {
 
 			case <-sendTickChan:
 
-				g.sendGameState(&gs)
+				// pack the gamestate into a message
+				var msg *Message
+				var err error
+				if msg, err = gs.pack(); err != nil {
+					log.WithField("err", err).Error("Couldn't pack the gamestate")
+					quit = true
+				}
+				if msg != nil {
+					log.WithField("msg", msg).Debug("Sending gamestate msg")
+					g.clients.sendAll(msg)
+				}
 
 			case <-tickChan:
 
@@ -67,5 +74,7 @@ func (g *Game) loop() {
 				runtime.Gosched()
 			}
 		}
+
+		log.Info("Game just stopped ticking")
 	}()
 }
