@@ -23,7 +23,7 @@ class MessageField(bytes, Enum):
     y_pos = b'Ypos'
     action = b'Action'
     action_type = b'ActionType'
-    target_timestamp = b'TargetTimestamp'
+    target_timestamp = b'TargetTstamp'
 
 
 class Message:

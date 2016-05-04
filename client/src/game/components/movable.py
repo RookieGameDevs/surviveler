@@ -100,7 +100,7 @@ class Movable(Component):
         :type target_tstamp: :class:`int`
         """
         dst = distance(destination, position)
-        theta = angle(self._position, self._destination)
+        theta = angle(position, destination)
         now = tstamp()
         dst = (
             tstamp() - start_tstamp *
