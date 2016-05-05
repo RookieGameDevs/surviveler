@@ -75,18 +75,23 @@ func (reg *ClientRegistry) Broadcast(msg *Message) error {
 
 	// protect client map access (read)
 	reg.mutex.RLock()
+	defer reg.mutex.RUnlock()
+
 	for _, client := range reg.clients {
-		// check connection state
+		// we tolerate only a very short delay
+		err := client.AsyncSendMessage(msg, 5*time.Millisecond)
 		if !client.IsClosed() {
-			err := client.AsyncSendMessage(msg, time.Millisecond)
-			// TODO: check out error type, blocking write or connection closed?
-			// the connection could still have been closed by the client here
-			if err != nil {
-				log.WithError(err).WithField("msg", msg).Error("Error sending message")
+			switch err {
+			case network.ErrClosedConnection:
+				// the connection could still have been closed in the meantime
+				log.WithField("msg", msg).Warning("Client connection already closed")
+			case network.ErrBlockingWrite:
+				// this should not be tolerated, as we can make the rest of the world wait
+				log.WithError(err).WithField("msg", msg).Error("Blocking broadcast")
 				return err
 			}
 		}
 	}
-	reg.mutex.RUnlock()
+
 	return nil
 }
