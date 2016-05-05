@@ -90,7 +90,11 @@ class Client:
 
             # Create, enqueue and push message
             sync_id = next(self.sync_counter)
-            msg = Message(MessageType.ping, {MessageField.id: sync_id})
+            msg = Message(
+                MessageType.ping, {
+                    MessageField.id: sync_id,
+                    MessageField.timestamp: tstamp(),
+                })
 
             def callback():
                 self._syncing[sync_id] = tstamp()
