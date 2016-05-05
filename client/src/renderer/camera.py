@@ -14,7 +14,11 @@ class Camera(ABC):
     """
 
     def __init__(self):
-        self.look_t = Mat4()
+        self.view_mat = Mat4()
+        self.scale_vec = Vec3(1.0, 1.0, 1.0)
+
+    def zoom(self, factor):
+        self.scale_vec = Vec3(factor, factor, factor)
 
     def look_at(self, eye, center, up=UP):
         """Sets up camera look transformation.
@@ -36,16 +40,23 @@ class Camera(ABC):
                 'Look direction vector must be different from up vector')
 
         y = z.cross(x)
-        self.look_t = Mat4([
-            [x[0],  x[1],  x[2],  0],
-            [y[0],  y[1],  y[2],  0],
-            [z[0],  z[1],  z[2],  0],
-            [0,     0,     0,     1]
-        ]) * Mat4.trans(d)
+        self.view_mat = (
+            Mat4([
+                [x[0],  x[1],  x[2],  0],
+                [y[0],  y[1],  y[2],  0],
+                [z[0],  z[1],  z[2],  0],
+                [0,     0,     0,     1]
+            ]) *
+            Mat4.trans(d))
+
+    @property
+    def modelview(self):
+        """Camera modelview 4x4 matrix."""
+        return Mat4.scale(self.scale_vec) * self.view_mat
 
     @abstractproperty
-    def transform(self):
-        """Camera transformation 4x4 matrix."""
+    def projection(self):
+        """Camera projection 4x4 matrix."""
         pass
 
 
@@ -62,7 +73,13 @@ class OrthoCamera(Camera):
         self.f = self.n + distance
 
     @property
-    def transform(self):
+    def modelview(self):
+        return (
+            Mat4.trans(Vec3(0, 0, self.n)) *
+            super(OrthoCamera, self).modelview)
+
+    @property
+    def projection(self):
         sx = 2.0 / (self.r - self.l)
         sy = 2.0 / (self.t - self.b)
         sz = 2.0 / (self.f - self.n)
@@ -74,6 +91,6 @@ class OrthoCamera(Camera):
             [0,  sy, 0,  ty],
             [0,  0,  sz, tz],
             [0,  0,  0,  1],
-        ]) * Mat4.trans(Vec3(0, 0, self.n))
+        ])
 
-        return proj_mat * self.look_t
+        return proj_mat

@@ -10,14 +10,14 @@ class Terrain(Entity):
 
     def __init__(self, parent_node, width, height):
         vertices = [
-            +0.0, +0.0, +0.0,  # top left
-            +0.0, +1.0, +0.0,  # bottom left
-            +1.0, +1.0, +0.0,  # bottom right
-            +1.0, +0.0, +0.0,  # top right
+            -0.5, +0.5, +0.0,  # top left
+            -0.5, -0.5, +0.0,  # bottom left
+            +0.5, -0.5, +0.0,  # bottom right
+            +0.5, +0.5, +0.0,  # top right
         ]
         indices = [
-            0, 1, 2,
-            0, 2, 3,
+            2, 1, 0,
+            3, 2, 0,
         ]
         mesh = Mesh(vertices, indices)
         shader = Shader.from_glsl(
@@ -27,7 +27,7 @@ class Terrain(Entity):
         renderable.node.params['color'] = Vec3(0, 1, 0)
         renderable.transform = (
             Mat4.trans(Vec3(0, 0, 0.5)) *
-            Mat4.scale(Vec3(20, 20, 1)))
+            Mat4.scale(Vec3(100, 100, 1)))
         super(Terrain, self).__init__(renderable)
 
     def update(self, dt):

@@ -1,9 +1,8 @@
 from game import Entity
 from game import Player
-from game import Terrain
 from game import process_gamestate
+from game import Terrain
 from itertools import count
-from matlib import Mat4
 from matlib import Vec3
 from network import get_message_handlers
 from network import Message
@@ -49,24 +48,29 @@ class Client:
             self.renderer = renderer
             self.input_mgr = input_mgr
 
+            self.setup_scene()
+            self.setup_camera()
+
+        def setup_camera(self):
+            """Sets up camera."""
             # field of view in game units
-            fov = game_cfg.getint('fov')
-            aspect_ratio = renderer.height / float(renderer.width)
+            fov = self.game_cfg.getint('fov')
+
+            # aspect ratio
+            aspect_ratio = self.renderer.height / float(self.renderer.width)
 
             # setup an orthographic camera with given field of view and flipped Y
             # coordinate (Y+ points down)
             self.camera = OrthoCamera(
-                0,                    # left plane
-                fov,                  # right plane
-                0,                    # top plane
-                fov * aspect_ratio,   # bottom plane
-                fov)                  # view distance
+                -fov / 2,                  # left plane
+                +fov / 2,                  # right plane
+                -fov / 2 * aspect_ratio,   # top plane
+                +fov / 2 * aspect_ratio,   # bottom plane
+                100)                       # view distance
 
             self.camera.look_at(eye=Vec3(0, -2.5, 5), center=Vec3(0, 0, 0))
 
-            self.scene_setup()
-
-        def scene_setup(self):
+        def setup_scene(self):
             """Sets up the scene.
 
             Creates game entities and sets up the visual scene.

@@ -151,7 +151,7 @@ class GeometryNode(AbstractSceneNode):
         self.params = params or {}
 
     def render(self, ctx, transform):
-        self.params['transform'] = transform
-        self.params['projection'] = ctx.camera.transform
+        self.params['transform'] = ctx.camera.modelview * transform
+        self.params['projection'] = ctx.camera.projection
         self.shader.use(self.params)
         self.mesh.render(ctx.renderer)
