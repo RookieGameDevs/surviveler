@@ -1,7 +1,7 @@
 /*
  * Surviveler Message Factory
  */
-package game
+package protocol
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -22,9 +22,10 @@ type MsgFactory struct {
 /*
  * NewMsgFactory instantiates a new MsgFactory
  */
-func NewMsgFactory() *MsgFactory {
-	mf := new(MsgFactory)
-	mf.registry = make(map[MsgType]reflect.Type)
+func NewMsgFactory() MsgFactory {
+	mf := MsgFactory{
+		registry: make(map[MsgType]reflect.Type),
+	}
 	return mf
 }
 

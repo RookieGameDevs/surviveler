@@ -1,4 +1,4 @@
-package game
+package protocol
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -7,10 +7,25 @@ import (
 	"time"
 )
 
+/*
+ * Broadcaster is the interface that wraps that Broadcast method. It implements
+ * the Broadcaster interface.
+ */
+type Broadcaster interface {
+
+	/*
+	 *Broadcast broadcast message and returns an error if it fails
+	 */
+	Broadcast(msg *Message) error
+}
+
+/*
+ * ClientRegistry manages a list of connections to remote clients
+ */
 type ClientRegistry struct {
 	clients map[uint16]*network.Conn // one for each client connection
 	nextId  uint16                   // next available client id (1 based)
-	mutex   sync.RWMutex             // protect from concurrent map accesses (data races)
+	mutex   sync.RWMutex             // protect map from concurrent accesses
 }
 
 /*
@@ -54,9 +69,9 @@ func (reg *ClientRegistry) register(client *network.Conn) uint16 {
 }
 
 /*
- * sendAll sends a message to all clients
+ * Broadcast sends a message to all clients
  */
-func (reg *ClientRegistry) sendAll(msg *Message) error {
+func (reg *ClientRegistry) Broadcast(msg *Message) error {
 
 	// protect client map access (read)
 	reg.mutex.RLock()

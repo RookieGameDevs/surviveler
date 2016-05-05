@@ -2,7 +2,7 @@
 	Surviveler Protocol Implementation
 	Implements the necessary interfaces for server.Server and server.Conn
 */
-package game
+package protocol
 
 import (
 	"bytes"
@@ -36,7 +36,7 @@ type Message struct {
  */
 type ClientMessage struct {
 	*Message
-	clientId uint16 // client Id (set by server)
+	ClientId uint16 // client Id (set by server)
 }
 
 /*

@@ -3,6 +3,7 @@ package game
 import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
+	"server/game/protocol"
 )
 
 /*
@@ -16,7 +17,7 @@ type GameState struct {
  * pack transforms the current game state into a GameStateMsg,
  * ready to be sent to every connected client
  */
-func (gs GameState) pack() (*Message, error) {
+func (gs GameState) pack() (*protocol.Message, error) {
 
 	// create a GameStateMsg from the game state
 	if len(gs.players) == 0 {
@@ -27,11 +28,11 @@ func (gs GameState) pack() (*Message, error) {
 	var ent0 entity.Player
 	ent0 = *gs.players[0]
 
-	gsMsg := GameStateMsg{
+	gsMsg := protocol.GameStateMsg{
 		Tstamp: MakeTimestamp(),
 		Xpos:   ent0.XPos,
 		Ypos:   ent0.YPos,
-		Action: ActionMsg{
+		Action: protocol.ActionMsg{
 			ActionType:   0,
 			TargetTstamp: MakeTimestamp(),
 			Xpos:         ent0.XPos,
@@ -40,7 +41,7 @@ func (gs GameState) pack() (*Message, error) {
 	}
 
 	// wrap the specialized GameStateMsg into a generic Message
-	msg, err := NewMessage(MsgType(GameStateId), gsMsg)
+	msg, err := protocol.NewMessage(protocol.MsgType(protocol.GameStateId), gsMsg)
 	if err != nil {
 		log.WithField("err", err).Fatal("Couldn't create Message from gamestate")
 		return nil, err

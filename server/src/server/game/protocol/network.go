@@ -1,4 +1,4 @@
-package game
+package protocol
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -7,12 +7,51 @@ import (
 	"time"
 )
 
+const (
+	MAX_OUT_CHANNELS = 100
+	MAX_IN_CHANNELS  = 100
+)
+
+type ClientMessageHandler func(*Message, uint16)
+
 /*
- * startServer creates the TCP server and starts the listening goroutine
+ * Server represents a TCP server. It implements the Broadcaster and
+ * network.ConnEvtHandler interfaces.
  */
-func (g *Game) startServer() {
+type Server struct {
+	port       string
+	server     network.Server // tcp server instance
+	msgFactory MsgFactory
+	clients    ClientRegistry // manage the connected clients
+	handler    ClientMessageHandler
+}
+
+/*
+ * NewServer returns a new configured Server instance
+ */
+func NewServer(port string, h ClientMessageHandler) *Server {
+
+	srv := new(Server)
+	srv.port = port
+	srv.handler = h
+
+	// register the message types
+	srv.msgFactory = NewMsgFactory()
+	srv.msgFactory.RegisterMsgTypes()
+
+	return srv
+}
+
+/*
+ * Start creates the TCP server and starts the listening goroutine
+ */
+func (srv *Server) Start() {
+
+	// setup client registry
+	srv.clients.init()
+
 	// creates a tcp listener
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+g.cfg.Port)
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+srv.port)
 	if err != nil {
 		log.WithError(err).Fatal("Couldn't resolve address")
 	}
@@ -26,10 +65,10 @@ func (g *Game) startServer() {
 		MaxOutgoingChannels: MAX_OUT_CHANNELS,
 		MaxIncomingChannels: MAX_IN_CHANNELS,
 	}
-	g.server = *network.NewServer(config, g, &MsgReader{})
+	srv.server = *network.NewServer(config, srv, &MsgReader{})
 
 	// starts the server in a listening goroutine
-	go g.server.Start(listener, time.Second)
+	go srv.server.Start(listener, time.Second)
 	log.WithField("addr", listener.Addr()).Info("Server ready , starting to listen")
 }
 
@@ -38,13 +77,13 @@ func (g *Game) startServer() {
  * connection. This gives us the chance to register a new client and perform
  * the client initialization
  */
-func (g *Game) OnConnect(c *network.Conn) bool {
+func (srv *Server) OnConnect(c *network.Conn) bool {
 	// register our new client
-	clientId := g.clients.register(c)
+	clientId := srv.clients.register(c)
 
 	// send a AddPlayerMsg to the game loop (server-only msg)
 	if msg, err := NewMessage(MsgType(AddPlayerId), AddPlayerMsg{"batman"}); err == nil {
-		g.msgChan <- ClientMessage{msg, clientId}
+		srv.handler(msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create AddPlayerMsg")
 	}
@@ -56,7 +95,7 @@ func (g *Game) OnConnect(c *network.Conn) bool {
  * OnIncomingMsg gets called by the server each time a message is ready to be
  * read on the connection
  */
-func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
+func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	clientId := c.GetUserData().(uint16)
 	log.WithFields(log.Fields{
 		"id":   clientId,
@@ -66,7 +105,7 @@ func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	msg := netmsg.(*Message)
 	if msg.Type == PingId {
 		// ping requires an immediate pong reply
-		if err := g.handlePing(c, msg); err != nil {
+		if err := srv.handlePing(c, msg); err != nil {
 			log.WithError(err).Error("Couldn't handle ping")
 			return false
 		}
@@ -77,17 +116,20 @@ func (g *Game) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 /*
  * handlePing processes a PingMsg and immediately replies with a PongMsg
  */
-func (g *Game) handlePing(c *network.Conn, msg *Message) error {
+func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	// decode ping msg payload into an interface
-	if iping, err := g.msgFactory.DecodePayload(PingId, msg.Buffer); err != nil {
+	var ping PingMsg
+	if iping, err := srv.msgFactory.DecodePayload(PingId, msg.Buffer); err != nil {
 		return err
+	} else {
+		ping = iping.(PingMsg)
 	}
 
-	ping := iping.(PingMsg)
 	log.WithField("msg", ping).Debug("Received ping")
 
 	// reply pong
-	pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, MakeTimestamp()})
+	ts := time.Now().UnixNano() / int64(time.Millisecond)
+	pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, ts})
 	if err = c.AsyncSendMessage(pong, time.Second); err != nil {
 		return err
 	}
@@ -100,15 +142,32 @@ func (g *Game) handlePing(c *network.Conn, msg *Message) error {
  * connection. This gives us the chance to unregister a new client and perform
  * client cleanup
  */
-func (g *Game) OnClose(c *network.Conn) {
+func (srv *Server) OnClose(c *network.Conn) {
 
 	clientId := c.GetUserData().(uint16)
 	log.WithField("addr", c.GetRawConn().RemoteAddr()).Debug("Connection closed")
 
 	// send a DelPlayerMsg to the game loop (server-only msg)
 	if msg, err := NewMessage(MsgType(DelPlayerId), DelPlayerMsg{}); err == nil {
-		g.msgChan <- ClientMessage{msg, clientId}
+		srv.handler(msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create DelPlayerMsg")
 	}
+}
+
+/*
+ * Broadcast sends a message to all clients
+ */
+func (srv *Server) Broadcast(msg *Message) error {
+
+	// protect client map access (read)
+	return srv.clients.Broadcast(msg)
+}
+
+/*
+ * Stop stops the tcp server and the clients connections
+ */
+func (srv *Server) Stop() {
+	log.Info("Stopping server")
+	srv.server.Stop()
 }

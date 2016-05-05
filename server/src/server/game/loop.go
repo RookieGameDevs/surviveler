@@ -4,6 +4,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"runtime"
 	"server/game/entity"
+	"server/game/protocol"
 	"time"
 )
 
@@ -39,19 +40,19 @@ func (g *Game) loop() {
 				// process client message
 				log.WithField("msg", msg).Debug("Message received")
 				switch msg.Type {
-				case AddPlayerId:
+				case protocol.AddPlayerId:
 					// we have a new player, assign her the unique connection id
-					gs.players[msg.clientId] = new(entity.Player)
-				case DelPlayerId:
+					gs.players[msg.ClientId] = new(entity.Player)
+				case protocol.DelPlayerId:
 					// one less player
-					log.WithField("id", msg.clientId).Info("Removing player from the game state")
-					delete(gs.players, msg.clientId)
+					log.WithField("id", msg.ClientId).Info("Removing player from the game state")
+					delete(gs.players, msg.ClientId)
 				}
 
 			case <-sendTickChan:
 
 				// pack the gamestate into a message
-				var msg *Message
+				var msg *protocol.Message
 				var err error
 				if msg, err = gs.pack(); err != nil {
 					log.WithField("err", err).Error("Couldn't pack the gamestate")
@@ -59,7 +60,7 @@ func (g *Game) loop() {
 				}
 				if msg != nil {
 					log.WithField("msg", msg).Debug("Sending gamestate msg")
-					g.clients.sendAll(msg)
+					g.server.Broadcast(msg)
 				}
 
 			case <-tickChan:

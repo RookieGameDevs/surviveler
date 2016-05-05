@@ -5,14 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"server/network"
+	"server/game/protocol"
 	"syscall"
 	"time"
-)
-
-const (
-	MAX_OUT_CHANNELS = 100
-	MAX_IN_CHANNELS  = 100
 )
 
 /*
@@ -28,13 +23,12 @@ type GameCfg struct {
  * network.ConnEvtHandler interface
  */
 type Game struct {
-	cfg           GameCfg            // configuration settings
-	msgFactory    MsgFactory         // message factory
-	server        network.Server     // tcp server instance
-	clients       ClientRegistry     // manage the connected clients
-	ticker        time.Ticker        // our tick source
-	msgChan       chan ClientMessage // conducts ClientMessage to the game loop
-	loopCloseChan chan struct{}      // indicates to the game loop that it may exit
+	cfg           GameCfg                     // configuration settings
+	msgFactory    protocol.MsgFactory         // message factory
+	server        protocol.Server             // server core
+	ticker        time.Ticker                 // our tick source
+	msgChan       chan protocol.ClientMessage // conducts ClientMessage to the game loop
+	loopCloseChan chan struct{}               // indicates to the game loop that it may exit
 }
 
 /*
@@ -51,16 +45,16 @@ func (g *Game) Setup(cfg GameCfg) {
 	// setup go runtime
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// register the message types
-	g.msgFactory = *NewMsgFactory()
-	g.msgFactory.RegisterMsgTypes()
-
-	// setup client registry
-	g.clients.init()
-
 	// init channels
-	g.msgChan = make(chan ClientMessage)
+	g.msgChan = make(chan protocol.ClientMessage)
 	g.loopCloseChan = make(chan struct{})
+
+	// setup server
+	msgHandler := func(msg *protocol.Message, clientId uint16) {
+		// forward incoming messages to the game loop
+		g.msgChan <- protocol.ClientMessage{msg, clientId}
+	}
+	g.server = *protocol.NewServer(g.cfg.Port, msgHandler)
 }
 
 /*
@@ -71,7 +65,7 @@ func (g *Game) Start() {
 	log.Info("Starting Surviveler server")
 
 	// start everything
-	g.startServer()
+	g.server.Start()
 	g.loop()
 
 	// be notified of termination signals
@@ -88,8 +82,6 @@ func (g *Game) Start() {
  * stop cleanups the server and exits the various loops
  */
 func (g *Game) stop() {
-	// stop server (that closes clients connection)
-	log.Info("Stopping server")
 	g.server.Stop()
 
 	// stop game loop
