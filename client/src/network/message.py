@@ -90,24 +90,28 @@ class MessageProxy:
         self.conn = conn
         self.msg_queue = []
 
-    def enqueue(self, msg):
+    def enqueue(self, msg, callback=lambda: None):
         """Enqueue the message.
 
         The message is going to be sent during the next push.
 
         :param msg: the Message object to be pushed
         :type msg: :class:`message.Message`
+
+        :param callback: Callback to be called when the message is pushed
+        :type callback: function or None
         """
         LOG.debug('Enqueueing message: {} {}'.format(msg, str(msg.data)))
-        self.msg_queue.append(msg)
+        self.msg_queue.append((msg, callback))
 
     def push(self):
         """Pushes the message through the underneath connection"""
         while len(self.msg_queue):
-            msg = self.msg_queue.pop(0)
+            msg, cb = self.msg_queue.pop(0)
             LOG.debug('Pushing message: {} {}'.format(msg, str(msg.data)))
             self.conn.send(*msg.encode())
             LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
+            cb()
 
     def wait_for(self, msgtype):
         """Polls the connection waiting for a specific message.

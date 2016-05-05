@@ -41,6 +41,7 @@ class Client:
             self.proxy = proxy
             self.sync_counter = count()
             self.last_update = None
+            self._syncing = {}
             self.delta = None
 
             self.renderer = renderer
@@ -77,29 +78,35 @@ class Client:
             for func in get_message_handlers(msg.msgtype):
                 func(msg)
 
-        def sync(self):
-            """Tries to guess the local delta with the server timestamps.
+        @property
+        def syncing(self):
+            """True if the client is syncing with the server, otherwise False"""
+            return len(self._syncing) > 0
 
-            Uses a message of type MessageType.ping with a random id to sync with
-            the server clock guessing the lag related to ping.
-
-            NOTE: this method is blocking until we receive the pong message from the
-            server.
+        def ping(self):
+            """Pings the server to start te timing offset calculation.
             """
-            LOG.info('Syncing time with server')
+            LOG.info('Sending ping')
 
             # Create, enqueue and push message
             sync_id = next(self.sync_counter)
             msg = Message(MessageType.ping, {MessageField.id: sync_id})
-            self.proxy.enqueue(msg)
-            self.proxy.push()
 
-            initial = tstamp()
+            def callback():
+                self._syncing[sync_id] = tstamp()
 
-            # block until a pong message is received
-            msg = self.proxy.wait_for(MessageType.pong)
-            now = tstamp()
-            self.delta = now - msg.data[MessageField.timestamp] + (now - initial) / 2
+            self.proxy.enqueue(msg, callback)
+
+        def pong(self, msg):
+            """Receives pong from the server and actually calculates the offset.
+
+            :param msg: The pong message
+            :type msg: :class:`network.message.Message`
+            """
+            now = tstamp(0)
+            sent_at = self._syncing.pop(msg.data[MessageField.id])
+            self.delta = (
+                now - msg.data[MessageField.timestamp] + (now - sent_at) / 2)
             LOG.info('Synced time with server: delta={}'.format(self.delta))
 
         def dt(self):
@@ -128,7 +135,7 @@ class Client:
             server, renders the scene.
             """
             # Sync with server time
-            self.sync()
+            self.ping()
 
             while True:
                 # compute time delta
@@ -197,9 +204,13 @@ class Client:
         """
         return Entity.get_entity(e_id)
 
+    @message_handler(MessageType.pong)
+    def pong(self, msg):
+        self.__client.pong(msg)
+
 
 @message_handler(MessageType.gamestate)
-def gamestate_handler(msg):
+def gamestate_handler(client, msg):
     """Handle gamestate messages
 
     Handle the gamestate messages, actually spawning all the processors.
@@ -207,6 +218,9 @@ def gamestate_handler(msg):
     Convert the server timestamp to the client one. Every timestamp in the
     gamestate messages payload from now on is to be considered comparable to
     the local timestamp (as returned by `utils.tstamp` function.
+
+    :param client: the client interface instance
+    :type client: :class:`client.Client`
 
     :param msg: the message to be processed
     :type msg: :class:`message.Message`

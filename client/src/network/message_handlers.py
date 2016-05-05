@@ -1,4 +1,5 @@
 from collections import defaultdict
+from functools import partial
 import logging
 
 
@@ -29,4 +30,7 @@ def get_message_handlers(msgtype):
     :return: handlers for the given message
     :rtype: list
     """
-    return __MESSAGE_HANDLERS[msgtype]
+    from client import Client
+    return map(
+        lambda f: partial(f, Client.get_instance()),
+        __MESSAGE_HANDLERS[msgtype])
