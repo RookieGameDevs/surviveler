@@ -38,14 +38,14 @@ func (g *Game) loop() {
 			case msg := <-g.msgChan:
 
 				// process client message
-				log.WithField("msg", msg).Debug("Message received")
 				switch msg.Type {
 				case protocol.AddPlayerId:
-					// we have a new player, assign her the unique connection id
+					// we have a new player, his id will be its unique connection id
+					log.WithField("clientId", msg.ClientId).Info("handling AddPlayerMsg")
 					gs.players[msg.ClientId] = new(entity.Player)
 				case protocol.DelPlayerId:
 					// one less player
-					log.WithField("id", msg.ClientId).Info("Removing player from the game state")
+					log.WithField("clientId", msg.ClientId).Info("handling DelPlayerMsg")
 					delete(gs.players, msg.ClientId)
 				}
 
