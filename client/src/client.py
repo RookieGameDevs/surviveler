@@ -23,7 +23,7 @@ class Client:
     #: The instance of the client
     __INSTANCE = None
 
-    class __ClientPvt:
+    class __Client:
         """Client implementation"""
 
         def __init__(self, renderer, proxy, input_mgr):
@@ -174,7 +174,7 @@ class Client:
         :type input_mgr: :class:`core.input.InputManager`
         """
         Client.__INSTANCE = self
-        self.__client = Client.__ClientPvt(renderer, proxy, input_mgr)
+        self.__client = Client.__Client(renderer, proxy, input_mgr)
 
     @classmethod
     def get_instance(cls):
