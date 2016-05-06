@@ -20,6 +20,6 @@ type Player struct {
 }
 
 func (p *Player) Update(dt time.Duration) {
-	p.XPos = 10
-	p.YPos = 15
+	p.XPos = 3
+	p.YPos = 4
 }
