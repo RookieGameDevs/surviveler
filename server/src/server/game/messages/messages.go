@@ -11,6 +11,7 @@ const (
 	PingId uint16 = 0 + iota
 	PongId
 	GameStateId
+	MoveId
 )
 
 /*
@@ -35,6 +36,34 @@ type PingMsg struct {
 type PongMsg PingMsg
 
 /*
+ * Server->client game state
+ */
+type GameStateMsg struct {
+	Tstamp int64
+	Xpos   float32
+	Ypos   float32
+	Action ActionMsg
+}
+
+/*
+ * Sub-message of GameStateMsg.
+ */
+type ActionMsg struct {
+	ActionType   uint16
+	TargetTstamp int64
+	Xpos         float32
+	Ypos         float32
+}
+
+/*
+ * player initiated character movement
+ */
+type MoveMsg struct {
+	Xpos float32
+	Ypos float32
+}
+
+/*
  * Indicates a new player joined the game
  */
 type AddPlayerMsg struct {
@@ -45,17 +74,3 @@ type AddPlayerMsg struct {
  * Indicates that a player may be removed
  */
 type DelPlayerMsg struct{}
-
-type GameStateMsg struct {
-	Tstamp int64
-	Xpos   float32
-	Ypos   float32
-	Action ActionMsg
-}
-
-type ActionMsg struct {
-	ActionType   uint16
-	TargetTstamp int64
-	Xpos         float32
-	Ypos         float32
-}
