@@ -55,3 +55,17 @@ func (gs GameState) pack() (*protocol.Message, error) {
 
 	return msg, nil
 }
+
+func (gs *GameState) onAddPlayer(msg protocol.Message, clientId uint16) error {
+	// we have a new player, his id will be its unique connection id
+	log.WithField("clientId", clientId).Info("handling AddPlayerMsg")
+	gs.players[clientId] = new(entity.Player)
+	return nil
+}
+
+func (gs *GameState) onDelPlayer(msg protocol.Message, clientId uint16) error {
+	// one less player
+	log.WithField("clientId", clientId).Info("handling DelPlayerMsg")
+	delete(gs.players, clientId)
+	return nil
+}

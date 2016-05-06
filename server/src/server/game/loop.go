@@ -31,8 +31,16 @@ func (g *Game) loop() {
 	gs := GameState{}
 	gs.players = make(map[uint16]*entity.Player)
 
+	msgmgr := new(MessageManager)
+
+	msgmgr.Listen(messages.AddPlayerId, MsgHandlerFunc(gs.onAddPlayer))
+	msgmgr.Listen(messages.DelPlayerId, MsgHandlerFunc(gs.onDelPlayer))
+
 	// loop local stop condition
 	quit := false
+
+	var last_time, cur_time time.Time
+	last_time = time.Now()
 
 	go func() {
 		for !quit {
@@ -42,18 +50,8 @@ func (g *Game) loop() {
 				quit = true
 
 			case msg := <-g.msgChan:
-
-				// process client message
-				switch msg.Type {
-				case messages.AddPlayerId:
-					// we have a new player, his id will be its unique connection id
-					log.WithField("clientId", msg.ClientId).Info("handling AddPlayerMsg")
-					gs.players[msg.ClientId] = new(entity.Player)
-				case messages.DelPlayerId:
-					// one less player
-					log.WithField("clientId", msg.ClientId).Info("handling DelPlayerMsg")
-					delete(gs.players, msg.ClientId)
-				}
+				// dispatch msg to listeners
+				msgmgr.Dispatch(*msg.Message, msg.ClientId)
 
 			case <-sendTickChan:
 
@@ -71,12 +69,15 @@ func (g *Game) loop() {
 
 			case <-tickChan:
 
-				// tick game
+				// compute delta time
+				cur_time = time.Now()
+				dt := cur_time.Sub(last_time)
+
+				// tick game: update entities
 				for _, ent := range gs.players {
-					var dt float32
-					// TODO: compute delta time
 					ent.Update(dt)
 				}
+				last_time = cur_time
 
 			default:
 
@@ -84,7 +85,6 @@ func (g *Game) loop() {
 				runtime.Gosched()
 			}
 		}
-
 		log.Info("Game just stopped ticking")
 	}()
 }
