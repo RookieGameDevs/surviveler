@@ -1,9 +1,15 @@
+/*
+ * Surviveler game package
+ * game loop
+ */
+
 package game
 
 import (
 	log "github.com/Sirupsen/logrus"
 	"runtime"
 	"server/game/entity"
+	"server/game/messages"
 	"server/game/protocol"
 	"time"
 )
@@ -39,11 +45,11 @@ func (g *Game) loop() {
 
 				// process client message
 				switch msg.Type {
-				case protocol.AddPlayerId:
+				case messages.AddPlayerId:
 					// we have a new player, his id will be its unique connection id
 					log.WithField("clientId", msg.ClientId).Info("handling AddPlayerMsg")
 					gs.players[msg.ClientId] = new(entity.Player)
-				case protocol.DelPlayerId:
+				case messages.DelPlayerId:
 					// one less player
 					log.WithField("clientId", msg.ClientId).Info("handling DelPlayerMsg")
 					delete(gs.players, msg.ClientId)

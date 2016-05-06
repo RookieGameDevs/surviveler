@@ -1,6 +1,8 @@
-package entity
-
-import ()
+/*
+ * Surviveler entity package
+ * types
+ */
+ package entity
 
 /*
  * This interface represents an element that updates itself

@@ -1,6 +1,7 @@
 /*
-	Server
-*/
+ * Generic network package
+ * server implementation
+ */
 package network
 
 import (

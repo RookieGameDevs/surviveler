@@ -1,13 +1,16 @@
 /*
- * Surviveler Message Factory
+ * Surviveler messages package
+ * message factory
  */
-package protocol
+package messages
 
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 	"reflect"
 )
+
+var factory *MsgFactory
 
 /*
  * MsgFactory associates unique message ids with their corresponding message
@@ -16,23 +19,26 @@ import (
  * MsgFactory.NewMsg()
  */
 type MsgFactory struct {
-	registry map[MsgType]reflect.Type
+	registry map[uint16]reflect.Type
 }
 
 /*
- * NewMsgFactory instantiates a new MsgFactory
+ * GetFactory returns the global message factory, instaniating it at first call
  */
-func NewMsgFactory() MsgFactory {
-	mf := MsgFactory{
-		registry: make(map[MsgType]reflect.Type),
+func GetFactory() *MsgFactory {
+	if factory == nil {
+		factory = new(MsgFactory)
+		factory.registry = make(map[uint16]reflect.Type)
+		factory.registerMsgTypes()
 	}
-	return mf
+	return factory
 }
 
 /*
- * Register all message types
+ * registerMsgTypes associates each message id with their corresponding message
+ * struct type
  */
-func (mf MsgFactory) RegisterMsgTypes() {
+func (mf MsgFactory) registerMsgTypes() {
 	mf.registerMsgType(PingId, PingMsg{})
 	mf.registerMsgType(PongId, PongMsg{})
 	mf.registerMsgType(GameStateId, GameStateMsg{})
@@ -43,7 +49,7 @@ func (mf MsgFactory) RegisterMsgTypes() {
 /*
  * registerMsgType registers a new MsgType and associates it to a struct type
  */
-func (mf MsgFactory) registerMsgType(t MsgType, i interface{}) {
+func (mf MsgFactory) registerMsgType(t uint16, i interface{}) {
 	// retrieve underlying msg type
 	it := reflect.TypeOf(i)
 	mf.registry[t] = it
@@ -52,7 +58,7 @@ func (mf MsgFactory) registerMsgType(t MsgType, i interface{}) {
 /*
  * newMsg returns a new (zero'ed) message struct
  */
-func (mf MsgFactory) newMsg(t MsgType) interface{} {
+func (mf MsgFactory) newMsg(t uint16) interface{} {
 	var it reflect.Type
 	var ok bool
 	if it, ok = mf.registry[t]; !ok {
@@ -64,7 +70,7 @@ func (mf MsgFactory) newMsg(t MsgType) interface{} {
 /*
  * DecodePayload returns a new message struct, decoded from given payload
  */
-func (mf MsgFactory) DecodePayload(t MsgType, p []byte) (interface{}, error) {
+func (mf MsgFactory) DecodePayload(t uint16, p []byte) (interface{}, error) {
 	var mh codec.MsgpackHandle
 	// Create a struct having the corresponding underlying type
 	msg := mf.newMsg(t)

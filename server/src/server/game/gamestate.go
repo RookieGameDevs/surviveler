@@ -1,8 +1,14 @@
+/*
+ * Surviveler game package
+ * game state structure
+ */
+
 package game
 
 import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
+	"server/game/messages"
 	"server/game/protocol"
 )
 
@@ -28,11 +34,11 @@ func (gs GameState) pack() (*protocol.Message, error) {
 	var ent0 entity.Player
 	ent0 = *gs.players[0]
 
-	gsMsg := protocol.GameStateMsg{
+	gsMsg := messages.GameStateMsg{
 		Tstamp: MakeTimestamp(),
 		Xpos:   ent0.XPos,
 		Ypos:   ent0.YPos,
-		Action: protocol.ActionMsg{
+		Action: messages.ActionMsg{
 			ActionType:   0,
 			TargetTstamp: MakeTimestamp(),
 			Xpos:         ent0.XPos,
@@ -41,7 +47,7 @@ func (gs GameState) pack() (*protocol.Message, error) {
 	}
 
 	// wrap the specialized GameStateMsg into a generic Message
-	msg, err := protocol.NewMessage(protocol.MsgType(protocol.GameStateId), gsMsg)
+	msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
 	if err != nil {
 		log.WithField("err", err).Fatal("Couldn't create Message from gamestate")
 		return nil, err

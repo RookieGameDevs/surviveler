@@ -1,10 +1,14 @@
-package protocol
+/*
+ * Surviveler messages package
+ * message types & identifiers
+ */
+package messages
 
 /*
  * Client - Server messages
  */
 const (
-	PingId MsgType = 0 + iota
+	PingId uint16 = 0 + iota
 	PongId
 	GameStateId
 )

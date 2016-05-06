@@ -1,3 +1,7 @@
+/*
+ * Generic network package
+ * TCP connection
+ */
 package network
 
 import (

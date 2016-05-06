@@ -1,7 +1,7 @@
 /*
-	Surviveler Protocol Implementation
-	Implements the necessary interfaces for server.Server and server.Conn
-*/
+ * Surviveler protocol package
+ * message encoding & decoding
+ */
 package protocol
 
 import (
@@ -19,15 +19,13 @@ import (
  */
 const MaxIncomingMsgLength uint32 = 1279
 
-type MsgType uint16
-
 /*
  * client -> server message
  */
 type Message struct {
-	Type   MsgType // the message type
-	Length uint32  // the payload length
-	Buffer []byte  // payload buffer
+	Type   uint16 // the message type
+	Length uint32 // the payload length
+	Buffer []byte // payload buffer
 }
 
 /*
@@ -48,14 +46,13 @@ func (msg Message) Serialize() []byte {
 	binary.Write(bbuf, binary.BigEndian, msg.Type)
 	binary.Write(bbuf, binary.BigEndian, msg.Length)
 	binary.Write(bbuf, binary.BigEndian, msg.Buffer)
-
 	return bbuf.Bytes()
 }
 
 /*
  * NewMessage creates a message from a message type and a generic payload
  */
-func NewMessage(t MsgType, p interface{}) (*Message, error) {
+func NewMessage(t uint16, p interface{}) (*Message, error) {
 	var mh codec.MsgpackHandle
 
 	msg := new(Message)

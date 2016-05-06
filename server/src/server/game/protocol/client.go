@@ -1,3 +1,7 @@
+/*
+ * Surviveler protocol package
+ * clients book-keeping
+ */
 package protocol
 
 import (
@@ -6,18 +10,6 @@ import (
 	"sync"
 	"time"
 )
-
-/*
- * Broadcaster is the interface that wraps that Broadcast method. It implements
- * the Broadcaster interface.
- */
-type Broadcaster interface {
-
-	/*
-	 *Broadcast broadcast message and returns an error if it fails
-	 */
-	Broadcast(msg *Message) error
-}
 
 /*
  * ClientRegistry manages a list of connections to remote clients

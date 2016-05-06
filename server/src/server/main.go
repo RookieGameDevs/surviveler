@@ -1,3 +1,7 @@
+/*
+ * Surviveler
+ * game entry point
+ */
 package main
 
 import (

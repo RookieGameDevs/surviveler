@@ -1,8 +1,13 @@
+/*
+ * Surviveler protocol package
+ * server implementation
+ */
 package protocol
 
 import (
 	log "github.com/Sirupsen/logrus"
 	"net"
+	"server/game/messages"
 	"server/network"
 	"time"
 )
@@ -15,15 +20,24 @@ const (
 type ClientMessageHandler func(*Message, uint16)
 
 /*
+ * Broadcaster is the interface that wraps that Broadcast method. It implements
+ * the Broadcaster interface.
+ */
+type Broadcaster interface {
+
+	// Broadcast broadcasts a message.
+	Broadcast(msg *Message) error
+}
+
+/*
  * Server represents a TCP server. It implements the Broadcaster and
  * network.ConnEvtHandler interfaces.
  */
 type Server struct {
-	port       string
-	server     network.Server // tcp server instance
-	msgFactory MsgFactory
-	clients    ClientRegistry // manage the connected clients
-	handler    ClientMessageHandler
+	port    string
+	server  network.Server // tcp server instance
+	clients ClientRegistry // manage the connected clients
+	handler ClientMessageHandler
 }
 
 /*
@@ -34,10 +48,6 @@ func NewServer(port string, h ClientMessageHandler) *Server {
 	srv := new(Server)
 	srv.port = port
 	srv.handler = h
-
-	// register the message types
-	srv.msgFactory = NewMsgFactory()
-	srv.msgFactory.RegisterMsgTypes()
 
 	return srv
 }
@@ -82,7 +92,7 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
 	clientId := srv.clients.register(c)
 
 	// send a AddPlayerMsg to the game loop (server-only msg)
-	if msg, err := NewMessage(MsgType(AddPlayerId), AddPlayerMsg{"batman"}); err == nil {
+	if msg, err := NewMessage(messages.AddPlayerId, messages.AddPlayerMsg{"batman"}); err == nil {
 		srv.handler(msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create AddPlayerMsg")
@@ -103,7 +113,7 @@ func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	}).Debug("Received message")
 
 	msg := netmsg.(*Message)
-	if msg.Type == PingId {
+	if msg.Type == messages.PingId {
 		// ping requires an immediate pong reply
 		if err := srv.handlePing(c, msg); err != nil {
 			log.WithError(err).Error("Couldn't handle ping")
@@ -118,18 +128,18 @@ func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
  */
 func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	// decode ping msg payload into an interface
-	var ping PingMsg
-	if iping, err := srv.msgFactory.DecodePayload(PingId, msg.Buffer); err != nil {
+	var ping messages.PingMsg
+	if iping, err := messages.GetFactory().DecodePayload(messages.PingId, msg.Buffer); err != nil {
 		return err
 	} else {
-		ping = iping.(PingMsg)
+		ping = iping.(messages.PingMsg)
 	}
 
 	log.WithField("msg", ping).Debug("Received ping")
 
 	// reply pong
 	ts := time.Now().UnixNano() / int64(time.Millisecond)
-	pong, err := NewMessage(MsgType(PongId), PongMsg{ping.Id, ts})
+	pong, err := NewMessage(messages.PongId, messages.PongMsg{ping.Id, ts})
 	if err = c.AsyncSendMessage(pong, time.Second); err != nil {
 		return err
 	}
@@ -148,7 +158,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 	log.WithField("addr", c.GetRawConn().RemoteAddr()).Debug("Connection closed")
 
 	// send a DelPlayerMsg to the game loop (server-only msg)
-	if msg, err := NewMessage(MsgType(DelPlayerId), DelPlayerMsg{}); err == nil {
+	if msg, err := NewMessage(messages.DelPlayerId, messages.DelPlayerMsg{}); err == nil {
 		srv.handler(msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create DelPlayerMsg")

@@ -1,3 +1,7 @@
+/*
+ * Surviveler game package
+ * utility
+ */
 package game
 
 import (

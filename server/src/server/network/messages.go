@@ -1,6 +1,7 @@
 /*
-	Network message handling interfaces
-*/
+ * Generic network package
+ * interfaces
+ */
 package network
 
 import (

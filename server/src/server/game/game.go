@@ -1,3 +1,7 @@
+/*
+ * Surviveler game package
+ * game entry & exit points
+ */
 package game
 
 import (
@@ -5,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"server/game/messages"
 	"server/game/protocol"
 	"syscall"
 	"time"
@@ -24,7 +29,7 @@ type GameCfg struct {
  */
 type Game struct {
 	cfg           GameCfg                     // configuration settings
-	msgFactory    protocol.MsgFactory         // message factory
+	msgFactory    messages.MsgFactory         // message factory
 	server        protocol.Server             // server core
 	ticker        time.Ticker                 // our tick source
 	msgChan       chan protocol.ClientMessage // conducts ClientMessage to the game loop
