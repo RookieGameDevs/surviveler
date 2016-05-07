@@ -5,23 +5,35 @@
 package entity
 
 import (
+	"server/math"
 	"time"
 )
 
 /*
- * Updater is the interface implemented by an game object that accepts the
- * delta time in order to update itself
+ * Updater is the interface implemented by objects having an Update method,
+ * called at every tick
  */
 type Updater interface {
 	Update(dt time.Duration)
 }
 
 /*
- * Mover is the interface implemented by a movable game object. It handles
- * setting and retrieving of its final destination. A Mover must implement
- * the Updater interface
+ * Positioner is the interface implemented by objects aware of a position
+ */
+type Positioner interface {
+	SetPos(pos math.Vec2)
+	GetPos() math.Vec2
+}
+
+/*
+ * Mover is the interface implemented by objects knowing how to move,
+ * themselves or other objects, at every tick.
  */
 type Mover interface {
-	SetDestination(xpos, ypos float32)
-	GetDestination() (xpos, ypos float32)
+	Updater
+	Positioner
+	GetDestination() math.Vec2
+	SetDestination(pos math.Vec2)
+	SetSpeed(s float32)
+	GetSpeed() float32
 }
