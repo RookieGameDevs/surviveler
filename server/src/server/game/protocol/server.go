@@ -27,25 +27,27 @@ type Broadcaster interface {
 	Broadcast(msg *Message) error
 }
 
+type MsgCallbackFunc func(msg *Message, clientId uint16) error
+
 /*
  * Server represents a TCP server. It implements the Broadcaster and
  * network.ConnEvtHandler interfaces.
  */
 type Server struct {
 	port    string
-	server  network.Server // tcp server instance
-	clients ClientRegistry // manage the connected clients
-	handler MsgHandlerFunc // root handler function, accept incoming messages
+	server  network.Server  // tcp server instance
+	clients ClientRegistry  // manage the connected clients
+	msgcb   MsgCallbackFunc // incoming messages callback
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, hf MsgHandlerFunc) *Server {
+func NewServer(port string, msgcb MsgCallbackFunc) *Server {
 
 	srv := new(Server)
 	srv.port = port
-	srv.handler = hf
+	srv.msgcb = msgcb
 
 	return srv
 }
@@ -89,19 +91,29 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
 	// register our new client
 	clientId := srv.clients.register(c)
 
-	// send a AddPlayerMsg to the game loop (server-only msg)
+	// TODO: this is temporary, for testing and dev, we are doing:
+	// - send a AddPlayerMsg so that the game loop creates a new player
+	// - send a MoveMsg so that the game loop updates its position
 	if msg, err := NewMessage(messages.AddPlayerId, messages.AddPlayerMsg{"batman"}); err == nil {
-		srv.handler(*msg, clientId)
+		srv.msgcb(msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create AddPlayerMsg")
+		return false
+	}
+
+	if msg, err := NewMessage(messages.MoveId, messages.MoveMsg{Xpos: 6, Ypos: 7}); err == nil {
+		srv.msgcb(msg, clientId)
+	} else {
+		log.WithError(err).Fatal("Couldn't create MoveMsg")
+		return false
 	}
 
 	return true
 }
 
 /*
- * OnIncomingMsg gets called by the server each time a message is ready to be
- * read on the connection
+ * OnIncomingMsg gets called by the server each time a message has been read
+ * from the connection
  */
 func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	clientId := c.GetUserData().(uint16)
@@ -111,13 +123,18 @@ func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	}).Debug("Received message")
 
 	msg := netmsg.(*Message)
-	if msg.Type == messages.PingId {
+	switch msg.Type {
+	case messages.PingId:
 		// ping requires an immediate pong reply
 		if err := srv.handlePing(c, msg); err != nil {
 			log.WithError(err).Error("Couldn't handle ping")
 			return false
 		}
+	default:
+		// forward it
+		srv.msgcb(msg, clientId)
 	}
+
 	return true
 }
 
@@ -157,7 +174,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 
 	// send a DelPlayerMsg to the game loop (server-only msg)
 	if msg, err := NewMessage(messages.DelPlayerId, messages.DelPlayerMsg{}); err == nil {
-		srv.handler(*msg, clientId)
+		srv.msgcb(msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create DelPlayerMsg")
 	}

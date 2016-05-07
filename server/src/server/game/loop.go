@@ -8,7 +8,6 @@ package game
 import (
 	log "github.com/Sirupsen/logrus"
 	"runtime"
-	"server/game/entity"
 	"server/game/messages"
 	"server/game/protocol"
 	"time"
@@ -28,12 +27,11 @@ func (g *Game) loop() {
 
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
-	gs := GameState{}
-	gs.players = make(map[uint16]*entity.Player)
+	gs := NewGameState()
 
 	msgmgr := new(protocol.MessageManager)
-
 	msgmgr.Listen(messages.AddPlayerId, protocol.MsgHandlerFunc(gs.onAddPlayer))
+	msgmgr.Listen(messages.MoveId, protocol.MsgHandlerFunc(gs.onMovePlayer))
 	msgmgr.Listen(messages.DelPlayerId, protocol.MsgHandlerFunc(gs.onDelPlayer))
 
 	// loop local stop condition
@@ -51,7 +49,9 @@ func (g *Game) loop() {
 
 			case msg := <-g.msgChan:
 				// dispatch msg to listeners
-				msgmgr.Dispatch(*msg.Message, msg.ClientId)
+				if err := msgmgr.Dispatch(msg.Message, msg.ClientId); err != nil {
+					log.WithField("err", err).Error("Dispatch returned an error")
+				}
 
 			case <-sendTickChan:
 

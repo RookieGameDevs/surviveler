@@ -6,6 +6,7 @@
 package game
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
@@ -17,6 +18,13 @@ import (
  */
 type GameState struct {
 	players map[uint16]*entity.Player
+}
+
+func NewGameState() GameState {
+
+	return GameState{
+		players: make(map[uint16]*entity.Player),
+	}
 }
 
 /*
@@ -56,16 +64,34 @@ func (gs GameState) pack() (*protocol.Message, error) {
 	return msg, nil
 }
 
-func (gs *GameState) onAddPlayer(msg protocol.Message, clientId uint16) error {
+func (gs *GameState) onAddPlayer(msg interface{}, clientId uint16) error {
 	// we have a new player, his id will be its unique connection id
-	log.WithField("clientId", clientId).Info("handling AddPlayerMsg")
+	log.WithField("clientId", clientId).Info("we have a new player")
 	gs.players[clientId] = new(entity.Player)
 	return nil
 }
 
-func (gs *GameState) onDelPlayer(msg protocol.Message, clientId uint16) error {
-	// one less player
-	log.WithField("clientId", clientId).Info("handling DelPlayerMsg")
+func (gs *GameState) onDelPlayer(msg interface{}, clientId uint16) error {
+	// one player less, remove him from the map
+	log.WithField("clientId", clientId).Info("we have one less player")
 	delete(gs.players, clientId)
+	return nil
+}
+
+func (gs *GameState) onMovePlayer(msg interface{}, clientId uint16) error {
+
+	move := msg.(messages.MoveMsg)
+	log.WithFields(log.WithFields{
+		"clientId": clientId,
+		"msg":      move,
+	}).Info("handling a MoveMsg")
+
+	var p *entity.Player
+	var ok bool
+	if p, ok = gs.players[clientId]; !ok {
+		return fmt.Errorf("player with this clientId (%v) doesn't exist", clientId)
+	}
+	p.SetDestination(moveMsg.Xpos, moveMsg.Ypos)
+
 	return nil
 }
