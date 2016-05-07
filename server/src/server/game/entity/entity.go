@@ -1,6 +1,6 @@
 /*
  * Surviveler entity package
- * types
+ * types definitions
  */
 package entity
 
@@ -9,17 +9,19 @@ import (
 )
 
 /*
- * Updater is the interface implemented by an game object that updates itself
+ * Updater is the interface implemented by an game object that accepts the
+ * delta time in order to update itself
  */
 type Updater interface {
 	Update(dt time.Duration)
 }
 
-type Player struct {
-	XPos, YPos float32
-}
-
-func (p *Player) Update(dt time.Duration) {
-	p.XPos = 3
-	p.YPos = 4
+/*
+ * Mover is the interface implemented by a movable game object. It handles
+ * setting and retrieving of its final destination. A Mover must implement
+ * the Updater interface
+ */
+type Mover interface {
+	SetDestination(xpos, ypos float32)
+	GetDestination() (xpos, ypos float32)
 }
