@@ -6,11 +6,11 @@
 package game
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
 	"server/game/protocol"
+	"server/math"
 )
 
 /*
@@ -33,31 +33,32 @@ func NewGameState() GameState {
  */
 func (gs GameState) pack() (*protocol.Message, error) {
 
-	// create a GameStateMsg from the game state
+	// do not send nothing if no players yet
 	if len(gs.players) == 0 {
-		log.Debug("sendGameState: nothing to pack, 0 players")
 		return nil, nil
 	}
 
-	var ent0 entity.Player
-	ent0 = *gs.players[0]
+	// TODO: GameStateMsg will be represented by a list
+	var ent0 *entity.Player
+	ent0 = gs.players[0]
 
+	// create a GameStateMsg from the game state
 	gsMsg := messages.GameStateMsg{
 		Tstamp: MakeTimestamp(),
-		Xpos:   ent0.XPos,
-		Ypos:   ent0.YPos,
+		Xpos:   ent0.GetPos().X(),
+		Ypos:   ent0.GetPos().Y(),
 		Action: messages.ActionMsg{
-			ActionType:   0,
-			TargetTstamp: MakeTimestamp(),
-			Xpos:         ent0.XPos,
-			Ypos:         ent0.YPos,
+			ActionType:   messages.MoveId,
+			TargetTstamp: ent0.GetDestinationTimestamp(),
+			Xpos:         ent0.GetDestination().X(),
+			Ypos:         ent0.GetDestination().Y(),
 		},
 	}
 
 	// wrap the specialized GameStateMsg into a generic Message
 	msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
 	if err != nil {
-		log.WithField("err", err).Fatal("Couldn't create Message from gamestate")
+		log.WithField("err", err).Fatal("Couldn't pack Gamestate")
 		return nil, err
 	}
 
@@ -67,7 +68,7 @@ func (gs GameState) pack() (*protocol.Message, error) {
 func (gs *GameState) onAddPlayer(msg interface{}, clientId uint16) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("we have a new player")
-	gs.players[clientId] = new(entity.Player)
+	gs.players[clientId] = entity.NewPlayer(0, 0, 2)
 	return nil
 }
 
@@ -81,17 +82,18 @@ func (gs *GameState) onDelPlayer(msg interface{}, clientId uint16) error {
 func (gs *GameState) onMovePlayer(msg interface{}, clientId uint16) error {
 
 	move := msg.(messages.MoveMsg)
-	log.WithFields(log.WithFields{
-		"clientId": clientId,
-		"msg":      move,
-	}).Info("handling a MoveMsg")
+	log.WithFields(
+		log.Fields{"clientId": clientId, "msg": move}).Info("handling a MoveMsg")
 
-	var p *entity.Player
-	var ok bool
-	if p, ok = gs.players[clientId]; !ok {
-		return fmt.Errorf("player with this clientId (%v) doesn't exist", clientId)
+	if p, ok := gs.players[clientId]; ok {
+		p.SetDestination(math.Vec2{move.Xpos, move.Ypos})
+
+		log.WithFields(
+			log.Fields{"player": p, "clientId": clientId}).Info("MovePlayer")
+	} else {
+		log.WithField(
+			"clientId", clientId).Panic("Player not found")
 	}
-	p.SetDestination(moveMsg.Xpos, moveMsg.Ypos)
 
 	return nil
 }

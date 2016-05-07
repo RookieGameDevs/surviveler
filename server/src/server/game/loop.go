@@ -63,7 +63,6 @@ func (g *Game) loop() {
 					quit = true
 				}
 				if msg != nil {
-					log.WithField("msg", msg).Debug("Sending gamestate msg")
 					g.server.Broadcast(msg)
 				}
 
