@@ -53,9 +53,10 @@ func (g *Game) Setup(cfg GameCfg) {
 	g.loopCloseChan = make(chan struct{})
 
 	// setup server
-	msgHandler := func(msg *protocol.Message, clientId uint16) {
+	msgHandler := func(msg protocol.Message, clientId uint16) error {
 		// forward incoming messages to the game loop
-		g.msgChan <- protocol.ClientMessage{msg, clientId}
+		g.msgChan <- protocol.ClientMessage{&msg, clientId}
+		return nil
 	}
 	g.server = *protocol.NewServer(g.cfg.Port, msgHandler)
 }

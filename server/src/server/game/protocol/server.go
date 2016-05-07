@@ -17,8 +17,6 @@ const (
 	MAX_IN_CHANNELS  = 100
 )
 
-type ClientMessageHandler func(*Message, uint16)
-
 /*
  * Broadcaster is the interface that wraps that Broadcast method. It implements
  * the Broadcaster interface.
@@ -37,17 +35,17 @@ type Server struct {
 	port    string
 	server  network.Server // tcp server instance
 	clients ClientRegistry // manage the connected clients
-	handler ClientMessageHandler
+	handler MsgHandlerFunc // root handler function, accept incoming messages
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, h ClientMessageHandler) *Server {
+func NewServer(port string, hf MsgHandlerFunc) *Server {
 
 	srv := new(Server)
 	srv.port = port
-	srv.handler = h
+	srv.handler = hf
 
 	return srv
 }
@@ -93,7 +91,7 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
 
 	// send a AddPlayerMsg to the game loop (server-only msg)
 	if msg, err := NewMessage(messages.AddPlayerId, messages.AddPlayerMsg{"batman"}); err == nil {
-		srv.handler(msg, clientId)
+		srv.handler(*msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create AddPlayerMsg")
 	}
@@ -159,7 +157,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 
 	// send a DelPlayerMsg to the game loop (server-only msg)
 	if msg, err := NewMessage(messages.DelPlayerId, messages.DelPlayerMsg{}); err == nil {
-		srv.handler(msg, clientId)
+		srv.handler(*msg, clientId)
 	} else {
 		log.WithError(err).Fatal("Couldn't create DelPlayerMsg")
 	}

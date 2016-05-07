@@ -31,10 +31,10 @@ func (g *Game) loop() {
 	gs := GameState{}
 	gs.players = make(map[uint16]*entity.Player)
 
-	msgmgr := new(MessageManager)
+	msgmgr := new(protocol.MessageManager)
 
-	msgmgr.Listen(messages.AddPlayerId, MsgHandlerFunc(gs.onAddPlayer))
-	msgmgr.Listen(messages.DelPlayerId, MsgHandlerFunc(gs.onDelPlayer))
+	msgmgr.Listen(messages.AddPlayerId, protocol.MsgHandlerFunc(gs.onAddPlayer))
+	msgmgr.Listen(messages.DelPlayerId, protocol.MsgHandlerFunc(gs.onDelPlayer))
 
 	// loop local stop condition
 	quit := false
