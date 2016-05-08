@@ -15,19 +15,11 @@ import (
 )
 
 /*
- * GameCfg contains all the configurable server-specific game settings
- */
-type GameCfg struct {
-	Port  string
-	Debug bool
-}
-
-/*
  * Game is the main game structure. It also implements the
  * network.ConnEvtHandler interface
  */
 type Game struct {
-	cfg           GameCfg                     // configuration settings
+	cfg           Config                      // configuration settings
 	server        protocol.Server             // server core
 	ticker        time.Ticker                 // our tick source
 	msgChan       chan protocol.ClientMessage // conducts ClientMessage to the game loop
@@ -37,13 +29,13 @@ type Game struct {
 /*
  * Setup initializes the different game subsystems
  */
-func (g *Game) Setup(cfg GameCfg) {
-	g.cfg = cfg
+func (g *Game) Setup() {
+
+	// get configuration
+	g.cfg = ParseConfig()
 
 	// setup logger
-	if g.cfg.Debug {
-		log.StandardLogger().Level = log.DebugLevel
-	}
+	log.StandardLogger().Level = g.cfg.LogLevel
 
 	// setup go runtime
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -77,7 +69,7 @@ func (g *Game) Start() {
 	defer close(chSig)
 
 	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
-	log.WithField("signal", <-chSig).Info("Received termination signal")
+	log.WithField("signal", <-chSig).Warn("Received termination signal")
 
 	g.stop()
 }
