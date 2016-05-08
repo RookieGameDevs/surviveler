@@ -4,3 +4,6 @@
 [submodule "logrus"]
 	path = server/src/server/vendor/github.com/Sirupsen/logrus
 	url = git@github.com:Sirupsen/logrus.git
+[submodule "iniflags"]
+	path = server/src/server/vendor/github.com/vharitonsky/iniflags
+	url = git@github.com:vharitonsky/iniflags.git
