@@ -127,10 +127,7 @@ class AbstractSceneNode(ABC):
             transform = parent.transform * transform
             parent = parent.parent
 
-        v = (
-            transform *
-            np.array([pos.x, pos.y, pos.z, 1.0]).reshape((4, 1)))
-
+        v = transform * np.array([pos.x, pos.y, pos.z, 1.0]).reshape((4, 1))
         return Vec3(v[0], v[1], v[2])
 
 
