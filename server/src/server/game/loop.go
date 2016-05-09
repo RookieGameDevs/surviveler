@@ -20,10 +20,12 @@ import (
 func (g *Game) loop() {
 
 	// will tick when it's time to send the gamestate to the clients
-	sendTickChan := time.NewTicker(time.Millisecond * 100).C
+	sendTickChan := time.NewTicker(
+		time.Millisecond * time.Duration(g.cfg.SendTickPeriod)).C
 
 	// will tick when it's time to update the game
-	tickChan := time.NewTicker(time.Millisecond * 10).C
+	tickChan := time.NewTicker(
+		time.Millisecond * time.Duration(g.cfg.LogicTickPeriod)).C
 
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
