@@ -66,6 +66,21 @@ class Vec3(np.ndarray):
         """
         return self / self.mag()
 
+    @property
+    def x(self):
+        """X coordinate."""
+        return self[0]
+
+    @property
+    def y(self):
+        """Y coordinate."""
+        return self[1]
+
+    @property
+    def z(self):
+        """Z coordinate."""
+        return self[2]
+
 
 class Mat4(np.matrix):
     """Matrix 4x4."""

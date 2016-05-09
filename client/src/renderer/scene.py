@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 from matlib import Mat4
+import numpy as np
 
 
 class SceneRenderContext:
@@ -65,6 +66,7 @@ class AbstractSceneNode(ABC):
 
     def __init__(self):
         self._children = []
+        self.parent = None
         self.transform = Mat4()
 
     @abstractmethod
@@ -95,6 +97,7 @@ class AbstractSceneNode(ABC):
         :param node: Node instance to add as child.
         :type node: a class derived from :class:`renderer.scene.AbstractSceneNode`
         """
+        node.parent = self
         self._children.append(node)
 
     def remove_child(self, node):
@@ -105,8 +108,22 @@ class AbstractSceneNode(ABC):
         """
         try:
             self._children.remove(node)
+            node.parent = None
         except ValueError:
             pass
+
+    def to_world(self, coord):
+        transform = self.transform
+        parent = self.parent
+        while parent:
+            transform = parent.transform * transform
+            parent = parent.parent
+
+        v = (
+            transform *
+            np.array([coord.x, coord.y, coord.z, 1.0]).reshape((4, 1)))
+
+        return Vec3(v[0], v[1], v[2])
 
 
 class RootNode(AbstractSceneNode):

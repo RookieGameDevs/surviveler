@@ -214,6 +214,16 @@ class Client:
         """The camera."""
         return self.__client.camera
 
+    @property
+    def renderer(self):
+        """The renderer."""
+        return self.__client.renderer
+
+    @property
+    def config(self):
+        """The game configuration."""
+        return self.__client.game_cfg
+
     def get_entity(self, e_id):
         """Returns the entity object associated with the given entity id.
 
