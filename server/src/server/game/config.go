@@ -12,8 +12,10 @@ import (
 )
 
 var (
-	DefaultPort     = "1234"
-	DefaultLogLevel = "Debug"
+	DefaultPort            = "1234"
+	DefaultLogLevel        = "Debug"
+	DefaultLogicTickPeriod = 10
+	DefaultSendTickPeriod  = 100
 )
 
 var (
@@ -21,14 +23,20 @@ var (
 		"Server listening port (TCP)")
 	LogLevel = flag.String("LogLevel", DefaultLogLevel,
 		"Server logging level (Debug, Info, Warning, Error)")
+	LogicTickPeriod = flag.Int("LogicTickPeriod", DefaultLogicTickPeriod,
+		"Period in millisecond of the ticker that updates game logic")
+	SendTickPeriod = flag.Int("SendTickPeriod", DefaultSendTickPeriod,
+		"Period in millisecond of the ticker that send the gamestate to clients")
 )
 
 /*
  * Config contains all the configurable server-specific game settings
  */
 type Config struct {
-	Port     string
-	LogLevel log.Level
+	Port            string
+	LogLevel        log.Level
+	SendTickPeriod  int
+	LogicTickPeriod int
 }
 
 /*
@@ -44,6 +52,8 @@ func ParseConfig() (cfg Config) {
 	// fill the Config struct
 	cfg = Config{}
 	cfg.Port = *Port
+	cfg.SendTickPeriod = *SendTickPeriod
+	cfg.LogicTickPeriod = *LogicTickPeriod
 
 	if ll, err := log.ParseLevel(*LogLevel); err == nil {
 		cfg.LogLevel = ll
