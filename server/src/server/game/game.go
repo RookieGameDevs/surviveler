@@ -37,6 +37,9 @@ func (g *Game) Setup() {
 	// setup logger
 	log.StandardLogger().Level = g.cfg.LogLevel
 
+	// dump config
+	log.WithField("cfg", g.cfg).Info("Game configuration")
+
 	// setup go runtime
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
