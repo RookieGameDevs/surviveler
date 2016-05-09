@@ -1,20 +1,25 @@
 /*
-	Message interfaces
-*/
-package core
+ * Generic network package
+ * interfaces
+ */
+package network
 
 import (
 	"net"
 )
 
-// Message is the interface that wraps the Serialize method.
+/*
+ * Message is the interface that wraps the Serialize method.
+ */
 type Message interface {
 
 	// Serialize transforms the message into a buffer of bytes.
 	Serialize() []byte
 }
 
-// MessageReader is the interface that wraps the ReadMessage method.
+/*
+ * MessageReader is the interface that wraps the ReadMessage method.
+ */
 type MessageReader interface {
 
 	// ReadMessage reads a message from a TCP connection, or returns an error

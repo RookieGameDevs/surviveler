@@ -1,34 +1,60 @@
-package core
+/*
+ * Generic network package
+ * TCP connection
+ */
+package network
 
 import (
 	"errors"
-	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-// Error types
+/*
+ * Error types
+ */
 var (
 	ErrClosedConnection = errors.New("connection already closed")
 	ErrBlockingWrite    = errors.New("blocking tcp write")
 	ErrBlockingRead     = errors.New("blocking tcp read")
 )
 
-// Conn is an opaque structure, holding the underlying TCP connection, the
-// message channels and the logic for resources cleanup and synchronization
+/*
+ * Conn is an opaque structure, holding the underlying TCP connection, the
+ * message channels and the logic for resources cleanup and synchronization
+ */
 type Conn struct {
 	srv          *Server
 	conn         *net.TCPConn  // underlying tcp connection
-	closeOnce    sync.Once     // close the conn, once, per instance
+	userData     interface{}   // associated user data
+	closeOnce    sync.Once     // close the connection, once, per instance
 	closeFlag    int32         // close flag
 	closeChan    chan struct{} // close chanel
 	outgoingChan chan Message  // chanel sending outgoing messages
 	incomingChan chan Message  // chanel receiving incoming messages
 }
 
-// ConnEvtHandler is the interface that handles connection events
+/*
+ * GetUserData retrieves the associated user data
+ */
+func (c *Conn) GetUserData() interface{} {
+	return c.userData
+}
+
+/*
+ * SetUserData associates user data with the connection
+ */
+func (c *Conn) SetUserData(data interface{}) {
+	// TODO: protect again more than one call, using sync.Once
+	c.userData = data
+}
+
+/*
+ * ConnEvtHandler is the interface that handles connection events
+ */
 type ConnEvtHandler interface {
 	// OnConnect is called once per connection. A false return value indicates
 	// the connection should be closed.
@@ -38,11 +64,13 @@ type ConnEvtHandler interface {
 	// A false return value indicates the connection should be closed.
 	OnIncomingMsg(*Conn, Message) bool
 
-	// OnClose is called when the connection has been closed
+	// OnClose is called when the connection has been closed, once per connection.
 	OnClose(*Conn)
 }
 
-// newConn returns a new Conn instance
+/*
+ * newConn returns a new Conn instance
+ */
 func newConn(conn *net.TCPConn, srv *Server) *Conn {
 	return &Conn{
 		srv:          srv,
@@ -53,29 +81,45 @@ func newConn(conn *net.TCPConn, srv *Server) *Conn {
 	}
 }
 
-// GetRawConn returns the underlying net.TCPConn from the Conn
+/*
+ * GetRawConn returns the underlying net.TCPConn from the Conn
+ */
 func (c *Conn) GetRawConn() *net.TCPConn {
 	return c.conn
 }
 
-// Close closes the connection
+/*
+ * Close closes the connection
+ */
 func (c *Conn) Close() {
 	c.closeOnce.Do(func() {
+		// atomically set to 1, so concurrent accesses always have the latest value
 		atomic.StoreInt32(&c.closeFlag, 1)
+
+		// close all the channels
 		close(c.closeChan)
 		close(c.outgoingChan)
 		close(c.incomingChan)
+
+		// close the underlying TCP connection
 		c.conn.Close()
+
+		// finally raise the callback
 		c.srv.callback.OnClose(c)
 	})
 }
 
-// IsClosed indicates whether a the connection is closed or not
+/*
+ * IsClosed indicates whether a the connection is closed or not
+ */
 func (c *Conn) IsClosed() bool {
+	// again, atomatically read it, so that concurrent accesses always have the latest value
 	return atomic.LoadInt32(&c.closeFlag) == 1
 }
 
-// AsyncSendMessage sends a message (guaranteed unblocking, or return error)
+/*
+ * AsyncSendMessage sends a message (guaranteed unblocking, or return error)
+ */
 func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) {
 	if c.IsClosed() {
 		return ErrClosedConnection
@@ -93,6 +137,7 @@ func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) 
 			return nil
 
 		default:
+			// in case of no timeout, raise an error if we couldn't send immediately
 			return ErrBlockingWrite
 		}
 
@@ -102,15 +147,19 @@ func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) 
 			return nil
 
 		case <-c.closeChan:
+			//  tried to send on a closed connection
 			return ErrClosedConnection
 
 		case <-time.After(timeout):
+			// in case a timeout, raise an error once it has elapsed
 			return ErrBlockingWrite
 		}
 	}
 }
 
-// StartLoops starts the various goroutines for current connection
+/*
+ * StartLoops starts the various goroutines for current connection
+ */
 func (c *Conn) StartLoops() {
 	if !c.srv.callback.OnConnect(c) {
 		return
@@ -138,8 +187,10 @@ func (c *Conn) StartLoops() {
 	}()
 }
 
-// readLoop loops forever and reads incoming message from the client, while
-// handling server exit and connection closing
+/*
+ * readLoop loops forever and reads incoming message from the client, while
+ * handling server exit and connection closing
+ */
 func (c *Conn) readLoop() {
 	defer func() {
 		recover()
@@ -148,9 +199,11 @@ func (c *Conn) readLoop() {
 
 	for {
 		select {
+		// handle server exit
 		case <-c.srv.exitChan:
 			return
 
+		// handle connection close
 		case <-c.closeChan:
 			return
 
@@ -160,7 +213,7 @@ func (c *Conn) readLoop() {
 		// Read from the connection byte stream and unserialize into a message
 		msg, err := c.srv.msgReader.ReadMessage(c.conn)
 		if err != nil {
-			fmt.Printf("ReadMessage error: %v\n", err)
+			log.WithError(err).Warning("ReadMessage")
 			return
 		}
 
@@ -169,8 +222,10 @@ func (c *Conn) readLoop() {
 	}
 }
 
-// writeLoop loops forever and writes outgoing packet to the client, while
-// handling server exit and connection closing
+/*
+ * writeLoop loops forever and writes outgoing packet to the client, while
+ * handling server exit and connection closing
+ */
 func (c *Conn) writeLoop() {
 	defer func() {
 		recover()
@@ -179,16 +234,20 @@ func (c *Conn) writeLoop() {
 
 	for {
 		select {
+		// handle server exit
 		case <-c.srv.exitChan:
 			return
 
+		// handle connection close
 		case <-c.closeChan:
 			return
 
+		// handle an outgoing message
 		case msg := <-c.outgoingChan:
 			if c.IsClosed() {
 				return
 			}
+			// write the serialized message on the underlying TCP connection
 			if _, err := c.conn.Write(msg.Serialize()); err != nil {
 				return
 			}
@@ -196,7 +255,9 @@ func (c *Conn) writeLoop() {
 	}
 }
 
-// handleLoop loops forever and handles connection/server specific events
+/*
+ * handleLoop loops forever and handles connection/server specific events
+ */
 func (c *Conn) handleLoop() {
 	defer func() {
 		recover()
@@ -205,12 +266,15 @@ func (c *Conn) handleLoop() {
 
 	for {
 		select {
+		// handle server exit
 		case <-c.srv.exitChan:
 			return
 
+		// handle connection close
 		case <-c.closeChan:
 			return
 
+		// handle incoming message
 		case msg := <-c.incomingChan:
 			if c.IsClosed() {
 				return

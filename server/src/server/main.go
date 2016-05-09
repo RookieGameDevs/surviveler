@@ -1,3 +1,7 @@
+/*
+ * Surviveler
+ * game entry point
+ */
 package main
 
 import (
@@ -5,6 +9,15 @@ import (
 )
 
 func main() {
+	// game setup
+	cfg := game.GameCfg{
+		Port:  "1234",
+		Debug: true,
+	}
 
-	game.StartGameServer()
+	surviveler := new(game.Game)
+	surviveler.Setup(cfg)
+
+	// start the game
+	surviveler.Start()
 }

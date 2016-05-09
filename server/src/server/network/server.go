@@ -1,4 +1,8 @@
-package core
+/*
+ * Generic network package
+ * server implementation
+ */
+package network
 
 import (
 	"net"
@@ -19,7 +23,9 @@ type Server struct {
 	waitGroup *sync.WaitGroup // wait for all goroutines
 }
 
-// NewServer creates a server
+/*
+ * NewServer creates a server
+ */
 func NewServer(cfg *ServerCfg, callback ConnEvtHandler, msgReader MessageReader) *Server {
 	return &Server{
 		config:    cfg,
@@ -30,7 +36,9 @@ func NewServer(cfg *ServerCfg, callback ConnEvtHandler, msgReader MessageReader)
 	}
 }
 
-// Start runs the server main listening loop
+/*
+ * Start runs the server main listening loop
+ */
 func (s *Server) Start(listener *net.TCPListener, acceptTimeout time.Duration) {
 	s.waitGroup.Add(1)
 	defer func() {
@@ -61,7 +69,9 @@ func (s *Server) Start(listener *net.TCPListener, acceptTimeout time.Duration) {
 	}
 }
 
-// Stop exits the server gracefully
+/*
+ * Stop exits the server gracefully
+ */
 func (s *Server) Stop() {
 	close(s.exitChan)
 	s.waitGroup.Wait()
