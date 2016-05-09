@@ -112,7 +112,15 @@ class AbstractSceneNode(ABC):
         except ValueError:
             pass
 
-    def to_world(self, coord):
+    def to_world(self, pos):
+        """Transform local coordinate to world.
+
+        :param pos: Position in node's local coordinate system.
+        :type pos: :class:`matlib.Vec3`
+
+        :returns: Position in world coordinates.
+        :rtype: :class:`matlib.Vec3`
+        """
         transform = self.transform
         parent = self.parent
         while parent:
@@ -121,7 +129,7 @@ class AbstractSceneNode(ABC):
 
         v = (
             transform *
-            np.array([coord.x, coord.y, coord.z, 1.0]).reshape((4, 1)))
+            np.array([pos.x, pos.y, pos.z, 1.0]).reshape((4, 1)))
 
         return Vec3(v[0], v[1], v[2])
 
