@@ -70,7 +70,7 @@ func (gs GameState) pack() (*protocol.Message, error) {
 		log.WithField("err", err).Fatal("Couldn't pack Gamestate")
 		return nil, err
 	}
-
+	log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
 	return msg, nil
 }
 
