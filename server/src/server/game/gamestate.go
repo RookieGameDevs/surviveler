@@ -38,9 +38,18 @@ func (gs GameState) pack() (*protocol.Message, error) {
 		return nil, nil
 	}
 
+	// TODO: remove this. It's a temporary safety!
+	if len(gs.players) > 1 {
+		log.Panic("Can't represent more than one client in the GameStateMsg for now")
+		return nil, nil
+	}
+
 	// TODO: GameStateMsg will be represented by a list
+	//       For now, we find the unique client and represent its game state
 	var ent0 *entity.Player
-	ent0 = gs.players[0]
+	for _, p := range gs.players {
+		ent0 = p
+	}
 
 	// create a GameStateMsg from the game state
 	gsMsg := messages.GameStateMsg{
