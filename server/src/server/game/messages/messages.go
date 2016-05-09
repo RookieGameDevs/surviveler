@@ -16,6 +16,7 @@ const (
 
 /*
  * Server only messages
+ * TODO: those will be replaced once the handshake protocol will be implemented
  */
 const (
 	AddPlayerId = 1024 + iota
@@ -39,6 +40,14 @@ type PongMsg PingMsg
  * Server->client game state
  */
 type GameStateMsg struct {
+	Entities map[uint16]EntityStateMsg
+}
+
+/*
+ * EntityStateMsg is a component of the GameStateMsg and represents the state of a
+ * game entity
+ */
+type EntityStateMsg struct {
 	Tstamp int64
 	Xpos   float32
 	Ypos   float32
@@ -46,14 +55,24 @@ type GameStateMsg struct {
 }
 
 /*
- * Sub-message of GameStateMsg.
+ * Action struct is a container for the fields representing the current action
+ * of an entity
  */
 type ActionMsg struct {
-	ActionType   uint16
+	ActionType   ActionType
 	TargetTstamp int64
 	Xpos         float32
 	Ypos         float32
 }
+
+type ActionType uint16
+
+const (
+	IdleAction ActionType = 0 + iota
+	// TODO: set the real action type Ids
+	WalkingAction
+	AttackAction
+)
 
 /*
  * player initiated character movement

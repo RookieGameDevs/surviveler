@@ -33,35 +33,26 @@ func NewGameState() GameState {
  */
 func (gs GameState) pack() (*protocol.Message, error) {
 
-	// do not send nothing if no players yet
+	// do not send nothing if we don't have players
 	if len(gs.players) == 0 {
 		return nil, nil
 	}
 
-	// TODO: remove this. It's a temporary safety!
-	if len(gs.players) > 1 {
-		log.Panic("Can't represent more than one client in the GameStateMsg for now")
-		return nil, nil
-	}
-
-	// TODO: GameStateMsg will be represented by a list
-	//       For now, we find the unique client and represent its game state
-	var ent0 *entity.Player
-	for _, p := range gs.players {
-		ent0 = p
-	}
-
-	// create a GameStateMsg from the game state
-	gsMsg := messages.GameStateMsg{
-		Tstamp: MakeTimestamp(),
-		Xpos:   ent0.GetPos().X(),
-		Ypos:   ent0.GetPos().Y(),
-		Action: messages.ActionMsg{
-			ActionType:   messages.MoveId,
-			TargetTstamp: ent0.GetDestinationTimestamp(),
-			Xpos:         ent0.GetDestination().X(),
-			Ypos:         ent0.GetDestination().Y(),
-		},
+	// fill the gamestatemsg
+	var gsMsg messages.GameStateMsg
+	gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
+	for id, ent := range gs.players {
+		gsMsg.Entities[id] = messages.EntityStateMsg{
+			Tstamp: MakeTimestamp(),
+			Xpos:   ent.GetPos().X(),
+			Ypos:   ent.GetPos().Y(),
+			Action: messages.ActionMsg{
+				ActionType:   messages.WalkingAction,
+				TargetTstamp: ent.GetDestinationTimestamp(),
+				Xpos:         ent.GetDestination().X(),
+				Ypos:         ent.GetDestination().Y(),
+			},
+		}
 	}
 
 	// wrap the specialized GameStateMsg into a generic Message
