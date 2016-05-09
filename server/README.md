@@ -38,7 +38,7 @@ You can provide configuration settings in different ways:
 #### Command line flags:
 
 ```
-bin/server -Port 12345
+bin/server -port 12345
 ```
 
 #### Ini file

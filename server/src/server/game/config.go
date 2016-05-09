@@ -19,13 +19,13 @@ var (
 )
 
 var (
-	Port = flag.String("Port", DefaultPort,
+	Port = flag.String("port", DefaultPort,
 		"Server listening port (TCP)")
-	LogLevel = flag.String("LogLevel", DefaultLogLevel,
+	LogLevel = flag.String("log-level", DefaultLogLevel,
 		"Server logging level (Debug, Info, Warning, Error)")
-	LogicTickPeriod = flag.Int("LogicTickPeriod", DefaultLogicTickPeriod,
+	LogicTickPeriod = flag.Int("logic-tick-period", DefaultLogicTickPeriod,
 		"Period in millisecond of the ticker that updates game logic")
-	SendTickPeriod = flag.Int("SendTickPeriod", DefaultSendTickPeriod,
+	SendTickPeriod = flag.Int("send-tick-period", DefaultSendTickPeriod,
 		"Period in millisecond of the ticker that send the gamestate to clients")
 )
 
