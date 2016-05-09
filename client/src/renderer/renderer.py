@@ -1,5 +1,4 @@
 from OpenGL.GL import GL_BACK
-from OpenGL.GL import GL_FRONT
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
 from OpenGL.GL import GL_CULL_FACE
 from OpenGL.GL import GL_DEPTH_BUFFER_BIT
