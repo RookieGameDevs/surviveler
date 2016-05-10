@@ -43,6 +43,24 @@ type GameStateMsg struct {
 	Entities map[uint16]EntityStateMsg
 }
 
+// TODO: to remove
+type OldGameStateMsg struct {
+	Tstamp int64
+	Xpos   float32
+	Ypos   float32
+	Action ActionMsg
+}
+
+/*
+ * Sub-message of GameStateMsg.
+ */
+type OldActionMsg struct {
+	ActionType   uint16
+	TargetTstamp int64
+	Xpos         float32
+	Ypos         float32
+}
+
 /*
  * EntityStateMsg is a component of the GameStateMsg and represents the state of a
  * game entity

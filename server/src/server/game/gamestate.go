@@ -13,6 +13,9 @@ import (
 	"server/math"
 )
 
+// TODO: remove this soon...
+const GAMESTATE_IS_A_MAP = false
+
 /*
  * GameState is the structure that contains all the complete game state
  */
@@ -38,34 +41,69 @@ func (gs GameState) pack() (*protocol.Message, error) {
 		return nil, nil
 	}
 
-	// fill the gamestatemsg
-	var gsMsg messages.GameStateMsg
-	gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
-	for id, ent := range gs.players {
+	if GAMESTATE_IS_A_MAP {
 
-		snapshot := ent.GetSnapshot()
+		// fill the gamestatemsg
+		var gsMsg messages.GameStateMsg
+		gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
+		for id, ent := range gs.players {
 
-		gsMsg.Entities[id] = messages.EntityStateMsg{
-			Tstamp: MakeTimestamp(),
-			Xpos:   snapshot.CurPos[0],
-			Ypos:   snapshot.CurPos[1],
-			Action: messages.ActionMsg{
-				ActionType:   messages.WalkingAction,
-				TargetTstamp: snapshot.DestTstamp,
-				Xpos:         snapshot.DestPos[0],
-				Ypos:         snapshot.DestPos[1],
-			},
+			snapshot := ent.GetSnapshot()
+
+			gsMsg.Entities[id] = messages.EntityStateMsg{
+				Tstamp: MakeTimestamp(),
+				Xpos:   snapshot.CurPos[0],
+				Ypos:   snapshot.CurPos[1],
+				Action: messages.ActionMsg{
+					ActionType:   messages.WalkingAction,
+					TargetTstamp: snapshot.DestTstamp,
+					Xpos:         snapshot.DestPos[0],
+					Ypos:         snapshot.DestPos[1],
+				},
+			}
+		}
+
+		// wrap the specialized GameStateMsg into a generic Message
+		msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
+		if err != nil {
+			log.WithField("err", err).Fatal("Couldn't pack Gamestate")
+			return nil, err
+		}
+		log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
+		return msg, nil
+
+	} else {
+
+		// create a GameStateMsg from the game state
+		for _, ent := range gs.players {
+
+			snapshot := ent.GetSnapshot()
+
+			gsMsg := messages.OldGameStateMsg{
+				Tstamp: MakeTimestamp(),
+				Xpos:   snapshot.CurPos[0],
+				Ypos:   snapshot.CurPos[1],
+				Action: messages.ActionMsg{
+					ActionType:   messages.ActionType(messages.MoveId),
+					TargetTstamp: snapshot.DestTstamp,
+					Xpos:         snapshot.DestPos[0],
+					Ypos:         snapshot.DestPos[1],
+				},
+			}
+
+			// wrap the specialized GameStateMsg into a generic Message
+			msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
+			if err != nil {
+				log.WithField("err", err).Fatal("Couldn't pack Gamestate")
+				return nil, err
+			}
+
+			// exit after sending the first found entity state
+			log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
+			return msg, nil
 		}
 	}
-
-	// wrap the specialized GameStateMsg into a generic Message
-	msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
-	if err != nil {
-		log.WithField("err", err).Fatal("Couldn't pack Gamestate")
-		return nil, err
-	}
-	log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
-	return msg, nil
+	return nil, nil
 }
 
 func (gs *GameState) onAddPlayer(msg interface{}, clientId uint16) error {
