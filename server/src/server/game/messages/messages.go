@@ -56,7 +56,7 @@ type EntityStateMsg struct {
 
 /*
  * Action struct is a container for the fields representing the current action
- * of an entity
+ * of an entity. Server -> client message
  */
 type ActionMsg struct {
 	ActionType   ActionType
@@ -75,7 +75,7 @@ const (
 )
 
 /*
- * player initiated character movement
+ * player initiated character movement. Client -> server message
  */
 type MoveMsg struct {
 	Xpos float32
