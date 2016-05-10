@@ -42,15 +42,18 @@ func (gs GameState) pack() (*protocol.Message, error) {
 	var gsMsg messages.GameStateMsg
 	gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
 	for id, ent := range gs.players {
+
+		snapshot := ent.GetSnapshot()
+
 		gsMsg.Entities[id] = messages.EntityStateMsg{
 			Tstamp: MakeTimestamp(),
-			Xpos:   ent.GetPos().X(),
-			Ypos:   ent.GetPos().Y(),
+			Xpos:   snapshot.CurPos[0],
+			Ypos:   snapshot.CurPos[1],
 			Action: messages.ActionMsg{
 				ActionType:   messages.WalkingAction,
-				TargetTstamp: ent.GetDestinationTimestamp(),
-				Xpos:         ent.GetDestination().X(),
-				Ypos:         ent.GetDestination().Y(),
+				TargetTstamp: snapshot.DestTstamp,
+				Xpos:         snapshot.DestPos[0],
+				Ypos:         snapshot.DestPos[1],
 			},
 		}
 	}
@@ -86,7 +89,7 @@ func (gs *GameState) onMovePlayer(msg interface{}, clientId uint16) error {
 		log.Fields{"clientId": clientId, "msg": move}).Info("handling a MoveMsg")
 
 	if p, ok := gs.players[clientId]; ok {
-		p.SetDestination(math.Vec2{move.Xpos, move.Ypos})
+		p.SetPos(math.Vec2{move.Xpos, move.Ypos})
 
 		log.WithFields(
 			log.Fields{"player": p, "clientId": clientId}).Info("MovePlayer")
