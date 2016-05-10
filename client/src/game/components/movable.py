@@ -103,7 +103,7 @@ class Movable(Component):
         theta = angle(position, destination)
         now = tstamp()
         dst = (
-            tstamp() - start_tstamp *
+            (tstamp() - start_tstamp) *
             distance(destination, position) /
             (target_tstamp - start_tstamp))
 

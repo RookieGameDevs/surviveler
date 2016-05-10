@@ -32,9 +32,11 @@ def update_user_position(gamestate):
     :param gamestate: the gamestate
     :type gamestate: dict
     """
-    x, y = gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]
-    evt = PlayerPositionUpdated(x, y)
-    send_event(evt)
+    if not gamestate.get(MessageField.action, None):
+        # NOTE: Update the position in this way only when the item is in "idle"
+        x, y = gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]
+        evt = PlayerPositionUpdated(x, y)
+        send_event(evt)
 
 
 @processor
