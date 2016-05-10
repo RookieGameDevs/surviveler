@@ -26,10 +26,8 @@ def handle_mouse_click(evt):
         LOG.info('World pos: {},{},{}'.format(pos.x, pos.y, pos.z))
 
         msg = Message(MessageType.move, {
-            MessageField.x_pos: pos.x,
-            MessageField.y_pos: pos.y,
+            MessageField.x_pos: int(round(pos.x)),
+            MessageField.y_pos: int(round(pos.y)),
         })
 
-        # FIXME: uncomment the message enqueueing when the server is able to receive
-        # move messages
-        # evt.client.proxy.enqueue(msg)
+        evt.client.proxy.enqueue(msg)
