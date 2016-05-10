@@ -4,6 +4,7 @@ from matlib import Mat4
 from matlib import Vec3
 from renderer import Mesh
 from renderer import Shader
+from renderer import Texture
 
 
 class Terrain(Entity):
@@ -20,9 +21,13 @@ class Terrain(Entity):
             3, 2, 0,
         ]
         mesh = Mesh(vertices, indices)
+
         shader = Shader.from_glsl(
             'data/shaders/simple.vert',
             'data/shaders/simple.frag')
+
+        texture = Texture.from_file('data/textures/tiles.jpg')
+
         renderable = Renderable(parent_node, mesh, shader)
         renderable.node.params['color'] = Vec3(0, 1, 0)
         renderable.transform = (
