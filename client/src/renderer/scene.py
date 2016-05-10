@@ -1,6 +1,7 @@
 from abc import ABC
 from abc import abstractmethod
 from matlib import Mat4
+from matlib import Vec3
 import numpy as np
 
 
