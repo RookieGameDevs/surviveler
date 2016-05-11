@@ -5,5 +5,5 @@
 	path = server/src/server/vendor/github.com/Sirupsen/logrus
 	url = git@github.com:Sirupsen/logrus.git
 [submodule "iniflags"]
-	path = server/src/server/vendor/github.com/vharitonsky/iniflags
-	url = git@github.com:vharitonsky/iniflags.git
+	path = server/src/server/vendor/github.com/aurelien-rainone/iniflags
+	url = git@github.com:aurelien-rainone/iniflags.git

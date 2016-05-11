@@ -8,7 +8,7 @@ import (
 	"flag"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/vharitonsky/iniflags"
+	"github.com/aurelien-rainone/iniflags"
 )
 
 var (
