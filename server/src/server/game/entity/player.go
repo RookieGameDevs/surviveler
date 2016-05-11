@@ -114,7 +114,7 @@ func (em *EntityMover) GetSnapshot() *ActionSnapshot {
 	// compute timestamp at destination
 	speed := em.speed
 	distance := em.dst.Sub(em.pos).Len()
-	duration := distance * speed
+	duration := distance / speed
 	dstTime := time.Now().Add(time.Duration(duration) * time.Second)
 	dstTstamp := dstTime.UnixNano() / int64(time.Millisecond)
 
