@@ -5,3 +5,4 @@ from renderer.scene import GeometryNode  # noqa
 from renderer.scene import Scene  # noqa
 from renderer.shader import Shader  # noqa
 from renderer.texture import Texture  # noqa
+from renderer.texture import TextureParamWrap  # noqa

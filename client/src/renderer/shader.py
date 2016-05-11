@@ -4,6 +4,7 @@ from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
 from OpenGL.GL import GL_FRAGMENT_SHADER
 from OpenGL.GL import GL_LINK_STATUS
+from OpenGL.GL import GL_SAMPLER_2D
 from OpenGL.GL import GL_VERTEX_SHADER
 from OpenGL.GL import glAttachShader
 from OpenGL.GL import glCompileShader
@@ -17,6 +18,7 @@ from OpenGL.GL import glGetShaderiv
 from OpenGL.GL import glGetUniformLocation
 from OpenGL.GL import glLinkProgram
 from OpenGL.GL import glShaderSource
+from OpenGL.GL import glUniform1i
 from OpenGL.GL import glUniform3fv
 from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
@@ -24,6 +26,7 @@ from exceptions import ShaderError
 from exceptions import UniformError
 from matlib import Mat4
 from matlib import Vec3
+from renderer.texture import Texture
 from utils import as_ascii
 from utils import as_utf8
 import numpy as np
@@ -32,12 +35,14 @@ import numpy as np
 UNIFORM_VALIDATORS = {
     GL_FLOAT_MAT4: lambda v: type(v) == Mat4,
     GL_FLOAT_VEC3: lambda v: type(v) == Vec3,
+    GL_SAMPLER_2D: lambda v: type(v) == Texture,
 }
 
 
 UNIFORM_SETTERS = {
     GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, np.asarray(v)),
     GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, np.asarray(v)),
+    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v.tex_unit)
 }
 
 

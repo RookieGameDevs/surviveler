@@ -1,5 +1,8 @@
+from OpenGL.GL import GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS as MAX_TEXTURES
 from abc import ABC
 from abc import abstractmethod
+from contextlib import ExitStack
+from exceptions import OpenGLError
 from matlib import Mat4
 from matlib import Vec3
 import numpy as np
@@ -153,7 +156,7 @@ class RootNode(AbstractSceneNode):
 class GeometryNode(AbstractSceneNode):
     """A node for attaching static geometry (mesh) to the scene."""
 
-    def __init__(self, mesh, shader, params=None):
+    def __init__(self, mesh, shader, params=None, textures=None):
         """Constructor.
 
         :param mesh: Instance of the mesh to render.
@@ -172,9 +175,20 @@ class GeometryNode(AbstractSceneNode):
         self.mesh = mesh
         self.shader = shader
         self.params = params or {}
+        self.textures = textures or []
 
     def render(self, ctx, transform):
         self.params['transform'] = ctx.camera.modelview * transform
         self.params['projection'] = ctx.camera.projection
-        self.shader.use(self.params)
-        self.mesh.render(ctx.renderer)
+
+        if len(self.textures) >= MAX_TEXTURES:
+            raise OpenGLError(
+                'Too much textures to render ({}), maximum is {}'.format(
+                    len(self.textures), MAX_TEXTURES))
+
+        with ExitStack() as stack:
+            for tex_unit, tex in enumerate(self.textures):
+                stack.enter_context(tex.use(tex_unit))
+
+            self.shader.use(self.params)
+            self.mesh.render(ctx.renderer)

@@ -5,6 +5,7 @@ from matlib import Vec3
 from renderer import Mesh
 from renderer import Shader
 from renderer import Texture
+from renderer import TextureParamWrap
 
 
 class Terrain(Entity):
@@ -33,8 +34,13 @@ class Terrain(Entity):
             'data/shaders/terrain.frag')
 
         texture = Texture.from_file('data/textures/tiles.jpg')
+        texture.set_param(TextureParamWrap(
+            TextureParamWrap.Coord.s, TextureParamWrap.WrapType.repeat))
+        texture.set_param(TextureParamWrap(
+            TextureParamWrap.Coord.t, TextureParamWrap.WrapType.repeat))
 
-        renderable = Renderable(parent_node, mesh, shader)
+        renderable = Renderable(parent_node, mesh, shader, textures=[texture])
+        renderable.node.params['tex'] = texture
         renderable.transform = (
             Mat4.trans(Vec3(0, 0, 0.5)) *
             Mat4.scale(Vec3(100, 100, 1)))

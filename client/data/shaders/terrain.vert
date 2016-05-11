@@ -10,6 +10,6 @@ out vec2 uv;
 void
 main()
 {
-    uv = in_uv;
+    uv = in_uv * 10;
     gl_Position = projection * transform * vec4(in_pos, 1.0);
 }

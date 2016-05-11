@@ -9,7 +9,7 @@ class Renderable(Component):
     the node.
     """
 
-    def __init__(self, parent_node, mesh, shader):
+    def __init__(self, parent_node, mesh, shader, textures=None):
         """Constructor.
 
         :param parent_node: Parent node of the new game node.
@@ -22,7 +22,7 @@ class Renderable(Component):
         :type shader: :class:`renderer.Shader`
         """
         self.entity = None
-        self.node = GeometryNode(mesh, shader)
+        self.node = GeometryNode(mesh, shader, textures=textures)
         parent_node.add_child(self.node)
 
     @property
