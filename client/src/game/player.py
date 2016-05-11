@@ -60,6 +60,10 @@ class Player(Entity):
             Mat4.trans(Vec3(x, y, 0)) *
             Mat4.rot(Z, self.rot_angle))
 
+        # FIXME: perform this in a better place
+        from client import Client
+        Client.get_instance().camera.translate(-Vec3(x, y, 0))
+
 
 @subscriber(PlayerPositionUpdated)
 def update_player_position(evt):

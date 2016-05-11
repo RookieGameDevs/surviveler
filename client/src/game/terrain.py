@@ -44,6 +44,7 @@ class Terrain(Entity):
         renderable.transform = (
             Mat4.trans(Vec3(0, 0, 0.5)) *
             Mat4.scale(Vec3(100, 100, 1)))
+
         super(Terrain, self).__init__(renderable)
 
     def update(self, dt):

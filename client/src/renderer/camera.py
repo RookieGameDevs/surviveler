@@ -15,10 +15,24 @@ class Camera(ABC):
 
     def __init__(self):
         self.view_mat = Mat4()
+        self.translate_mat = Mat4()
         self.scale_vec = Vec3(1.0, 1.0, 1.0)
 
     def zoom(self, factor):
+        """Zoom by given factor.
+
+        :param factor: Zoom factor (1.0 for no zoom)
+        :type factor: float
+        """
         self.scale_vec = Vec3(factor, factor, factor)
+
+    def translate(self, v):
+        """Translate the camera by given vector.
+
+        :param v: Translation vector.
+        :type v: :class:`matlib.Vec3`
+        """
+        self.translate_mat = Mat4.trans(v)
 
     def look_at(self, eye, center, up=UP):
         """Sets up camera look transformation.
@@ -52,7 +66,7 @@ class Camera(ABC):
     @property
     def modelview(self):
         """Camera modelview 4x4 matrix."""
-        return Mat4.scale(self.scale_vec) * self.view_mat
+        return Mat4.scale(self.scale_vec) * self.view_mat * self.translate_mat
 
     @abstractproperty
     def projection(self):
