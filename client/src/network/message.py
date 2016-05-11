@@ -16,6 +16,12 @@ class MessageType(IntEnum):
 
 
 @unique
+class ActionType(IntEnum):
+    idle = 0
+    move = 1
+
+
+@unique
 class MessageField(bytes, Enum):
     id = b'Id'
     timestamp = b'Tstamp'
@@ -23,7 +29,7 @@ class MessageField(bytes, Enum):
     y_pos = b'Ypos'
     action = b'Action'
     action_type = b'ActionType'
-    target_timestamp = b'TargetTstamp'
+    speed = b'Speed'
 
 
 class Message:

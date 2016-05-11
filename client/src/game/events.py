@@ -29,13 +29,11 @@ class PlayerActionMove(Event):
     :param action: Move action payload.
     :type action: dict
     """
-    def __init__(self, current_position, destination, current_tstamp, target_tstamp):
+    def __init__(self, current_position, destination, speed):
         self.current_position = current_position
         self.destination = destination
-        self.current_tstamp = current_tstamp
-        self.target_tstamp = target_tstamp
+        self.speed = speed
 
     def __str__(self):
-        return '<PlayerActionMove({}, {}, {}, {})>'.format(
-            self.current_position, self.destination,
-            self.current_tstamp, self.target_tstamp)
+        return '<PlayerActionMove({}, {}, {})>'.format(
+            self.current_position, self.destination, self.speed)

@@ -1,4 +1,5 @@
 from network.connection import Connection  # noqa
+from network.message import ActionType  # noqa
 from network.message import Message  # noqa
 from network.message import MessageField  # noqa
 from network.message import MessageProxy  # noqa

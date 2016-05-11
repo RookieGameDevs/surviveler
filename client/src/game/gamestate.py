@@ -1,6 +1,7 @@
 from events import send_event
 from game.events import PlayerActionMove
 from game.events import PlayerPositionUpdated
+from network import ActionType
 from network import MessageField
 from network import MessageType
 import logging
@@ -32,7 +33,7 @@ def update_user_position(gamestate):
     :param gamestate: the gamestate
     :type gamestate: dict
     """
-    if not gamestate.get(MessageField.action, None):
+    if gamestate.get(MessageField.action_type, ActionType.idle) == ActionType.idle:
         # NOTE: Update the position in this way only when the item is in "idle"
         x, y = gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]
         evt = PlayerPositionUpdated(x, y)
@@ -47,12 +48,11 @@ def player_move_action(gamestate):
     :param gamestate: the gamestate
     :type gamestate: dict
     """
-    action = gamestate.get(MessageField.action, None)
-    if action and action.get(MessageField.action_type, None) == MessageType.move:
+    if gamestate.get(MessageField.action_type, None) == ActionType.move:
+        action = gamestate[MessageField.action]
         send_event(PlayerActionMove(
             current_position=(
                 gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]),
             destination=(
                 action[MessageField.x_pos], action[MessageField.y_pos]),
-            current_tstamp=gamestate[MessageField.timestamp],
-            target_tstamp=action[MessageField.target_timestamp]))
+            speed=action[MessageField.speed]))

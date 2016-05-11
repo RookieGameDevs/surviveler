@@ -1,4 +1,5 @@
 from game.components import Component
+from matlib import Vec3
 from utils import angle
 from utils import distance
 from utils import tstamp
@@ -30,12 +31,11 @@ class Movable(Component):
         # Current position of the server
         self._position = position
 
-        # Current timestamp (for movement interpolation)
-        self._current_tstamp = 0
-        # Current destination (for movement interpolation)
+        # Destination
         self._destination = None
-        # Target timestamp (for movement interpolation)
-        self._target_tstamp = None
+
+        # Speed
+        self._speed = 0
 
     @property
     def position(self):
@@ -69,16 +69,16 @@ class Movable(Component):
         return self._destination
 
     @property
-    def target_tstamp(self):
-        """Target timestamp getter.
+    def speed(self):
+        """Speed getter.
 
-        :return: The timestamp (local time) in which the movable is expected to
-            be in the destination point.
-        :rtype: int or None
+        :return: The movable speed.
+        :rtype: float
         """
-        return self._target_tstamp
+        return self._speed
 
-    def move(self, position, start_tstamp, destination, target_tstamp):
+
+    def move(self, position, destination, speed):
         """Initial setup of a movable.
 
         Computes the initial position, based on the starting position and the dt
@@ -88,34 +88,18 @@ class Movable(Component):
         :param position: The starting position of the movable.
         :type position: :class:`tuple`
 
-        :param start_tstamp: The timestamp in which the starting position was
-            calculated
-        :type start_tstamp: :class:`int`
-
         :param destination: The target destination of the movable.
         :type destination: :class:`tuple`
 
-        :param target_tstamp: The timestamp in which the movable is expected to
-            be at destination
-        :type target_tstamp: :class:`int`
+        :param speed: The movement speed.
+        :type target_tstamp: :class:`float`
         """
-        dst = distance(destination, position)
-        theta = angle(position, destination)
-        now = tstamp()
-        dst = (
-            (tstamp() - start_tstamp) *
-            distance(destination, position) /
-            (target_tstamp - start_tstamp))
-
-        # Use the EPSILON tolerance calculation as usual to decide if we really
-        # need to move the movable.
-        self.position = (
-            position[0] + dst * math.cos(theta),
-            position[1] + dst * math.sin(theta))
-
-        self._current_tstamp = now
+        self.direction = (
+            Vec3(destination[0], destination[1], 0.0) -
+            Vec3(position[0], position[1], 0.0)).unit()
+        self._position = position
         self._destination = destination
-        self._target_tstamp = target_tstamp
+        self._speed = speed
 
     def update(self, dt):
         """Movable update function.
@@ -131,30 +115,17 @@ class Movable(Component):
         :param dt: The time spent since the last update call (in seconds).
         :type dt: float
         """
-        if self._destination and self._target_tstamp:
+        if self._destination:
             # We have both destination and target timestamp, we can calculate
             # the amount of movement in the given dt.
-            ms_dt = dt * 1000
-            theta = angle(self._position, self._destination)
-            dst = (
-                ms_dt *
-                distance(self._position, self._destination) /
-                (self._target_tstamp - self._current_tstamp))
-            self._position = (
-                self._position[0] + dst * math.cos(theta),
-                self._position[1] + dst * math.sin(theta))
+            dv = self.direction * dt * self._speed
+            self._position = self._position[0] + dv.x, self.position[1] + dv.y
 
-            self._current_tstamp += ms_dt
-
-            finished = (
-                distance(self._destination, self._position) < self.EPSILON or
-                self._target_tstamp - self._current_tstamp == 0)
-            if finished:
+            if distance(self._destination, self._position) < self.EPSILON:
                 # Reset the movable internal data because:
                 #  1. We arrived at the destination (distance < EPSILON)
                 #  2. We are in the target timestamp instant
                 # Force the destination as current position and reset the
                 # internal data.
                 self._position = self._destination
-                self._destination, self._target_tstamp = None, None
-                self._current_tstamp = 0
+                self._destination = None

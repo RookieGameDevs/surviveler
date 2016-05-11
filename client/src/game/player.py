@@ -94,6 +94,5 @@ def move_received(evt):
     player = evt.client.get_entity(0)
     player[Movable].move(
         position=evt.current_position,
-        start_tstamp=evt.current_tstamp,
         destination=evt.destination,
-        target_tstamp=evt.target_tstamp)
+        speed=evt.speed)
