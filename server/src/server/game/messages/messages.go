@@ -43,14 +43,6 @@ type GameStateMsg struct {
 	Entities map[uint16]EntityStateMsg
 }
 
-// TODO: to remove
-type OldGameStateMsg struct {
-	Tstamp int64
-	Xpos   float32
-	Ypos   float32
-	Action ActionMsg
-}
-
 /*
  * Sub-message of GameStateMsg.
  */
@@ -61,36 +53,38 @@ type OldActionMsg struct {
 	Ypos         float32
 }
 
-/*
- * EntityStateMsg is a component of the GameStateMsg and represents the state of a
- * game entity
- */
-type EntityStateMsg struct {
-	Tstamp int64
-	Xpos   float32
-	Ypos   float32
-	Action ActionMsg
-}
-
-/*
- * Action struct is a container for the fields representing the current action
- * of an entity. Server -> client message
- */
-type ActionMsg struct {
-	ActionType   ActionType
-	TargetTstamp int64
-	Xpos         float32
-	Ypos         float32
-}
-
 type ActionType uint16
 
 const (
 	IdleAction ActionType = 0 + iota
 	// TODO: set the real action type Ids
-	WalkingAction
-	AttackAction
+	MoveAction
 )
+
+/*
+ * EntityStateMsg is a component of the GameStateMsg and represents the state of a
+ * game entity
+ */
+type EntityStateMsg struct {
+	Tstamp     int64
+	Xpos       float32
+	Ypos       float32
+	ActionType ActionType
+	Action     interface{}
+}
+
+/*
+ * Movement action data.
+ */
+type MoveActionData struct {
+	Speed float32
+	Xpos  float32
+	Ypos  float32
+}
+
+type IdleActionData struct {
+	// empty
+}
 
 /*
  * player initiated character movement. Client -> server message

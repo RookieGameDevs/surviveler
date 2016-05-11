@@ -6,11 +6,12 @@
 package game
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
 	"server/game/protocol"
 	"server/math"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // TODO: remove this soon...
@@ -48,18 +49,15 @@ func (gs GameState) pack() (*protocol.Message, error) {
 		gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
 		for id, ent := range gs.players {
 
-			snapshot := ent.GetSnapshot()
+			curPos := ent.GetPos()
+			actionType, actionData := ent.GetAction()
 
 			gsMsg.Entities[id] = messages.EntityStateMsg{
-				Tstamp: MakeTimestamp(),
-				Xpos:   snapshot.CurPos[0],
-				Ypos:   snapshot.CurPos[1],
-				Action: messages.ActionMsg{
-					ActionType:   messages.WalkingAction,
-					TargetTstamp: snapshot.DestTstamp,
-					Xpos:         snapshot.DestPos[0],
-					Ypos:         snapshot.DestPos[1],
-				},
+				Tstamp:     MakeTimestamp(),
+				Xpos:       curPos[0],
+				Ypos:       curPos[1],
+				ActionType: actionType,
+				Action:     actionData,
 			}
 		}
 
@@ -77,18 +75,15 @@ func (gs GameState) pack() (*protocol.Message, error) {
 		// create a GameStateMsg from the game state
 		for _, ent := range gs.players {
 
-			snapshot := ent.GetSnapshot()
+			curPos := ent.GetPos()
+			actionType, actionData := ent.GetAction()
 
-			gsMsg := messages.OldGameStateMsg{
-				Tstamp: MakeTimestamp(),
-				Xpos:   snapshot.CurPos[0],
-				Ypos:   snapshot.CurPos[1],
-				Action: messages.ActionMsg{
-					ActionType:   messages.ActionType(messages.MoveId),
-					TargetTstamp: snapshot.DestTstamp,
-					Xpos:         snapshot.DestPos[0],
-					Ypos:         snapshot.DestPos[1],
-				},
+			gsMsg := messages.EntityStateMsg{
+				Tstamp:     MakeTimestamp(),
+				Xpos:       curPos[0],
+				Ypos:       curPos[1],
+				ActionType: actionType,
+				Action:     actionData,
 			}
 
 			// wrap the specialized GameStateMsg into a generic Message

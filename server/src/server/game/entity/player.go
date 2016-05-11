@@ -5,6 +5,7 @@
 package entity
 
 import (
+	"server/game/messages"
 	"server/math"
 	"time"
 )
@@ -26,12 +27,9 @@ func NewPlayer(startX, startY, speed float32) *Player {
 	// config the mover
 	mover := EntityMover{}
 	mover.SetPos(math.Vec2{startX, startY})
+	mover.SetDestPos(math.Vec2{startX, startY})
 	mover.SetSpeed(speed)
 
-	// TODO: REMOVE THIS! this is for the test
-	// this is for the test, set position so that the player can goes back and
-	// forth on screen
-	mover.Org = math.Vec2{startX, startY}
 	return &Player{mover: &mover}
 }
 
@@ -47,10 +45,17 @@ func (p *Player) GetPos() math.Vec2 {
 	return p.mover.GetPos()
 }
 
-func (p *Player) GetSnapshot() *ActionSnapshot {
-	// for now an action snapshot is enough to represent the whole entity snapshot,
-	// but that won't always be the case...
-	return p.mover.GetSnapshot()
+func (p *Player) GetAction() (messages.ActionType, interface{}) {
+	if p.mover.HasReachedDestination() {
+		return messages.IdleAction, messages.IdleActionData{}
+	} else {
+		dst := p.mover.GetDestPos()
+		return messages.MoveAction, messages.MoveActionData{
+			Speed: p.mover.GetSpeed(),
+			Xpos:  dst[0],
+			Ypos:  dst[1],
+		}
+	}
 }
 
 /*
@@ -61,11 +66,6 @@ type EntityMover struct {
 	dst     math.Vec2 // final destination
 	speed   float32   // speed
 	reached bool
-
-	// TODO: REMOVE THIS! this is for the test
-	// record the original position to make the Entity goes back
-	// and forth on screen
-	Org math.Vec2
 }
 
 func (em *EntityMover) HasReachedDestination() bool {
@@ -73,17 +73,32 @@ func (em *EntityMover) HasReachedDestination() bool {
 }
 
 /*
- * SetPos defines the mover final destination
+ * SetPos defines the mover current position
  */
-func (em *EntityMover) SetPos(dst math.Vec2) {
+func (em *EntityMover) SetPos(pos math.Vec2) {
+	em.pos = pos
+	em.reached = false
+}
+
+/*
+ * GetPos retrieves the mover current position
+ */
+func (em *EntityMover) GetPos() math.Vec2 {
+	return em.pos
+}
+
+/*
+ * SetPos defines the mover destination
+ */
+func (em *EntityMover) SetDestPos(dst math.Vec2) {
 	em.dst = dst
 	em.reached = false
 }
 
 /*
- * GetPos retrieves the mover final destination
+ * GetPos retrieves the mover destination
  */
-func (em *EntityMover) GetPos() math.Vec2 {
+func (em *EntityMover) GetDestPos() math.Vec2 {
 	return em.dst
 }
 
@@ -91,37 +106,18 @@ func (em *EntityMover) SetSpeed(speed float32) {
 	em.speed = speed
 }
 
-func (em *EntityMover) Update(dt time.Duration) {
-	// compute translation vector
-	moveVec := em.dst.Sub(em.pos).Normalize()
-	em.pos = em.pos.Add(moveVec.Mul(float32(em.speed * float32(dt.Seconds()))))
-
-	// arrived at destination?
-	if em.pos.ApproxEqualThreshold(em.dst, 0.01) {
-		// TODO: REMOVE THIS! this is for the test
-		//       swap dst and pos to make the entity goes back and forth
-		tmp := em.dst
-		em.dst = em.Org
-		em.Org = tmp
-
-		// destination reached
-		//em.reached = true
-	}
+func (em *EntityMover) GetSpeed() float32 {
+	return em.speed
 }
 
-func (em *EntityMover) GetSnapshot() *ActionSnapshot {
-
-	// compute timestamp at destination
-	speed := em.speed
-	distance := em.dst.Sub(em.pos).Len()
-	duration := distance / speed
-	dstTime := time.Now().Add(time.Duration(duration) * time.Second)
-	dstTstamp := dstTime.UnixNano() / int64(time.Millisecond)
-
-	return &ActionSnapshot{
-		CurPos:     em.pos,
-		DestPos:    em.dst,
-		CurSpeed:   em.speed,
-		DestTstamp: dstTstamp,
+func (em *EntityMover) Update(dt time.Duration) {
+	// arrived at destination?
+	if em.pos.ApproxEqualThreshold(em.dst, 0.01) {
+		// destination reached
+		em.reached = true
+	} else {
+		// compute translation vector
+		moveVec := em.dst.Sub(em.pos).Normalize()
+		em.pos = em.pos.Add(moveVec.Mul(float32(em.speed * float32(dt.Seconds()))))
 	}
 }

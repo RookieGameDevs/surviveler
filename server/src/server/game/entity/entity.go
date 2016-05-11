@@ -34,27 +34,14 @@ type Positioner interface {
 type Mover interface {
 	Updater
 	Positioner
-	// Set Current Speed
+	// Set current speed
 	SetSpeed(s float32)
-	// Get a snapshot of current position, action
-	GetSnapshot() *ActionSnapshot
+	// Get current speed
+	GetSpeed() float32
+	// Set destination
+	SetDestPos(pos math.Vec2)
+	// Get destination
+	GetDestPos() math.Vec2
 	// know if destination has been reached
 	HasReachedDestination() bool
-}
-
-/*
- * ActionSnapshot represents the snapshot of an entity's current action.
- * Example: an entity 1, currently in room A, its main goal is 'Kill Entity 2'.
- * But entity 2 is in another room, so entity 1 current action is 'Walking to
- * room B' and thus can be represented by an ActionSnapshot struct
- */
-type ActionSnapshot struct {
-	// current entity position
-	CurPos math.Vec2
-	// current destination
-	DestPos math.Vec2
-	// current speed
-	CurSpeed float32
-	// expected timestamp at destination arrival (may vary over time)
-	DestTstamp int64
 }
