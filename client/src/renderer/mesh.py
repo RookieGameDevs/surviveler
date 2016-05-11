@@ -13,6 +13,7 @@ from OpenGL.GL import glEnableVertexAttribArray
 from OpenGL.GL import glGenBuffers
 from OpenGL.GL import glGenVertexArrays
 from OpenGL.GL import glVertexAttribPointer
+import ctypes
 import numpy as np
 
 
@@ -26,7 +27,7 @@ class Mesh:
     context is set up and active.
     """
 
-    def __init__(self, vertices, indices):
+    def __init__(self, vertices, indices, uvs=None):
         """Constructor.
 
         Creates and initializes corresponding OpenGL objects with given data.
@@ -44,8 +45,10 @@ class Mesh:
             raise ValueError(
                 'Vertex data must be an array of floats, which length is a '
                 'positive multiple of 3')
-        elif len(indices) < 3 or len(indices) % 3:
+        if len(indices) < 3 or len(indices) % 3:
             raise ValueError('Indices count must be a positive multiple of 3')
+        if uvs is not None and len(uvs) % 2:
+            raise ValueError('UVs count must be a positive multiple of 2')
 
         self.num_elements = len(indices)
 
@@ -59,6 +62,10 @@ class Mesh:
 
         # initialize vertex buffer
         vertex_data = np.array(vertices, np.float32)
+        uvs_offset = 0
+        if uvs:
+            uvs_offset = vertex_data.nbytes
+            vertex_data = np.append(vertex_data, np.array(uvs, np.float32))
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(GL_ARRAY_BUFFER, vertex_data.nbytes, vertex_data, GL_STATIC_DRAW)
 
@@ -70,6 +77,17 @@ class Mesh:
         # specify first attribute as vertex data
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
+
+        # if provided, specify UVs as second attribute
+        if uvs is not None:
+            glEnableVertexAttribArray(1)
+            glVertexAttribPointer(
+                1,
+                2,
+                GL_FLOAT,
+                GL_FALSE,
+                0,
+                ctypes.c_void_p(uvs_offset))
 
         # unbind the vertex array object
         glBindVertexArray(0)

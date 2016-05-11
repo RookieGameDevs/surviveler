@@ -20,16 +20,21 @@ class Terrain(Entity):
             2, 1, 0,
             3, 2, 0,
         ]
-        mesh = Mesh(vertices, indices)
+        uvs = [
+            0, 0,
+            0, 1,
+            1, 1,
+            1, 0,
+        ]
+        mesh = Mesh(vertices, indices, uvs)
 
         shader = Shader.from_glsl(
-            'data/shaders/simple.vert',
-            'data/shaders/simple.frag')
+            'data/shaders/terrain.vert',
+            'data/shaders/terrain.frag')
 
         texture = Texture.from_file('data/textures/tiles.jpg')
 
         renderable = Renderable(parent_node, mesh, shader)
-        renderable.node.params['color'] = Vec3(0, 1, 0)
         renderable.transform = (
             Mat4.trans(Vec3(0, 0, 0.5)) *
             Mat4.scale(Vec3(100, 100, 1)))
