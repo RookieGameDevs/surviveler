@@ -58,7 +58,7 @@ type ActionType uint16
 const (
 	IdleAction ActionType = 0 + iota
 	// TODO: set the real action type Ids
-	MoveAction
+	MovingAction
 )
 
 /*
