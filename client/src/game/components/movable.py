@@ -50,11 +50,9 @@ class Movable(Component):
         :param value: The new position to be used as current.
         :type value: tuple
         """
-        if distance(value, self._position) > self.EPSILON:
-            self._position = value
-        else:
-            LOG.debug('Ignoring position changes: {} {}'.format(
-                self._position, value))
+        LOG.debug('Manually setting position {} -> {}'.format(
+            self._position, value))
+        self._position = value
 
     @property
     def destination(self):
@@ -89,6 +87,8 @@ class Movable(Component):
         :param speed: The movement speed.
         :type target_tstamp: :class:`float`
         """
+        LOG.debug('Moving movable from {} to {} at speed {}'.format(
+            position, destination, speed))
         self.direction = (
             Vec3(destination[0], destination[1], 0.0) -
             Vec3(position[0], position[1], 0.0)).unit()
@@ -117,4 +117,6 @@ class Movable(Component):
                 # destination (distance < EPSILON). Force the destination as
                 # current position and reset the internal data.
                 self._position = self._destination
-                self._destination = None
+                self._destination, self.direction = None, None
+                LOG.debug('Movable arrived at destination {}'.format(
+                    self._position))
