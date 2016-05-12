@@ -1,10 +1,7 @@
 from game.components import Component
 from matlib import Vec3
-from utils import angle
 from utils import distance
-from utils import tstamp
 import logging
-import math
 
 
 LOG = logging.getLogger(__name__)
@@ -77,13 +74,11 @@ class Movable(Component):
         """
         return self._speed
 
-
     def move(self, position, destination, speed):
         """Initial setup of a movable.
 
-        Computes the initial position, based on the starting position and the dt
-        from the the tstamp when the starting position was calculated on the
-        server.
+        Set the initial position, the destination and the speed. And compute the
+        direction vector.
 
         :param position: The starting position of the movable.
         :type position: :class:`tuple`
@@ -105,12 +100,8 @@ class Movable(Component):
         """Movable update function.
 
         Computes the amount of movement to be done in the given dt time. The
-        movement is calculated using the target tstamp and the distance between
-        the current position and the destination.
-
-        NOTE: inside this method we are talking about milliseconds: the dt
-        parameter is converted in milliseconds and all the timing logics are in
-        milliseconds.
+        movement is calculated using the speed and the direction of the
+        movement.
 
         :param dt: The time spent since the last update call (in seconds).
         :type dt: float
@@ -122,10 +113,8 @@ class Movable(Component):
             self._position = self._position[0] + dv.x, self.position[1] + dv.y
 
             if distance(self._destination, self._position) < self.EPSILON:
-                # Reset the movable internal data because:
-                #  1. We arrived at the destination (distance < EPSILON)
-                #  2. We are in the target timestamp instant
-                # Force the destination as current position and reset the
-                # internal data.
+                # Reset the movable internal data because we arrived at the
+                # destination (distance < EPSILON). Force the destination as
+                # current position and reset the internal data.
                 self._position = self._destination
                 self._destination = None
