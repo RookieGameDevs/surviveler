@@ -41,6 +41,10 @@ func (p *Player) SetPos(pos math.Vec2) {
 	p.mover.SetPos(pos)
 }
 
+func(p *Player) SetDestPos(pos math.Vec2) {
+	p.mover.SetDestPos(pos)
+}
+
 func (p *Player) GetPos() math.Vec2 {
 	return p.mover.GetPos()
 }

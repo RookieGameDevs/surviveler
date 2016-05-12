@@ -122,7 +122,7 @@ func (gs *GameState) onMovePlayer(msg interface{}, clientId uint16) error {
 		log.Fields{"clientId": clientId, "msg": move}).Info("handling a MoveMsg")
 
 	if p, ok := gs.players[clientId]; ok {
-		p.SetPos(math.Vec2{move.Xpos, move.Ypos})
+		p.SetDestPos(math.Vec2{move.Xpos, move.Ypos})
 
 		log.WithFields(
 			log.Fields{"player": p, "clientId": clientId}).Info("MovePlayer")
