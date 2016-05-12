@@ -15,8 +15,8 @@ import (
  * implements the Entity interface.
  */
 type Player struct {
-	mover     Mover
-	dstTstamp int64 // timestamp at which the player will arrive
+	MovableEntity
+	Pathfinder PathFinder
 }
 
 /*
@@ -24,104 +24,49 @@ type Player struct {
  */
 func NewPlayer(startX, startY, speed float32) *Player {
 
-	// config the mover
-	mover := EntityMover{}
-	mover.SetPos(math.Vec2{startX, startY})
-	mover.SetDestPos(math.Vec2{startX, startY})
-	mover.SetSpeed(speed)
-
-	return &Player{mover: &mover}
+	p := new(Player)
+	p.Speed = speed
+	p.Pathfinder = &BasicPathFinder{}
+	p.Pos = math.Vec2{startX, startY}
+	p.CurAction = messages.IdleAction
+	return p
 }
 
 func (p *Player) Update(dt time.Duration) {
-	p.mover.Update(dt)
-}
 
-func (p *Player) SetPos(pos math.Vec2) {
-	p.mover.SetPos(pos)
-}
+	// update position
+	if p.CurAction != messages.IdleAction {
 
-func(p *Player) SetDestPos(pos math.Vec2) {
-	p.mover.SetDestPos(pos)
-}
+		curDst := p.Pathfinder.GetCurrentDestination()
 
-func (p *Player) GetPos() math.Vec2 {
-	return p.mover.GetPos()
-}
+		// compute translation vector
+		moveVec := curDst.Sub(p.Pos).Normalize()
+		p.Pos = p.Pos.Add(moveVec.Mul(float32(p.Speed * float32(dt.Seconds()))))
 
-func (p *Player) GetAction() (messages.ActionType, interface{}) {
-	if p.mover.HasReachedDestination() {
-		return messages.IdleAction, messages.IdleActionData{}
-	} else {
-		dst := p.mover.GetDestPos()
-		return messages.MoveAction, messages.MoveActionData{
-			Speed: p.mover.GetSpeed(),
-			Xpos:  dst[0],
-			Ypos:  dst[1],
+		// arrived at destination?
+		if p.Pos.ApproxEqualThreshold(curDst, 0.01) {
+			// destination reached
+			p.CurAction = messages.IdleAction
 		}
 	}
 }
 
-/*
- * EntityMover is a Mover implementation moving an element in straight line
- */
-type EntityMover struct {
-	pos     math.Vec2 // current position
-	dst     math.Vec2 // final destination
-	speed   float32   // speed
-	reached bool
+func (p *Player) Move(dst math.Vec2) {
+	// setup pathfinding
+	p.Pathfinder.SetOrigin(p.Pos)
+	p.Pathfinder.SetDestination(dst)
+	p.CurAction = messages.MovingAction
 }
 
-func (em *EntityMover) HasReachedDestination() bool {
-	return em.reached
-}
-
-/*
- * SetPos defines the mover current position
- */
-func (em *EntityMover) SetPos(pos math.Vec2) {
-	em.pos = pos
-	em.reached = false
-}
-
-/*
- * GetPos retrieves the mover current position
- */
-func (em *EntityMover) GetPos() math.Vec2 {
-	return em.pos
-}
-
-/*
- * SetPos defines the mover destination
- */
-func (em *EntityMover) SetDestPos(dst math.Vec2) {
-	em.dst = dst
-	em.reached = false
-}
-
-/*
- * GetPos retrieves the mover destination
- */
-func (em *EntityMover) GetDestPos() math.Vec2 {
-	return em.dst
-}
-
-func (em *EntityMover) SetSpeed(speed float32) {
-	em.speed = speed
-}
-
-func (em *EntityMover) GetSpeed() float32 {
-	return em.speed
-}
-
-func (em *EntityMover) Update(dt time.Duration) {
-	// arrived at destination?
-	if em.pos.ApproxEqualThreshold(em.dst, 0.01) {
-		// destination reached
-		em.reached = true
+func (p *Player) GetAction() (messages.ActionType, interface{}) {
+	if p.CurAction == messages.IdleAction {
+		return messages.IdleAction, messages.IdleActionData{}
 	} else {
-		// compute translation vector
-		moveVec := em.dst.Sub(em.pos).Normalize()
-		em.pos = em.pos.Add(moveVec.Mul(float32(em.speed * float32(dt.Seconds()))))
+		dst := p.Pathfinder.GetCurrentDestination()
+		return messages.MovingAction, messages.MoveActionData{
+			Speed: p.Speed,
+			Xpos:  dst[0],
+			Ypos:  dst[1],
+		}
 	}
 }
