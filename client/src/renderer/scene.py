@@ -1,6 +1,11 @@
+from OpenGL.GL import GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS as MAX_TEXTURES
 from abc import ABC
 from abc import abstractmethod
+from contextlib import ExitStack
+from exceptions import OpenGLError
 from matlib import Mat4
+from matlib import Vec3
+import numpy as np
 
 
 class SceneRenderContext:
@@ -65,6 +70,7 @@ class AbstractSceneNode(ABC):
 
     def __init__(self):
         self._children = []
+        self.parent = None
         self.transform = Mat4()
 
     @abstractmethod
@@ -95,6 +101,7 @@ class AbstractSceneNode(ABC):
         :param node: Node instance to add as child.
         :type node: a class derived from :class:`renderer.scene.AbstractSceneNode`
         """
+        node.parent = self
         self._children.append(node)
 
     def remove_child(self, node):
@@ -105,8 +112,27 @@ class AbstractSceneNode(ABC):
         """
         try:
             self._children.remove(node)
+            node.parent = None
         except ValueError:
             pass
+
+    def to_world(self, pos):
+        """Transform local coordinate to world.
+
+        :param pos: Position in node's local coordinate system.
+        :type pos: :class:`matlib.Vec3`
+
+        :returns: Position in world coordinates.
+        :rtype: :class:`matlib.Vec3`
+        """
+        transform = self.transform
+        parent = self.parent
+        while parent:
+            transform = parent.transform * transform
+            parent = parent.parent
+
+        v = transform * np.array([pos.x, pos.y, pos.z, 1.0]).reshape((4, 1))
+        return Vec3(v[0], v[1], v[2])
 
 
 class RootNode(AbstractSceneNode):
@@ -118,7 +144,7 @@ class RootNode(AbstractSceneNode):
     def render(self, ctx, transform=None):
 
         def render_all(node, parent_transform):
-            node.render(ctx, node.transform * parent_transform)
+            node.render(ctx, parent_transform * node.transform)
 
             for child in node.children:
                 render_all(child, node.transform)
@@ -130,7 +156,7 @@ class RootNode(AbstractSceneNode):
 class GeometryNode(AbstractSceneNode):
     """A node for attaching static geometry (mesh) to the scene."""
 
-    def __init__(self, mesh, shader, params=None):
+    def __init__(self, mesh, shader, params=None, textures=None):
         """Constructor.
 
         :param mesh: Instance of the mesh to render.
@@ -144,14 +170,28 @@ class GeometryNode(AbstractSceneNode):
         :param params: Additional shader parameters. These are passed to the
             shader verbatim.
         :type params: map
+
+        :param textures: Textures to apply to the mesh
+        :type textures: list of :class:`renderer.Texture`
         """
         super(GeometryNode, self).__init__()
         self.mesh = mesh
         self.shader = shader
         self.params = params or {}
+        self.textures = textures or []
 
     def render(self, ctx, transform):
-        self.params['transform'] = transform
-        self.params['projection'] = ctx.camera.transform
-        self.shader.use(self.params)
-        self.mesh.render(ctx.renderer)
+        self.params['transform'] = ctx.camera.modelview * transform
+        self.params['projection'] = ctx.camera.projection
+
+        if len(self.textures) >= MAX_TEXTURES:
+            raise OpenGLError(
+                'Too much textures to render ({}), maximum is {}'.format(
+                    len(self.textures), MAX_TEXTURES))
+
+        with ExitStack() as stack:
+            for tex_unit, tex in enumerate(self.textures):
+                stack.enter_context(tex.use(tex_unit))
+
+            self.shader.use(self.params)
+            self.mesh.render(ctx.renderer)

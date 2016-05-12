@@ -9,17 +9,23 @@ LOG = logging.getLogger(__name__)
 
 @unique
 class MessageType(IntEnum):
+    """Enum of possible message types."""
     ping = 0
     pong = 1
     gamestate = 2
+    move = 3
 
 
 @unique
 class MessageField(bytes, Enum):
+    """Enum of possible message fields."""
     id = b'Id'
     timestamp = b'Tstamp'
     x_pos = b'Xpos'
     y_pos = b'Ypos'
+    action = b'Action'
+    action_type = b'ActionType'
+    speed = b'Speed'
 
 
 class Message:
@@ -84,18 +90,46 @@ class MessageProxy:
         """
         LOG.info('Initializing message proxy')
         self.conn = conn
+        self.msg_queue = []
 
-    def push(self, msg):
-        """Pushes the message through the underneath connection
+    def enqueue(self, msg, callback=lambda: None):
+        """Enqueue the message.
+
+        The message is going to be sent during the next push.
 
         :param msg: the Message object to be pushed
         :type msg: :class:`message.Message`
-        """
-        LOG.debug('Pushing message: {} {}'.format(msg, str(msg.data)))
-        self.conn.send(*msg.encode())
-        LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
 
-    def poll(self):
+        :param callback: Callback to be called when the message is pushed
+        :type callback: function or None
+        """
+        LOG.debug('Enqueueing message: {} {}'.format(msg, str(msg.data)))
+        self.msg_queue.append((msg, callback))
+
+    def push(self):
+        """Pushes the message through the underneath connection"""
+        while len(self.msg_queue):
+            msg, cb = self.msg_queue.pop(0)
+            LOG.debug('Pushing message: {} {}'.format(msg, str(msg.data)))
+            self.conn.send(*msg.encode())
+            LOG.debug('Pushed message: {} {}'.format(msg, str(msg.data)))
+            cb()
+
+    def wait_for(self, msgtype):
+        """Polls the connection waiting for a specific message.
+
+        :param msgtype: The message type we are waiting for
+        :type msgtype: :class:`network.message.MessageType`
+
+        :return: The message.
+        :rtype: :class:`network.message.Message`
+        """
+        with self.conn.blocking():
+            while True:
+                for msg in self.poll(MessageType.pong):
+                    return msg
+
+    def poll(self, msgtype=None):
         """Polls the underneath connection and yields all the messages readed.
 
         :return: the Message object to be pushed
@@ -105,7 +139,10 @@ class MessageProxy:
             data = self.conn.recv()
             if data is None:
                 break
-            msgtype, payload = data
-            msg = Message.decode(msgtype, payload)
+            mt, payload = data
+            if msgtype and mt != msgtype:
+                LOG.debug('Discarded message: {}]'.format(mt))
+                continue
+            msg = Message.decode(mt, payload)
             LOG.debug('Received message: {} {}'.format(msg, str(msg.data)))
             yield msg

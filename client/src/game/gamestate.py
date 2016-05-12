@@ -1,5 +1,8 @@
+from enum import IntEnum
+from enum import unique
+from events import send_event
+from game.events import PlayerActionMove
 from game.events import PlayerPositionUpdated
-from game.events import send_event
 from network import MessageField
 import logging
 
@@ -7,6 +10,13 @@ import logging
 LOG = logging.getLogger(__name__)
 
 __PROCESSORS = []
+
+
+@unique
+class ActionType(IntEnum):
+    """Enum of the various possible ActionType"""
+    idle = 0
+    move = 1
 
 
 def processor(f):
@@ -30,6 +40,26 @@ def update_user_position(gamestate):
     :param gamestate: the gamestate
     :type gamestate: dict
     """
-    x, y = gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]
-    evt = PlayerPositionUpdated(x, y)
-    send_event(evt)
+    if gamestate.get(MessageField.action_type, ActionType.idle) == ActionType.idle:
+        # NOTE: Update the position in this way only when the item is in "idle"
+        x, y = gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]
+        evt = PlayerPositionUpdated(x, y)
+        send_event(evt)
+
+
+@processor
+def player_move_action(gamestate):
+    """Checks if the player is actually doing any move action and send the
+    proper event.
+
+    :param gamestate: the gamestate
+    :type gamestate: dict
+    """
+    if gamestate.get(MessageField.action_type, None) == ActionType.move:
+        action = gamestate[MessageField.action]
+        send_event(PlayerActionMove(
+            position=(
+                gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]),
+            destination=(
+                action[MessageField.x_pos], action[MessageField.y_pos]),
+            speed=action[MessageField.speed]))

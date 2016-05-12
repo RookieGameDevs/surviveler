@@ -1,14 +1,5 @@
-from abc import ABC
-from abc import abstractmethod
+from game.components import Component
 from renderer import GeometryNode
-
-
-class Component(ABC):
-    """Base class for all components"""
-
-    @abstractmethod
-    def __init__(self):
-        pass
 
 
 class Renderable(Component):
@@ -18,7 +9,7 @@ class Renderable(Component):
     the node.
     """
 
-    def __init__(self, parent_node, mesh, shader):
+    def __init__(self, parent_node, mesh, shader, textures=None):
         """Constructor.
 
         :param parent_node: Parent node of the new game node.
@@ -29,9 +20,12 @@ class Renderable(Component):
 
         :param shader: The shader program.
         :type shader: :class:`renderer.Shader`
+
+        :param textures: Textures to apply to the mesh.
+        :type textures: list of :class:`renderer.Texture`
         """
         self.entity = None
-        self.node = GeometryNode(mesh, shader)
+        self.node = GeometryNode(mesh, shader, textures=textures)
         parent_node.add_child(self.node)
 
     @property

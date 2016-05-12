@@ -10,7 +10,7 @@ import (
 )
 
 /*
- * Updater is the interface implemented by objects having an Update method,
+ * Updater is the interface implemented by objects that have an Update method,
  * called at every tick
  */
 type Updater interface {
@@ -18,22 +18,40 @@ type Updater interface {
 }
 
 /*
- * Positioner is the interface implemented by objects aware of a position
+ * Entity is the interface that represents stateful game objects
  */
-type Positioner interface {
-	SetPos(pos math.Vec2)
-	GetPos() math.Vec2
+type Entity interface {
+	GetState() EntityState
+}
+
+type MovableEntity struct {
+	Pos   math.Vec2 // current position
+	Speed float32   // speed
 }
 
 /*
- * Mover is the interface implemented by objects knowing how to move,
- * themselves or other objects, at every tick.
+ * PathFinder is the interface implemented by objects that generate paths on
+ * map
  */
-type Mover interface {
-	Updater
-	Positioner
-	GetDestination() math.Vec2
-	SetDestination(pos math.Vec2)
-	SetSpeed(s float32)
-	GetSpeed() float32
+type PathFinder interface {
+	SetOrigin(org math.Vec2)
+	SetDestination(dst math.Vec2)
+	GetCurrentDestination() math.Vec2
+}
+
+type BasicPathFinder struct {
+	org math.Vec2
+	dst math.Vec2
+}
+
+func (p *BasicPathFinder) SetOrigin(org math.Vec2) {
+	p.org = org
+}
+
+func (p *BasicPathFinder) SetDestination(dst math.Vec2) {
+	p.dst = dst
+}
+
+func (p *BasicPathFinder) GetCurrentDestination() math.Vec2 {
+	return p.dst
 }

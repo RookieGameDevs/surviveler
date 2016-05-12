@@ -1,13 +1,16 @@
+from OpenGL.GL import GL_BACK
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
-from OpenGL.GL import GL_FRONT_AND_BACK
-from OpenGL.GL import GL_LINE
+from OpenGL.GL import GL_CULL_FACE
+from OpenGL.GL import GL_DEPTH_BUFFER_BIT
+from OpenGL.GL import GL_DEPTH_TEST
 from OpenGL.GL import GL_SHADING_LANGUAGE_VERSION
 from OpenGL.GL import GL_VERSION
 from OpenGL.GL import glClear
 from OpenGL.GL import glClearColor
+from OpenGL.GL import glCullFace
+from OpenGL.GL import glEnable
 from OpenGL.GL import glFlush
 from OpenGL.GL import glGetString
-from OpenGL.GL import glPolygonMode
 from exceptions import ConfigError
 from exceptions import OpenGLError
 from exceptions import SDLError
@@ -89,12 +92,19 @@ class Renderer:
 
     def gl_setup(self, width, height):
         """Private."""
+        # cut out invisible faces
+        glEnable(GL_CULL_FACE)
+        glCullFace(GL_BACK)
+
+        # enable depth buffer
+        glEnable(GL_DEPTH_TEST)
+
+        # clear to black
         glClearColor(0, 0, 0, 0)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
 
     def clear(self):
         """Clear buffers."""
-        glClear(GL_COLOR_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
     def present(self):
         """Present updated buffers to screen."""

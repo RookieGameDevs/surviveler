@@ -2,6 +2,7 @@ from abc import ABC
 from abc import abstractproperty
 from matlib import UP
 from matlib import Mat4
+from matlib import Vec3
 
 
 class Camera(ABC):
@@ -13,7 +14,25 @@ class Camera(ABC):
     """
 
     def __init__(self):
-        self.look_t = Mat4()
+        self.view_mat = Mat4()
+        self.translate_mat = Mat4()
+        self.scale_vec = Vec3(1.0, 1.0, 1.0)
+
+    def zoom(self, factor):
+        """Zoom by given factor.
+
+        :param factor: Zoom factor (1.0 for no zoom)
+        :type factor: float
+        """
+        self.scale_vec = Vec3(factor, factor, factor)
+
+    def translate(self, v):
+        """Translate the camera by given vector.
+
+        :param v: Translation vector.
+        :type v: :class:`matlib.Vec3`
+        """
+        self.translate_mat = Mat4.trans(v)
 
     def look_at(self, eye, center, up=UP):
         """Sets up camera look transformation.
@@ -27,25 +46,31 @@ class Camera(ABC):
         :param up: Up vector.
         :type up: :class:`matlib.Vec3`
         """
-        t = center - eye
-        z = t.mag()
-        f = t.unit()
-        s = f.cross(up)
-        if s.mag() == 0:
+        d = eye - center
+        z = d.unit()
+        x = up.cross(z).unit()
+        if x.mag() == 0:
             raise ValueError(
                 'Look direction vector must be different from up vector')
 
-        u = s.unit().cross(f)
-        self.look_t = Mat4([
-            [s[0],  s[1],  s[2],  0],
-            [u[0],  u[1],  u[2],  0],
-            [-f[0], -f[1], -f[2], z],
-            [0,     0,     0,     1]
-        ])
+        y = z.cross(x)
+        self.view_mat = (
+            Mat4([
+                [x[0],  x[1],  x[2],  0],
+                [y[0],  y[1],  y[2],  0],
+                [z[0],  z[1],  z[2],  0],
+                [0,     0,     0,     1]
+            ]) *
+            Mat4.trans(d))
+
+    @property
+    def modelview(self):
+        """Camera modelview 4x4 matrix."""
+        return Mat4.scale(self.scale_vec) * self.view_mat * self.translate_mat
 
     @abstractproperty
-    def transform(self):
-        """Camera transformation 4x4 matrix."""
+    def projection(self):
+        """Camera projection 4x4 matrix."""
         pass
 
 
@@ -58,11 +83,17 @@ class OrthoCamera(Camera):
         self.r = right
         self.t = top
         self.b = bottom
-        self.n = 0
-        self.f = distance
+        self.n = distance / 2
+        self.f = self.n + distance
 
     @property
-    def transform(self):
+    def modelview(self):
+        return (
+            Mat4.trans(Vec3(0, 0, self.n)) *
+            super(OrthoCamera, self).modelview)
+
+    @property
+    def projection(self):
         sx = 2.0 / (self.r - self.l)
         sy = 2.0 / (self.t - self.b)
         sz = 2.0 / (self.f - self.n)
@@ -76,4 +107,4 @@ class OrthoCamera(Camera):
             [0,  0,  0,  1],
         ])
 
-        return proj_mat * self.look_t
+        return proj_mat

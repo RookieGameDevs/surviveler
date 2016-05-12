@@ -16,6 +16,7 @@ const (
 
 /*
  * Server only messages
+ * TODO: those will be replaced once the handshake protocol will be implemented
  */
 const (
 	AddPlayerId = 1024 + iota
@@ -39,24 +40,11 @@ type PongMsg PingMsg
  * Server->client game state
  */
 type GameStateMsg struct {
-	Tstamp int64
-	Xpos   float32
-	Ypos   float32
-	Action ActionMsg
+	Entities map[uint16]interface{}
 }
 
 /*
- * Sub-message of GameStateMsg.
- */
-type ActionMsg struct {
-	ActionType   uint16
-	TargetTstamp int64
-	Xpos         float32
-	Ypos         float32
-}
-
-/*
- * player initiated character movement
+ * player initiated character movement. Client -> server message
  */
 type MoveMsg struct {
 	Xpos float32

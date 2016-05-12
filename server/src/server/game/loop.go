@@ -7,7 +7,6 @@ package game
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"runtime"
 	"server/game/messages"
 	"server/game/protocol"
 	"time"
@@ -82,8 +81,8 @@ func (g *Game) loop() {
 
 			default:
 
-				// let the world spin
-				runtime.Gosched()
+				// let the rest of the world spin
+				time.Sleep(1 * time.Millisecond)
 			}
 		}
 		log.Info("Game just stopped ticking")

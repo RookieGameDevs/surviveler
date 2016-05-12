@@ -1,38 +1,4 @@
-from abc import ABC
-from collections import defaultdict
-
-
-__SUBSCRIBED = defaultdict(list)
-
-
-def subscriber(event):
-    """Decorator for event handlers.
-
-    :param event: the event to be handled
-    :type event: :class:`Event`
-    """
-    def wrap(f):
-        __SUBSCRIBED[event].append(f)
-        return f
-    return wrap
-
-
-def send_event(event):
-    """Emits the given event.
-
-    Calls all the event handlers subscribed to the specified event.
-
-    :param event: The event to be emitted.
-    :type event: :class:`game.events.Event`
-    """
-    for subscriber in __SUBSCRIBED[type(event)]:
-        subscriber(event)
-
-
-class Event(ABC):
-    """Abstract base class for all the event classes.
-    """
-    pass
+from events import Event
 
 
 class PlayerPositionUpdated(Event):
@@ -52,4 +18,33 @@ class PlayerPositionUpdated(Event):
         self.x, self.y = x, y
 
     def __str__(self):
-        return '<PlayerPositionUpdate({}, {})>'.format(self.x, self.y)
+        return '<PlayerPositionUpdated({}, {})>'.format(self.x, self.y)
+
+
+class PlayerActionMove(Event):
+    """Receved move action.
+
+    Event emitted whenever the player is subject to a move action.
+
+    :param action: Move action payload.
+    :type action: dict
+    """
+    def __init__(self, position, destination, speed):
+        """Constructor.
+
+        :param position: The current position.
+        :type position: tuple
+
+        :param destination: The destination position
+        :type destination: tuple
+
+        :param speed: The player speed in game unit / seconds
+        :type speed: float
+        """
+        self.position = position
+        self.destination = destination
+        self.speed = speed
+
+    def __str__(self):
+        return '<PlayerActionMove({}, {}, {})>'.format(
+            self.position, self.destination, self.speed)

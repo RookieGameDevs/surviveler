@@ -66,12 +66,30 @@ class Vec3(np.ndarray):
         """
         return self / self.mag()
 
+    @property
+    def x(self):
+        """X coordinate."""
+        return self[0]
+
+    @property
+    def y(self):
+        """Y coordinate."""
+        return self[1]
+
+    @property
+    def z(self):
+        """Z coordinate."""
+        return self[2]
+
 
 class Mat4(np.matrix):
     """Matrix 4x4."""
 
     def __new__(cls, rows=None):
-        return np.matrix.__new__(cls, rows or np.eye(4), np.float32)
+        return np.matrix.__new__(
+            cls,
+            rows if rows is not None else np.eye(4),
+            np.float32)
 
     @classmethod
     def rot(cls, axis, theta):
@@ -116,6 +134,31 @@ class Mat4(np.matrix):
         mat = Mat4()
         mat.A[:, 3][:3] = v
         return mat
+
+    @classmethod
+    def scale(cls, v):
+        """Creates a scale matrix given scale factors.
+
+        :param v: Scale vector.
+        :type v: :class:`matlib.Vec3`
+
+        :returns: The resulting matrix.
+        :rtype: :class:`matlib.Mat4`
+        """
+        return Mat4([
+            [v[0], 0,    0,    0],
+            [0,    v[1], 0,    0],
+            [0,    0,    v[2], 0],
+            [0,    0,    0,    1],
+        ])
+
+    def inverse(self):
+        """Returns the matrix inverse.
+
+        :returns: Inverse matrix.
+        :rtype: :class:`matlib.Mat4`
+        """
+        return Mat4(np.linalg.inv(self))
 
 
 #: Predefined vector for X axis

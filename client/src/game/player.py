@@ -1,12 +1,14 @@
+from events import subscriber
 from game import Entity
-from game import Renderable
+from game.components import Movable
+from game.components import Renderable
+from game.events import PlayerActionMove
 from game.events import PlayerPositionUpdated
-from game.events import subscriber
 from loaders import load_obj
 from math import pi
 from matlib import Mat4
 from matlib import Vec3
-from matlib import Y
+from matlib import Z
 from renderer import Mesh
 from renderer import Shader
 import logging
@@ -34,11 +36,11 @@ class Player(Entity):
             'data/shaders/simple.frag')
 
         renderable = Renderable(parent_node, mesh, shader)
-        super(Player, self).__init__(renderable)
+        renderable.node.params['color'] = Vec3(0.04, 0.67, 0.87)
+        movable = Movable((0.0, 0.0))
+        super(Player, self).__init__(renderable, movable)
 
         self.rot_angle = 0.0
-        self.x = 0.0
-        self.y = 0.0
 
     def update(self, dt):
         """Update the player.
@@ -52,9 +54,15 @@ class Player(Entity):
         if self.rot_angle >= WHOLE_ANGLE:
             self.rot_angle -= WHOLE_ANGLE
 
+        self[Movable].update(dt)
+        x, y = self[Movable].position
         self[Renderable].transform = (
-            Mat4.trans(Vec3(self.x, self.y, 0)) *
-            Mat4.rot(Y, self.rot_angle))
+            Mat4.trans(Vec3(x, y, 0)) *
+            Mat4.rot(Z, self.rot_angle))
+
+        # FIXME: perform this in a better place
+        from client import Client
+        Client.get_instance().camera.translate(-Vec3(x, y, 0))
 
 
 @subscriber(PlayerPositionUpdated)
@@ -69,5 +77,22 @@ def update_player_position(evt):
     LOG.debug('Event subscriber: {}'.format(evt))
 
     # FIXME: find a proper way to map server ids with internal ids
-    player = Entity.get_entity(0)
-    player.x, player.y = evt.x, evt.y
+    player = evt.client.get_entity(0)
+    player[Movable].position = evt.x, evt.y
+
+
+@subscriber(PlayerActionMove)
+def move_received(evt):
+    """Set the move action in the player entity.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.PlayerActionMove`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+
+    # FIXME: find a proper way to map server ids with internal ids
+    player = evt.client.get_entity(0)
+    player[Movable].move(
+        position=evt.position,
+        destination=evt.destination,
+        speed=evt.speed)
