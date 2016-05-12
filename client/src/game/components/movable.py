@@ -52,6 +52,8 @@ class Movable(Component):
         """
         LOG.debug('Manually setting position {} -> {}'.format(
             self._position, value))
+        self._destination, self.direction = None, None
+        self._speed = 0
         self._position = value
 
     @property
@@ -116,7 +118,6 @@ class Movable(Component):
                 # Reset the movable internal data because we arrived at the
                 # destination (distance < EPSILON). Force the destination as
                 # current position and reset the internal data.
-                self._position = self._destination
-                self._destination, self.direction = None, None
+                self.position = self._destination
                 LOG.debug('Movable arrived at destination {}'.format(
                     self._position))
