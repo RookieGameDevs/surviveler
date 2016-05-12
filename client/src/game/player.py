@@ -93,6 +93,6 @@ def move_received(evt):
     # FIXME: find a proper way to map server ids with internal ids
     player = evt.client.get_entity(0)
     player[Movable].move(
-        position=evt.current_position,
+        position=evt.position,
         destination=evt.destination,
         speed=evt.speed)

@@ -14,6 +14,7 @@ __PROCESSORS = []
 
 @unique
 class ActionType(IntEnum):
+    """Enum of the various possible ActionType"""
     idle = 0
     move = 1
 
@@ -57,7 +58,7 @@ def player_move_action(gamestate):
     if gamestate.get(MessageField.action_type, None) == ActionType.move:
         action = gamestate[MessageField.action]
         send_event(PlayerActionMove(
-            current_position=(
+            position=(
                 gamestate[MessageField.x_pos], gamestate[MessageField.y_pos]),
             destination=(
                 action[MessageField.x_pos], action[MessageField.y_pos]),

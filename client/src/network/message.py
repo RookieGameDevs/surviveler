@@ -9,6 +9,7 @@ LOG = logging.getLogger(__name__)
 
 @unique
 class MessageType(IntEnum):
+    """Enum of possible message types."""
     ping = 0
     pong = 1
     gamestate = 2
@@ -17,6 +18,7 @@ class MessageType(IntEnum):
 
 @unique
 class MessageField(bytes, Enum):
+    """Enum of possible message fields."""
     id = b'Id'
     timestamp = b'Tstamp'
     x_pos = b'Xpos'

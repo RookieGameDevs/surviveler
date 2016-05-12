@@ -38,6 +38,9 @@ class Client:
 
             :param input_mgr: The input manager
             :type input_mgr: :class:`core.InputManager`
+
+            :param config: the network section of the config object
+            :type config: :class:`configparser.SectionProxy`
             """
             self.game_cfg = game_cfg
             self.proxy = proxy
@@ -138,7 +141,8 @@ class Client:
             return dt
 
         def poll_network(self):
-            """Poll the message proxy and process messages when they are complete.
+            """Poll the message proxy and process messages when they are
+            complete.
             """
             for msg in self.proxy.poll():
                 self.process_message(msg)
@@ -229,6 +233,9 @@ class Client:
 
         :param e_id: The entity id.
         :type e_id: int
+
+        :return: The required entity
+        :rtype: :class:`game.Entity`
         """
         return Entity.get_entity(e_id)
 

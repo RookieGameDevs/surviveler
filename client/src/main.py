@@ -25,6 +25,13 @@ def filter_modules(modules, record):
 
     If modules is not an empty string, we filter out every logger that is not in
     the specified modules.
+
+    Except for the modules argument that is binded at runtime, the record
+    parameter and the return value are compliant to the logging.Filter.filter
+    API.
+
+    :param modules: List of enabled modules
+    :type modules: list
     """
     if not modules:
         return True
@@ -50,9 +57,13 @@ def setup_logging(config):
     numeric_level = getattr(logging, config['Level'], None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % config['level'])
+
+    # Configure the logging module
     logging.basicConfig(
         level=numeric_level,
         format='[%(asctime)s - %(levelname)s:%(name)s] %(msg)s')
+
+    # Add the filter to all the handlers
     for handler in logging.root.handlers:
         handler.addFilter(partial(filter_modules, modules))
 
