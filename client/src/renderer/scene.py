@@ -170,6 +170,9 @@ class GeometryNode(AbstractSceneNode):
         :param params: Additional shader parameters. These are passed to the
             shader verbatim.
         :type params: map
+
+        :param textures: Textures to apply to the mesh
+        :type textures: list of :class:`renderer.Texture`
         """
         super(GeometryNode, self).__init__()
         self.mesh = mesh
