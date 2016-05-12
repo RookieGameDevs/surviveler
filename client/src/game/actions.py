@@ -26,8 +26,8 @@ def handle_mouse_click(evt):
         LOG.info('World pos: {},{},{}'.format(pos.x, pos.y, pos.z))
 
         msg = Message(MessageType.move, {
-            MessageField.x_pos: int(round(pos.x)),
-            MessageField.y_pos: int(round(pos.y)),
+            MessageField.x_pos: float(pos.x),
+            MessageField.y_pos: float(pos.y),
         })
 
         evt.client.proxy.enqueue(msg)
