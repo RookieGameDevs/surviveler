@@ -20,6 +20,9 @@ class Renderable(Component):
 
         :param shader: The shader program.
         :type shader: :class:`renderer.Shader`
+
+        :param textures: Textures to apply to the mesh
+        :type textures: list of :class:`renderer.Texture`
         """
         self.entity = None
         self.node = GeometryNode(mesh, shader, textures=textures)
