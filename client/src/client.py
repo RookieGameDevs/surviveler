@@ -204,6 +204,11 @@ class Client:
         self.__client.start()
 
     @property
+    def delta(self):
+        """The tstamp offset between client and server"""
+        return self.__client.delta
+
+    @property
     def proxy(self):
         """The message proxy."""
         return self.__client.proxy
@@ -261,7 +266,7 @@ def gamestate_handler(client, msg):
     :type msg: :class:`message.Message`
     """
     LOG.debug('Processing gamestate message')
-    # TODO: uncomment me when the server will give back a timestamp in the
-    # gamestate.
-    # msg.data[MessageField.timestamp] += self.delta or 0
+    # Update the server timestamp adding the offset calculated after the
+    # ping-pong exchange.
+    msg.data[MessageField.timestamp] += client.delta or 0
     process_gamestate(msg.data)
