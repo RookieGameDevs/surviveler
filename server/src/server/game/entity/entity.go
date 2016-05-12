@@ -5,6 +5,7 @@
 package entity
 
 import (
+	"server/game/messages"
 	"server/math"
 	"time"
 )
@@ -17,31 +18,39 @@ type Updater interface {
 	Update(dt time.Duration)
 }
 
-/*
- * Positioner is the interface implemented by objects aware of a position
- */
-type Positioner interface {
-	SetPos(pos math.Vec2)
-	GetPos() math.Vec2
+type Entity struct {
+	Pos       math.Vec2           // current position
+	CurAction messages.ActionType // current action
+}
+
+type MovableEntity struct {
+	Entity
+	Speed float32 // speed
 }
 
 /*
- * Mover is the interface implemented by objects that know how to update an
- * object's position. Implements Updater and Positioner interfaces. The
- * Positioner interface allows to manage the final destination, Updater for
- * actual moving and GetSnapshot in order to retrieve current position
+ * PathFinder is the interface implemented by objects that generate paths on
+ * map
  */
-type Mover interface {
-	Updater
-	Positioner
-	// Set current speed
-	SetSpeed(s float32)
-	// Get current speed
-	GetSpeed() float32
-	// Set destination
-	SetDestPos(pos math.Vec2)
-	// Get destination
-	GetDestPos() math.Vec2
-	// know if destination has been reached
-	HasReachedDestination() bool
+type PathFinder interface {
+	SetOrigin(org math.Vec2)
+	SetDestination(dst math.Vec2)
+	GetCurrentDestination() math.Vec2
+}
+
+type BasicPathFinder struct {
+	org math.Vec2
+	dst math.Vec2
+}
+
+func (p *BasicPathFinder) SetOrigin(org math.Vec2) {
+	p.org = org
+}
+
+func (p *BasicPathFinder) SetDestination(dst math.Vec2) {
+	p.dst = dst
+}
+
+func (p *BasicPathFinder) GetCurrentDestination() math.Vec2 {
+	return p.dst
 }
