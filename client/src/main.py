@@ -4,6 +4,7 @@ from client import Client
 from configparser import ConfigParser
 from contextlib import ContextDecorator
 from core import InputManager
+from functools import partial
 from network import Connection
 from network import MessageProxy
 from renderer import Renderer
@@ -19,18 +20,41 @@ LOG = logging.getLogger(__name__)
 CONFIG_FILE = os.path.join(os.getcwd(), 'client.ini')
 
 
+def filter_modules(modules, record):
+    """Filter function for log modules.
+
+    If modules is not an empty string, we filter out every logger that is not in
+    the specified modules.
+    """
+    if not modules:
+        return True
+    else:
+        path = record.name.split('.')
+        for i in range(len(path)):
+            if '.'.join(path[:i + 1]) in modules:
+                return True
+        return False
+
+
 def setup_logging(config):
     """Setups the logging module
 
     :param config: the logging section of the config object
     :type config: :class:`configparser.SectionProxy`
     """
+    modules = []
+    filter_str = config.get('Modules')
+    if filter_str:
+        modules = list(map(lambda x: x.strip(), filter_str.split(',')))
+
     numeric_level = getattr(logging, config['Level'], None)
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % config['level'])
     logging.basicConfig(
         level=numeric_level,
         format='[%(asctime)s - %(levelname)s:%(name)s] %(msg)s')
+    for handler in logging.root.handlers:
+        handler.addFilter(partial(filter_modules, modules))
 
 
 class sdl2context(ContextDecorator):
