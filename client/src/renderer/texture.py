@@ -28,7 +28,11 @@ class TextureParam(ABC):
 
     @abstractmethod
     def apply(self, sampler):
-        """Applies a texture parameter to given sampler."""
+        """Applies a texture parameter to given sampler.
+
+        :param sampler: The OpenGL identifier for the sampler object.
+        :type sampler: int
+        """
 
 
 class TextureParamWrap(TextureParam):
@@ -45,6 +49,14 @@ class TextureParamWrap(TextureParam):
         clamp = GL_CLAMP_TO_EDGE
 
     def __init__(self, coord, wrap_type):
+        """Constructor.
+
+        :param coord: Coordinate along which to wrap.
+        :type coord: :class:`renderer.TextureParamWrap.Coord`
+
+        :param wrap_type: Type of wrap to perform.
+        :type wrap_type: :enum:`renderer.TextureParamWrap.WrapType`
+        """
         self.coord = coord
         self.wrap_type = wrap_type
 
@@ -59,15 +71,33 @@ class Texture:
     interface.
     """
     def __init__(self, tex_id):
+        """Constructor.
+
+        :param tex_id: Identifier of OpenGL object representing the texture.
+        :type tex_id: int
+        """
         self.tex_id = tex_id
         self.tex_unit = 0
         self.sampler = glGenSamplers(1)
 
     def set_param(self, param):
+        """Applies sampling parameter.
+
+        :param param: Parameter to apply.
+        :type param: subclass of :class:`renderer.TextureParam`
+        """
         param.apply(self.sampler)
 
     @classmethod
     def from_file(cls, filename):
+        """Creates a texture from given image file.
+
+        :param filename: Image file.
+        :type filename: str
+
+        :returns: The texture instance.
+        :rtype: :class:`renderer.Texture`
+        """
         img = Image.open(filename)
         w, h = img.size
 
@@ -82,6 +112,11 @@ class Texture:
 
     @contextmanager
     def use(self, tex_unit):
+        """Makes the given texture as active in the rendering pipeline.
+
+        :param tex_unit: OpenGL texture image unit to make active.
+        :type tex_unit: int
+        """
         self.tex_unit = tex_unit
         glActiveTexture(GL_TEXTURE0 + self.tex_unit)
         glBindTexture(GL_TEXTURE_2D, self.tex_id)
