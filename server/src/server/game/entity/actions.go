@@ -4,16 +4,6 @@
  */
 package entity
 
-/*
- * Sub-message of GameStateMsg.
- */
-type OldActionMsg struct {
-	ActionType   uint16
-	TargetTstamp int64
-	Xpos         float32
-	Ypos         float32
-}
-
 type ActionType uint16
 
 const (
