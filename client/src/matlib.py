@@ -86,7 +86,10 @@ class Mat4(np.matrix):
     """Matrix 4x4."""
 
     def __new__(cls, rows=None):
-        return np.matrix.__new__(cls, rows or np.eye(4), np.float32)
+        return np.matrix.__new__(
+            cls,
+            rows if rows is not None else np.eye(4),
+            np.float32)
 
     @classmethod
     def rot(cls, axis, theta):
@@ -148,6 +151,14 @@ class Mat4(np.matrix):
             [0,    0,    v[2], 0],
             [0,    0,    0,    1],
         ])
+
+    def inverse(self):
+        """Returns the matrix inverse.
+
+        :returns: Inverse matrix.
+        :rtype: :class:`matlib.Mat4`
+        """
+        return Mat4(np.linalg.inv(self))
 
 
 #: Predefined vector for X axis
