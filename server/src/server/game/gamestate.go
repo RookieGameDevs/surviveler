@@ -6,16 +6,13 @@
 package game
 
 import (
+	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
 	"server/game/protocol"
 	"server/math"
-
-	log "github.com/Sirupsen/logrus"
 )
-
-// TODO: remove this soon...
-const GAMESTATE_IS_A_MAP = false
 
 /*
  * GameState is the structure that contains all the complete game state
@@ -42,23 +39,42 @@ func (gs GameState) pack() (*protocol.Message, error) {
 		return nil, nil
 	}
 
-	if GAMESTATE_IS_A_MAP {
+	//// fill the gamestatemsg
+	//var gsMsg messages.GameStateMsg
+	//gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
+	//for id, ent := range gs.players {
 
-		// fill the gamestatemsg
-		var gsMsg messages.GameStateMsg
-		gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
-		for id, ent := range gs.players {
+	//curPos := ent.GetPos()
+	//actionType, actionData := ent.GetAction()
 
-			curPos := ent.GetPos()
-			actionType, actionData := ent.GetAction()
+	//gsMsg.Entities[id] = messages.EntityStateMsg{
+	//Tstamp:     MakeTimestamp(),
+	//Xpos:       curPos[0],
+	//Ypos:       curPos[1],
+	//ActionType: actionType,
+	//Action:     actionData,
+	//}
+	//}
 
-			gsMsg.Entities[id] = messages.EntityStateMsg{
-				Tstamp:     MakeTimestamp(),
-				Xpos:       curPos[0],
-				Ypos:       curPos[1],
-				ActionType: actionType,
-				Action:     actionData,
-			}
+	//// wrap the specialized GameStateMsg into a generic Message
+	//msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
+	//if err != nil {
+	//log.WithField("err", err).Fatal("Couldn't pack Gamestate")
+	//return nil, err
+	//}
+	//log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
+	//return msg, nil
+
+	// create a GameStateMsg from the game state
+	for _, ent := range gs.players {
+
+		actionType, actionData := ent.GetAction()
+		gsMsg := messages.EntityStateMsg{
+			Tstamp:     MakeTimestamp(),
+			Xpos:       ent.Pos[0],
+			Ypos:       ent.Pos[1],
+			ActionType: actionType,
+			Action:     actionData,
 		}
 
 		// wrap the specialized GameStateMsg into a generic Message
@@ -67,36 +83,10 @@ func (gs GameState) pack() (*protocol.Message, error) {
 			log.WithField("err", err).Fatal("Couldn't pack Gamestate")
 			return nil, err
 		}
+
+		// exit after sending the first found entity state
 		log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
 		return msg, nil
-
-	} else {
-
-		// create a GameStateMsg from the game state
-		for _, ent := range gs.players {
-
-			curPos := ent.GetPos()
-			actionType, actionData := ent.GetAction()
-
-			gsMsg := messages.EntityStateMsg{
-				Tstamp:     MakeTimestamp(),
-				Xpos:       curPos[0],
-				Ypos:       curPos[1],
-				ActionType: actionType,
-				Action:     actionData,
-			}
-
-			// wrap the specialized GameStateMsg into a generic Message
-			msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
-			if err != nil {
-				log.WithField("err", err).Fatal("Couldn't pack Gamestate")
-				return nil, err
-			}
-
-			// exit after sending the first found entity state
-			log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
-			return msg, nil
-		}
 	}
 	return nil, nil
 }
@@ -116,20 +106,12 @@ func (gs *GameState) onDelPlayer(msg interface{}, clientId uint16) error {
 }
 
 func (gs *GameState) onMovePlayer(msg interface{}, clientId uint16) error {
-
 	move := msg.(messages.MoveMsg)
-	log.WithFields(
-		log.Fields{"clientId": clientId, "msg": move}).Info("handling a MoveMsg")
-
+	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("onMovePlayer")
 	if p, ok := gs.players[clientId]; ok {
-		p.SetDestPos(math.Vec2{move.Xpos, move.Ypos})
-
-		log.WithFields(
-			log.Fields{"player": p, "clientId": clientId}).Info("MovePlayer")
+		p.Move(math.Vec2{move.Xpos, move.Ypos})
 	} else {
-		log.WithField(
-			"clientId", clientId).Panic("Player not found")
+		return fmt.Errorf("Client Id not found: %v", clientId)
 	}
-
 	return nil
 }
