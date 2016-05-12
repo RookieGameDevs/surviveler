@@ -9,8 +9,20 @@ from renderer import TextureParamWrap
 
 
 class Terrain(Entity):
+    """Terrain entity."""
 
     def __init__(self, parent_node, width, height):
+        """Constructor.
+
+        :param parent_node: Parent node to attach the terrain entity to.
+        :type param_node: subclass of :class:`renderer.AbstractSceneNode`
+
+        :param width: Width of the terrain in game units.
+        :type width: float
+
+        :param height: Height of the terrain in game units.
+        :type height: float
+        """
         vertices = [
             -0.5, +0.5, +0.0,  # top left
             -0.5, -0.5, +0.0,  # bottom left
@@ -48,4 +60,5 @@ class Terrain(Entity):
         super(Terrain, self).__init__(renderable)
 
     def update(self, dt):
+        # NOTE: nothing to do
         pass
