@@ -12,15 +12,10 @@ const (
 	PongId
 	GameStateId
 	MoveId
-)
-
-/*
- * Server only messages
- * TODO: those will be replaced once the handshake protocol will be implemented
- */
-const (
-	AddPlayerId = 1024 + iota
-	DelPlayerId
+	JoinId
+	JoinedId
+	StayId
+	LeaveId
 )
 
 /*
@@ -53,13 +48,35 @@ type MoveMsg struct {
 }
 
 /*
- * Indicates a new player joined the game
+ * This message is sent only by clients right after a connection is
+ * established.
  */
-type AddPlayerMsg struct {
+type JoinMsg struct {
 	Name string
 }
 
 /*
- * Indicates that a player may be removed
+ * Message broadcasted to all clients by the server when a successful join was
+ * accomplished.
  */
-type DelPlayerMsg struct{}
+type JoinedMsg struct {
+	Id   uint32
+	Name string
+}
+
+/*
+ * Response to a `JOIN` message, sent only by server to the client which
+ * requested to join.
+ */
+type StayMsg struct {
+	Id uint32
+}
+
+/*
+ * Response to a bad `JOIN` request *OR* broadcast message sent at any point
+ * during play.
+ */
+type LeaveMsg struct {
+	Id      uint32
+	Reasong string
+}
