@@ -1,15 +1,21 @@
+from enum import IntEnum
+from enum import unique
 from events import send_event
 from game.events import PlayerActionMove
 from game.events import PlayerPositionUpdated
-from network import ActionType
 from network import MessageField
-from network import MessageType
 import logging
 
 
 LOG = logging.getLogger(__name__)
 
 __PROCESSORS = []
+
+
+@unique
+class ActionType(IntEnum):
+    idle = 0
+    move = 1
 
 
 def processor(f):

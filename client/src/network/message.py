@@ -16,12 +16,6 @@ class MessageType(IntEnum):
 
 
 @unique
-class ActionType(IntEnum):
-    idle = 0
-    move = 1
-
-
-@unique
 class MessageField(bytes, Enum):
     id = b'Id'
     timestamp = b'Tstamp'
