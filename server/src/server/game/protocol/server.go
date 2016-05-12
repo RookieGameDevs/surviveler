@@ -100,14 +100,6 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
 		log.WithError(err).Fatal("Couldn't create AddPlayerMsg")
 		return false
 	}
-
-	if msg, err := NewMessage(messages.MoveId, messages.MoveMsg{Xpos: 6, Ypos: 7}); err == nil {
-		srv.msgcb(msg, clientId)
-	} else {
-		log.WithError(err).Fatal("Couldn't create MoveMsg")
-		return false
-	}
-
 	return true
 }
 
