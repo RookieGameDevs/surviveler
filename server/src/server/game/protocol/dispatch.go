@@ -34,8 +34,6 @@ type MessageManager struct {
 	factory   *messages.Factory           // keep the msg factory
 }
 
-// TODO: we'll have to implement a StopListen method to unregister a listener
-
 /*
  * Dispatch dispatches messages of a particular type to the listeners. It
  * performs the decoding of the payload into an interface.
