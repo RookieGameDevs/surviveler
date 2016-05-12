@@ -34,54 +34,26 @@ func NewGameState() GameState {
  */
 func (gs GameState) pack() (*protocol.Message, error) {
 
-	// do not send nothing if we don't have players
 	if len(gs.players) == 0 {
+		// nothing to do
 		return nil, nil
 	}
 
-	//// fill the gamestatemsg
-	//var gsMsg messages.GameStateMsg
-	//gsMsg.Entities = make(map[uint16]messages.EntityStateMsg)
-	//for id, ent := range gs.players {
-
-	//curPos := ent.GetPos()
-	//actionType, actionData := ent.GetAction()
-
-	//gsMsg.Entities[id] = messages.EntityStateMsg{
-	//Tstamp:     MakeTimestamp(),
-	//Xpos:       curPos[0],
-	//Ypos:       curPos[1],
-	//ActionType: actionType,
-	//Action:     actionData,
-	//}
-	//}
-
-	//// wrap the specialized GameStateMsg into a generic Message
-	//msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
-	//if err != nil {
-	//log.WithField("err", err).Fatal("Couldn't pack Gamestate")
-	//return nil, err
-	//}
-	//log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
-	//return msg, nil
-
-	// create a GameStateMsg from the game state
-	for _, ent := range gs.players {
-
-		entityState := ent.GetState()
-
-		// wrap the specialized GameStateMsg into a generic Message
-		msg, err := protocol.NewMessage(messages.GameStateId, entityState)
-		if err != nil {
-			log.WithField("err", err).Fatal("Couldn't pack Gamestate")
-			return nil, err
-		}
-
-		// exit after sending the first found entity state
-		log.WithField("msg", entityState).Debug("sent GamestateMsg")
-		return msg, nil
+	// fill the GameStateMsg
+	var gsMsg messages.GameStateMsg
+	gsMsg.Entities = make(map[uint16]interface{})
+	for id, ent := range gs.players {
+		gsMsg.Entities[id] = ent.GetState()
 	}
-	return nil, nil
+
+	// wrap the GameStateMsg into a generic Message
+	msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
+	if err != nil {
+		log.WithField("err", err).Fatal("Couldn't pack game state")
+		return nil, err
+	}
+	log.WithField("msg", gsMsg).Debug("Packed game state")
+	return msg, nil
 }
 
 func (gs *GameState) onAddPlayer(msg interface{}, clientId uint16) error {
