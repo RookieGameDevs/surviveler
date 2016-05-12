@@ -40,6 +40,10 @@ class Mesh:
             geometry primitive is the triangle, thus, the size of indices list must
             be a multiple of 3.
         :type indices: list
+
+        :param uvs: List of texture coordinates. List length must be a multiple
+            of 2.
+        :type uvs: list
         """
         if len(vertices) < 3 or len(vertices) % 3:
             raise ValueError(
