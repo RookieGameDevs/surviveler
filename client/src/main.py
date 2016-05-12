@@ -13,8 +13,6 @@ import os
 import sdl2 as sdl
 
 
-LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
-
 LOG = logging.getLogger(__name__)
 
 
@@ -29,7 +27,7 @@ def setup_logging(config):
     """
     numeric_level = getattr(logging, config['Level'], None)
     if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % LOG_LEVEL)
+        raise ValueError('Invalid log level: %s' % config['level'])
     logging.basicConfig(
         level=numeric_level,
         format='[%(asctime)s - %(levelname)s:%(name)s] %(msg)s')
