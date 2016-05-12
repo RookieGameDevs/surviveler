@@ -68,24 +68,17 @@ func (gs GameState) pack() (*protocol.Message, error) {
 	// create a GameStateMsg from the game state
 	for _, ent := range gs.players {
 
-		actionType, actionData := ent.GetAction()
-		gsMsg := messages.EntityStateMsg{
-			Tstamp:     MakeTimestamp(),
-			Xpos:       ent.Pos[0],
-			Ypos:       ent.Pos[1],
-			ActionType: actionType,
-			Action:     actionData,
-		}
+		entityState := ent.GetState()
 
 		// wrap the specialized GameStateMsg into a generic Message
-		msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
+		msg, err := protocol.NewMessage(messages.GameStateId, entityState)
 		if err != nil {
 			log.WithField("err", err).Fatal("Couldn't pack Gamestate")
 			return nil, err
 		}
 
 		// exit after sending the first found entity state
-		log.WithField("msg", gsMsg).Debug("sent GamestateMsg")
+		log.WithField("msg", entityState).Debug("sent GamestateMsg")
 		return msg, nil
 	}
 	return nil, nil

@@ -5,7 +5,6 @@
 package entity
 
 import (
-	"server/game/messages"
 	"server/math"
 	"time"
 )
@@ -18,14 +17,16 @@ type Updater interface {
 	Update(dt time.Duration)
 }
 
-type Entity struct {
-	Pos       math.Vec2           // current position
-	CurAction messages.ActionType // current action
+/*
+ * Entity is the interface that represents stateful game objects
+ */
+type Entity interface {
+	GetState() EntityState
 }
 
 type MovableEntity struct {
-	Entity
-	Speed float32 // speed
+	Pos   math.Vec2 // current position
+	Speed float32   // speed
 }
 
 /*

@@ -5,7 +5,6 @@
 package entity
 
 import (
-	"server/game/messages"
 	"server/math"
 	"time"
 )
@@ -17,6 +16,7 @@ import (
 type Player struct {
 	MovableEntity
 	Pathfinder PathFinder
+	CurAction  ActionType // current action
 }
 
 /*
@@ -28,14 +28,14 @@ func NewPlayer(startX, startY, speed float32) *Player {
 	p.Speed = speed
 	p.Pathfinder = &BasicPathFinder{}
 	p.Pos = math.Vec2{startX, startY}
-	p.CurAction = messages.IdleAction
+	p.CurAction = IdleAction
 	return p
 }
 
 func (p *Player) Update(dt time.Duration) {
 
 	// update position
-	if p.CurAction != messages.IdleAction {
+	if p.CurAction != IdleAction {
 
 		curDst := p.Pathfinder.GetCurrentDestination()
 
@@ -46,7 +46,7 @@ func (p *Player) Update(dt time.Duration) {
 		// arrived at destination?
 		if p.Pos.ApproxEqualThreshold(curDst, 0.01) {
 			// destination reached
-			p.CurAction = messages.IdleAction
+			p.CurAction = IdleAction
 		}
 	}
 }
@@ -55,18 +55,28 @@ func (p *Player) Move(dst math.Vec2) {
 	// setup pathfinding
 	p.Pathfinder.SetOrigin(p.Pos)
 	p.Pathfinder.SetDestination(dst)
-	p.CurAction = messages.MovingAction
+	p.CurAction = MovingAction
 }
 
-func (p *Player) GetAction() (messages.ActionType, interface{}) {
-	if p.CurAction == messages.IdleAction {
-		return messages.IdleAction, messages.IdleActionData{}
+func (p *Player) GetState() EntityState {
+	// first compile the data depending on current action
+	var actionData interface{}
+	if p.CurAction == IdleAction {
+		actionData = IdleActionData{}
 	} else {
 		dst := p.Pathfinder.GetCurrentDestination()
-		return messages.MovingAction, messages.MoveActionData{
+		actionData = MoveActionData{
 			Speed: p.Speed,
 			Xpos:  dst[0],
 			Ypos:  dst[1],
 		}
+	}
+
+	return EntityState{
+		Tstamp:     time.Now().UnixNano() / int64(time.Millisecond),
+		Xpos:       p.Pos[0],
+		Ypos:       p.Pos[1],
+		ActionType: p.CurAction,
+		Action:     actionData,
 	}
 }
