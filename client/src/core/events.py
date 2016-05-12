@@ -29,10 +29,10 @@ class MouseClickEvent(Event):
         :type y: int
 
         :param button: Button clicked.
-        :type button: enum of :class:`core.MouseClickEvent.Button`
+        :type button: enum of :class:`core.events.MouseClickEvent.Button`
 
         :param state: Button state.
-        :type state: enum of :class:`core.MouseClickEvent.State`
+        :type state: enum of :class:`core.events.MouseClickEvent.State`
         """
         self.x = x
         self.y = y

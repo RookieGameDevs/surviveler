@@ -37,7 +37,7 @@ class Client:
             :type proxy: :class:`network.message.MessageProxy`
 
             :param input_mgr: The input manager
-            :type input_mgr: :class:`core.input.InputManager`
+            :type input_mgr: :class:`core.InputManager`
             """
             self.game_cfg = game_cfg
             self.proxy = proxy
@@ -182,7 +182,7 @@ class Client:
         :type proxy: :class:`network.message.MessageProxy`
 
         :param input_mgr: The input manager
-        :type input_mgr: :class:`core.input.InputManager`
+        :type input_mgr: :class:`core.InputManager`
 
         :param game_cfg: Game configuration
         :type game_cfg: mapping
