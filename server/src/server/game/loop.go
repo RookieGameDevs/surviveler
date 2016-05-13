@@ -57,14 +57,8 @@ func (g *Game) loop() {
 			case <-sendTickChan:
 
 				// pack the gamestate into a message
-				var msg *protocol.Message
-				var err error
-				if msg, err = gs.pack(); err != nil {
-					log.WithField("err", err).Error("Couldn't pack the gamestate")
-					quit = true
-				}
-				if msg != nil {
-					g.server.Broadcast(msg)
+				if gsmsg := gs.pack(); gsmsg != nil {
+					g.server.Broadcast(gsmsg)
 				}
 
 			case <-tickChan:
