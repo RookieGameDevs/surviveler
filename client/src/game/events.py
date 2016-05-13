@@ -1,13 +1,16 @@
 from events import Event
 
 
-class PlayerPositionUpdated(Event):
+class EntityIdle(Event):
     """Player position updated.
 
     Event emitted when the position of the Player changed.
     """
-    def __init__(self, x, y):
+    def __init__(self, srv_id, x, y):
         """Constructor.
+
+        :param srv_id: The server id of the entity.
+        :type srv_id: int
 
         :param x: The position on x-axis.
         :type x: float
@@ -15,13 +18,14 @@ class PlayerPositionUpdated(Event):
         :param y: The position on y-axis.
         :type y: float
         """
+        self.srv_id = srv_id
         self.x, self.y = x, y
 
     def __str__(self):
-        return '<PlayerPositionUpdated({}, {})>'.format(self.x, self.y)
+        return '<EntityIdle({}, {}, {})>'.format(self.srv_id, self.x, self.y)
 
 
-class PlayerActionMove(Event):
+class EntityMove(Event):
     """Receved move action.
 
     Event emitted whenever the player is subject to a move action.
@@ -29,8 +33,11 @@ class PlayerActionMove(Event):
     :param action: Move action payload.
     :type action: dict
     """
-    def __init__(self, position, destination, speed):
+    def __init__(self, srv_id, position, destination, speed):
         """Constructor.
+
+        :param srv_id: The server id of the entity.
+        :type srv_id: int
 
         :param position: The current position.
         :type position: tuple
@@ -41,10 +48,11 @@ class PlayerActionMove(Event):
         :param speed: The player speed in game unit / seconds
         :type speed: float
         """
+        self.srv_id = srv_id
         self.position = position
         self.destination = destination
         self.speed = speed
 
     def __str__(self):
-        return '<PlayerActionMove({}, {}, {})>'.format(
-            self.position, self.destination, self.speed)
+        return '<EntityMove({}, {}, {}, {})>'.format(
+            self.srv_id, self.position, self.destination, self.speed)
