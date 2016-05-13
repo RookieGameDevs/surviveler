@@ -42,9 +42,6 @@ type ClientMessage struct {
  * Serialize transforms a message into a byte slice
  */
 func (msg Message) Serialize() []byte {
-	if msg == nil {
-		log.Panic("Trying to serialize a nil message!")
-	}
 	// we know the buffer total size so we can provide it to our bytes.Buffer
 	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Buffer)))
 	binary.Write(bbuf, binary.BigEndian, msg.Type)

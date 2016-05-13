@@ -135,19 +135,19 @@ func (srv *Server) OnClose(c *network.Conn) {
 
 	// unregister the client before anything
 	clientData := c.GetUserData().(ClientData)
-	srv.clients.unregister(clientData.ClientId)
+	srv.clients.unregister(clientData.Id)
 
 	if clientData.Joined {
 		// client is still JOINED so that's a disconnection initiated externally
 		// send a LEAVE to the rest of the world
 		msg := NewMessage(messages.LeaveId, messages.LeaveMsg{
-			Id:     uint32(clientData.ClientId),
+			Id:     uint32(clientData.Id),
 			Reason: "client disconnection",
 		})
 		srv.Broadcast(msg)
 	}
 	// send a LEAVE to the game loop (server-only msg)
-	srv.msgcb(NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.ClientId)
+	srv.msgcb(NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.Id)
 }
 
 /*
@@ -213,12 +213,12 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		if accepted {
 			// send JOINED and STAY
 			srv.Broadcast(NewMessage(messages.JoinedId, messages.JoinedMsg{
-				Id:   uint32(clientData.ClientId),
+				Id:   uint32(clientData.Id),
 				Name: clientData.Name,
 			}))
 
 			// informs the game loop that we have a new player
-			srv.msgcb(NewMessage(messages.JoinId, join), clientData.ClientId)
+			srv.msgcb(NewMessage(messages.JoinId, join), clientData.Id)
 		}
 	}
 	return nil
