@@ -12,6 +12,7 @@ import (
 	"server/game/messages"
 	"server/game/protocol"
 	"server/math"
+	"time"
 )
 
 /*
@@ -41,6 +42,7 @@ func (gs GameState) pack() (*protocol.Message, error) {
 
 	// fill the GameStateMsg
 	var gsMsg messages.GameStateMsg
+	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Entities = make(map[uint16]interface{})
 	for id, ent := range gs.players {
 		gsMsg.Entities[id] = ent.GetState()
