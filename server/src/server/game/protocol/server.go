@@ -190,32 +190,57 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 }
 
 func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
+
+	// decode join msg payload into an interface
+	var join messages.JoinMsg
+	if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Buffer); err != nil {
+		return err
+	} else {
+		join = ijoin.(messages.JoinMsg)
+	}
+
 	clientData := c.GetUserData().(ClientData)
-	log.Debug("Handling Join")
+	log.WithField("client", clientData).Debug("Handling Join")
 
 	if clientData.Joined {
-		// TODO: handle this
 		// protocol error: second JOIN received
-		log.Warn("Second JOIN of same connection: not implemented!")
-	} else {
-		// decode join msg payload into an interface
-		var join messages.JoinMsg
-		if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Buffer); err != nil {
+		// send LEAVE to client
+		leave := NewMessage(messages.LeaveId, messages.LeaveMsg{
+			Id:     uint32(clientData.Id),
+			Reason: "already joined",
+		})
+		log.WithField("leave", leave).Debug("About to send LEAVE")
+		if err := c.AsyncSendMessage(leave, time.Second); err != nil {
 			return err
-		} else {
-			join = ijoin.(messages.JoinMsg)
 		}
 
-		// check conditions
+	} else {
+		// check if STAY conditions are met
 		accepted := true
+		// TODO: check other conditions...
 
-		// accepted?
 		if accepted {
-			// send JOINED and STAY
-			srv.Broadcast(NewMessage(messages.JoinedId, messages.JoinedMsg{
+			// send STAY to client
+			stay := NewMessage(messages.StayId, messages.StayMsg{
+				Id: uint32(clientData.Id),
+			})
+			log.WithField("stay", stay).Debug("About to send STAY")
+			if err := c.AsyncSendMessage(stay, time.Second); err != nil {
+				return err
+			}
+
+			// broadcast JOINED
+			joined := NewMessage(messages.JoinedId, messages.JoinedMsg{
 				Id:   uint32(clientData.Id),
 				Name: clientData.Name,
-			}))
+			})
+			log.WithField("JOINED", joined).Debug("About to broadcast JOINED")
+			srv.Broadcast(joined)
+
+			// mark the client as joined
+			clientData.Joined = true
+			clientData.Name = join.Name
+			c.SetUserData(clientData)
 
 			// informs the game loop that we have a new player
 			srv.msgcb(NewMessage(messages.JoinId, join), clientData.Id)
