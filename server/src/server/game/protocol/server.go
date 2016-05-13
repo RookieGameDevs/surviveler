@@ -89,16 +89,7 @@ func (srv *Server) Start() {
  */
 func (srv *Server) OnConnect(c *network.Conn) bool {
 	// register our new client
-	clientId := srv.clients.register(c)
-
-	// TODO: this is temporary, for testing and dev, we are doing:
-	// - send a AddPlayerMsg so that the game loop creates a new player
-	if msg, err := NewMessage(messages.AddPlayerId, messages.AddPlayerMsg{"batman"}); err == nil {
-		srv.msgcb(msg, clientId)
-	} else {
-		log.WithError(err).Fatal("Couldn't create AddPlayerMsg")
-		return false
-	}
+	srv.clients.register(c)
 	return true
 }
 
@@ -107,10 +98,10 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
  * from the connection
  */
 func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
-	clientId := c.GetUserData().(uint16)
+	clientData := c.GetUserData().(ClientData)
 	log.WithFields(log.Fields{
-		"id":   clientId,
-		"addr": c.GetRawConn().RemoteAddr(),
+		"clientData": clientData,
+		"addr":       c.GetRawConn().RemoteAddr(),
 	}).Debug("Received message")
 
 	msg := netmsg.(*Message)
@@ -118,15 +109,60 @@ func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	case messages.PingId:
 		// ping requires an immediate pong reply
 		if err := srv.handlePing(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle ping")
+			log.WithError(err).Error("Couldn't handle Ping")
+			return false
+		}
+	case messages.JoinId:
+		if err := srv.handleJoin(c, msg); err != nil {
+			log.WithError(err).Error("Couldn't handle Join")
 			return false
 		}
 	default:
 		// forward it
-		srv.msgcb(msg, clientId)
+		srv.msgcb(msg, clientData.Id)
 	}
 
 	return true
+}
+
+/*
+ * OnClose gets called by the server at connection closing, once by
+ * connection. This gives us the chance to unregister a new client and perform
+ * client cleanup
+ */
+func (srv *Server) OnClose(c *network.Conn) {
+	log.WithField("addr", c.GetRawConn().RemoteAddr()).Debug("Connection closed")
+
+	// unregister the client before anything
+	clientData := c.GetUserData().(ClientData)
+	srv.clients.unregister(clientData.ClientId)
+
+	if clientData.Joined {
+		// client is still JOINED so that's a disconnection initiated externally
+		// send a LEAVE to the rest of the world
+		msg := NewMessage(messages.LeaveId, messages.LeaveMsg{
+			Id:     uint32(clientData.ClientId),
+			Reason: "client disconnection",
+		})
+		srv.Broadcast(msg)
+	}
+	// send a LEAVE to the game loop (server-only msg)
+	srv.msgcb(NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.ClientId)
+}
+
+/*
+ * Broadcast sends a message to all clients
+ */
+func (srv *Server) Broadcast(msg *Message) error {
+	return srv.clients.Broadcast(msg)
+}
+
+/*
+ * Stop stops the tcp server and the clients connections
+ */
+func (srv *Server) Stop() {
+	log.Info("Stopping server")
+	srv.server.Stop()
 }
 
 /*
@@ -141,49 +177,49 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 		ping = iping.(messages.PingMsg)
 	}
 
-	log.WithField("msg", ping).Debug("Received ping")
+	log.WithField("msg", ping).Debug("Received Ping")
 
 	// reply pong
 	ts := time.Now().UnixNano() / int64(time.Millisecond)
-	pong, err := NewMessage(messages.PongId, messages.PongMsg{ping.Id, ts})
-	if err = c.AsyncSendMessage(pong, time.Second); err != nil {
+	pong := NewMessage(messages.PongId, messages.PongMsg{ping.Id, ts})
+	if err := c.AsyncSendMessage(pong, time.Second); err != nil {
 		return err
 	}
-	log.WithField("msg", pong).Debug("Sent pong")
+	log.WithField("msg", pong).Debug("Sent Pong")
 	return nil
 }
 
-/*
- * OnClose gets called by the server at connection closing, once by
- * connection. This gives us the chance to unregister a new client and perform
- * client cleanup
- */
-func (srv *Server) OnClose(c *network.Conn) {
+func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
+	clientData := c.GetUserData().(ClientData)
+	log.Debug("Handling Join")
 
-	clientId := c.GetUserData().(uint16)
-	log.WithField("addr", c.GetRawConn().RemoteAddr()).Debug("Connection closed")
-
-	// send a DelPlayerMsg to the game loop (server-only msg)
-	if msg, err := NewMessage(messages.DelPlayerId, messages.DelPlayerMsg{}); err == nil {
-		srv.msgcb(msg, clientId)
+	if clientData.Joined {
+		// TODO: handle this
+		// protocol error: second JOIN received
+		log.Warn("Second JOIN of same connection: not implemented!")
 	} else {
-		log.WithError(err).Fatal("Couldn't create DelPlayerMsg")
+		// decode join msg payload into an interface
+		var join messages.JoinMsg
+		if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Buffer); err != nil {
+			return err
+		} else {
+			join = ijoin.(messages.JoinMsg)
+		}
+
+		// check conditions
+		accepted := true
+
+		// accepted?
+		if accepted {
+			// send JOINED and STAY
+			srv.Broadcast(NewMessage(messages.JoinedId, messages.JoinedMsg{
+				Id:   uint32(clientData.ClientId),
+				Name: clientData.Name,
+			}))
+
+			// informs the game loop that we have a new player
+			srv.msgcb(NewMessage(messages.JoinId, join), clientData.ClientId)
+		}
 	}
-}
-
-/*
- * Broadcast sends a message to all clients
- */
-func (srv *Server) Broadcast(msg *Message) error {
-
-	// protect client map access (read)
-	return srv.clients.Broadcast(msg)
-}
-
-/*
- * Stop stops the tcp server and the clients connections
- */
-func (srv *Server) Stop() {
-	log.Info("Stopping server")
-	srv.server.Stop()
+	return nil
 }

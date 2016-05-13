@@ -21,6 +21,15 @@ type ClientRegistry struct {
 }
 
 /*
+ * ClientData contains the fields associated to a connection
+ */
+type ClientData struct {
+	Id     uint16
+	Name   string
+	Joined bool
+}
+
+/*
  * Init initializes the ClientRegistry
  */
 func (reg *ClientRegistry) init() {
@@ -46,18 +55,34 @@ func (reg *ClientRegistry) register(client *network.Conn) uint16 {
 
 	// record the client id inside the connection, this is needed for later
 	// retriving the clientId when we just have a connection
-	client.SetUserData(clientId)
+	clientData := ClientData{
+		Id:     clientId,
+		Name:   "",
+		Joined: false,
+	}
+	client.SetUserData(clientData)
 
 	// Note: for now we just stupidly increment the next available id.
 	//        We will have other problems to solve before this overflows...
 	reg.mutex.Unlock()
 
 	log.WithFields(log.Fields{
-		"id":   clientId,
-		"addr": client.GetRawConn().RemoteAddr(),
+		"client": clientData,
+		"addr":   client.GetRawConn().RemoteAddr(),
 	}).Info("Accepted a new client")
 
 	return clientId
+}
+
+/*
+ * unregister removes client from the registry
+ */
+func (reg *ClientRegistry) unregister(clientId uint16) {
+	log.WithField("id", clientId).Debug("Unregister a client")
+	// protect client map write
+	reg.mutex.Lock()
+	delete(reg.clients, clientId)
+	reg.mutex.Unlock()
 }
 
 /*

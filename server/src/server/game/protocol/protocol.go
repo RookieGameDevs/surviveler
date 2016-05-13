@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 	"net"
 	"server/network"
@@ -41,6 +42,9 @@ type ClientMessage struct {
  * Serialize transforms a message into a byte slice
  */
 func (msg Message) Serialize() []byte {
+	if msg == nil {
+		log.Panic("Trying to serialize a nil message!")
+	}
 	// we know the buffer total size so we can provide it to our bytes.Buffer
 	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Buffer)))
 	binary.Write(bbuf, binary.BigEndian, msg.Type)
@@ -52,9 +56,8 @@ func (msg Message) Serialize() []byte {
 /*
  * NewMessage creates a message from a message type and a generic payload
  */
-func NewMessage(t uint16, p interface{}) (*Message, error) {
+func NewMessage(t uint16, p interface{}) *Message {
 	var mh codec.MsgpackHandle
-
 	msg := new(Message)
 	msg.Type = t
 
@@ -63,7 +66,7 @@ func NewMessage(t uint16, p interface{}) (*Message, error) {
 	var enc *codec.Encoder = codec.NewEncoder(bb, &mh)
 	err := enc.Encode(p)
 	if err != nil {
-		return nil, fmt.Errorf("Error encoding payload: %v\n", err)
+		log.WithError(err).Panic("Error encoding payload: %v\n")
 	}
 
 	// Copy the buffer
@@ -72,7 +75,7 @@ func NewMessage(t uint16, p interface{}) (*Message, error) {
 	// Length is the buffer length
 	msg.Length = uint32(len(msg.Buffer))
 
-	return msg, nil
+	return msg
 }
 
 type MsgReader struct{}
