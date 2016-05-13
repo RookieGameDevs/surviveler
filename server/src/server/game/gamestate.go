@@ -33,11 +33,11 @@ func NewGameState() GameState {
  * pack transforms the current game state into a GameStateMsg,
  * ready to be sent to every connected client
  */
-func (gs GameState) pack() (*protocol.Message, error) {
+func (gs GameState) pack() *protocol.Message {
 
 	if len(gs.players) == 0 {
 		// nothing to do
-		return nil, nil
+		return nil
 	}
 
 	// fill the GameStateMsg
@@ -49,23 +49,17 @@ func (gs GameState) pack() (*protocol.Message, error) {
 	}
 
 	// wrap the GameStateMsg into a generic Message
-	msg, err := protocol.NewMessage(messages.GameStateId, gsMsg)
-	if err != nil {
-		log.WithField("err", err).Fatal("Couldn't pack game state")
-		return nil, err
-	}
-	log.WithField("msg", gsMsg).Debug("Packed game state")
-	return msg, nil
+	return protocol.NewMessage(messages.GameStateId, gsMsg)
 }
 
-func (gs *GameState) onAddPlayer(msg interface{}, clientId uint16) error {
+func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint16) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("we have a new player")
 	gs.players[clientId] = entity.NewPlayer(0, 0, 2)
 	return nil
 }
 
-func (gs *GameState) onDelPlayer(msg interface{}, clientId uint16) error {
+func (gs *GameState) onPlayerLeft(msg interface{}, clientId uint16) error {
 	// one player less, remove him from the map
 	log.WithField("clientId", clientId).Info("we have one less player")
 	delete(gs.players, clientId)

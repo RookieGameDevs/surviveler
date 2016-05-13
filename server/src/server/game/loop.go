@@ -31,9 +31,9 @@ func (g *Game) loop() {
 	gs := NewGameState()
 
 	msgmgr := new(protocol.MessageManager)
-	msgmgr.Listen(messages.AddPlayerId, protocol.MsgHandlerFunc(gs.onAddPlayer))
 	msgmgr.Listen(messages.MoveId, protocol.MsgHandlerFunc(gs.onMovePlayer))
-	msgmgr.Listen(messages.DelPlayerId, protocol.MsgHandlerFunc(gs.onDelPlayer))
+	msgmgr.Listen(messages.JoinedId, protocol.MsgHandlerFunc(gs.onPlayerJoined))
+	msgmgr.Listen(messages.LeaveId, protocol.MsgHandlerFunc(gs.onPlayerLeft))
 
 	// loop local stop condition
 	quit := false
