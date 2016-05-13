@@ -88,7 +88,8 @@ func (srv *Server) Start() {
  * the client initialization
  */
 func (srv *Server) OnConnect(c *network.Conn) bool {
-	// register our new client
+	// register our new client connection
+	// this is not the same as accepting the player
 	srv.clients.register(c)
 	return true
 }
@@ -145,6 +146,9 @@ func (srv *Server) OnClose(c *network.Conn) {
 			Reason: "client disconnection",
 		})
 		srv.Broadcast(msg)
+	} else {
+		// the client was not marked as JOINED, so nobody knows about him
+		// and we have nothing more to do
 	}
 	// send a LEAVE to the game loop (server-only msg)
 	srv.msgcb(NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.Id)
@@ -154,7 +158,11 @@ func (srv *Server) OnClose(c *network.Conn) {
  * Broadcast sends a message to all clients
  */
 func (srv *Server) Broadcast(msg *Message) error {
-	return srv.clients.Broadcast(msg)
+	err := srv.clients.Broadcast(msg)
+	if err != nil {
+		log.WithError(err).Error("Couldn't broadcast")
+	}
+	return err
 }
 
 /*
@@ -190,7 +198,6 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 }
 
 func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
-
 	// decode join msg payload into an interface
 	var join messages.JoinMsg
 	if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Buffer); err != nil {
@@ -202,49 +209,58 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 	clientData := c.GetUserData().(ClientData)
 	log.WithField("client", clientData).Debug("Handling Join")
 
-	if clientData.Joined {
-		// protocol error: second JOIN received
+	// check if STAY conditions are met
+	var reason string
+	accepted := false
+
+	switch {
+	case clientData.Joined:
+		reason = "already joined once!"
+	case len(join.Name) < 3:
+		reason = "Name is too short!"
+		// TODO:
+		//case CHECK-FOR-UTF8 only chars:
+	default:
+		// send STAY to client
+		stay := NewMessage(messages.StayId, messages.StayMsg{
+			Id: uint32(clientData.Id),
+		})
+		log.WithField("stay", stay).Debug("About to send STAY")
+		if err := c.AsyncSendMessage(stay, time.Second); err != nil {
+			return err
+		}
+		// broadcast JOINED
+		joined := NewMessage(messages.JoinedId, messages.JoinedMsg{
+			Id:   uint32(clientData.Id),
+			Name: clientData.Name,
+		})
+		log.WithField("JOINED", joined).Debug("About to broadcast JOINED")
+		srv.Broadcast(joined)
+
+		// mark the client as joined
+		clientData.Joined = true
+		clientData.Name = join.Name
+		c.SetUserData(clientData)
+
+		// informs the game loop that we have a new player
+		srv.msgcb(NewMessage(messages.JoinId, join), clientData.Id)
+
+		// at this point we consider the client as accepted
+		accepted = true
+	}
+
+	if !accepted {
 		// send LEAVE to client
 		leave := NewMessage(messages.LeaveId, messages.LeaveMsg{
 			Id:     uint32(clientData.Id),
-			Reason: "already joined",
+			Reason: reason,
 		})
-		log.WithField("leave", leave).Debug("About to send LEAVE")
+		log.WithField("leave", leave).Info("Didn't accept a JOIN, sending LEAVE")
 		if err := c.AsyncSendMessage(leave, time.Second); err != nil {
 			return err
 		}
-
-	} else {
-		// check if STAY conditions are met
-		accepted := true
-		// TODO: check other conditions...
-
-		if accepted {
-			// send STAY to client
-			stay := NewMessage(messages.StayId, messages.StayMsg{
-				Id: uint32(clientData.Id),
-			})
-			log.WithField("stay", stay).Debug("About to send STAY")
-			if err := c.AsyncSendMessage(stay, time.Second); err != nil {
-				return err
-			}
-
-			// broadcast JOINED
-			joined := NewMessage(messages.JoinedId, messages.JoinedMsg{
-				Id:   uint32(clientData.Id),
-				Name: clientData.Name,
-			})
-			log.WithField("JOINED", joined).Debug("About to broadcast JOINED")
-			srv.Broadcast(joined)
-
-			// mark the client as joined
-			clientData.Joined = true
-			clientData.Name = join.Name
-			c.SetUserData(clientData)
-
-			// informs the game loop that we have a new player
-			srv.msgcb(NewMessage(messages.JoinId, join), clientData.Id)
-		}
+		// closes the connection, this will also unregister it (in OnClose)
+		c.Close()
 	}
 	return nil
 }
