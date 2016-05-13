@@ -39,16 +39,14 @@ func GetFactory() *Factory {
  * struct type
  */
 func (mf Factory) registerMsgTypes() {
-
-	// client <-> server
 	mf.registerMsgType(PingId, PingMsg{})
 	mf.registerMsgType(PongId, PongMsg{})
 	mf.registerMsgType(GameStateId, GameStateMsg{})
 	mf.registerMsgType(MoveId, MoveMsg{})
-
-	// server only
-	mf.registerMsgType(AddPlayerId, AddPlayerMsg{})
-	mf.registerMsgType(DelPlayerId, DelPlayerMsg{})
+	mf.registerMsgType(JoinId, JoinMsg{})
+	mf.registerMsgType(JoinedId, JoinedMsg{})
+	mf.registerMsgType(StayId, StayMsg{})
+	mf.registerMsgType(LeaveId, LeaveMsg{})
 }
 
 /*

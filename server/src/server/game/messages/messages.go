@@ -77,6 +77,6 @@ type StayMsg struct {
  * during play.
  */
 type LeaveMsg struct {
-	Id      uint32
-	Reasong string
+	Id     uint32
+	Reason string
 }
