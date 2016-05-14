@@ -24,7 +24,7 @@ var (
 
 /*
  * Conn is an opaque structure, holding the underlying TCP connection, the
- * message channels and the logic for resources cleanup and synchronization
+ * packet channels and the logic for resources cleanup and synchronization
  */
 type Conn struct {
 	srv          *Server
@@ -33,8 +33,8 @@ type Conn struct {
 	closeOnce    sync.Once     // close the connection, once, per instance
 	closeFlag    int32         // close flag
 	closeChan    chan struct{} // close chanel
-	outgoingChan chan Message  // chanel sending outgoing messages
-	incomingChan chan Message  // chanel receiving incoming messages
+	outgoingChan chan Packet   // chanel sending outgoing packets
+	incomingChan chan Packet   // chanel receiving incoming packets
 }
 
 /*
@@ -60,9 +60,9 @@ type ConnEvtHandler interface {
 	// the connection should be closed.
 	OnConnect(*Conn) bool
 
-	// OnMessage is called when an incoming message has been received.
+	// OnIncomingPacket is called when an incoming packet has been received.
 	// A false return value indicates the connection should be closed.
-	OnIncomingMsg(*Conn, Message) bool
+	OnIncomingPacket(*Conn, Packet) bool
 
 	// OnClose is called when the connection has been closed, once per connection.
 	OnClose(*Conn)
@@ -76,8 +76,8 @@ func newConn(conn *net.TCPConn, srv *Server) *Conn {
 		srv:          srv,
 		conn:         conn,
 		closeChan:    make(chan struct{}),
-		outgoingChan: make(chan Message, srv.config.MaxOutgoingChannels),
-		incomingChan: make(chan Message, srv.config.MaxIncomingChannels),
+		outgoingChan: make(chan Packet, srv.config.MaxOutgoingChannels),
+		incomingChan: make(chan Packet, srv.config.MaxIncomingChannels),
 	}
 }
 
@@ -118,9 +118,9 @@ func (c *Conn) IsClosed() bool {
 }
 
 /*
- * AsyncSendMessage sends a message (guaranteed unblocking, or return error)
+ * AsyncSendPacket sends a packet (guaranteed unblocking, or return error)
  */
-func (c *Conn) AsyncSendMessage(msg Message, timeout time.Duration) (err error) {
+func (c *Conn) AsyncSendPacket(msg Packet, timeout time.Duration) (err error) {
 	if c.IsClosed() {
 		return ErrClosedConnection
 	}
@@ -188,7 +188,7 @@ func (c *Conn) StartLoops() {
 }
 
 /*
- * readLoop loops forever and reads incoming message from the client, while
+ * readLoop loops forever and reads incoming packet from the client, while
  * handling server exit and connection closing
  */
 func (c *Conn) readLoop() {
@@ -210,14 +210,14 @@ func (c *Conn) readLoop() {
 		default:
 		}
 
-		// Read from the connection byte stream and unserialize into a message
-		msg, err := c.srv.msgReader.ReadMessage(c.conn)
+		// Read from the connection byte stream and unserialize into a packet
+		msg, err := c.srv.msgReader.ReadPacket(c.conn)
 		if err != nil {
-			log.WithError(err).Warning("ReadMessage")
+			log.WithError(err).Warning("Error while reading packet")
 			return
 		}
 
-		// send the received message for further processing
+		// send the received packet for further processing
 		c.incomingChan <- msg
 	}
 }
@@ -242,12 +242,12 @@ func (c *Conn) writeLoop() {
 		case <-c.closeChan:
 			return
 
-		// handle an outgoing message
+		// handle an outgoing packet
 		case msg := <-c.outgoingChan:
 			if c.IsClosed() {
 				return
 			}
-			// write the serialized message on the underlying TCP connection
+			// write the serialized packet on the underlying TCP connection
 			if _, err := c.conn.Write(msg.Serialize()); err != nil {
 				return
 			}
@@ -274,13 +274,13 @@ func (c *Conn) handleLoop() {
 		case <-c.closeChan:
 			return
 
-		// handle incoming message
+		// handle incoming packet
 		case msg := <-c.incomingChan:
 			if c.IsClosed() {
 				return
 			}
 			// invoke the provided callback with the decoded incoming msg
-			if !c.srv.callback.OnIncomingMsg(c, msg) {
+			if !c.srv.callback.OnIncomingPacket(c, msg) {
 				return
 			}
 		}

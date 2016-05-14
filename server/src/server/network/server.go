@@ -17,8 +17,8 @@ type ServerCfg struct {
 
 type Server struct {
 	config    *ServerCfg      // server configuration
-	callback  ConnEvtHandler  // message callbacks in connection
-	msgReader MessageReader   // customized message reader
+	callback  ConnEvtHandler  // packet callbacks in connection
+	msgReader PacketReader    // customized packet reader
 	exitChan  chan struct{}   // notify all goroutines to shutdown
 	waitGroup *sync.WaitGroup // wait for all goroutines
 }
@@ -26,7 +26,7 @@ type Server struct {
 /*
  * NewServer creates a server
  */
-func NewServer(cfg *ServerCfg, callback ConnEvtHandler, msgReader MessageReader) *Server {
+func NewServer(cfg *ServerCfg, callback ConnEvtHandler, msgReader PacketReader) *Server {
 	return &Server{
 		config:    cfg,
 		callback:  callback,

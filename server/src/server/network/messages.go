@@ -9,20 +9,20 @@ import (
 )
 
 /*
- * Message is the interface that wraps the Serialize method.
+ * Packet is the interface that wraps the Serialize method.
  */
-type Message interface {
+type Packet interface {
 
-	// Serialize transforms the message into a buffer of bytes.
+	// Serialize transforms the packet into a buffer of bytes.
 	Serialize() []byte
 }
 
 /*
- * MessageReader is the interface that wraps the ReadMessage method.
+ * PacketReader is the interface that wraps the ReadPacket method.
  */
-type MessageReader interface {
+type PacketReader interface {
 
-	// ReadMessage reads a message from a TCP connection, or returns an error
+	// ReadPacket reads a message from a TCP connection, or returns an error
 	// in case of failure.
-	ReadMessage(conn *net.TCPConn) (Message, error)
+	ReadPacket(conn *net.TCPConn) (Packet, error)
 }
