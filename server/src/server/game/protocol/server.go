@@ -93,7 +93,6 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
 
 	// TODO: this is temporary, for testing and dev, we are doing:
 	// - send a AddPlayerMsg so that the game loop creates a new player
-	// - send a MoveMsg so that the game loop updates its position
 	if msg, err := NewMessage(messages.AddPlayerId, messages.AddPlayerMsg{"batman"}); err == nil {
 		srv.msgcb(msg, clientId)
 	} else {

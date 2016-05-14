@@ -73,7 +73,6 @@ func (p *Player) GetState() EntityState {
 	}
 
 	return EntityState{
-		Tstamp:     time.Now().UnixNano() / int64(time.Millisecond),
 		Xpos:       p.Pos[0],
 		Ypos:       p.Pos[1],
 		ActionType: p.CurAction,

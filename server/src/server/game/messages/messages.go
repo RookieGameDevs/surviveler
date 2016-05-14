@@ -40,6 +40,7 @@ type PongMsg PingMsg
  * Server->client game state
  */
 type GameStateMsg struct {
+	Tstamp   int64
 	Entities map[uint16]interface{}
 }
 

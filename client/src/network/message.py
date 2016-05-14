@@ -26,6 +26,7 @@ class MessageField(bytes, Enum):
     action = b'Action'
     action_type = b'ActionType'
     speed = b'Speed'
+    entities = b'Entities'
 
 
 class Message:

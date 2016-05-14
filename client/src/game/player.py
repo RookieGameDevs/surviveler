@@ -2,8 +2,8 @@ from events import subscriber
 from game import Entity
 from game.components import Movable
 from game.components import Renderable
-from game.events import PlayerActionMove
-from game.events import PlayerPositionUpdated
+from game.events import EntityIdle
+from game.events import EntityMove
 from loaders import load_obj
 from math import pi
 from matlib import Mat4
@@ -65,7 +65,7 @@ class Player(Entity):
         Client.get_instance().camera.translate(-Vec3(x, y, 0))
 
 
-@subscriber(PlayerPositionUpdated)
+@subscriber(EntityIdle)
 def update_player_position(evt):
     """Updates the player position
 
@@ -81,7 +81,7 @@ def update_player_position(evt):
     player[Movable].position = evt.x, evt.y
 
 
-@subscriber(PlayerActionMove)
+@subscriber(EntityMove)
 def move_received(evt):
     """Set the move action in the player entity.
 
