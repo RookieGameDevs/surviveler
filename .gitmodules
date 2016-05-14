@@ -7,3 +7,6 @@
 [submodule "iniflags"]
 	path = server/src/server/vendor/github.com/aurelien-rainone/iniflags
 	url = git@github.com:aurelien-rainone/iniflags.git
+[submodule "telgo"]
+	path = server/src/server/vendor/github.com/aurelien-rainone/telgo
+	url = git@github.com:aurelien-rainone/telgo
