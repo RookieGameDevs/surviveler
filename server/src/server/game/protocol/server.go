@@ -219,9 +219,19 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		reason = "already joined once!"
 	case len(join.Name) < 3:
 		reason = "Name is too short!"
-		// TODO:
-		//case CHECK-FOR-UTF8 only chars:
+		// TODO: check for UTF-8 chars. (maybe already done by msgpack?)
 	default:
+
+		nameExists := false
+		srv.clients.ForEach(func(cd ClientData) {
+			nameExists = cd.Name == join.Name
+			return !nameExists
+		})
+		if nameExists {
+			reason = "Name is already taken!"
+			break
+		}
+
 		// send STAY to client
 		stay := NewMessage(messages.StayId, messages.StayMsg{
 			Id: uint32(clientData.Id),

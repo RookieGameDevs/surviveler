@@ -109,6 +109,31 @@ func (reg *ClientRegistry) Broadcast(msg *Message) error {
 			}
 		}
 	}
+	return nil
+}
 
+/*
+ * ClientDataFunc is the type of functions accetping a ClientData and returning
+ * a boolean.
+ */
+type ClientDataFunc func(ClientData) bool
+
+/*
+ * ForEach runs a provided function, once per each connection, and gives it a
+ * copy of the ClientData struct associated to the current connection. The
+ * callback method should not call any ClientRegistry. it is guaranteed that the
+ * list of connection won't be modified during the ForEach closure. ForEach exits
+ * prematurely if the callback returns false.
+ */
+func (reg *ClientRegistry) ForEach(cb ClientDataFunc) {
+
+	// protect client map access (read)
+	reg.mutex.RLock()
+	defer reg.mutex.RUnlock()
+	for _, client := range reg.clients {
+		if !cb(client) {
+			return false
+		}
+	}
 	return nil
 }
