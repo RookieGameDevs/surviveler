@@ -131,9 +131,8 @@ func (reg *ClientRegistry) ForEach(cb ClientDataFunc) {
 	reg.mutex.RLock()
 	defer reg.mutex.RUnlock()
 	for _, client := range reg.clients {
-		if !cb(client) {
-			return false
+		if !cb(client.GetUserData().(ClientData)) {
+			break
 		}
 	}
-	return nil
 }

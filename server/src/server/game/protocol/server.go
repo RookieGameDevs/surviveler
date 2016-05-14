@@ -223,7 +223,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 	default:
 
 		nameExists := false
-		srv.clients.ForEach(func(cd ClientData) {
+		srv.clients.ForEach(func(cd ClientData) bool {
 			nameExists = cd.Name == join.Name
 			return !nameExists
 		})
@@ -265,7 +265,8 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 			Id:     uint32(clientData.Id),
 			Reason: reason,
 		})
-		log.WithField("leave", leave).Info("Client not accepted, tell him to leave")
+		log.WithFields(log.Fields{"id": clientData.Id, "reason": reason}).Info("Client not accepted, tell him to leave")
+
 		if err := c.AsyncSendMessage(leave, time.Second); err != nil {
 			return err
 		}
