@@ -244,20 +244,18 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		// broadcast JOINED
 		joined := NewMessage(messages.JoinedId, messages.JoinedMsg{
 			Id:   uint32(clientData.Id),
-			Name: clientData.Name,
+			Name: join.Name,
 		})
 		log.WithField("joined", joined).Info("Tell to the world this client has joined")
 		srv.Broadcast(joined)
-
-		// mark the client as joined
-		clientData.Joined = true
-		clientData.Name = join.Name
-		c.SetUserData(clientData)
 
 		// informs the game loop that we have a new player
 		srv.msgcb(NewMessage(messages.JoinedId, joined), clientData.Id)
 
 		// at this point we consider the client as accepted
+		clientData.Joined = true
+		clientData.Name = join.Name
+		c.SetUserData(clientData)
 		accepted = true
 	}
 
