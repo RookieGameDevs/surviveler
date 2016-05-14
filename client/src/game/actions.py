@@ -12,7 +12,7 @@ LOG = logging.getLogger(__name__)
 
 @subscriber(MouseClickEvent)
 def handle_mouse_click(evt):
-    if evt.state == MouseClickEvent.State.up:
+    if evt.state == MouseClickEvent.State.up and evt.client.player:
         LOG.debug('Action: {}'.format(evt))
         LOG.debug('Viewport pos: {},{}'.format(evt.x, evt.y))
 

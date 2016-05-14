@@ -79,8 +79,9 @@ def update_player_position(evt):
     :type evt: :class:`game.events.PlayerPositionUpdated`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
-
-    evt.client.player[Movable].position = evt.x, evt.y
+    entity = evt.client.resolve_entity(evt.srv_id)
+    if entity:
+        entity[Movable].position = evt.x, evt.y
 
 
 @subscriber(EntityMove)
@@ -91,8 +92,9 @@ def move_received(evt):
     :type evt: :class:`game.events.PlayerActionMove`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
-
-    evt.client.player[Movable].move(
-        position=evt.position,
-        destination=evt.destination,
-        speed=evt.speed)
+    entity = evt.client.resolve_entity(evt.srv_id)
+    if entity:
+        entity[Movable].move(
+            position=evt.position,
+            destination=evt.destination,
+            speed=evt.speed)
