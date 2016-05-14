@@ -75,13 +75,13 @@ func NewMessage(t uint16, p interface{}) *Message {
 	return msg
 }
 
-type MsgReader struct{}
+type packetReader struct{}
 
 /*
- * ReadMessage reads a message from a TCP connection. Performs the conversion
+ * ReadPacket reads a packet from a TCP connection. Performs the conversion
  * from network to local byte order.
  */
-func (this *MsgReader) ReadMessage(conn *net.TCPConn) (network.Message, error) {
+func (this *packetReader) ReadPacket(conn *net.TCPConn) (network.Packet, error) {
 	msg := new(Message)
 	var err error
 

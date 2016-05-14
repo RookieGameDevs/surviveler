@@ -75,7 +75,7 @@ func (srv *Server) Start() {
 		MaxOutgoingChannels: MAX_OUT_CHANNELS,
 		MaxIncomingChannels: MAX_IN_CHANNELS,
 	}
-	srv.server = *network.NewServer(config, srv, &MsgReader{})
+	srv.server = *network.NewServer(config, srv, &packetReader{})
 
 	// starts the server in a listening goroutine
 	go srv.server.Start(listener, time.Second)
@@ -98,9 +98,9 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
  * OnIncomingMsg gets called by the server each time a message has been read
  * from the connection
  */
-func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
+func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool {
 	clientData := c.GetUserData().(ClientData)
-	msg := netmsg.(*Message)
+	msg := packet.(*Message)
 
 	log.WithFields(log.Fields{
 		"clientData": clientData,
@@ -195,7 +195,7 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 			Id:     ping.Id,
 			Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
 		})
-	if err := c.AsyncSendMessage(pong, time.Second); err != nil {
+	if err := c.AsyncSendPacket(pong, time.Second); err != nil {
 		return err
 	}
 	log.WithField("msg", pong).Info("Sent a Pong!")
@@ -250,7 +250,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 
 		// send STAY to client
 		log.WithField("id", clientData.Id).Info("Join conditions accepted, client can stay")
-		err := c.AsyncSendMessage(NewMessage(messages.StayId, stay), time.Second)
+		err := c.AsyncSendPacket(NewMessage(messages.StayId, stay), time.Second)
 		if err != nil {
 			return err
 		}
@@ -283,7 +283,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 			})
 		log.WithFields(log.Fields{"id": clientData.Id, "reason": reason}).Info("Client not accepted, tell him to leave")
 
-		if err := c.AsyncSendMessage(leave, time.Second); err != nil {
+		if err := c.AsyncSendPacket(leave, time.Second); err != nil {
 			return err
 		}
 		// closes the connection, registry cleanup will be performed in OnClose

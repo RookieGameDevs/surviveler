@@ -96,7 +96,7 @@ func (reg *ClientRegistry) Broadcast(msg *Message) error {
 
 	for _, client := range reg.clients {
 		// we tolerate only a very short delay
-		err := client.AsyncSendMessage(msg, 5*time.Millisecond)
+		err := client.AsyncSendPacket(msg, 5*time.Millisecond)
 		if !client.IsClosed() {
 			switch err {
 			case network.ErrClosedConnection:
