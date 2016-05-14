@@ -221,23 +221,28 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		reason = "Name is too short!"
 		// TODO: check for UTF-8 chars. (maybe already done by msgpack?)
 	default:
+		nameTaken := false
+		stay := messages.StayMsg{
+			Id:      clientData.Id,
+			Players: make(map[uint32]string),
+		}
 
-		nameExists := false
+		// compute the list of joined players in a closure
 		srv.clients.ForEach(func(cd ClientData) bool {
-			nameExists = cd.Name == join.Name
-			return !nameExists
+			nameTaken = cd.Name == join.Name
+			stay.Players[cd.Id] = cd.Name
+			// stop iteratio if name is taken
+			return !nameTaken
 		})
-		if nameExists {
+		if nameTaken {
 			reason = "Name is already taken!"
 			break
 		}
 
 		// send STAY to client
-		stay := NewMessage(messages.StayId, messages.StayMsg{
-			Id: uint32(clientData.Id),
-		})
 		log.WithField("id", clientData.Id).Info("Join conditions accepted, client can stay")
-		if err := c.AsyncSendMessage(stay, time.Second); err != nil {
+		err := c.AsyncSendMessage(NewMessage(messages.StayId, stay), time.Second)
+		if err != nil {
 			return err
 		}
 
