@@ -127,6 +127,20 @@ class Client:
                 now - msg.data[MessageField.timestamp] + (now - sent_at) / 2)
             LOG.info('Synced time with server: delta={}'.format(self.delta))
 
+        def join(self, name):
+            """Sends the join request to the server.
+
+            :param name: Player name to join with.
+            :type name: str
+            """
+            LOG.info('Sending join')
+
+            msg = Message(
+                MessageType.join, {
+                    MessageField.name: name,
+                })
+            self.proxy.enqueue(msg)
+
         def dt(self):
             """Returns the dt from the last update.
 
@@ -155,6 +169,9 @@ class Client:
             """
             # Sync with server time
             self.ping()
+
+            # Send a join request
+            self.join('John Doe')
 
             while True:
                 # compute time delta
