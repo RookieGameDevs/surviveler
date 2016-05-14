@@ -36,7 +36,7 @@ type PongMsg PingMsg
  */
 type GameStateMsg struct {
 	Tstamp   int64
-	Entities map[uint16]interface{}
+	Entities map[uint32]interface{}
 }
 
 /*
@@ -69,7 +69,8 @@ type JoinedMsg struct {
  * requested to join.
  */
 type StayMsg struct {
-	Id uint32
+	Id      uint32
+	Players map[uint32]string
 }
 
 /*

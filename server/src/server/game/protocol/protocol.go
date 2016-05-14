@@ -35,7 +35,7 @@ type Message struct {
  */
 type ClientMessage struct {
 	*Message
-	ClientId uint16 // client Id (set by server)
+	ClientId uint32 // client Id (set by server)
 }
 
 /*

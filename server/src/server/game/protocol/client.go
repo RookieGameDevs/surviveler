@@ -15,8 +15,8 @@ import (
  * ClientRegistry manages a list of connections to remote clients
  */
 type ClientRegistry struct {
-	clients map[uint16]*network.Conn // one for each client connection
-	nextId  uint16                   // next available client id (1 based)
+	clients map[uint32]*network.Conn // one for each client connection
+	nextId  uint32                   // next available client id (1 based)
 	mutex   sync.RWMutex             // protect map from concurrent accesses
 }
 
@@ -24,7 +24,7 @@ type ClientRegistry struct {
  * ClientData contains the fields associated to a connection
  */
 type ClientData struct {
-	Id     uint16
+	Id     uint32
 	Name   string
 	Joined bool
 }
@@ -33,15 +33,15 @@ type ClientData struct {
  * Init initializes the ClientRegistry
  */
 func (reg *ClientRegistry) init() {
-	reg.clients = make(map[uint16]*network.Conn, 0)
+	reg.clients = make(map[uint32]*network.Conn, 0)
 	reg.nextId = 0
 }
 
 /*
- * register creates a new client, gives it an id and return the id
+ * register creates a new client, assigns it an id and returns it
  */
-func (reg *ClientRegistry) register(client *network.Conn) uint16 {
-	var clientId uint16
+func (reg *ClientRegistry) register(client *network.Conn) uint32 {
+	var clientId uint32
 
 	// protect:
 	// - increment the next available id
@@ -77,7 +77,7 @@ func (reg *ClientRegistry) register(client *network.Conn) uint16 {
 /*
  * unregister removes client from the registry
  */
-func (reg *ClientRegistry) unregister(clientId uint16) {
+func (reg *ClientRegistry) unregister(clientId uint32) {
 	log.WithField("id", clientId).Debug("Unregister a client")
 	// protect client map write
 	reg.mutex.Lock()

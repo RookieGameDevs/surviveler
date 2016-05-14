@@ -27,7 +27,7 @@ type Broadcaster interface {
 	Broadcast(msg *Message) error
 }
 
-type MsgCallbackFunc func(msg *Message, clientId uint16) error
+type MsgCallbackFunc func(msg *Message, clientId uint32) error
 
 /*
  * Server represents a TCP server. It implements the Broadcaster and
@@ -143,10 +143,11 @@ func (srv *Server) OnClose(c *network.Conn) {
 	if clientData.Joined {
 		// client is still JOINED so that's a disconnection initiated externally
 		// send a LEAVE to the rest of the world
-		msg := NewMessage(messages.LeaveId, messages.LeaveMsg{
-			Id:     uint32(clientData.Id),
-			Reason: "client disconnection",
-		})
+		msg := NewMessage(messages.LeaveId,
+			messages.LeaveMsg{
+				Id:     uint32(clientData.Id),
+				Reason: "client disconnection",
+			})
 		srv.Broadcast(msg)
 	} else {
 		// the client was not marked as JOINED, so nobody knows about him
@@ -189,8 +190,11 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	log.WithField("msg", ping).Info("It's a Ping!")
 
 	// reply pong
-	ts := time.Now().UnixNano() / int64(time.Millisecond)
-	pong := NewMessage(messages.PongId, messages.PongMsg{ping.Id, ts})
+	pong := NewMessage(messages.PongId,
+		messages.PongMsg{
+			Id:     ping.Id,
+			Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
+		})
 	if err := c.AsyncSendMessage(pong, time.Second); err != nil {
 		return err
 	}
@@ -198,6 +202,11 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	return nil
 }
 
+/*
+ * handleJoin processes a JoinMsg, checking some conditions before eventually
+ * accepting the client join request (or not). Inform other players and game
+ * loop if the player is accepted.
+ */
 func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 	// decode join msg payload into an interface
 	var join messages.JoinMsg
@@ -247,10 +256,11 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		}
 
 		// broadcast JOINED
-		joined := NewMessage(messages.JoinedId, messages.JoinedMsg{
-			Id:   uint32(clientData.Id),
-			Name: join.Name,
-		})
+		joined := NewMessage(messages.JoinedId,
+			messages.JoinedMsg{
+				Id:   clientData.Id,
+				Name: join.Name,
+			})
 		log.WithField("joined", joined).Info("Tell to the world this client has joined")
 		srv.Broadcast(joined)
 
@@ -266,10 +276,11 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 
 	if !accepted {
 		// send LEAVE to client
-		leave := NewMessage(messages.LeaveId, messages.LeaveMsg{
-			Id:     uint32(clientData.Id),
-			Reason: reason,
-		})
+		leave := NewMessage(messages.LeaveId,
+			messages.LeaveMsg{
+				Id:     uint32(clientData.Id),
+				Reason: reason,
+			})
 		log.WithFields(log.Fields{"id": clientData.Id, "reason": reason}).Info("Client not accepted, tell him to leave")
 
 		if err := c.AsyncSendMessage(leave, time.Second); err != nil {

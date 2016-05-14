@@ -48,7 +48,7 @@ func (g *Game) Setup() {
 	g.loopCloseChan = make(chan struct{})
 
 	// setup server
-	rootHandler := func(msg *protocol.Message, clientId uint16) error {
+	rootHandler := func(msg *protocol.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
 		g.msgChan <- protocol.ClientMessage{msg, clientId}
 		return nil

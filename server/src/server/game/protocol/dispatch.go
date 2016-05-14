@@ -13,16 +13,16 @@ import (
  * The messages handled represents decoded payloads.
  */
 type MessageHandler interface {
-	handleMsg(interface{}, uint16) error
+	handleMsg(interface{}, uint32) error
 }
 
 /*
  * MsgHandlerFunc is the type of function that handles messages. It
  * implements the MessageHandler interface.
  */
-type MsgHandlerFunc func(interface{}, uint16) error
+type MsgHandlerFunc func(interface{}, uint32) error
 
-func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint16) error {
+func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint32) error {
 	return mhf(i, clientId)
 }
 
@@ -38,7 +38,7 @@ type MessageManager struct {
  * Dispatch dispatches messages of a particular type to the listeners. It
  * performs the decoding of the payload into an interface.
  */
-func (mm *MessageManager) Dispatch(msg *Message, clientId uint16) error {
+func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
 	handlers := mm.listeners[msg.Type]
 
 	var err error
