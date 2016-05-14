@@ -1,4 +1,3 @@
-from game import Entity
 from game import Player
 from game import Terrain
 from game import process_gamestate
@@ -11,6 +10,7 @@ from network import get_message_handlers
 from network import message_handler
 from renderer import OrthoCamera
 from renderer import Scene
+from utils import as_utf8
 from utils import tstamp
 import logging
 
@@ -308,12 +308,12 @@ class Client:
 
         Instantiates player entities and adds them to the game.
         """
-        player = Player(msg.data[MessageField.name], self.scene.root)
+        player_name = as_utf8(msg.data[MessageField.name])
+        player_id = msg.data[MessageField.id]
+        player = Player(player_name, self.scene.root)
         self.__client.entities[player.e_id] = player
-        self.__client.server_entities_map[msg.data[MessageField.id]] = player.e_id
-        LOG.info('Player "{}" joined with ID {}'.format(
-            player.name,
-            msg.data[MessageField.id]))
+        self.__client.server_entities_map[player_id] = player.e_id
+        LOG.info('Player "{}" joined with ID {}'.format(player_name, player_id))
 
 
 @message_handler(MessageType.gamestate)
