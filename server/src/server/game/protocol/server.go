@@ -106,7 +106,7 @@ func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 		"clientData": clientData,
 		"addr":       c.GetRawConn().RemoteAddr(),
 		"msg":        msg,
-	}).Debug("Received message")
+	}).Debug("Incoming message")
 
 	switch msg.Type {
 	case messages.PingId:
@@ -186,8 +186,7 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	} else {
 		ping = iping.(messages.PingMsg)
 	}
-
-	log.WithField("msg", ping).Debug("Received Ping")
+	log.WithField("msg", ping).Info("It's a Ping!")
 
 	// reply pong
 	ts := time.Now().UnixNano() / int64(time.Millisecond)
@@ -195,7 +194,7 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	if err := c.AsyncSendMessage(pong, time.Second); err != nil {
 		return err
 	}
-	log.WithField("msg", pong).Debug("Sent Pong")
+	log.WithField("msg", pong).Info("Sent a Pong!")
 	return nil
 }
 
@@ -209,6 +208,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 	}
 
 	clientData := c.GetUserData().(ClientData)
+	log.WithField("name", join.Name).Info("A client would like to join")
 
 	// check if STAY conditions are met
 	var reason string
@@ -226,16 +226,17 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		stay := NewMessage(messages.StayId, messages.StayMsg{
 			Id: uint32(clientData.Id),
 		})
-		log.WithField("STAY", stay).Debug("About to send STAY")
+		log.WithField("id", clientData.Id).Info("Join conditions accepted, client can stay")
 		if err := c.AsyncSendMessage(stay, time.Second); err != nil {
 			return err
 		}
+
 		// broadcast JOINED
 		joined := NewMessage(messages.JoinedId, messages.JoinedMsg{
 			Id:   uint32(clientData.Id),
 			Name: clientData.Name,
 		})
-		log.WithField("JOINED", joined).Debug("About to broadcast JOINED")
+		log.WithField("joined", joined).Info("Tell to the world this client has joined")
 		srv.Broadcast(joined)
 
 		// mark the client as joined
@@ -256,11 +257,11 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 			Id:     uint32(clientData.Id),
 			Reason: reason,
 		})
-		log.WithField("LEAVE", leave).Info("Player not accepted, sending LEAVE")
+		log.WithField("leave", leave).Info("Client not accepted, tell him to leave")
 		if err := c.AsyncSendMessage(leave, time.Second); err != nil {
 			return err
 		}
-		// closes the connection, this will also unregister it (in OnClose)
+		// closes the connection, registry cleanup will be performed in OnClose
 		c.Close()
 	}
 	return nil
