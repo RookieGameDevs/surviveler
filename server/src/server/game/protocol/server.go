@@ -100,12 +100,14 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
  */
 func (srv *Server) OnIncomingMsg(c *network.Conn, netmsg network.Message) bool {
 	clientData := c.GetUserData().(ClientData)
+	msg := netmsg.(*Message)
+
 	log.WithFields(log.Fields{
 		"clientData": clientData,
 		"addr":       c.GetRawConn().RemoteAddr(),
+		"msg":        msg,
 	}).Debug("Received message")
 
-	msg := netmsg.(*Message)
 	switch msg.Type {
 	case messages.PingId:
 		// ping requires an immediate pong reply
@@ -207,7 +209,6 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 	}
 
 	clientData := c.GetUserData().(ClientData)
-	log.WithField("client", clientData).Debug("Handling Join")
 
 	// check if STAY conditions are met
 	var reason string
@@ -225,7 +226,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		stay := NewMessage(messages.StayId, messages.StayMsg{
 			Id: uint32(clientData.Id),
 		})
-		log.WithField("stay", stay).Debug("About to send STAY")
+		log.WithField("STAY", stay).Debug("About to send STAY")
 		if err := c.AsyncSendMessage(stay, time.Second); err != nil {
 			return err
 		}
@@ -243,7 +244,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		c.SetUserData(clientData)
 
 		// informs the game loop that we have a new player
-		srv.msgcb(NewMessage(messages.JoinId, join), clientData.Id)
+		srv.msgcb(NewMessage(messages.JoinedId, joined), clientData.Id)
 
 		// at this point we consider the client as accepted
 		accepted = true
@@ -255,7 +256,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 			Id:     uint32(clientData.Id),
 			Reason: reason,
 		})
-		log.WithField("leave", leave).Info("Didn't accept a JOIN, sending LEAVE")
+		log.WithField("LEAVE", leave).Info("Player not accepted, sending LEAVE")
 		if err := c.AsyncSendMessage(leave, time.Second); err != nil {
 			return err
 		}
