@@ -26,7 +26,7 @@ def handle_mouse_click(evt):
         # the offset in game units to player's current position (no need to
         # transform using matrices, since player's position is the actual offset
         # from world origin)
-        player = evt.client.get_entity(0)
+        player = evt.client.player
         player_pos = Vec3(*player[Movable].position)
         pos = evt.client.scene.root.to_world(Vec3(x, y) + player_pos)
         LOG.debug('World pos: {},{},{}'.format(pos.x, pos.y, pos.z))

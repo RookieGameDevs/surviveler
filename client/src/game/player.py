@@ -23,8 +23,11 @@ WHOLE_ANGLE = 2.0 * pi
 class Player(Entity):
     """Game entity which represents a player."""
 
-    def __init__(self, parent_node):
+    def __init__(self, name, parent_node):
         """Constructor.
+
+        :param name: Player's name.
+        :type name: str
 
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.AbstractSceneNode`
@@ -40,6 +43,7 @@ class Player(Entity):
         movable = Movable((0.0, 0.0))
         super(Player, self).__init__(renderable, movable)
 
+        self.name = name
         self.rot_angle = 0.0
 
     def update(self, dt):
@@ -76,9 +80,7 @@ def update_player_position(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
 
-    # FIXME: find a proper way to map server ids with internal ids
-    player = evt.client.get_entity(0)
-    player[Movable].position = evt.x, evt.y
+    evt.client.player[Movable].position = evt.x, evt.y
 
 
 @subscriber(EntityMove)
@@ -90,9 +92,7 @@ def move_received(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
 
-    # FIXME: find a proper way to map server ids with internal ids
-    player = evt.client.get_entity(0)
-    player[Movable].move(
+    evt.client.player[Movable].move(
         position=evt.position,
         destination=evt.destination,
         speed=evt.speed)

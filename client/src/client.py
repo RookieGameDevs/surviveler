@@ -50,6 +50,9 @@ class Client:
             self.delta = None
             self.renderer = renderer
             self.input_mgr = input_mgr
+            self.player_id = None
+            self.server_entities_map = {}
+            self.entities = {}
 
             self.setup_scene()
             self.setup_camera()
@@ -79,8 +82,8 @@ class Client:
             Creates game entities and sets up the visual scene.
             """
             self.scene = Scene()
-            self.player = Player(self.scene.root)
-            self.terrain = Terrain(self.scene.root, 30, 30)
+            terrain = Terrain(self.scene.root, 30, 30)
+            self.entities[terrain.e_id] = terrain
 
         def process_message(self, msg):
             """Processes a message received from the server.
@@ -179,10 +182,13 @@ class Client:
 
                 # poll messages from network
                 self.poll_network()
+
                 # process user input
                 self.input_mgr.process_input()
 
-                self.player.update(dt)
+                # update entities
+                for ent in self.entities.values():
+                    ent.update(dt)
 
                 # rendering
                 self.renderer.clear()
@@ -250,6 +256,19 @@ class Client:
         """The game configuration."""
         return self.__client.game_cfg
 
+    def resolve_entity(self, srv_e_id):
+        """Returns the entity object associated with given server-provided
+        entity identifier.
+
+        :param srv_e_id: The server entity id.
+        :type srv_e_id: int
+
+        :returns: The entity object, if any, `None` otherwise.
+        :rtype: :class:`game.Entity`
+        """
+        e_id = self.__client.server_entities_map.get(srv_e_id)
+        return self.get_entity(e_id) if e_id is not None else None
+
     def get_entity(self, e_id):
         """Returns the entity object associated with the given entity id.
 
@@ -259,11 +278,42 @@ class Client:
         :return: The required entity
         :rtype: :class:`game.Entity`
         """
-        return Entity.get_entity(e_id)
+        return self.__client.entities.get(e_id)
+
+    @property
+    def player(self):
+        """Player entity."""
+        if self.__client.player_id:
+            return self.resolve_entity(self.__client.player_id)
+        return None
 
     @message_handler(MessageType.pong)
     def pong(self, msg):
         self.__client.pong(msg)
+
+    @message_handler(MessageType.stay)
+    def handle_stay(self, msg):
+        """Handles stay response from server.
+
+        Assigns the client a server provided id, which uniquely identifies the
+        controlled player entity.
+        """
+        player_id = msg.data[MessageField.id]
+        self.__client.player_id = player_id
+        LOG.info('Joined the party with ID {}'.format(player_id))
+
+    @message_handler(MessageType.joined)
+    def handle_joined(self, msg):
+        """Handles player joins.
+
+        Instantiates player entities and adds them to the game.
+        """
+        player = Player(msg.data[MessageField.name], self.scene.root)
+        self.__client.entities[player.e_id] = player
+        self.__client.server_entities_map[msg.data[MessageField.id]] = player.e_id
+        LOG.info('Player "{}" joined with ID {}'.format(
+            player.name,
+            msg.data[MessageField.id]))
 
 
 @message_handler(MessageType.gamestate)
