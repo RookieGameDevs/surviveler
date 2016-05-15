@@ -182,7 +182,7 @@ func (srv *Server) Stop() {
 func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	// decode ping msg payload into an interface
 	var ping messages.PingMsg
-	if iping, err := messages.GetFactory().DecodePayload(messages.PingId, msg.Buffer); err != nil {
+	if iping, err := messages.GetFactory().DecodePayload(messages.PingId, msg.Payload); err != nil {
 		return err
 	} else {
 		ping = iping.(messages.PingMsg)
@@ -210,7 +210,7 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 	// decode join msg payload into an interface
 	var join messages.JoinMsg
-	if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Buffer); err != nil {
+	if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Payload); err != nil {
 		return err
 	} else {
 		join = ijoin.(messages.JoinMsg)

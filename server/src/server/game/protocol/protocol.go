@@ -24,9 +24,9 @@ const MaxIncomingMsgLength uint32 = 1279
  * client -> server message
  */
 type Message struct {
-	Type   uint16 // the message type
-	Length uint32 // the payload length
-	Buffer []byte // payload buffer
+	Type    uint16 // the message type
+	Length  uint32 // the payload length
+	Payload []byte // payload buffer
 }
 
 /*
@@ -42,11 +42,11 @@ type ClientMessage struct {
  * Serialize transforms a message into a byte slice
  */
 func (msg Message) Serialize() []byte {
-	// we know the buffer total size so we can provide it to our bytes.Buffer
-	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Buffer)))
+	// we know the payload total size so we can provide it to our bytes.Buffer
+	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Payload)))
 	binary.Write(bbuf, binary.BigEndian, msg.Type)
 	binary.Write(bbuf, binary.BigEndian, msg.Length)
-	binary.Write(bbuf, binary.BigEndian, msg.Buffer)
+	binary.Write(bbuf, binary.BigEndian, msg.Payload)
 	return bbuf.Bytes()
 }
 
@@ -66,11 +66,11 @@ func NewMessage(t uint16, p interface{}) *Message {
 		log.WithError(err).Panic("Error encoding payload: %v\n")
 	}
 
-	// Copy the buffer
-	msg.Buffer = bb.Bytes()
+	// Copy the payload buffer
+	msg.Payload = bb.Bytes()
 
 	// Length is the buffer length
-	msg.Length = uint32(len(msg.Buffer))
+	msg.Length = uint32(len(msg.Payload))
 
 	return msg
 }
@@ -104,9 +104,9 @@ func (this *packetReader) ReadPacket(conn *net.TCPConn) (network.Packet, error) 
 		return nil, fmt.Errorf("Invalid (too big) Message.Length: %v", msg.Length)
 	}
 
-	//  Read Payload Buffer
-	msg.Buffer = make([]byte, msg.Length, msg.Length)
-	err = binary.Read(conn, binary.BigEndian, &msg.Buffer)
+	// Read payload
+	msg.Payload = make([]byte, msg.Length, msg.Length)
+	err = binary.Read(conn, binary.BigEndian, &msg.Payload)
 	if err != nil {
 		return nil, fmt.Errorf("Error while reading payload: %v", err)
 	}

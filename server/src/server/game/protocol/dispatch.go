@@ -44,7 +44,7 @@ func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
 	var err error
 	var i interface{}
 	for _, handler := range handlers {
-		i, err = mm.factory.DecodePayload(msg.Type, msg.Buffer)
+		i, err = mm.factory.DecodePayload(msg.Type, msg.Payload)
 		if err != nil {
 			return err
 		}
