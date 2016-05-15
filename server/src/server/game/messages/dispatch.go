@@ -1,5 +1,5 @@
 /*
- * Surviveler protocol package
+ * Surviveler messages package
  * message dispatching & handling
  */
 package messages
