@@ -9,9 +9,17 @@ Go 1.6 is preferred, or Go 1.5 with [**Vendor Experiment**](https://medium.com/@
 ### Go dependencies management
 
 It is the developer responsibility to maintain the content of the *version
-controlled* `src/server/vendor` directory.
+controlled* `src/server/vendor` directory, by keeping updated the Git
+submodules needed to compile the server.
 
 ## Build
+
+Pull out the Git submodules dependencies:
+
+```
+git submodules init
+git submodules update
+```
 
 Set your `$GOPATH` to /path/to/surviveler/server directory (where this README
 file is located) and then issue:
