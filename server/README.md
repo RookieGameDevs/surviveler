@@ -21,8 +21,15 @@ git submodules init
 git submodules update
 ```
 
+### Set your $GOPATH
+
 Set your `$GOPATH` to /path/to/surviveler/server directory (where this README
-file is located) and then issue:
+file is located).
+
+
+### Build and install
+
+Change to the directory where you will find the file `main.go`, and then issue:
 
 ```
 go install
