@@ -24,10 +24,10 @@ const (
 type Broadcaster interface {
 
 	// Broadcast broadcasts a message.
-	Broadcast(msg *Message) error
+	Broadcast(msg *messages.Message) error
 }
 
-type MsgCallbackFunc func(msg *Message, clientId uint32) error
+type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
 
 /*
  * Server represents a TCP server. It implements the Broadcaster and
@@ -100,7 +100,7 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
  */
 func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool {
 	clientData := c.GetUserData().(ClientData)
-	msg := packet.(*Message)
+	msg := packet.(*messages.Message)
 
 	log.WithFields(log.Fields{
 		"clientData": clientData,
@@ -143,7 +143,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 	if clientData.Joined {
 		// client is still JOINED so that's a disconnection initiated externally
 		// send a LEAVE to the rest of the world
-		msg := NewMessage(messages.LeaveId,
+		msg := messages.NewMessage(messages.LeaveId,
 			messages.LeaveMsg{
 				Id:     uint32(clientData.Id),
 				Reason: "client disconnection",
@@ -154,13 +154,13 @@ func (srv *Server) OnClose(c *network.Conn) {
 		// and we have nothing more to do
 	}
 	// send a LEAVE to the game loop (server-only msg)
-	srv.msgcb(NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.Id)
+	srv.msgcb(messages.NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.Id)
 }
 
 /*
  * Broadcast sends a message to all clients
  */
-func (srv *Server) Broadcast(msg *Message) error {
+func (srv *Server) Broadcast(msg *messages.Message) error {
 	err := srv.clients.Broadcast(msg)
 	if err != nil {
 		log.WithError(err).Error("Couldn't broadcast")
@@ -179,7 +179,7 @@ func (srv *Server) Stop() {
 /*
  * handlePing processes a PingMsg and immediately replies with a PongMsg
  */
-func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
+func (srv *Server) handlePing(c *network.Conn, msg *messages.Message) error {
 	// decode ping msg payload into an interface
 	var ping messages.PingMsg
 	if iping, err := messages.GetFactory().DecodePayload(messages.PingId, msg.Payload); err != nil {
@@ -190,7 +190,7 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
 	log.WithField("msg", ping).Info("It's a Ping!")
 
 	// reply pong
-	pong := NewMessage(messages.PongId,
+	pong := messages.NewMessage(messages.PongId,
 		messages.PongMsg{
 			Id:     ping.Id,
 			Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
@@ -207,7 +207,7 @@ func (srv *Server) handlePing(c *network.Conn, msg *Message) error {
  * accepting the client join request (or not). Inform other players and game
  * loop if the player is accepted.
  */
-func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
+func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 	// decode join msg payload into an interface
 	var join messages.JoinMsg
 	if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Payload); err != nil {
@@ -250,13 +250,13 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 
 		// send STAY to client
 		log.WithField("id", clientData.Id).Info("Join conditions accepted, client can stay")
-		err := c.AsyncSendPacket(NewMessage(messages.StayId, stay), time.Second)
+		err := c.AsyncSendPacket(messages.NewMessage(messages.StayId, stay), time.Second)
 		if err != nil {
 			return err
 		}
 
 		// broadcast JOINED
-		joined := NewMessage(messages.JoinedId,
+		joined := messages.NewMessage(messages.JoinedId,
 			messages.JoinedMsg{
 				Id:   clientData.Id,
 				Name: join.Name,
@@ -265,7 +265,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 		srv.Broadcast(joined)
 
 		// informs the game loop that we have a new player
-		srv.msgcb(NewMessage(messages.JoinedId, joined), clientData.Id)
+		srv.msgcb(messages.NewMessage(messages.JoinedId, joined), clientData.Id)
 
 		// at this point we consider the client as accepted
 		clientData.Joined = true
@@ -276,7 +276,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *Message) error {
 
 	if !accepted {
 		// send LEAVE to client
-		leave := NewMessage(messages.LeaveId,
+		leave := messages.NewMessage(messages.LeaveId,
 			messages.LeaveMsg{
 				Id:     uint32(clientData.Id),
 				Reason: reason,

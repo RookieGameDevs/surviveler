@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"server/game/messages"
 	"server/game/protocol"
 	"syscall"
 	"time"
@@ -22,7 +23,7 @@ type Game struct {
 	cfg           Config                      // configuration settings
 	server        protocol.Server             // server core
 	ticker        time.Ticker                 // our tick source
-	msgChan       chan protocol.ClientMessage // conducts ClientMessage to the game loop
+	msgChan       chan messages.ClientMessage // conducts ClientMessage to the game loop
 	loopCloseChan chan struct{}               // indicates to the game loop that it may exit
 }
 
@@ -44,13 +45,13 @@ func (g *Game) Setup() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// init channels
-	g.msgChan = make(chan protocol.ClientMessage)
+	g.msgChan = make(chan messages.ClientMessage)
 	g.loopCloseChan = make(chan struct{})
 
 	// setup server
-	rootHandler := func(msg *protocol.Message, clientId uint32) error {
+	rootHandler := func(msg *messages.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
-		g.msgChan <- protocol.ClientMessage{msg, clientId}
+		g.msgChan <- messages.ClientMessage{msg, clientId}
 		return nil
 	}
 	g.server = *protocol.NewServer(g.cfg.Port, rootHandler)

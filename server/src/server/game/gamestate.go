@@ -10,7 +10,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
-	"server/game/protocol"
 	"server/math"
 	"time"
 )
@@ -32,7 +31,7 @@ func NewGameState() GameState {
  * pack transforms the current game state into a GameStateMsg,
  * ready to be sent to every connected client
  */
-func (gs GameState) pack() *protocol.Message {
+func (gs GameState) pack() *messages.Message {
 	if len(gs.players) == 0 {
 		// nothing to do
 		return nil
@@ -47,7 +46,7 @@ func (gs GameState) pack() *protocol.Message {
 	}
 
 	// wrap the GameStateMsg into a generic Message
-	return protocol.NewMessage(messages.GameStateId, gsMsg)
+	return messages.NewMessage(messages.GameStateId, gsMsg)
 }
 
 /*

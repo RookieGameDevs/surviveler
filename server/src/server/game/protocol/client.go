@@ -6,6 +6,7 @@ package protocol
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"server/game/messages"
 	"server/network"
 	"sync"
 	"time"
@@ -88,7 +89,7 @@ func (reg *ClientRegistry) unregister(clientId uint32) {
 /*
  * Broadcast sends a message to all clients
  */
-func (reg *ClientRegistry) Broadcast(msg *Message) error {
+func (reg *ClientRegistry) Broadcast(msg *messages.Message) error {
 
 	// protect client map access (read)
 	reg.mutex.RLock()

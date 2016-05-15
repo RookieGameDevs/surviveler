@@ -5,12 +5,10 @@
 package protocol
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/ugorji/go/codec"
 	"net"
+	"server/game/messages"
 	"server/network"
 )
 
@@ -20,61 +18,6 @@ import (
  */
 const MaxIncomingMsgLength uint32 = 1279
 
-/*
- * client -> server message
- */
-type Message struct {
-	Type    uint16 // the message type
-	Length  uint32 // the payload length
-	Payload []byte // payload buffer
-}
-
-/*
- * ClientMessage is a message sent by the client, to which the server has added
- * the client Id
- */
-type ClientMessage struct {
-	*Message
-	ClientId uint32 // client Id (set by server)
-}
-
-/*
- * Serialize transforms a message into a byte slice
- */
-func (msg Message) Serialize() []byte {
-	// we know the payload total size so we can provide it to our bytes.Buffer
-	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Payload)))
-	binary.Write(bbuf, binary.BigEndian, msg.Type)
-	binary.Write(bbuf, binary.BigEndian, msg.Length)
-	binary.Write(bbuf, binary.BigEndian, msg.Payload)
-	return bbuf.Bytes()
-}
-
-/*
- * NewMessage creates a message from a message type and a generic payload
- */
-func NewMessage(t uint16, p interface{}) *Message {
-	var mh codec.MsgpackHandle
-	msg := new(Message)
-	msg.Type = t
-
-	// Encode payload to msgpack
-	bb := new(bytes.Buffer)
-	var enc *codec.Encoder = codec.NewEncoder(bb, &mh)
-	err := enc.Encode(p)
-	if err != nil {
-		log.WithError(err).Panic("Error encoding payload: %v\n")
-	}
-
-	// Copy the payload buffer
-	msg.Payload = bb.Bytes()
-
-	// Length is the buffer length
-	msg.Length = uint32(len(msg.Payload))
-
-	return msg
-}
-
 type packetReader struct{}
 
 /*
@@ -82,7 +25,7 @@ type packetReader struct{}
  * from network to local byte order.
  */
 func (this *packetReader) ReadPacket(conn *net.TCPConn) (network.Packet, error) {
-	msg := new(Message)
+	msg := new(messages.Message)
 	var err error
 
 	// Read MsgType

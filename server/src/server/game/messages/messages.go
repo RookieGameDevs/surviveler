@@ -1,83 +1,73 @@
 /*
  * Surviveler messages package
- * message types & identifiers
+ * message implementation
  */
 package messages
 
-/*
- * Client - Server messages
- */
-const (
-	PingId uint16 = 0 + iota
-	PongId
-	GameStateId
-	MoveId
-	JoinId
-	JoinedId
-	StayId
-	LeaveId
+import (
+	"bytes"
+	"encoding/binary"
+	log "github.com/Sirupsen/logrus"
+	"github.com/ugorji/go/codec"
 )
 
 /*
- * Client->server time synchronization message
+ * value used to check the length of a client message before allocating
+ * a buffer, in case the received size was wrong
  */
-type PingMsg struct {
-	Id     uint32
-	Tstamp int64
+const MaxIncomingMsgLength uint32 = 1279
+
+/*
+ * client -> server message
+ */
+type Message struct {
+	Type    uint16 // the message type
+	Length  uint32 // the payload length
+	Payload []byte // payload buffer
 }
 
 /*
- * Server->client time synchronization message
+ * ClientMessage is a message sent by the client, to which the server has added
+ * the client Id
  */
-type PongMsg PingMsg
-
-/*
- * Server->client game state
- */
-type GameStateMsg struct {
-	Tstamp   int64
-	Entities map[uint32]interface{}
+type ClientMessage struct {
+	*Message
+	ClientId uint32 // client Id (set by server)
 }
 
 /*
- * player initiated character movement. Client -> server message
+ * Serialize transforms a message into a byte slice
  */
-type MoveMsg struct {
-	Xpos float32
-	Ypos float32
+func (msg Message) Serialize() []byte {
+	// we know the payload total size so we can provide it to our bytes.Buffer
+	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Payload)))
+	binary.Write(bbuf, binary.BigEndian, msg.Type)
+	binary.Write(bbuf, binary.BigEndian, msg.Length)
+	binary.Write(bbuf, binary.BigEndian, msg.Payload)
+	return bbuf.Bytes()
 }
 
 /*
- * This message is sent only by clients right after a connection is
- * established.
+ * NewMessage creates a message from a message type and a generic payload
  */
-type JoinMsg struct {
-	Name string
-}
+func NewMessage(t uint16, p interface{}) *Message {
+	var mh codec.MsgpackHandle
+	msg := new(Message)
+	msg.Type = t
 
-/*
- * Message broadcasted to all clients by the server when a successful join was
- * accomplished.
- */
-type JoinedMsg struct {
-	Id   uint32
-	Name string
-}
+	// Encode payload to msgpack
+	bb := new(bytes.Buffer)
+	var enc *codec.Encoder = codec.NewEncoder(bb, &mh)
+	err := enc.Encode(p)
+	if err != nil {
+		log.WithError(err).Panic("Error encoding payload: %v\n")
+	}
 
-/*
- * Response to a `JOIN` message, sent only by server to the client which
- * requested to join.
- */
-type StayMsg struct {
-	Id      uint32
-	Players map[uint32]string
-}
+	// Copy the payload buffer
+	msg.Payload = bb.Bytes()
 
-/*
- * Response to a bad `JOIN` request *OR* broadcast message sent at any point
- * during play.
- */
-type LeaveMsg struct {
-	Id     uint32
-	Reason string
+	// Length is the buffer length
+	msg.Length = uint32(len(msg.Payload))
+
+	return msg
 }

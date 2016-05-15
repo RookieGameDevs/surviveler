@@ -8,7 +8,6 @@ package game
 import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/messages"
-	"server/game/protocol"
 	"time"
 )
 
@@ -30,10 +29,10 @@ func (g *Game) loop() {
 	// from outside the game loop
 	gs := NewGameState()
 
-	msgmgr := new(protocol.MessageManager)
-	msgmgr.Listen(messages.MoveId, protocol.MsgHandlerFunc(gs.onMovePlayer))
-	msgmgr.Listen(messages.JoinedId, protocol.MsgHandlerFunc(gs.onPlayerJoined))
-	msgmgr.Listen(messages.LeaveId, protocol.MsgHandlerFunc(gs.onPlayerLeft))
+	msgmgr := new(messages.MessageManager)
+	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(gs.onMovePlayer))
+	msgmgr.Listen(messages.JoinedId, messages.MsgHandlerFunc(gs.onPlayerJoined))
+	msgmgr.Listen(messages.LeaveId, messages.MsgHandlerFunc(gs.onPlayerLeft))
 
 	// loop local stop condition
 	quit := false

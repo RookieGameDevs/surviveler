@@ -2,10 +2,10 @@
  * Surviveler protocol package
  * message dispatching & handling
  */
-package protocol
+package messages
 
 import (
-	"server/game/messages"
+//"server/game/messages"
 )
 
 /*
@@ -31,7 +31,7 @@ func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint32) error {
  */
 type MessageManager struct {
 	listeners map[uint16][]MessageHandler // registered listeners
-	factory   *messages.Factory           // keep the msg factory
+	factory   *Factory                    // keep the msg factory
 }
 
 /*
@@ -63,7 +63,7 @@ func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
 func (mm *MessageManager) Listen(msgType uint16, handler MessageHandler) {
 	if mm.listeners == nil {
 		mm.listeners = make(map[uint16][]MessageHandler)
-		mm.factory = messages.GetFactory()
+		mm.factory = GetFactory()
 	}
 	mm.listeners[msgType] = append(mm.listeners[msgType], handler)
 }
