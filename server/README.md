@@ -48,7 +48,12 @@ bin/server
 
 ### Configuration
 
-You can provide configuration settings in different ways:
+You can provide configuration settings in different ways, and a summary of the
+possible options is printed after issuing:
+
+```
+bin/server -h
+```
 
 #### Command line flags:
 
