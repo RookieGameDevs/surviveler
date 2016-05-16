@@ -47,7 +47,7 @@ type Server struct {
 func NewServer(port string, msgcb MsgCallbackFunc, telnetPort string) *Server {
 	var telnet *TelnetServer
 	if len(telnetPort) > 0 {
-		telnet = &TelnetServer{Port: telnetPort}
+		telnet = NewTelnetServer(telnetPort)
 	}
 	return &Server{
 		clients: *NewClientRegistry(),
@@ -81,7 +81,7 @@ func (srv *Server) Start() {
 
 	if srv.telnet != nil {
 		// start telnet server if present
-		go srv.telnet.Start()
+		srv.telnet.Start()
 	}
 
 	// starts the server in a listening goroutine
