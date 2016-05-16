@@ -54,7 +54,7 @@ func (g *Game) Setup() {
 		g.msgChan <- messages.ClientMessage{msg, clientId}
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler)
+	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.cfg.TelnetPort)
 }
 
 /*

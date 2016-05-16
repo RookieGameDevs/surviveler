@@ -31,11 +31,13 @@ type ClientData struct {
 }
 
 /*
- * Init initializes the ClientRegistry
+ * NewClientRegistry initializes and returns a ClientRegistry
  */
-func (reg *ClientRegistry) init() {
-	reg.clients = make(map[uint32]*network.Conn, 0)
-	reg.nextId = 0
+func NewClientRegistry() *ClientRegistry {
+	return &ClientRegistry{
+		clients: make(map[uint32]*network.Conn, 0),
+		nextId:  0,
+	}
 }
 
 /*

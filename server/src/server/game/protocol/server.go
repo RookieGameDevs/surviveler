@@ -21,8 +21,8 @@ const (
  * Broadcaster is the interface that wraps that Broadcast method. It implements
  * the Broadcaster interface.
  */
+// TODO: to remove if not planned to use
 type Broadcaster interface {
-
 	// Broadcast broadcasts a message.
 	Broadcast(msg *messages.Message) error
 }
@@ -38,27 +38,29 @@ type Server struct {
 	server  network.Server  // tcp server instance
 	clients ClientRegistry  // manage the connected clients
 	msgcb   MsgCallbackFunc // incoming messages callback
+	telnet  *TelnetServer   // embedded telnet server
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, msgcb MsgCallbackFunc) *Server {
-
-	srv := new(Server)
-	srv.port = port
-	srv.msgcb = msgcb
-
-	return srv
+func NewServer(port string, msgcb MsgCallbackFunc, telnetPort string) *Server {
+	var telnet *TelnetServer
+	if len(telnetPort) > 0 {
+		telnet = &TelnetServer{Port: telnetPort}
+	}
+	return &Server{
+		clients: *NewClientRegistry(),
+		msgcb:   msgcb,
+		port:    port,
+		telnet:  telnet,
+	}
 }
 
 /*
  * Start creates the TCP server and starts the listening goroutine
  */
 func (srv *Server) Start() {
-
-	// setup client registry
-	srv.clients.init()
 
 	// creates a tcp listener
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+srv.port)
@@ -76,6 +78,11 @@ func (srv *Server) Start() {
 		MaxIncomingChannels: MAX_IN_CHANNELS,
 	}
 	srv.server = *network.NewServer(config, srv, &packetReader{})
+
+	if srv.telnet != nil {
+		// start telnet server if present
+		go srv.telnet.Start()
+	}
 
 	// starts the server in a listening goroutine
 	go srv.server.Start(listener, time.Second)
