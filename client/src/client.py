@@ -341,12 +341,9 @@ class Client:
         self.__client.player_id = player_id
         LOG.info('Joined the party with ID {}'.format(player_id))
         for srv_id, name in msg.data[MessageField.players].items():
-            # FIXME: Adds only the other players: we will instantiate ourself
-            # with the next joined message...
-            if srv_id != player_id:
-                self.__client.add_player(srv_id, name)
-                LOG.info('Adding existing player "{}" with ID {}'.format(
-                    name, srv_id))
+            self.__client.add_player(srv_id, name)
+            LOG.info('Adding existing player "{}" with ID {}'.format(
+                name, srv_id))
 
     @message_handler(MessageType.joined)
     def handle_joined(self, msg):
@@ -356,8 +353,11 @@ class Client:
         """
         player_name = as_utf8(msg.data[MessageField.name])
         player_id = msg.data[MessageField.id]
-        self.__client.add_player(player_id, player_name)
-        LOG.info('Player "{}" joined with ID {}'.format(player_name, player_id))
+        if not self.resolve_entity(player_id):
+            # NOTE: only add players that are not already there.
+            self.__client.add_player(player_id, player_name)
+            LOG.info('Player "{}" joined with ID {}'.format(
+                player_name, player_id))
 
     @message_handler(MessageType.leave)
     def handle_leave(self, msg):
