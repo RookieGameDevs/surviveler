@@ -35,10 +35,11 @@ type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
  */
 type Server struct {
 	port    string
-	server  network.Server  // tcp server instance
-	clients ClientRegistry  // manage the connected clients
-	msgcb   MsgCallbackFunc // incoming messages callback
-	telnet  *TelnetServer   // embedded telnet server
+	server  network.Server    // tcp server instance
+	clients ClientRegistry    // manage the connected clients
+	msgcb   MsgCallbackFunc   // incoming messages callback
+	telnet  *TelnetServer     // embedded telnet server
+	factory *messages.Factory // the unique message factory
 }
 
 /*
@@ -56,6 +57,7 @@ func NewServer(port string, msgcb MsgCallbackFunc, telnetPort string) *Server {
 		msgcb:   msgcb,
 		port:    port,
 		telnet:  telnet,
+		factory: messages.GetFactory(),
 	}
 }
 
@@ -189,13 +191,8 @@ func (srv *Server) Stop() {
  * handlePing processes a PingMsg and immediately replies with a PongMsg
  */
 func (srv *Server) handlePing(c *network.Conn, msg *messages.Message) error {
-	// decode ping msg payload into an interface
-	var ping messages.PingMsg
-	if iping, err := messages.GetFactory().DecodePayload(messages.PingId, msg.Payload); err != nil {
-		return err
-	} else {
-		ping = iping.(messages.PingMsg)
-	}
+	// decode payload into a ping message
+	ping := srv.factory.DecodePayload(messages.PingId, msg.Payload).(messages.PingMsg)
 	log.WithField("msg", ping).Info("It's a Ping!")
 
 	// reply pong
@@ -217,16 +214,11 @@ func (srv *Server) handlePing(c *network.Conn, msg *messages.Message) error {
  * loop if the player is accepted.
  */
 func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
-	// decode join msg payload into an interface
-	var join messages.JoinMsg
-	if ijoin, err := messages.GetFactory().DecodePayload(messages.JoinId, msg.Payload); err != nil {
-		return err
-	} else {
-		join = ijoin.(messages.JoinMsg)
-	}
+	// decode payload into a join message
+	join := srv.factory.DecodePayload(messages.JoinId, msg.Payload).(messages.JoinMsg)
+	log.WithField("name", join.Name).Info("A client would like to join")
 
 	clientData := c.GetUserData().(ClientData)
-	log.WithField("name", join.Name).Info("A client would like to join")
 
 	// check if STAY conditions are met
 	var reason string
@@ -234,10 +226,9 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 
 	switch {
 	case clientData.Joined:
-		reason = "already joined once!"
+		reason = "Joined already received"
 	case len(join.Name) < 3:
 		reason = "Name is too short!"
-		// TODO: check for UTF-8 chars. (maybe already done by msgpack?)
 	default:
 		nameTaken := false
 		stay := messages.StayMsg{
@@ -267,18 +258,17 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 		}
 
 		// broadcast JOINED
-		joined := messages.NewMessage(messages.JoinedId,
-			messages.JoinedMsg{
-				Id:   clientData.Id,
-				Name: join.Name,
-			})
+		joined := messages.NewMessage(messages.JoinedId, messages.JoinedMsg{
+			Id:   clientData.Id,
+			Name: join.Name,
+		})
 		log.WithField("joined", joined).Info("Tell to the world this client has joined")
 		srv.Broadcast(joined)
 
 		// informs the game loop that we have a new player
 		srv.msgcb(messages.NewMessage(messages.JoinedId, joined), clientData.Id)
 
-		// at this point we consider the client as accepted
+		// consider the client as accepted
 		clientData.Joined = true
 		clientData.Name = join.Name
 		c.SetUserData(clientData)

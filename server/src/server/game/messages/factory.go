@@ -62,29 +62,27 @@ func (mf Factory) registerMsgType(t uint16, i interface{}) {
  * newMsg returns a new (zero'ed) message struct
  */
 func (mf Factory) newMsg(t uint16) interface{} {
-	var it reflect.Type
 	var ok bool
-	if it, ok = mf.registry[t]; !ok {
+	var reft reflect.Type
+	if reft, ok = mf.registry[t]; !ok {
 		log.WithField("msgtype", t).Panic("Unknown message type")
 	}
-	return reflect.New(it).Elem().Interface()
+	return reflect.New(reft).Elem().Interface()
 }
 
 /*
  * DecodePayload returns a new message struct, decoded from given payload
  */
-func (mf Factory) DecodePayload(t uint16, p []byte) (interface{}, error) {
+func (mf Factory) DecodePayload(t uint16, p []byte) interface{} {
 	var mh codec.MsgpackHandle
 	// Create a struct having the corresponding underlying type
 	msg := mf.newMsg(t)
 
 	// Decode msgpack payload into interface
-	var dec *codec.Decoder = codec.NewDecoderBytes(p, &mh)
-	err := dec.Decode(&msg)
+	decoder := codec.NewDecoderBytes(p, &mh)
+	err := decoder.Decode(&msg)
 	if err != nil {
-		log.WithError(err).Error("Couldn't decode payload")
-		return nil, err
+		log.WithError(err).Panic("Couldn't decode payload")
 	}
-
-	return msg, nil
+	return msg
 }

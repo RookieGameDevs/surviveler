@@ -41,14 +41,9 @@ type MessageManager struct {
 func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
 	handlers := mm.listeners[msg.Type]
 
-	var err error
-	var i interface{}
 	for _, handler := range handlers {
-		i, err = mm.factory.DecodePayload(msg.Type, msg.Payload)
-		if err != nil {
-			return err
-		}
-		err = handler.handleMsg(i, clientId)
+		iface := mm.factory.DecodePayload(msg.Type, msg.Payload)
+		err := handler.handleMsg(iface, clientId)
 		if err != nil {
 			return err
 		}
