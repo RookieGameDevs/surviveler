@@ -38,11 +38,16 @@ class Client:
         """
         Client.__INSTANCE = self
         self.__client = _Client(name, renderer, proxy, input_mgr, game_cfg)
+        self.server_entities_map = {}
 
     @classmethod
     def get_instance(cls):
         """Returns the instance of the clint (aka use client as a singleton)."""
         return cls.__INSTANCE
+
+    #######################################
+    # Wrappers around the internal client #
+    #######################################
 
     def start(self):
         """Wraps the _Client start method."""
@@ -78,18 +83,20 @@ class Client:
         """The game configuration."""
         return self.__client.game_cfg
 
-    def resolve_entity(self, srv_e_id):
-        """Returns the entity object associated with given server-provided
-        entity identifier.
+    @property
+    def player_id(self):
+        return self.__client.player_id
 
-        :param srv_e_id: The server entity id.
-        :type srv_e_id: int
+    @property
+    def player(self):
+        """Player entity."""
+        if self.player_id:
+            return self.resolve_entity(self.player_id)
+        return None
 
-        :returns: The entity object, if any, `None` otherwise.
-        :rtype: :class:`game.Entity`
-        """
-        e_id = self.__client.server_entities_map.get(srv_e_id)
-        return self.get_entity(e_id) if e_id is not None else None
+    ###########################
+    # Public client interface #
+    ###########################
 
     def get_entity(self, e_id):
         """Returns the entity object associated with the given entity id.
@@ -102,15 +109,22 @@ class Client:
         """
         return self.__client.entities.get(e_id)
 
-    @property
-    def player(self):
-        """Player entity."""
-        if self.__client.player_id:
-            return self.resolve_entity(self.__client.player_id)
-        return None
+    def resolve_entity(self, srv_id):
+        """Returns the entity object associated with given server-provided
+        entity identifier.
+
+        :param srv_id: The server entity id.
+        :type srv_id: int
+
+        :returns: The entity object, if any, `None` otherwise.
+        :rtype: :class:`game.Entity`
+        """
+        e_id = self.server_entities_map.get(srv_id)
+        return self.get_entity(e_id) if e_id is not None else None
 
     @message_handler(MessageType.pong)
     def pong(self, msg):
+        """Just let the internal client handle the pong message"""
         self.__client.pong(msg)
 
     @message_handler(MessageType.stay)
@@ -124,7 +138,8 @@ class Client:
         self.__client.player_id = player_id
         LOG.info('Joined the party with ID {}'.format(player_id))
         for srv_id, name in msg.data[MessageField.players].items():
-            self.__client.add_player(srv_id, name)
+            e_id = self.__client.add_player(name)
+            self.server_entities_map[srv_id] = e_id
             LOG.info('Adding existing player "{}" with ID {}'.format(
                 name, srv_id))
 
@@ -135,22 +150,24 @@ class Client:
         Instantiates player entities and adds them to the game.
         """
         player_name = as_utf8(msg.data[MessageField.name])
-        player_id = msg.data[MessageField.id]
-        if not self.resolve_entity(player_id):
+        srv_id = msg.data[MessageField.id]
+        if not self.resolve_entity(srv_id):
             # NOTE: only add players that are not already there.
-            self.__client.add_player(player_id, player_name)
+            e_id = self.__client.add_player(player_name)
+            self.server_entities_map[srv_id] = e_id
             LOG.info('Player "{}" joined with ID {}'.format(
-                player_name, player_id))
+                player_name, srv_id))
 
     @message_handler(MessageType.leave)
     def handle_leave(self, msg):
-        player_left = msg.data[MessageField.id]
-        if player_left == self.__client.player_id:
+        srv_id = msg.data[MessageField.id]
+        if srv_id == self.__client.player_id:
             LOG.info('Local player disconnected')
-            self.__client.exit = True
+            self.__client.exit()
         else:
-            LOG.info('Player "{}" disconnected'.format(player_left))
-            self.__client.remove_player(player_left)
+            LOG.info('Player "{}" disconnected'.format(srv_id))
+            e_id = self.server_entities_map.pop(srv_id)
+            self.__client.remove_player(e_id)
 
 
 @message_handler(MessageType.gamestate)

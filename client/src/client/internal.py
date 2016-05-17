@@ -36,29 +36,37 @@ class Client:
         :param config: the network section of the config object
         :type config: :class:`configparser.SectionProxy`
         """
+        # Exit flag
         self.exit = False
 
+        # Helper variable for calculating loop dt
         self.last_update = None
 
+        # Ping helper variables
         self.sync_counter = count()
         self._syncing = {}
         self.delta = None
 
+        # Main client components
         self.game_cfg = game_cfg
         self.proxy = proxy
         self.renderer = renderer
         self.input_mgr = input_mgr
 
+        # Local player information
         self.player_name = name
         self.player_id = None
 
+        # Mapping of server entities to client entities
         self.server_entities_map = {}
+        # Mapping of the game entities
         self.entities = {}
 
-        self.setup_scene()
-        self.setup_camera()
+    ###########################
+    # Internal helper methods #
+    ###########################
 
-    def setup_camera(self):
+    def __setup_camera(self):
         """Sets up camera."""
         # field of view in game units
         fov = self.game_cfg.getint('fov')
@@ -77,7 +85,7 @@ class Client:
 
         self.camera.look_at(eye=Vec3(0, -2.5, 5), center=Vec3(0, 0, 0))
 
-    def setup_scene(self):
+    def __setup_scene(self):
         """Sets up the scene.
 
         Creates game entities and sets up the visual scene.
@@ -86,7 +94,7 @@ class Client:
         terrain = Terrain(self.scene.root, 30, 30)
         self.entities[terrain.e_id] = terrain
 
-    def process_message(self, msg):
+    def __process_message(self, msg):
         """Processes a message received from the server.
 
         :param msg: the message to be processed
@@ -96,12 +104,7 @@ class Client:
         for func in get_message_handlers(msg.msgtype):
             func(msg)
 
-    @property
-    def syncing(self):
-        """True if the client is syncing with the server, otherwise False"""
-        return len(self._syncing) > 0
-
-    def ping(self):
+    def __ping(self):
         """Pings the server to start te timing offset calculation.
         """
         LOG.debug('Sending ping')
@@ -119,19 +122,7 @@ class Client:
 
         self.proxy.enqueue(msg, callback)
 
-    def pong(self, msg):
-        """Receives pong from the server and actually calculates the offset.
-
-        :param msg: The pong message
-        :type msg: :class:`network.message.Message`
-        """
-        now = tstamp(0)
-        sent_at = self._syncing.pop(msg.data[MessageField.id])
-        self.delta = (
-            now - msg.data[MessageField.timestamp] + (now - sent_at) / 2)
-        LOG.info('Synced time with server: delta={}'.format(self.delta))
-
-    def join(self, name):
+    def __join(self, name):
         """Sends the join request to the server.
 
         :param name: Player name to join with.
@@ -145,33 +136,7 @@ class Client:
             })
         self.proxy.enqueue(msg)
 
-    def add_player(self, srv_id, name):
-        """Adds a new player in the game.
-
-        FIXME: We still don't know if the player is the local player or
-        another one on the network.
-
-        :param srf_id: The server id of the entity
-        :type srf_id: int
-
-        :param name: The player name
-        :type name: str
-        """
-        player = Player(name, self.scene.root)
-        self.entities[player.e_id] = player
-        self.server_entities_map[srv_id] = player.e_id
-
-    def remove_player(self, srv_id):
-        """Remoives a player from the game.
-
-        :param srf_id: The server id of the entity
-        :type srf_id: int
-        """
-        e_id = self.server_entities_map.pop(srv_id)
-        player = self.entities.pop(e_id)
-        player.destroy()
-
-    def dt(self):
+    def __dt(self):
         """Returns the dt from the last update.
 
         :return: The dt from the last update in seconds
@@ -184,12 +149,60 @@ class Client:
         self.last_update = now
         return dt
 
-    def poll_network(self):
+    def __poll_network(self):
         """Poll the message proxy and process messages when they are
         complete.
         """
         for msg in self.proxy.poll():
-            self.process_message(msg)
+            self.__process_message(msg)
+
+    ####################################
+    # Public internal client interface #
+    ####################################
+
+    @property
+    def syncing(self):
+        """True if the client is syncing with the server, otherwise False"""
+        return len(self._syncing) > 0
+
+    def add_player(self, name):
+        """Adds a new player in the game.
+
+        :param e_id: The id of the entity
+        :type e_id: int
+
+        :param name: The player name
+        :type name: str
+        """
+        player = Player(name, self.scene.root)
+        self.entities[player.e_id] = player
+        return player.e_id
+
+    def remove_player(self, e_id):
+        """Remoives a player from the game.
+
+        :param e_id: The id of the entity
+        :type e_id: int
+        """
+        player = self.entities.pop(e_id)
+        player.destroy()
+
+    def pong(self, msg):
+        """Receives pong from the server and actually calculates the offset.
+
+        :param msg: The pong message
+        :type msg: :class:`network.message.Message`
+        """
+        now = tstamp(0)
+        sent_at = self._syncing.pop(msg.data[MessageField.id])
+        self.delta = (
+            now - msg.data[MessageField.timestamp] + (now - sent_at) / 2)
+        LOG.info('Synced time with server: delta={}'.format(self.delta))
+
+    def exit(self):
+        """Register for exit at the next game loop.
+        """
+        self.exit = True
 
     def start(self):
         """Client main loop.
@@ -197,18 +210,22 @@ class Client:
         Polls the MessageProxy and processes each message received from the
         server, renders the scene.
         """
+        # Client startup operations
+        self.__setup_scene()
+        self.__setup_camera()
+
         # Sync with server time
-        self.ping()
+        self.__ping()
 
         # Send a join request
-        self.join(self.player_name)
+        self.__join(self.player_name)
 
         while not self.exit:
             # compute time delta
-            dt = self.dt()
+            dt = self.__dt()
 
             # poll messages from network
-            self.poll_network()
+            self.__poll_network()
 
             # process user input
             self.input_mgr.process_input()
