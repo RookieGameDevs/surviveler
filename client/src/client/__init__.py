@@ -37,7 +37,14 @@ class Client:
         :type game_cfg: mapping
         """
         Client.__INSTANCE = self
-        self.__client = _Client(name, renderer, proxy, input_mgr, game_cfg)
+        self.__client = _Client(renderer, proxy, input_mgr, game_cfg)
+        self.__client.ping()
+        self.__client.join(name)
+
+        # Local player information
+        self._player_name = name
+        self._player_id = None
+
         self.server_entities_map = {}
 
     @classmethod
@@ -85,7 +92,7 @@ class Client:
 
     @property
     def player_id(self):
-        return self.__client.player_id
+        return self._player_id
 
     @property
     def player(self):
@@ -135,10 +142,13 @@ class Client:
         controlled player entity.
         """
         player_id = msg.data[MessageField.id]
-        self.__client.player_id = player_id
+        self._player_id = player_id
         LOG.info('Joined the party with ID {}'.format(player_id))
         for srv_id, name in msg.data[MessageField.players].items():
-            e_id = self.__client.add_player(name)
+            if srv_id == player_id:
+                e_id = self.__client.add_main_player(name)
+            else:
+                e_id = self.__client.add_player(name)
             self.server_entities_map[srv_id] = e_id
             LOG.info('Adding existing player "{}" with ID {}'.format(
                 name, srv_id))
@@ -161,7 +171,7 @@ class Client:
     @message_handler(MessageType.leave)
     def handle_leave(self, msg):
         srv_id = msg.data[MessageField.id]
-        if srv_id == self.__client.player_id:
+        if srv_id == self.player_id:
             LOG.info('Local player disconnected')
             self.__client.exit()
         else:

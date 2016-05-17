@@ -1,3 +1,4 @@
+from game import MainPlayer
 from game import Player
 from game import Terrain
 from itertools import count
@@ -18,11 +19,8 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client implementation"""
 
-    def __init__(self, name, renderer, proxy, input_mgr, game_cfg):
+    def __init__(self, renderer, proxy, input_mgr, game_cfg):
         """Constructor.
-
-        :param name: The player name
-        :type name: str
 
         :param renderer: The rederer
         :type renderer: :class:`renderer.Renderer`
@@ -52,10 +50,6 @@ class Client:
         self.proxy = proxy
         self.renderer = renderer
         self.input_mgr = input_mgr
-
-        # Local player information
-        self.player_name = name
-        self.player_id = None
 
         # Mapping of server entities to client entities
         self.server_entities_map = {}
@@ -104,38 +98,6 @@ class Client:
         for func in get_message_handlers(msg.msgtype):
             func(msg)
 
-    def __ping(self):
-        """Pings the server to start te timing offset calculation.
-        """
-        LOG.debug('Sending ping')
-
-        # Create, enqueue and push message
-        sync_id = next(self.sync_counter)
-        msg = Message(
-            MessageType.ping, {
-                MessageField.id: sync_id,
-                MessageField.timestamp: tstamp(),
-            })
-
-        def callback():
-            self._syncing[sync_id] = tstamp()
-
-        self.proxy.enqueue(msg, callback)
-
-    def __join(self, name):
-        """Sends the join request to the server.
-
-        :param name: Player name to join with.
-        :type name: str
-        """
-        LOG.info('Trying to join server')
-
-        msg = Message(
-            MessageType.join, {
-                MessageField.name: name,
-            })
-        self.proxy.enqueue(msg)
-
     def __dt(self):
         """Returns the dt from the last update.
 
@@ -165,16 +127,24 @@ class Client:
         """True if the client is syncing with the server, otherwise False"""
         return len(self._syncing) > 0
 
-    def add_player(self, name):
-        """Adds a new player in the game.
-
-        :param e_id: The id of the entity
-        :type e_id: int
+    def add_main_player(self, name):
+        """Adds the main player in the game.
 
         :param name: The player name
         :type name: str
         """
-        player = Player(name, self.scene.root)
+        return self.add_player(name, MainPlayer)
+
+    def add_player(self, name, player_cls=Player):
+        """Adds a new player in the game.
+
+        :param name: The player name
+        :type name: str
+
+        :param player_cls: The player subclass to be used
+        :type player_cls: subclass of Player
+        """
+        player = player_cls(name, self.scene.root)
         self.entities[player.e_id] = player
         return player.e_id
 
@@ -187,6 +157,24 @@ class Client:
         player = self.entities.pop(e_id)
         player.destroy()
 
+    def ping(self):
+        """Pings the server to start te timing offset calculation.
+        """
+        LOG.debug('Sending ping')
+
+        # Create, enqueue and push message
+        sync_id = next(self.sync_counter)
+        msg = Message(
+            MessageType.ping, {
+                MessageField.id: sync_id,
+                MessageField.timestamp: tstamp(),
+            })
+
+        def callback():
+            self._syncing[sync_id] = tstamp()
+
+        self.proxy.enqueue(msg, callback)
+
     def pong(self, msg):
         """Receives pong from the server and actually calculates the offset.
 
@@ -198,6 +186,20 @@ class Client:
         self.delta = (
             now - msg.data[MessageField.timestamp] + (now - sent_at) / 2)
         LOG.info('Synced time with server: delta={}'.format(self.delta))
+
+    def join(self, name):
+        """Sends the join request to the server.
+
+        :param name: Player name to join with.
+        :type name: str
+        """
+        LOG.info('Trying to join server')
+
+        msg = Message(
+            MessageType.join, {
+                MessageField.name: name,
+            })
+        self.proxy.enqueue(msg)
 
     def exit(self):
         """Register for exit at the next game loop.
@@ -213,12 +215,6 @@ class Client:
         # Client startup operations
         self.__setup_scene()
         self.__setup_camera()
-
-        # Sync with server time
-        self.__ping()
-
-        # Send a join request
-        self.__join(self.player_name)
 
         while not self.exit:
             # compute time delta

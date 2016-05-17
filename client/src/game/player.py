@@ -1,9 +1,11 @@
+from events import send_event
 from events import subscriber
 from game import Entity
 from game.components import Movable
 from game.components import Renderable
 from game.events import EntityIdle
 from game.events import EntityMove
+from game.events import MainPlayerPositionUpdated
 from loaders import load_obj
 from math import pi
 from matlib import Mat4
@@ -71,11 +73,22 @@ class Player(Entity):
             Mat4.trans(Vec3(x, y, 0)) *
             Mat4.rot(Z, self.rot_angle))
 
-        # FIXME: perform this in a better place
-        from client import Client
-        client = Client.get_instance()
-        if client.player == self:
-            client.camera.translate(-Vec3(x, y, 0))
+
+class MainPlayer(Player):
+    """Game entity representing the local player"""
+
+    def update(self, dt):
+        """Update the local player.
+
+        This method computes player's game logic as a function of time and sends
+        the appropriate event.
+
+        :param dt: Time delta from last update.
+        :type dt: float
+        """
+        super(MainPlayer, self).update(dt)
+        x, y = self[Movable].position
+        send_event(MainPlayerPositionUpdated(-Vec3(x, y, 0)))
 
 
 @subscriber(EntityIdle)
@@ -107,3 +120,15 @@ def move_received(evt):
             position=evt.position,
             destination=evt.destination,
             speed=evt.speed)
+
+
+@subscriber(MainPlayerPositionUpdated)
+def move_camera(evt):
+    """Set the new position for the camera.
+
+    FIXME: find a proper position where to put this function.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.PlayerActionMove`
+    """
+    evt.client.camera.translate(evt.player_position)

@@ -29,9 +29,6 @@ class EntityMove(Event):
     """Receved move action.
 
     Event emitted whenever the player is subject to a move action.
-
-    :param action: Move action payload.
-    :type action: dict
     """
     def __init__(self, srv_id, position, destination, speed):
         """Constructor.
@@ -56,3 +53,21 @@ class EntityMove(Event):
     def __str__(self):
         return '<EntityMove({}, {}, {}, {})>'.format(
             self.srv_id, self.position, self.destination, self.speed)
+
+
+class MainPlayerPositionUpdated(Event):
+    """The local player has changed his position.
+
+    Event emitted when the computed position of the local player changed.
+    """
+    def __init__(self, player_pos):
+        """Constructor.
+
+        :param player_pos: The current player position.
+        :type player_pos: :class:`matlib.Vec3`
+        """
+        self.player_position = player_pos
+
+    def __str__(self):
+        return '<MainPlayerPositionUpdated({})>'.format(
+            self.player_position)
