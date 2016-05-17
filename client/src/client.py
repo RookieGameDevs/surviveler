@@ -152,6 +152,22 @@ class Client:
                 })
             self.proxy.enqueue(msg)
 
+        def add_player(self, name, srv_id):
+            """Adds a new player in the game.
+
+            FIXME: We still don't know if the player is the local player or
+            another one on the network.
+
+            :param name: The player name
+            :type name: str
+
+            :param srf_id: The server id of the entity
+            :type srf_id: int
+            """
+            player = Player(name, self.scene.root)
+            self.entities[player.e_id] = player
+            self.server_entities_map[srv_id] = player.e_id
+
         def dt(self):
             """Returns the dt from the last update.
 
@@ -312,6 +328,13 @@ class Client:
         player_id = msg.data[MessageField.id]
         self.__client.player_id = player_id
         LOG.info('Joined the party with ID {}'.format(player_id))
+        for srv_id, name in msg.data[MessageField.players].items():
+            # FIXME: Adds only the other players: we will instantiate ourself
+            # with the next joined message...
+            if srv_id != player_id:
+                self.__client.add_player(name, srv_id)
+                LOG.info('Adding existing player "{}" with ID {}'.format(
+                    name, srv_id))
 
     @message_handler(MessageType.joined)
     def handle_joined(self, msg):
@@ -321,9 +344,7 @@ class Client:
         """
         player_name = as_utf8(msg.data[MessageField.name])
         player_id = msg.data[MessageField.id]
-        player = Player(player_name, self.scene.root)
-        self.__client.entities[player.e_id] = player
-        self.__client.server_entities_map[player_id] = player.e_id
+        self.__client.add_player(player_name, player_id)
         LOG.info('Player "{}" joined with ID {}'.format(player_name, player_id))
 
 

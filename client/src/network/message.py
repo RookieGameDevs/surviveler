@@ -32,6 +32,7 @@ class MessageField(bytes, Enum):
     speed = b'Speed'
     entities = b'Entities'
     name = b'Name'
+    players = b'Players'
 
 
 class Message:
