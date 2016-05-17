@@ -45,6 +45,8 @@ class Client:
             :param config: the network section of the config object
             :type config: :class:`configparser.SectionProxy`
             """
+            self.exit = False
+
             self.last_update = None
 
             self.sync_counter = count()
@@ -111,7 +113,7 @@ class Client:
         def ping(self):
             """Pings the server to start te timing offset calculation.
             """
-            LOG.info('Sending ping')
+            LOG.debug('Sending ping')
 
             # Create, enqueue and push message
             sync_id = next(self.sync_counter)
@@ -144,7 +146,7 @@ class Client:
             :param name: Player name to join with.
             :type name: str
             """
-            LOG.info('Sending join')
+            LOG.info('Trying to join server')
 
             msg = Message(
                 MessageType.join, {
@@ -152,21 +154,31 @@ class Client:
                 })
             self.proxy.enqueue(msg)
 
-        def add_player(self, name, srv_id):
+        def add_player(self, srv_id, name):
             """Adds a new player in the game.
 
             FIXME: We still don't know if the player is the local player or
             another one on the network.
 
-            :param name: The player name
-            :type name: str
-
             :param srf_id: The server id of the entity
             :type srf_id: int
+
+            :param name: The player name
+            :type name: str
             """
             player = Player(name, self.scene.root)
             self.entities[player.e_id] = player
             self.server_entities_map[srv_id] = player.e_id
+
+        def remove_player(self, srv_id):
+            """Remoives a player from the game.
+
+            :param srf_id: The server id of the entity
+            :type srf_id: int
+            """
+            e_id = self.server_entities_map.pop(srv_id)
+            player = self.entities.pop(e_id)
+            player.destroy()
 
         def dt(self):
             """Returns the dt from the last update.
@@ -200,7 +212,7 @@ class Client:
             # Send a join request
             self.join(self.player_name)
 
-            while True:
+            while not self.exit:
                 # compute time delta
                 dt = self.dt()
 
@@ -332,7 +344,7 @@ class Client:
             # FIXME: Adds only the other players: we will instantiate ourself
             # with the next joined message...
             if srv_id != player_id:
-                self.__client.add_player(name, srv_id)
+                self.__client.add_player(srv_id, name)
                 LOG.info('Adding existing player "{}" with ID {}'.format(
                     name, srv_id))
 
@@ -344,8 +356,18 @@ class Client:
         """
         player_name = as_utf8(msg.data[MessageField.name])
         player_id = msg.data[MessageField.id]
-        self.__client.add_player(player_name, player_id)
+        self.__client.add_player(player_id, player_name)
         LOG.info('Player "{}" joined with ID {}'.format(player_name, player_id))
+
+    @message_handler(MessageType.leave)
+    def handle_leave(self, msg):
+        player_left = msg.data[MessageField.id]
+        if player_left == self.__client.player_id:
+            LOG.info('Local player disconnected')
+            self.__client.exit = True
+        else:
+            LOG.info('Player "{}" disconnected'.format(player_left))
+            self.__client.remove_player(player_left)
 
 
 @message_handler(MessageType.gamestate)

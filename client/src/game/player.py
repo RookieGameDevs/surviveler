@@ -46,6 +46,13 @@ class Player(Entity):
         self.name = name
         self.rot_angle = 0.0
 
+    def destroy(self):
+        """Removes itself from the scene.
+        """
+        LOG.debug('Destroying player {}'.format(self.e_id))
+        node = self[Renderable].node
+        node.parent.remove_child(node)
+
     def update(self, dt):
         """Update the player.
 
