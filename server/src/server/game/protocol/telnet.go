@@ -50,6 +50,10 @@ func onTelnetKick(clientId int32, w io.Writer) {
 	}
 }
 
+func onTelnetClients(w io.Writer) {
+	io.WriteString(w, fmt.Sprintf("this is the list of connected clients\n"))
+}
+
 /*
  * registerCommands creates and register the list of commands, their options
  * and handlers
@@ -71,13 +75,25 @@ func (tns *TelnetServer) registerCommands() telgo.CmdList {
 	}
 	commands["kick"] = kickHandler
 
+	// register clients command handler
+	clientsHandler := func(c *telgo.Client, args []string) bool {
+		fs := flag.NewFlagSet("clients", flag.ContinueOnError)
+		tw := &telnetWriter{c}
+		fs.SetOutput(tw)
+		if err := fs.Parse(args[1:]); err == nil {
+			onTelnetClients(tw)
+		}
+		return false
+	}
+	commands["clients"] = clientsHandler
+
 	// register help command handler
 	helpHandler := func(c *telgo.Client, args []string) bool {
 		tw := &telnetWriter{c}
-		io.WriteString(tw, "available commands:")
-		io.WriteString(tw, "")
-		io.WriteString(tw, "\tkick   :  -id clientId")
-		io.WriteString(tw, "\thelp   :  [cmdname]")
+		io.WriteString(tw, "usage:")
+		io.WriteString(tw, "\tkick -id clientId    kick a client")
+		io.WriteString(tw, "\tclients              shows list of clients")
+		io.WriteString(tw, "\thelp [cmdname]       get help")
 		io.WriteString(tw, "\n")
 		if len(args) > 1 {
 			// help about a specific command
