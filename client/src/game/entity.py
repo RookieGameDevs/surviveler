@@ -6,10 +6,6 @@ from itertools import count
 class Entity(ABC):
     """Base classe for all game entities"""
 
-    #: mapping of all the entities where the key is the entity id, and the value
-    # is the entity itself
-    ENTITIES = {}
-
     #: count iterator for incremental unique internal ids for each created
     # entity.
     count = count()
@@ -21,7 +17,6 @@ class Entity(ABC):
         :type components: sequence of :class:`game.component.Component`
         """
         self.e_id = next(self.count)
-        self.ENTITIES[self.e_id] = self
         self._components = {}
         for comp in components:
             comp.entity = self
@@ -46,12 +41,3 @@ class Entity(ABC):
         :type dt: float
         """
         pass
-
-    @classmethod
-    def get_entity(cls, e_id):
-        """Class method that returns a registered entity (if exists).
-
-        :param e_id: The unique ideitifier of the entity.
-        :type e_id: TBD.
-        """
-        return cls.ENTITIES[e_id]
