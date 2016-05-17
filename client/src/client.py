@@ -27,8 +27,11 @@ class Client:
     class __Client:
         """Client implementation"""
 
-        def __init__(self, renderer, proxy, input_mgr, game_cfg):
+        def __init__(self, name, renderer, proxy, input_mgr, game_cfg):
             """Constructor.
+
+            :param name: The player name
+            :type name: str
 
             :param renderer: The rederer
             :type renderer: :class:`renderer.Renderer`
@@ -42,15 +45,20 @@ class Client:
             :param config: the network section of the config object
             :type config: :class:`configparser.SectionProxy`
             """
-            self.game_cfg = game_cfg
-            self.proxy = proxy
-            self.sync_counter = count()
             self.last_update = None
+
+            self.sync_counter = count()
             self._syncing = {}
             self.delta = None
+
+            self.game_cfg = game_cfg
+            self.proxy = proxy
             self.renderer = renderer
             self.input_mgr = input_mgr
+
+            self.player_name = name
             self.player_id = None
+
             self.server_entities_map = {}
             self.entities = {}
 
@@ -174,7 +182,7 @@ class Client:
             self.ping()
 
             # Send a join request
-            self.join('John Doe')
+            self.join(self.player_name)
 
             while True:
                 # compute time delta
@@ -197,10 +205,13 @@ class Client:
                 # push messages in the proxy queue
                 self.proxy.push()
 
-    def __init__(self, renderer, proxy, input_mgr, game_cfg):
+    def __init__(self, name, renderer, proxy, input_mgr, game_cfg):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
+
+        sphinx-:param name: The player name
+        :type name: str
 
         :param renderer: The rederer
         :type renderer: :class:`renderer.Renderer`
@@ -215,7 +226,7 @@ class Client:
         :type game_cfg: mapping
         """
         Client.__INSTANCE = self
-        self.__client = Client.__Client(renderer, proxy, input_mgr, game_cfg)
+        self.__client = Client.__Client(name, renderer, proxy, input_mgr, game_cfg)
 
     @classmethod
     def get_instance(cls):

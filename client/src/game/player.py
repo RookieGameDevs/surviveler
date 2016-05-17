@@ -66,7 +66,9 @@ class Player(Entity):
 
         # FIXME: perform this in a better place
         from client import Client
-        Client.get_instance().camera.translate(-Vec3(x, y, 0))
+        client = Client.get_instance()
+        if client.player == self:
+            client.camera.translate(-Vec3(x, y, 0))
 
 
 @subscriber(EntityIdle)

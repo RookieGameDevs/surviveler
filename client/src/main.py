@@ -8,6 +8,7 @@ from functools import partial
 from network import Connection
 from network import MessageProxy
 from renderer import Renderer
+import click
 import game.actions  # noqa
 import logging
 import os
@@ -81,22 +82,29 @@ class sdl2context(ContextDecorator):
 
 
 @sdl2context()
-def main(config):
+def main(name, config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])
     proxy = MessageProxy(conn)
     input_mgr = InputManager()
-    client = Client(renderer, proxy, input_mgr, config['Game'])
+    client = Client(name, renderer, proxy, input_mgr, config['Game'])
 
     client.start()
     renderer.shutdown()
 
 
-if __name__ == '__main__':
+@click.command()
+@click.option('--name', help='The player username', default='John Doe')
+def bootstrap(name):
     config = ConfigParser()
     config.read(CONFIG_FILE)
 
     setup_logging(config['Logging'])
 
     LOG.debug('Loaded config file {}'.format(CONFIG_FILE))
-    main(config)
+
+    main(name, config)
+
+
+if __name__ == '__main__':
+    bootstrap()
