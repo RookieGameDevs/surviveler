@@ -9,6 +9,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/telgo"
+	"io"
 )
 
 type TelnetServer struct {
@@ -40,8 +41,13 @@ func (tns *TelnetServer) Start() {
 	}()
 }
 
-func onKick(clientId int32) {
-	fmt.Printf("kicking player with client id: %v\n", clientId)
+func onTelnetKick(clientId int32, w io.Writer) {
+	if clientId < 0 {
+		io.WriteString(w, fmt.Sprintf("invalid client id: %v\n", clientId))
+	} else {
+		// try kick client
+		io.WriteString(w, fmt.Sprintf("client %v has been kicked out\n", clientId))
+	}
 }
 
 /*
@@ -55,15 +61,38 @@ func (tns *TelnetServer) registerCommands() telgo.CmdList {
 	// register kick command handler
 	kickHandler := func(c *telgo.Client, args []string) bool {
 		fs := flag.NewFlagSet("kick", flag.ContinueOnError)
-		fs.SetOutput(&telnetWriter{c})
-		clientId := fs.Int("id", -1, "id of the client to kick")
-		fmt.Println("args", args[1:])
+		tw := &telnetWriter{c}
+		fs.SetOutput(tw)
+		clientId := fs.Int("id", -1, "id of the client to kick (integer)")
 		if err := fs.Parse(args[1:]); err == nil {
-			onKick(int32(*clientId))
+			onTelnetKick(int32(*clientId), tw)
 		}
 		return false
 	}
 	commands["kick"] = kickHandler
+
+	// register help command handler
+	helpHandler := func(c *telgo.Client, args []string) bool {
+		tw := &telnetWriter{c}
+		io.WriteString(tw, "available commands:")
+		io.WriteString(tw, "")
+		io.WriteString(tw, "\tkick   :  -id clientId")
+		io.WriteString(tw, "\thelp   :  [cmdname]")
+		io.WriteString(tw, "\n")
+		if len(args) > 1 {
+			// help about a specific command
+			for cmd, cb := range commands {
+				if args[1] == cmd {
+					args[0] = cmd
+					args[1] = "--help"
+					cb(c, args)
+				}
+			}
+		}
+		return false
+	}
+	commands["help"] = helpHandler
+
 	return commands
 }
 
