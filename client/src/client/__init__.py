@@ -141,17 +141,19 @@ class Client:
         Assigns the client a server provided id, which uniquely identifies the
         controlled player entity.
         """
-        player_id = msg.data[MessageField.id]
-        self._player_id = player_id
-        LOG.info('Joined the party with ID {}'.format(player_id))
+        self._player_id = msg.data[MessageField.id]
+        LOG.info('Joined the party with ID {}'.format(self.player_id))
         for srv_id, name in msg.data[MessageField.players].items():
-            if srv_id == player_id:
-                e_id = self.__client.add_main_player(name)
+            if srv_id == self.player_id:
+                # NOTE: name is empty string if this is the main player entity
+                e_id = self.__client.add_main_player(self._player_name)
+                LOG.info('Added local player "{}" with ID {}'.format(
+                    self._player_name, srv_id))
             else:
                 e_id = self.__client.add_player(name)
+                LOG.info('Added existing player "{}" with ID {}'.format(
+                    name, srv_id))
             self.server_entities_map[srv_id] = e_id
-            LOG.info('Adding existing player "{}" with ID {}'.format(
-                name, srv_id))
 
     @message_handler(MessageType.joined)
     def handle_joined(self, msg):
