@@ -15,15 +15,17 @@ import (
 type TelnetServer struct {
 	port     string
 	commands map[string]flag.FlagSet
+	clients  *ClientRegistry
 }
 
 /*
  * NewTelnetServer initializes a TelnetServer struct
  */
-func NewTelnetServer(port string) *TelnetServer {
+func NewTelnetServer(port string, clients *ClientRegistry) *TelnetServer {
 	return &TelnetServer{
 		port:     port,
 		commands: make(map[string]flag.FlagSet),
+		clients:  clients,
 	}
 }
 
@@ -50,8 +52,16 @@ func onTelnetKick(clientId int32, w io.Writer) {
 	}
 }
 
-func onTelnetClients(w io.Writer) {
-	io.WriteString(w, fmt.Sprintf("this is the list of connected clients\n"))
+/*
+ * onTelnetClients prints the list of currently connected clients on given
+ * writer
+ */
+func onTelnetClients(clients *ClientRegistry, w io.Writer) {
+	io.WriteString(w, fmt.Sprintf("connected clients:\n"))
+	clients.ForEach(func(client ClientData) bool {
+		io.WriteString(w, fmt.Sprintf(" * %v - %v", client.Name, client.Id))
+		return true
+	})
 }
 
 /*
@@ -81,7 +91,7 @@ func (tns *TelnetServer) registerCommands() telgo.CmdList {
 		tw := &telnetWriter{c}
 		fs.SetOutput(tw)
 		if err := fs.Parse(args[1:]); err == nil {
-			onTelnetClients(tw)
+			onTelnetClients(tns.clients, tw)
 		}
 		return false
 	}

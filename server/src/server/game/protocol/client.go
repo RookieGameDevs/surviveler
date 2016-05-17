@@ -116,7 +116,7 @@ func (reg *ClientRegistry) Broadcast(msg *messages.Message) error {
 }
 
 /*
- * ClientDataFunc is the type of functions accetping a ClientData and returning
+ * ClientDataFunc is the type of functions accepting a ClientData and returning
  * a boolean.
  */
 type ClientDataFunc func(ClientData) bool

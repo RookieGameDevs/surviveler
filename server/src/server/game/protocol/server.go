@@ -45,12 +45,14 @@ type Server struct {
  * NewServer returns a new configured Server instance
  */
 func NewServer(port string, msgcb MsgCallbackFunc, telnetPort string) *Server {
+	// creates our client registry
+	clients := NewClientRegistry()
 	var telnet *TelnetServer
 	if len(telnetPort) > 0 {
-		telnet = NewTelnetServer(telnetPort)
+		telnet = NewTelnetServer(telnetPort, clients)
 	}
 	return &Server{
-		clients: *NewClientRegistry(),
+		clients: *clients,
 		msgcb:   msgcb,
 		port:    port,
 		telnet:  telnet,
