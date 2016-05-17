@@ -86,6 +86,8 @@ func (srv *Server) Start() {
 	if srv.telnet != nil {
 		// start telnet server if present
 		srv.telnet.Start()
+		registerTelnetKick(srv.telnet, &srv.clients)
+		registerTelnetClients(srv.telnet, &srv.clients)
 	}
 
 	// starts the server in a listening goroutine

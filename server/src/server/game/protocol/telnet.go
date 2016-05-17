@@ -13,19 +13,36 @@ import (
 )
 
 type TelnetServer struct {
-	port     string
-	commands map[string]flag.FlagSet
-	clients  *ClientRegistry
+	port     string               // port on which listening
+	commands map[string]TelnetCmd // the registered telnet commands
+	registry *ClientRegistry      // the unique client registry
+}
+
+type TelnetHandlerFunc func(io.Writer)
+
+type TelnetCmd struct {
+	Name    string            // command name
+	Descr   string            // command description
+	Parms   flag.FlagSet      // command parameters, in an embedded flag set
+	Handler TelnetHandlerFunc // handler function
+}
+
+func NewTelnetCmd(name string) TelnetCmd {
+	return TelnetCmd{
+		Name:  name,
+		Descr: "",
+		Parms: *flag.NewFlagSet(name, flag.ContinueOnError),
+	}
 }
 
 /*
  * NewTelnetServer initializes a TelnetServer struct
  */
-func NewTelnetServer(port string, clients *ClientRegistry) *TelnetServer {
+func NewTelnetServer(port string, registry *ClientRegistry) *TelnetServer {
 	return &TelnetServer{
 		port:     port,
-		commands: make(map[string]flag.FlagSet),
-		clients:  clients,
+		commands: make(map[string]TelnetCmd),
+		registry: registry,
 	}
 }
 
@@ -33,9 +50,31 @@ func NewTelnetServer(port string, clients *ClientRegistry) *TelnetServer {
  * Start starts the telnet server. This call is not blocking
  */
 func (tns *TelnetServer) Start() {
-	cmdList := tns.registerCommands()
+
+	globalHandler := func(c *telgo.Client, args []string) bool {
+		tw := &telnetWriter{c}
+		if cmd, ok := tns.commands[args[0]]; ok {
+			// cmd handler
+			cmd.Parms.SetOutput(tw)
+			cmd.Parms.Parse(args[1:])
+			cmd.Handler(tw)
+		} else {
+			subcmd := ""
+			if len(args) > 1 {
+				subcmd = args[1]
+			}
+			if cmd, ok = tns.commands[subcmd]; ok && args[0] == "help" {
+				cmd.Parms.SetOutput(tw)
+				cmd.Parms.PrintDefaults()
+			} else {
+				c.Sayln(tns.usage())
+			}
+		}
+		return false
+	}
+
 	// start the server in a go routine
-	s := telgo.NewServer(":"+tns.port, "surviveler> ", cmdList, "anonymous")
+	s := telgo.NewServer(":"+tns.port, "surviveler> ", globalHandler, "anonymous")
 	go func() {
 		if err := s.Run(); err != nil {
 			log.WithError(err).Error("Telnet server error")
@@ -43,97 +82,38 @@ func (tns *TelnetServer) Start() {
 	}()
 }
 
-func onTelnetKick(clientId int32, w io.Writer) {
-	if clientId < 0 {
-		io.WriteString(w, fmt.Sprintf("invalid client id: %v\n", clientId))
-	} else {
-		// try kick client
-		io.WriteString(w, fmt.Sprintf("client %v has been kicked out\n", clientId))
-	}
+/*
+ * RegisterCommand register a new telnet command, and its handler. flags is a configured
+ * FlagSet describing the command and its arguments
+ */
+func (tns *TelnetServer) RegisterCommand(cmd TelnetCmd) {
+	tns.commands[cmd.Name] = cmd
 }
 
 /*
- * onTelnetClients prints the list of currently connected clients on given
- * writer
+ * usage prints the list registered telnet commands and their description
  */
-func onTelnetClients(clients *ClientRegistry, w io.Writer) {
-	io.WriteString(w, fmt.Sprintf("connected clients:\n"))
-	clients.ForEach(func(client ClientData) bool {
-		io.WriteString(w, fmt.Sprintf(" * %v - %v", client.Name, client.Id))
-		return true
-	})
-}
-
-/*
- * registerCommands creates and register the list of commands, their options
- * and handlers
- */
-func (tns *TelnetServer) registerCommands() telgo.CmdList {
-	// set up the list of commands
-	commands := make(map[string]telgo.Cmd)
-
-	// register kick command handler
-	kickHandler := func(c *telgo.Client, args []string) bool {
-		fs := flag.NewFlagSet("kick", flag.ContinueOnError)
-		tw := &telnetWriter{c}
-		fs.SetOutput(tw)
-		clientId := fs.Int("id", -1, "id of the client to kick (integer)")
-		if err := fs.Parse(args[1:]); err == nil {
-			onTelnetKick(int32(*clientId), tw)
-		}
-		return false
+func (tns *TelnetServer) usage() string {
+	h := "available commands:\n"
+	for cmdName, cmd := range tns.commands {
+		h = h + fmt.Sprintf("  %-18s%s\n", cmdName, cmd.Descr)
 	}
-	commands["kick"] = kickHandler
-
-	// register clients command handler
-	clientsHandler := func(c *telgo.Client, args []string) bool {
-		fs := flag.NewFlagSet("clients", flag.ContinueOnError)
-		tw := &telnetWriter{c}
-		fs.SetOutput(tw)
-		if err := fs.Parse(args[1:]); err == nil {
-			onTelnetClients(tns.clients, tw)
-		}
-		return false
-	}
-	commands["clients"] = clientsHandler
-
-	// register help command handler
-	helpHandler := func(c *telgo.Client, args []string) bool {
-		tw := &telnetWriter{c}
-		io.WriteString(tw, "usage:")
-		io.WriteString(tw, "\tkick -id clientId    kick a client")
-		io.WriteString(tw, "\tclients              shows list of clients")
-		io.WriteString(tw, "\thelp [cmdname]       get help")
-		io.WriteString(tw, "\n")
-		if len(args) > 1 {
-			// help about a specific command
-			for cmd, cb := range commands {
-				if args[1] == cmd {
-					args[0] = cmd
-					args[1] = "--help"
-					cb(c, args)
-				}
-			}
-		}
-		return false
-	}
-	commands["help"] = helpHandler
-
-	return commands
+	h = h + fmt.Sprintf("  %-18s%s\n", "help", "this help text")
+	return h
 }
 
 /*
  * telnetWriter is an io.Writer implementation that writes on a telnet connection
  * line
  */
-type telnetWriter struct{ c *telgo.Client }
+type telnetWriter struct {
+	c *telgo.Client
+}
 
 /*
  * Write writes the given byte slice on the wrapped telnet connection
  */
 func (w telnetWriter) Write(p []byte) (n int, err error) {
-	// TODO: protect from trying to write on a closed connection
-	//n = bytes.IndexByte(p, 0)
 	s := string(p)
 	w.c.Sayln(s)
 	return len(s), nil

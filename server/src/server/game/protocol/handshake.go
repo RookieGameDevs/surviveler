@@ -5,7 +5,9 @@
 package protocol
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"io"
 	"server/game/messages"
 	"server/network"
 	"time"
@@ -98,19 +100,70 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 	}
 
 	if !accepted {
-		// send LEAVE to client
-		leave := messages.NewMessage(messages.LeaveId, messages.LeaveMsg{
-			Id:     uint32(clientData.Id),
-			Reason: reason,
-		})
-		if err := c.AsyncSendPacket(leave, time.Second); err != nil {
-			return err
-		}
-		log.WithFields(log.Fields{
-			"id": clientData.Id, "reason": reason}).
-			Info("Client not accepted, tell him to leave")
-		// closes the connection, registry cleanup will be performed in OnClose
+		sendLeave(c, reason)
+	}
+	return nil
+}
+
+/*
+ * sendLeave sends a LEAVE message to the client associated to given connection
+ */
+func sendLeave(c *network.Conn, reason string) error {
+	clientData := c.GetUserData().(ClientData)
+
+	// send LEAVE to client
+	leave := messages.NewMessage(messages.LeaveId, messages.LeaveMsg{
+		Id:     uint32(clientData.Id),
+		Reason: reason,
+	})
+	if err := c.AsyncSendPacket(leave, 5*time.Millisecond); err != nil {
+		return err
+	}
+	log.WithField("leave", leave).Info("Client is kindly asked to leave")
+
+	// closes the connection, registry cleanup will be performed in OnClose
+	if !c.IsClosed() {
 		c.Close()
 	}
 	return nil
+}
+
+/*
+ * registerTelnetKick sets up the command handler for the kick command issued on a
+ * telnet client
+ */
+func registerTelnetKick(tns *TelnetServer, registry *ClientRegistry) {
+	cmd := NewTelnetCmd("kick")
+	cmd.Descr = "politely ask a client to leave"
+	clientId := cmd.Parms.Int("id", -1, "client id (integer)")
+	cmd.Handler = func(w io.Writer) {
+		clientId := uint32(*clientId)
+		if connection, ok := registry.clients[clientId]; ok {
+			if err := sendLeave(connection, "telnet just kicked your ass out"); err != nil {
+				io.WriteString(w, fmt.Sprintf("couldn't kick client %v\n", err))
+			} else {
+				io.WriteString(w, fmt.Sprintf("client %v has been kicked out\n", clientId))
+			}
+		} else {
+			io.WriteString(w, fmt.Sprintf("invalid client id: %v\n", clientId))
+		}
+	}
+	tns.RegisterCommand(cmd)
+}
+
+/*
+ * registerTelnetClientList sets up the command handler for the clients command
+ * issued on a telnet client
+ */
+func registerTelnetClients(tns *TelnetServer, registry *ClientRegistry) {
+	cmd := NewTelnetCmd("clients")
+	cmd.Descr = "show the list of connected clients"
+	cmd.Handler = func(w io.Writer) {
+		io.WriteString(w, fmt.Sprintf("connected clients:"))
+		registry.ForEach(func(client ClientData) bool {
+			io.WriteString(w, fmt.Sprintf(" * %v - %v", client.Name, client.Id))
+			return true
+		})
+	}
+	tns.RegisterCommand(cmd)
 }
