@@ -1,4 +1,4 @@
-from game import MainPlayer
+from game import Character
 from game import Player
 from game import Terrain
 from itertools import count
@@ -133,9 +133,9 @@ class Client:
         :param name: The player name
         :type name: str
         """
-        return self.add_player(name, MainPlayer)
+        return self.add_player(name, Player)
 
-    def add_player(self, name, player_cls=Player):
+    def add_player(self, name, player_cls=Character):
         """Adds a new player in the game.
 
         :param name: The player name
