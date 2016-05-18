@@ -238,9 +238,11 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 
 		// compute the list of joined players in a closure
 		srv.clients.ForEach(func(cd ClientData) bool {
-			nameTaken = cd.Name == join.Name
-			stay.Players[cd.Id] = cd.Name
-			// stop iteratio if name is taken
+			if cd.Joined {
+				nameTaken = cd.Name == join.Name
+				stay.Players[cd.Id] = cd.Name
+			}
+			// stop iterating if name is taken
 			return !nameTaken
 		})
 		if nameTaken {
