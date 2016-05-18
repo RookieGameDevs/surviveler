@@ -143,12 +143,17 @@ class Client:
         """
         self._player_id = msg.data[MessageField.id]
         LOG.info('Joined the party with ID {}'.format(self.player_id))
+        # Add current player into the scene.
+        e_id = self.__client.add_main_player(self._player_name)
+        self.server_entities_map[self.player_id] = e_id
+        LOG.info('Added local player "{}" with ID {}'.format(
+            self._player_name, self.player_id))
+
         for srv_id, name in msg.data[MessageField.players].items():
+            # TODO: remove me when the server is no more sending myself inside
+            # the STAY payload.
             if srv_id == self.player_id:
-                # NOTE: name is empty string if this is the main player entity
-                e_id = self.__client.add_main_player(self._player_name)
-                LOG.info('Added local player "{}" with ID {}'.format(
-                    self._player_name, srv_id))
+                continue
             else:
                 e_id = self.__client.add_player(name)
                 LOG.info('Added existing player "{}" with ID {}'.format(
