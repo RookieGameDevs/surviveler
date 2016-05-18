@@ -97,7 +97,7 @@ class Client:
     @property
     def player(self):
         """Player entity."""
-        if self.player_id:
+        if self.player_id is not None:
             return self.resolve_entity(self.player_id)
         return None
 
