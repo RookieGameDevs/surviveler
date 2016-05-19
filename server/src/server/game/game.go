@@ -5,9 +5,7 @@
 package game
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"io"
 	"os"
 	"os/signal"
 	"runtime"
@@ -29,14 +27,13 @@ type Game struct {
 	loopCloseChan chan struct{}               // signal the game loop it must end
 	clients       *protocol.ClientRegistry    // the client registry
 	telnet        *protocol.TelnetServer      // if enabled, the telnet server
-	telnetChan    chan protocol.TelnetRequest
+	telnetChan    chan TelnetRequest          // channel for game related telnet commands
 }
 
 /*
  * Setup initializes the different game subsystems
  */
 func (g *Game) Setup() {
-
 	// get configuration
 	g.cfg = ParseConfig()
 
@@ -58,10 +55,9 @@ func (g *Game) Setup() {
 
 	// setup the telnet server
 	if len(g.cfg.TelnetPort) > 0 {
-		g.telnetChan = make(chan protocol.TelnetRequest)
+		g.telnetChan = make(chan TelnetRequest)
 		g.telnet = protocol.NewTelnetServer(g.cfg.TelnetPort, g.clients)
 		g.setTelnetHandlers()
-		// TODO: copy the content the registerTelnetKick/Clients functions inside setTelnetHandlers
 	}
 
 	// setup TCP server
@@ -77,7 +73,6 @@ func (g *Game) Setup() {
  * Start starts the server and game loops
  */
 func (g *Game) Start() {
-
 	log.Info("Starting Surviveler server")
 
 	// start everything
@@ -103,37 +98,5 @@ func (g *Game) stop() {
 	// stop game loop
 	log.Info("Stopping game loop")
 	g.loopCloseChan <- struct{}{}
-	defer close(g.loopCloseChan)
-}
-
-/*
- * setTelnetHandlers sets the handlers for game related telnet commands. Game
- * related telnet requests use a channel to signal the game loop, thus
- * guaranteeing us that the functions handling those requests won't be compete
- * with others functions having access to the game stae. Therefore, those
- * handlers can read and modify the game state without problem.
- */
-func (g *Game) setTelnetHandlers() {
-	cmd := protocol.NewTelnetCmd("gamestate")
-	cmd.Descr = "prints the gamestate"
-	cmd.Handler = func(w io.Writer) {
-		req := protocol.TelnetRequest{
-			Type:   protocol.DumpGameStateId,
-			Writer: w,
-		}
-		g.telnetChan <- req
-	}
-	g.telnet.RegisterCommand(cmd)
-}
-
-func (g *Game) telnetHandler(msg protocol.TelnetRequest, gs *GameState) {
-	log.WithField("msg", msg).Info("Received telnet game messages")
-
-	switch msg.Type {
-
-	case protocol.DumpGameStateId:
-		if gsMsg := gs.pack(); gsMsg != nil {
-			io.WriteString(msg.Writer, fmt.Sprintf("%v\n", *gsMsg))
-		}
-	}
+	close(g.loopCloseChan)
 }

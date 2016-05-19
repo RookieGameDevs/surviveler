@@ -129,15 +129,16 @@ func sendLeave(c *network.Conn, reason string) error {
 }
 
 /*
- * registerTelnetKick sets up the command handler for the kick command issued on a
- * telnet client
+ * registerTelnetCommands sets up the server-related command handlers
  */
-func registerTelnetKick(tns *TelnetServer, registry *ClientRegistry) {
-	cmd := NewTelnetCmd("kick")
-	cmd.Descr = "politely ask a client to leave"
-	clientId := cmd.Parms.Int("id", -1, "client id (integer)")
-	cmd.Handler = func(w io.Writer) {
+func registerTelnetCommands(tns *TelnetServer, registry *ClientRegistry) {
+	kick := NewTelnetCmd("kick")
+	kick.Descr = "politely ask a client to leave"
+	clientId := kick.Parms.Int("id", -1, "client id (integer)")
+	kick.Handler = func(w io.Writer) {
+
 		clientId := uint32(*clientId)
+
 		if connection, ok := registry.clients[clientId]; ok {
 			if err := sendLeave(connection, "telnet just kicked your ass out"); err != nil {
 				io.WriteString(w, fmt.Sprintf("couldn't kick client %v\n", err))
@@ -148,22 +149,16 @@ func registerTelnetKick(tns *TelnetServer, registry *ClientRegistry) {
 			io.WriteString(w, fmt.Sprintf("invalid client id: %v\n", clientId))
 		}
 	}
-	tns.RegisterCommand(cmd)
-}
+	tns.RegisterCommand(kick)
 
-/*
- * registerTelnetClientList sets up the command handler for the clients command
- * issued on a telnet client
- */
-func registerTelnetClients(tns *TelnetServer, registry *ClientRegistry) {
-	cmd := NewTelnetCmd("clients")
-	cmd.Descr = "show the list of connected clients"
-	cmd.Handler = func(w io.Writer) {
+	clients := NewTelnetCmd("clients")
+	clients.Descr = "show the list of connected clients"
+	clients.Handler = func(w io.Writer) {
 		io.WriteString(w, fmt.Sprintf("connected clients:"))
 		registry.ForEach(func(client ClientData) bool {
 			io.WriteString(w, fmt.Sprintf(" * %v - %v", client.Name, client.Id))
 			return true
 		})
 	}
-	tns.RegisterCommand(cmd)
+	tns.RegisterCommand(clients)
 }
