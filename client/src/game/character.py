@@ -63,10 +63,6 @@ class Character(Entity):
         :param dt: Time delta from last update.
         :type dt: float
         """
-        self.rot_angle += dt * pi
-        if self.rot_angle >= WHOLE_ANGLE:
-            self.rot_angle -= WHOLE_ANGLE
-
         self[Movable].update(dt)
         x, y = self[Movable].position
         self[Renderable].transform = (
