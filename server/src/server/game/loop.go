@@ -13,7 +13,12 @@ import (
 
 /*
  * loop is the main game loop, it fetches messages from a channel, processes
- * them immediately.
+ * them immediately. After performing some initialization, it waits forever,
+ * waiting a wake-up call from any one of those events:
+ * - external loop close request -> exits immediately
+ * - arrival of a message -> process it
+ * - logic tick -> perform logic update
+ * - gamestate tick: pack and broadcast the current game state
  */
 func (g *Game) loop() {
 
@@ -54,14 +59,12 @@ func (g *Game) loop() {
 				}
 
 			case <-sendTickChan:
-
 				// pack the gamestate into a message
 				if gsmsg := gs.pack(); gsmsg != nil {
 					g.server.Broadcast(gsmsg)
 				}
 
 			case <-tickChan:
-
 				// compute delta time
 				cur_time = time.Now()
 				dt := cur_time.Sub(last_time)
