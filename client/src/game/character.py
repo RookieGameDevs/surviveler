@@ -2,6 +2,8 @@ from events import subscriber
 from game import Entity
 from game.components import Movable
 from game.components import Renderable
+from game.events import CharacterJoin
+from game.events import CharacterLeave
 from game.events import EntityIdle
 from game.events import EntityMove
 from loaders import load_obj
@@ -72,8 +74,43 @@ class Character(Entity):
             Mat4.rot(Z, self.rot_angle))
 
 
+@subscriber(CharacterJoin)
+def add_character(evt):
+    """Add a character in the game.
+
+    Gets all the relevant data from the event.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.CharacterJoin`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    # Only instantiate the new character if it does not exist
+    if not context.resolve_entity(evt.srv_id):
+        player = Character(evt.name, context.scene.root)
+        context.entities[player.e_id] = player
+        context.server_entities_map[evt.srv_id] = player.e_id
+
+
+@subscriber(CharacterLeave)
+def remove_character(evt):
+    """Remove a character from the game.
+
+    Gets all the relevant data from the event.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.CharacterLeave`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    if evt.srv_id in context.server_entities_map:
+        e_id = context.server_entities_map.pop(evt.srv_id)
+        character = context.entities.pop(e_id)
+        character.destroy()
+
+
 @subscriber(EntityIdle)
-def position_received(evt):
+def character_set_position(evt):
     """Updates the character position
 
     Gets all the relevant data from the event.
@@ -82,20 +119,20 @@ def position_received(evt):
     :type evt: :class:`game.events.EntityIdle`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
-    entity = evt.client.resolve_entity(evt.srv_id)
+    entity = evt.context.resolve_entity(evt.srv_id)
     if entity:
         entity[Movable].position = evt.x, evt.y
 
 
 @subscriber(EntityMove)
-def move_received(evt):
+def character_set_movement(evt):
     """Set the move action in the character entity.
 
     :param evt: The event instance
     :type evt: :class:`game.events.EntityMove`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
-    entity = evt.client.resolve_entity(evt.srv_id)
+    entity = evt.context.resolve_entity(evt.srv_id)
     if entity:
         entity[Movable].move(
             position=evt.position,

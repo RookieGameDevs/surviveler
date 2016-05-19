@@ -87,7 +87,7 @@ def main(name, config):
     conn = Connection(config['Network'])
     proxy = MessageProxy(conn)
     input_mgr = InputManager()
-    client = Client(name, renderer, proxy, input_mgr, config['Game'])
+    client = Client(name, renderer, proxy, input_mgr, config)
 
     client.start()
     renderer.shutdown()

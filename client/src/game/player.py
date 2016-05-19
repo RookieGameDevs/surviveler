@@ -1,5 +1,8 @@
+from context import Context
+from events import subscriber
 from game import Character
 from game.components import Movable
+from game.events import PlayerJoin
 from matlib import Vec3
 import logging
 
@@ -22,6 +25,22 @@ class Player(Character):
         super(Player, self).update(dt)
         x, y = self[Movable].position
 
-        from client import Client
-        client = Client.get_instance()
-        client.camera.translate(-Vec3(x, y, 0))
+        context = Context.get_instance()
+        context.camera.translate(-Vec3(x, y, 0))
+
+
+@subscriber(PlayerJoin)
+def add_player(evt):
+    """Instantiate and add the local player into the game.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.PlayerJoin`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    # Only instantiate the player if it does not exist
+    if not context.resolve_entity(evt.srv_id):
+        player = Player(evt.name, context.scene.root)
+        context.entities[player.e_id] = player
+        context.server_entities_map[evt.srv_id] = player.e_id
+        return player.e_id
