@@ -3,6 +3,9 @@ from events import subscriber
 from game import Character
 from game.components import Movable
 from game.events import PlayerJoin
+from math import atan
+from math import copysign
+from math import pi
 from matlib import Vec3
 import logging
 
@@ -23,10 +26,22 @@ class Player(Character):
         :type dt: float
         """
         super(Player, self).update(dt)
+        self.orientate()
+
+        self[Movable].update(dt)
         x, y = self[Movable].position
 
         context = Context.get_instance()
         context.camera.translate(-Vec3(x, y, 0))
+
+    def orientate(self):
+        """Orientate the player towards the current destination."""
+        dest = self[Movable].destination
+        if dest:
+            x, y = self[Movable].position
+            dx = dest[0] - x
+            dy = dest[1] - y
+            self.rot_angle = atan(dy / dx) + (pi / 2) * copysign(1, dx)
 
 
 @subscriber(PlayerJoin)
