@@ -129,4 +129,4 @@ def load_obj(filename):
                 continue
             func_map.get(keyword, do_nothing)(lineno, keyword, values)
 
-    return vertices, normals, uvs, indices
+    return vertices, normals, uvs, list(reversed(indices))
