@@ -28,9 +28,7 @@ class Player(Character):
         super(Player, self).update(dt)
         self.orientate()
 
-        self[Movable].update(dt)
         x, y = self[Movable].position
-
         context = Context.get_instance()
         context.camera.translate(-Vec3(x, y, 0))
 
