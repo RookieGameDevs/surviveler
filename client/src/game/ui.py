@@ -4,6 +4,7 @@ from renderer import Shader
 from renderer import Scene
 from matlib import Vec3
 
+
 class UI(Scene):
     """User interface."""
 
@@ -14,6 +15,6 @@ class UI(Scene):
             'data/shaders/text.vert',
             'data/shaders/text.frag')
 
-        font = Font('data/fonts/Monaco-Linux.ttf', 21)
-        text = TextNode(font, text_shader, 'Surviveler', color=Vec3(1, 0, 0))
+        font = Font('data/fonts/Monaco-Linux.ttf', 14)
+        text = TextNode(font, text_shader, 'Surviveler', color=Vec3(0.3, 0.3, 0.3))
         self.root.add_child(text)

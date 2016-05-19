@@ -1,11 +1,15 @@
 from OpenGL.GL import GL_BACK
+from OpenGL.GL import GL_BLEND
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
 from OpenGL.GL import GL_CULL_FACE
 from OpenGL.GL import GL_CW
 from OpenGL.GL import GL_DEPTH_BUFFER_BIT
 from OpenGL.GL import GL_DEPTH_TEST
+from OpenGL.GL import GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_SHADING_LANGUAGE_VERSION
+from OpenGL.GL import GL_SRC_ALPHA
 from OpenGL.GL import GL_VERSION
+from OpenGL.GL import glBlendFunc
 from OpenGL.GL import glClear
 from OpenGL.GL import glClearColor
 from OpenGL.GL import glCullFace
@@ -103,6 +107,10 @@ class Renderer:
 
         # enable depth buffer
         glEnable(GL_DEPTH_TEST)
+
+        # enable alpha-blending
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # clear to black
         glClearColor(0, 0, 0, 0)
