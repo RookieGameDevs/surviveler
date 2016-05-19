@@ -1,3 +1,4 @@
+from datetime import datetime
 from events import subscriber
 from game.events import CharacterJoin
 from matlib import Mat4
@@ -8,7 +9,6 @@ from renderer import Scene
 from renderer import SceneNode
 from renderer import Shader
 from renderer import TextNode
-
 
 class UI:
     """User interface."""
@@ -48,8 +48,8 @@ class UI:
             self.log_shader,
             msg,
             self.log_color))
-        self.log_height += self.log_line_height
         txt.transform = Mat4.trans(Vec3(0, self.log_height, 0))
+        self.log_height += self.log_line_height
 
     def render(self):
         """Render the user interface."""
@@ -59,4 +59,7 @@ class UI:
 @subscriber(CharacterJoin)
 def log_join(evt):
     """Logs the name and ID of the joined character to UI console."""
-    evt.context.ui.log('{} joined with ID {}'.format(evt.name, evt.srv_id))
+    evt.context.ui.log('[{}] {} joined with ID {}'.format(
+        datetime.now().time().replace(microsecond=0).isoformat(),
+        evt.name,
+        evt.srv_id))
