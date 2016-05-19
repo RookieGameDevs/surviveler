@@ -1,4 +1,5 @@
 from abc import ABC
+from context import Context
 from collections import defaultdict
 
 
@@ -34,8 +35,6 @@ class Event(ABC):
     """
     def __new__(cls, *args, **kwargs):
         """Injects the client instance in the event object."""
-        # FIXME: cyclic import. Sounds like bad design.
-        from client import Client
         inst = super(Event, cls).__new__(cls)
-        inst.client = Client.get_instance()
+        inst.context = Context.get_instance()
         return inst

@@ -1,65 +1,73 @@
 /*
  * Surviveler messages package
- * message types & identifiers
+ * message implementation
  */
 package messages
 
-/*
- * Client - Server messages
- */
-const (
-	PingId uint16 = 0 + iota
-	PongId
-	GameStateId
-	MoveId
+import (
+	"bytes"
+	"encoding/binary"
+	log "github.com/Sirupsen/logrus"
+	"github.com/ugorji/go/codec"
 )
 
 /*
- * Server only messages
- * TODO: those will be replaced once the handshake protocol will be implemented
+ * value used to check the length of a client message before allocating
+ * a buffer, in case the received size was wrong
  */
-const (
-	AddPlayerId = 1024 + iota
-	DelPlayerId
-)
+const MaxIncomingMsgLength uint32 = 1279
 
 /*
- * Client->server time synchronization message
+ * client -> server message
  */
-type PingMsg struct {
-	Id     uint32
-	Tstamp int64
+type Message struct {
+	Type    uint16 // the message type
+	Length  uint32 // the payload length
+	Payload []byte // payload buffer
 }
 
 /*
- * Server->client time synchronization message
+ * ClientMessage is a message sent by the client, to which the server has added
+ * the client Id
  */
-type PongMsg PingMsg
-
-/*
- * Server->client game state
- */
-type GameStateMsg struct {
-	Tstamp   int64
-	Entities map[uint16]interface{}
+type ClientMessage struct {
+	*Message
+	ClientId uint32 // client Id (set by server)
 }
 
 /*
- * player initiated character movement. Client -> server message
+ * Serialize transforms a message into a byte slice
  */
-type MoveMsg struct {
-	Xpos float32
-	Ypos float32
+func (msg Message) Serialize() []byte {
+	// we know the payload total size so we can provide it to our bytes.Buffer
+	bbuf := bytes.NewBuffer(make([]byte, 0, 2+4+len(msg.Payload)))
+	binary.Write(bbuf, binary.BigEndian, msg.Type)
+	binary.Write(bbuf, binary.BigEndian, msg.Length)
+	binary.Write(bbuf, binary.BigEndian, msg.Payload)
+	return bbuf.Bytes()
 }
 
 /*
- * Indicates a new player joined the game
+ * NewMessage creates a message from a message type and a generic payload
  */
-type AddPlayerMsg struct {
-	Name string
-}
+func NewMessage(t uint16, p interface{}) *Message {
+	var mh codec.MsgpackHandle
+	msg := new(Message)
+	msg.Type = t
 
-/*
- * Indicates that a player may be removed
- */
-type DelPlayerMsg struct{}
+	// Encode payload to msgpack
+	bb := new(bytes.Buffer)
+	var enc *codec.Encoder = codec.NewEncoder(bb, &mh)
+	err := enc.Encode(p)
+	if err != nil {
+		log.WithError(err).Panic("Error encoding payload: %v\n")
+	}
+
+	// Copy the payload buffer
+	msg.Payload = bb.Bytes()
+
+	// Length is the buffer length
+	msg.Length = uint32(len(msg.Payload))
+
+	return msg
+}

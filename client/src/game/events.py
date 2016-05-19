@@ -29,9 +29,6 @@ class EntityMove(Event):
     """Receved move action.
 
     Event emitted whenever the player is subject to a move action.
-
-    :param action: Move action payload.
-    :type action: dict
     """
     def __init__(self, srv_id, position, destination, speed):
         """Constructor.
@@ -56,3 +53,39 @@ class EntityMove(Event):
     def __str__(self):
         return '<EntityMove({}, {}, {}, {})>'.format(
             self.srv_id, self.position, self.destination, self.speed)
+
+
+class CharacterJoin(Event):
+    """Handles character joining.
+
+    Event emitted when a character joins the game.
+    """
+    def __init__(self, srv_id, name):
+        self.srv_id = srv_id
+        self.name = name
+
+    def __str__(self):
+        return '<CharacterJoin({}, {})>'.format(self.srv_id, self.name)
+
+
+class PlayerJoin(CharacterJoin):
+    """Handles local player joining.
+
+    Event emitted when the local player actually joined the game.
+    """
+
+    def __str__(self):
+        return '<PlayerJoin({}, {})>'.format(self.srv_id, self.name)
+
+
+class CharacterLeave(Event):
+    """Handles character leaving.
+
+    Event emitted when a character leaves the game.
+    """
+    def __init__(self, srv_id, reason):
+        self.srv_id = srv_id
+        self.reason = reason
+
+    def __str__(self):
+        return '<CharacterLeave({}, {})>'.format(self.srv_id, self.reason)

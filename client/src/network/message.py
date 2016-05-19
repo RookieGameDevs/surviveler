@@ -14,6 +14,10 @@ class MessageType(IntEnum):
     pong = 1
     gamestate = 2
     move = 3
+    join = 4
+    joined = 5
+    stay = 6
+    leave = 7
 
 
 @unique
@@ -27,6 +31,9 @@ class MessageField(bytes, Enum):
     action_type = b'ActionType'
     speed = b'Speed'
     entities = b'Entities'
+    name = b'Name'
+    players = b'Players'
+    reason = b'Reason'
 
 
 class Message:

@@ -1,11 +1,11 @@
 /*
- * Surviveler protocol package
+ * Surviveler messages package
  * message dispatching & handling
  */
-package protocol
+package messages
 
 import (
-	"server/game/messages"
+//"server/game/messages"
 )
 
 /*
@@ -13,16 +13,16 @@ import (
  * The messages handled represents decoded payloads.
  */
 type MessageHandler interface {
-	handleMsg(interface{}, uint16) error
+	handleMsg(interface{}, uint32) error
 }
 
 /*
  * MsgHandlerFunc is the type of function that handles messages. It
  * implements the MessageHandler interface.
  */
-type MsgHandlerFunc func(interface{}, uint16) error
+type MsgHandlerFunc func(interface{}, uint32) error
 
-func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint16) error {
+func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint32) error {
 	return mhf(i, clientId)
 }
 
@@ -31,22 +31,20 @@ func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint16) error {
  */
 type MessageManager struct {
 	listeners map[uint16][]MessageHandler // registered listeners
-	factory   *messages.Factory           // keep the msg factory
+	factory   *Factory                    // keep the msg factory
 }
-
-// TODO: we'll have to implement a StopListen method to unregister a listener
 
 /*
  * Dispatch dispatches messages of a particular type to the listeners. It
  * performs the decoding of the payload into an interface.
  */
-func (mm *MessageManager) Dispatch(msg *Message, clientId uint16) error {
+func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
 	handlers := mm.listeners[msg.Type]
 
 	var err error
 	var i interface{}
 	for _, handler := range handlers {
-		i, err = mm.factory.DecodePayload(msg.Type, msg.Buffer)
+		i, err = mm.factory.DecodePayload(msg.Type, msg.Payload)
 		if err != nil {
 			return err
 		}
@@ -65,7 +63,7 @@ func (mm *MessageManager) Dispatch(msg *Message, clientId uint16) error {
 func (mm *MessageManager) Listen(msgType uint16, handler MessageHandler) {
 	if mm.listeners == nil {
 		mm.listeners = make(map[uint16][]MessageHandler)
-		mm.factory = messages.GetFactory()
+		mm.factory = GetFactory()
 	}
 	mm.listeners[msgType] = append(mm.listeners[msgType], handler)
 }

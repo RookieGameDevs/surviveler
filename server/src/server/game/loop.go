@@ -8,7 +8,6 @@ package game
 import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/messages"
-	"server/game/protocol"
 	"time"
 )
 
@@ -30,10 +29,10 @@ func (g *Game) loop() {
 	// from outside the game loop
 	gs := NewGameState()
 
-	msgmgr := new(protocol.MessageManager)
-	msgmgr.Listen(messages.AddPlayerId, protocol.MsgHandlerFunc(gs.onAddPlayer))
-	msgmgr.Listen(messages.MoveId, protocol.MsgHandlerFunc(gs.onMovePlayer))
-	msgmgr.Listen(messages.DelPlayerId, protocol.MsgHandlerFunc(gs.onDelPlayer))
+	msgmgr := new(messages.MessageManager)
+	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(gs.onMovePlayer))
+	msgmgr.Listen(messages.JoinedId, messages.MsgHandlerFunc(gs.onPlayerJoined))
+	msgmgr.Listen(messages.LeaveId, messages.MsgHandlerFunc(gs.onPlayerLeft))
 
 	// loop local stop condition
 	quit := false
@@ -57,14 +56,8 @@ func (g *Game) loop() {
 			case <-sendTickChan:
 
 				// pack the gamestate into a message
-				var msg *protocol.Message
-				var err error
-				if msg, err = gs.pack(); err != nil {
-					log.WithField("err", err).Error("Couldn't pack the gamestate")
-					quit = true
-				}
-				if msg != nil {
-					g.server.Broadcast(msg)
+				if gsmsg := gs.pack(); gsmsg != nil {
+					g.server.Broadcast(gsmsg)
 				}
 
 			case <-tickChan:
