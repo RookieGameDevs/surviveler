@@ -24,7 +24,8 @@ type Game struct {
 	server        protocol.Server             // server core
 	ticker        time.Ticker                 // our tick source
 	msgChan       chan messages.ClientMessage // conducts ClientMessage to the game loop
-	loopCloseChan chan struct{}               // indicates to the game loop that it may exit
+	loopCloseChan chan struct{}               // signal the game loop it must end
+	telnet        *protocol.TelnetServer      // if enabled, the telnet server
 }
 
 /*
@@ -48,13 +49,21 @@ func (g *Game) Setup() {
 	g.msgChan = make(chan messages.ClientMessage)
 	g.loopCloseChan = make(chan struct{})
 
-	// setup server
+	// creates the client registry
+	registry := protocol.NewClientRegistry()
+
+	// setup a telnet server
+	if len(g.cfg.TelnetPort) > 0 {
+		g.telnet = protocol.NewTelnetServer(g.cfg.TelnetPort, registry)
+	}
+
+	// setup TCP server
 	rootHandler := func(msg *messages.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
 		g.msgChan <- messages.ClientMessage{msg, clientId}
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.cfg.TelnetPort)
+	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, registry, g.telnet)
 }
 
 /*
