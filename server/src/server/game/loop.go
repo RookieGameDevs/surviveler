@@ -60,8 +60,11 @@ func (g *Game) loop() {
 
 			case <-sendTickChan:
 				// pack the gamestate into a message
-				if gsmsg := gs.pack(); gsmsg != nil {
-					g.server.Broadcast(gsmsg)
+				if gsMsg := gs.pack(); gsMsg != nil {
+					// wrap the GameStateMsg into a generic Message
+					if msg := messages.NewMessage(messages.GameStateId, *gsMsg); msg != nil {
+						g.server.Broadcast(msg)
+					}
 				}
 
 			case <-tickChan:
@@ -74,6 +77,10 @@ func (g *Game) loop() {
 					ent.Update(dt)
 				}
 				last_time = cur_time
+
+			case tnm := <-g.telnetChan:
+				// received an message from telnet
+				g.telnetHandler(tnm, &gs)
 
 			default:
 

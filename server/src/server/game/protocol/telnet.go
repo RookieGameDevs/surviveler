@@ -118,3 +118,17 @@ func (w telnetWriter) Write(p []byte) (n int, err error) {
 	w.c.Sayln(s)
 	return len(s), nil
 }
+
+/*
+ * TelnetRequest represents the type and content of a telnet request, and a way to
+ * reply to it
+ */
+type TelnetRequest struct {
+	Type    uint32
+	Content interface{}
+	Writer  io.Writer
+}
+
+const (
+	DumpGameStateId uint32 = 0 + iota
+)

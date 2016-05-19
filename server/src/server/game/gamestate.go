@@ -28,25 +28,22 @@ func NewGameState() GameState {
 }
 
 /*
- * pack transforms the current game state into a GameStateMsg,
- * ready to be sent to every connected client
+ * pack transforms the current game state into a GameStateMsg
  */
-func (gs GameState) pack() *messages.Message {
+func (gs GameState) pack() *messages.GameStateMsg {
 	if len(gs.players) == 0 {
 		// nothing to do
 		return nil
 	}
 
 	// fill the GameStateMsg
-	var gsMsg messages.GameStateMsg
+	gsMsg := new(messages.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Entities = make(map[uint32]interface{})
 	for id, ent := range gs.players {
 		gsMsg.Entities[id] = ent.GetState()
 	}
-
-	// wrap the GameStateMsg into a generic Message
-	return messages.NewMessage(messages.GameStateId, gsMsg)
+	return gsMsg
 }
 
 /*
@@ -70,7 +67,7 @@ func (gs *GameState) onPlayerLeft(msg interface{}, clientId uint32) error {
 }
 
 /*
- * onMovePlyare handles a MoveMsg by setting the final destination of an entity
+ * onMovePlayer handles a MoveMsg by setting the final destination of an entity
  */
 func (gs *GameState) onMovePlayer(msg interface{}, clientId uint32) error {
 	move := msg.(messages.MoveMsg)
