@@ -56,7 +56,7 @@ class EntityMove(Event):
 
 
 class CharacterJoin(Event):
-    """Handles character joining
+    """Handles character joining.
 
     Event emitted when a character joins the game.
     """
@@ -69,9 +69,9 @@ class CharacterJoin(Event):
 
 
 class PlayerJoin(CharacterJoin):
-    """Handles local player joining
+    """Handles local player joining.
 
-    Event emitted when te local player actually joined the game.
+    Event emitted when the local player actually joined the game.
     """
 
     def __str__(self):
@@ -79,7 +79,7 @@ class PlayerJoin(CharacterJoin):
 
 
 class CharacterLeave(Event):
-    """Handles character leaving
+    """Handles character leaving.
 
     Event emitted when a character leaves the game.
     """
