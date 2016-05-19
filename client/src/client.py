@@ -237,7 +237,7 @@ class Client:
         send_event(PlayerJoin(self.context.player_id, self.context.player_name))
 
         for srv_id, name in msg.data[MF.players].items():
-            send_event(CharacterJoin(srv_id, name))
+            send_event(CharacterJoin(srv_id, as_utf8(name)))
 
     @message_handler(MT.joined)
     def handle_joined(self, msg):
