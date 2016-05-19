@@ -20,6 +20,8 @@ class Context:
         self.conf = conf
         self.scene = None
         self.camera = None
+        self.ui = None
+        self.ui_camera = None
 
         # Entity related maps
         self.server_entities_map = {}

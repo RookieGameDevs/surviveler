@@ -1,8 +1,11 @@
 from renderer.camera import OrthoCamera  # noqa
+from renderer.font import Font  # noqa
 from renderer.mesh import Mesh  # noqa
+from renderer.mesh import Rect  # noqa
 from renderer.renderer import Renderer  # noqa
 from renderer.scene import GeometryNode  # noqa
 from renderer.scene import Scene  # noqa
+from renderer.scene import TextNode  # noqa
 from renderer.shader import Shader  # noqa
 from renderer.texture import Texture  # noqa
 from renderer.texture import TextureParamWrap  # noqa

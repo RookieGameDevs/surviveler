@@ -3,6 +3,7 @@ from OpenGL.GL import GL_COMPILE_STATUS
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
 from OpenGL.GL import GL_FRAGMENT_SHADER
+from OpenGL.GL import GL_INT
 from OpenGL.GL import GL_LINK_STATUS
 from OpenGL.GL import GL_SAMPLER_2D
 from OpenGL.GL import GL_VERTEX_SHADER
@@ -36,13 +37,15 @@ UNIFORM_VALIDATORS = {
     GL_FLOAT_MAT4: lambda v: type(v) == Mat4,
     GL_FLOAT_VEC3: lambda v: type(v) == Vec3,
     GL_SAMPLER_2D: lambda v: type(v) == Texture,
+    GL_INT: lambda v: type(v) == int,
 }
 
 
 UNIFORM_SETTERS = {
     GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, np.asarray(v)),
     GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, np.asarray(v)),
-    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v.tex_unit)
+    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v.tex_unit),
+    GL_INT: lambda i, v: glUniform1i(i, v),
 }
 
 

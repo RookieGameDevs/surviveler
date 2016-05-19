@@ -1,6 +1,7 @@
 from context import Context
 from events import send_event
 from game import Terrain
+from game import UI
 from game import process_gamestate
 from game.events import CharacterJoin
 from game.events import CharacterLeave
@@ -51,8 +52,13 @@ class Client:
 
         # Setup the context
         context = Context(conf)
+
+        aspect = self.renderer.height / float(self.renderer.width)
+
         context.scene = self.setup_scene(context)
-        context.camera = self.setup_camera(context)
+        context.camera = self.setup_camera(context, aspect)
+        context.ui = self.setup_ui(context)
+        context.ui_camera = self.setup_ui_camera(context, aspect)
         context.player_name = player_name
         self.context = context
 
@@ -80,33 +86,63 @@ class Client:
         context.entities[terrain.e_id] = terrain
         return scene
 
-    def setup_camera(self, context):
+    def setup_camera(self, context, aspect):
         """Sets up camera.
 
         :param context: Game context.
         :type context: :class:`context.Context`
 
+        :param aspect: Aspect ratio.
+        :type aspect: float
+
         :return: The camera
-        :rtype: :class:`renderer.camera.OrthoCamera`
+        :rtype: :class:`renderer.camera.Camera`
         """
         # Field of view in game units
         fov = context.conf['Game'].getint('fov')
 
-        # Aspect ratio
-        aspect_ratio = self.renderer.height / float(self.renderer.width)
-
         # Setup an orthographic camera with given field of view and flipped Y
         # coordinate (Y+ points down)
         camera = OrthoCamera(
-            -fov / 2,                  # left plane
-            +fov / 2,                  # right plane
-            -fov / 2 * aspect_ratio,   # top plane
-            +fov / 2 * aspect_ratio,   # bottom plane
-            100)                       # view distance
+            -fov / 2,            # left plane
+            +fov / 2,            # right plane
+            -fov / 2 * aspect,   # top plane
+            +fov / 2 * aspect,   # bottom plane
+            100)                 # view distance
 
         camera.look_at(eye=Vec3(0, -2.5, 5), center=Vec3(0, 0, 0))
 
         return camera
+
+    def setup_ui_camera(self, context, aspect):
+        """Sets up camera for user interface.
+
+        :param context: Game context.
+        :type context: :class:`context.Context`
+
+        :param aspect: Aspect ratio.
+        :type aspect: float
+
+        :return: The camera
+        :rtype: :class:`renderer.camera.Camera`
+        """
+        return OrthoCamera(
+            0,
+            self.renderer.width,
+            0,
+            aspect * self.renderer.height,
+            1)
+
+    def setup_ui(self, context):
+        """Sets up user interface scene.
+
+        :param context: Game context.
+        :type context: :class:`context.Context`
+
+        :return: The configured scene.
+        :rtype: :class:`game.UI`
+        """
+        return UI()
 
     @property
     def syncing(self):
@@ -193,6 +229,7 @@ class Client:
             # rendering
             self.renderer.clear()
             self.context.scene.render(self.renderer, self.context.camera)
+            self.context.ui.render(self.renderer, self.context.ui_camera)
             self.renderer.present()
 
             # Enqueue messages in context and emtpy the queue

@@ -5,6 +5,7 @@ from contextlib import ExitStack
 from exceptions import OpenGLError
 from matlib import Mat4
 from matlib import Vec3
+from renderer.mesh import Rect
 import numpy as np
 
 
@@ -195,3 +196,37 @@ class GeometryNode(AbstractSceneNode):
 
             self.shader.use(self.params)
             self.mesh.render(ctx.renderer)
+
+
+class TextNode(AbstractSceneNode):
+    """A node for rendering static text."""
+
+    def __init__(self, font, shader, text, color=Vec3(1, 1, 1)):
+        super(TextNode, self).__init__()
+        self.font = font
+        self.text = text
+        self.shader = shader
+        self.color = color
+
+    @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, text):
+        self._text = text
+        self._texture = self.font.render_to_texture(text)
+        self._rect = Rect(self._texture.width, self._texture.height, False)
+
+    def render(self, ctx, transform):
+        params = {
+            'transform': ctx.camera.modelview * transform,
+            'projection': ctx.camera.projection,
+            'width': self._texture.width,
+            'height': self._texture.height,
+            'tex': self._texture,
+            'color': self.color,
+        }
+        with self._texture.use(0):
+            self.shader.use(params)
+            self._rect.render(ctx.renderer)
