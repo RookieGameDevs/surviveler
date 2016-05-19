@@ -13,7 +13,7 @@ class Renderable(Component):
         """Constructor.
 
         :param parent_node: Parent node of the new game node.
-        :type parent_node: :class:`renderer.scene.AbstractSceneNode`
+        :type parent_node: :class:`renderer.scene.SceneNode`
 
         :param mesh: The mesh.
         :type mesh: :class:`renderer.Mesh`

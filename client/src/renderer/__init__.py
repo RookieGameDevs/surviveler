@@ -5,6 +5,7 @@ from renderer.mesh import Rect  # noqa
 from renderer.renderer import Renderer  # noqa
 from renderer.scene import GeometryNode  # noqa
 from renderer.scene import Scene  # noqa
+from renderer.scene import SceneNode  # noqa
 from renderer.scene import TextNode  # noqa
 from renderer.shader import Shader  # noqa
 from renderer.texture import Texture  # noqa

@@ -32,7 +32,7 @@ class Character(Entity):
         :type name: str
 
         :param parent_node: The parent node in the scene graph
-        :type parent_node: :class:`renderer.scene.AbstractSceneNode`
+        :type parent_node: :class:`renderer.scene.SceneNode`
         """
         vertices, _, _, indices = load_obj('data/models/player.obj')
         mesh = Mesh(vertices, indices)

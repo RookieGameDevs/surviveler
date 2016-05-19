@@ -1,6 +1,4 @@
 from OpenGL.GL import GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS as MAX_TEXTURES
-from abc import ABC
-from abc import abstractmethod
 from contextlib import ExitStack
 from exceptions import OpenGLError
 from matlib import Mat4
@@ -58,7 +56,7 @@ class Scene:
         self.root.render(ctx)
 
 
-class AbstractSceneNode(ABC):
+class SceneNode:
     """Base class for scene nodes.
 
     A scene node is a renderable element in the scene tree, which can be a
@@ -74,7 +72,6 @@ class AbstractSceneNode(ABC):
         self.parent = None
         self.transform = Mat4()
 
-    @abstractmethod
     def render(self, ctx, transform):
         """Renders the node.
 
@@ -100,16 +97,20 @@ class AbstractSceneNode(ABC):
         """Add a node as child.
 
         :param node: Node instance to add as child.
-        :type node: a class derived from :class:`renderer.scene.AbstractSceneNode`
+        :type node: a class derived from :class:`renderer.scene.SceneNode`
+
+        :returns: The added node.
+        :rtype: :class:`renderer.scene.SceneNode`
         """
         node.parent = self
         self._children.append(node)
+        return node
 
     def remove_child(self, node):
         """Remove a child node.
 
         :param node: Node instance to remove.
-        :type node: a class derived from :class:`renderer.scene.AbstractSceneNode`
+        :type node: a class derived from :class:`renderer.scene.SceneNode`
         """
         try:
             self._children.remove(node)
@@ -136,7 +137,7 @@ class AbstractSceneNode(ABC):
         return Vec3(v[0], v[1], v[2])
 
 
-class RootNode(AbstractSceneNode):
+class RootNode(SceneNode):
     """A special node used as root for the scene tree, which `render()` method
     renders the entire tree and performs the parent-child transformations
     chaining.
@@ -154,7 +155,7 @@ class RootNode(AbstractSceneNode):
             render_all(child, self.transform)
 
 
-class GeometryNode(AbstractSceneNode):
+class GeometryNode(SceneNode):
     """A node for attaching static geometry (mesh) to the scene."""
 
     def __init__(self, mesh, shader, params=None, textures=None):
@@ -198,7 +199,7 @@ class GeometryNode(AbstractSceneNode):
             self.mesh.render(ctx.renderer)
 
 
-class TextNode(AbstractSceneNode):
+class TextNode(SceneNode):
     """A node for rendering static text."""
 
     def __init__(self, font, shader, text, color=Vec3(1, 1, 1)):

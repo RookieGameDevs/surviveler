@@ -15,7 +15,7 @@ class Terrain(Entity):
         """Constructor.
 
         :param parent_node: Parent node to attach the terrain entity to.
-        :type param_node: subclass of :class:`renderer.AbstractSceneNode`
+        :type param_node: subclass of :class:`renderer.SceneNode`
 
         :param width: Width of the terrain in game units.
         :type width: float
