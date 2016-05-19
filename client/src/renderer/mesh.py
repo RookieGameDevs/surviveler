@@ -108,3 +108,44 @@ class Mesh:
         glBindVertexArray(self.vao)
         glDrawElements(GL_TRIANGLES, self.num_elements, GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
+
+
+class Rect(Mesh):
+    """2D rectangle mesh with origin in top left corner."""
+
+    def __init__(self, width, height, normalize_uvs=True):
+        """Constructor.
+
+        :param width: Width of the rectangle.
+        :type width: float
+
+        :param height: Height of the rectangle.
+        :type height: float
+
+        :param normalize_uvs: Should UV coordinates be in [0, 1] range or
+            extend to width and height values.
+        :type normalize_uvs: bool
+        """
+        left = 0
+        top = height
+        right = width
+        bottom = 0
+        vertices = [
+            left, top, 0.0,
+            left, bottom, 0.0,
+            right, bottom, 0.0,
+            right, top, 0.0,
+        ]
+        indices = [
+            0, 1, 2,
+            0, 2, 3,
+        ]
+        u = 1.0 if normalize_uvs else width
+        v = 1.0 if normalize_uvs else height
+        uvs = [
+            0, 0,
+            0, v,
+            u, v,
+            u, 0,
+        ]
+        super(Rect, self).__init__(vertices, indices, uvs)
