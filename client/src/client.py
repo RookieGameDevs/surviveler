@@ -69,8 +69,8 @@ class Client:
 
         Creates game entities and sets up the visual scene.
 
-        :param conf: Game configuration
-        :type conf: mapping
+        :param context: Game context.
+        :type context: :class:`context.Context`
 
         :return: The configured scene
         :rtype: :class:`renderer.scene.Scene`
@@ -83,8 +83,8 @@ class Client:
     def setup_camera(self, context):
         """Sets up camera.
 
-        :param conf: Game configuration
-        :type conf: mapping
+        :param context: Game context.
+        :type context: :class:`context.Context`
 
         :return: The camera
         :rtype: :class:`renderer.camera.OrthoCamera`
