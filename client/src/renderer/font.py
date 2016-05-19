@@ -8,11 +8,11 @@ from OpenGL.GL import glBindTexture
 from OpenGL.GL import glGenTextures
 from OpenGL.GL import glTexStorage2D
 from OpenGL.GL import glTexSubImage2D
-from renderer.texture import Texture
 from exceptions import SDLError
-import sdl2.sdlttf as ttf
-import sdl2 as sdl
+from renderer.texture import Texture
 import ctypes
+import sdl2 as sdl
+import sdl2.sdlttf as ttf
 
 
 TTF_INITIALIZED = False
