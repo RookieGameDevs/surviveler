@@ -138,7 +138,6 @@ func registerTelnetCommands(tns *TelnetServer, registry *ClientRegistry) {
 	kick.Handler = func(w io.Writer) {
 
 		clientId := uint32(*clientId)
-
 		if connection, ok := registry.clients[clientId]; ok {
 			if err := sendLeave(connection, "telnet just kicked your ass out"); err != nil {
 				io.WriteString(w, fmt.Sprintf("couldn't kick client %v\n", err))
@@ -146,7 +145,9 @@ func registerTelnetCommands(tns *TelnetServer, registry *ClientRegistry) {
 				io.WriteString(w, fmt.Sprintf("client %v has been kicked out\n", clientId))
 			}
 		} else {
-			io.WriteString(w, fmt.Sprintf("invalid client id: %v\n", clientId))
+			kick.Parms.SetOutput(w)
+			io.WriteString(w, fmt.Sprintf("invalid client id\n"))
+			kick.Parms.PrintDefaults()
 		}
 	}
 	tns.RegisterCommand(kick)
