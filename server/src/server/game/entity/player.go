@@ -23,7 +23,6 @@ type Player struct {
  * NewPlayer creates a new player and set its initial position and speed
  */
 func NewPlayer(startX, startY, speed float32) *Player {
-
 	p := new(Player)
 	p.Speed = speed
 	p.Pathfinder = &BasicPathFinder{}
@@ -33,7 +32,6 @@ func NewPlayer(startX, startY, speed float32) *Player {
 }
 
 func (p *Player) Update(dt time.Duration) {
-
 	// update position
 	if p.CurAction != IdleAction {
 

@@ -24,14 +24,16 @@ type Game struct {
 	server        protocol.Server             // server core
 	ticker        time.Ticker                 // our tick source
 	msgChan       chan messages.ClientMessage // conducts ClientMessage to the game loop
-	loopCloseChan chan struct{}               // indicates to the game loop that it may exit
+	loopCloseChan chan struct{}               // signal the game loop it must end
+	clients       *protocol.ClientRegistry    // the client registry
+	telnet        *protocol.TelnetServer      // if enabled, the telnet server
+	telnetChan    chan TelnetRequest          // channel for game related telnet commands
 }
 
 /*
  * Setup initializes the different game subsystems
  */
 func (g *Game) Setup() {
-
 	// get configuration
 	g.cfg = ParseConfig()
 
@@ -48,20 +50,29 @@ func (g *Game) Setup() {
 	g.msgChan = make(chan messages.ClientMessage)
 	g.loopCloseChan = make(chan struct{})
 
-	// setup server
+	// creates the client registry
+	g.clients = protocol.NewClientRegistry()
+
+	// setup the telnet server
+	if len(g.cfg.TelnetPort) > 0 {
+		g.telnetChan = make(chan TelnetRequest)
+		g.telnet = protocol.NewTelnetServer(g.cfg.TelnetPort, g.clients)
+		g.setTelnetHandlers()
+	}
+
+	// setup TCP server
 	rootHandler := func(msg *messages.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
 		g.msgChan <- messages.ClientMessage{msg, clientId}
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler)
+	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet)
 }
 
 /*
  * Start starts the server and game loops
  */
 func (g *Game) Start() {
-
 	log.Info("Starting Surviveler server")
 
 	// start everything
@@ -87,5 +98,5 @@ func (g *Game) stop() {
 	// stop game loop
 	log.Info("Stopping game loop")
 	g.loopCloseChan <- struct{}{}
-	defer close(g.loopCloseChan)
+	close(g.loopCloseChan)
 }

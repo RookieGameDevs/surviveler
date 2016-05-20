@@ -16,6 +16,7 @@ var (
 	DefaultLogLevel        = "Debug"
 	DefaultLogicTickPeriod = 10
 	DefaultSendTickPeriod  = 100
+	DefaultTelnetPort      = ""
 )
 
 var (
@@ -27,6 +28,8 @@ var (
 		"Period in millisecond of the ticker that updates game logic")
 	SendTickPeriod = flag.Int("send-tick-period", DefaultSendTickPeriod,
 		"Period in millisecond of the ticker that send the gamestate to clients")
+	TelnetPort = flag.String("telnet-port", DefaultTelnetPort,
+		"Any port different than 0 enables the telnet server (disabled by defaut)")
 )
 
 /*
@@ -37,6 +40,7 @@ type Config struct {
 	LogLevel        log.Level
 	SendTickPeriod  int
 	LogicTickPeriod int
+	TelnetPort      string
 }
 
 /*
@@ -54,6 +58,7 @@ func ParseConfig() (cfg Config) {
 	cfg.Port = *Port
 	cfg.SendTickPeriod = *SendTickPeriod
 	cfg.LogicTickPeriod = *LogicTickPeriod
+	cfg.TelnetPort = *TelnetPort
 
 	if ll, err := log.ParseLevel(*LogLevel); err == nil {
 		cfg.LogLevel = ll

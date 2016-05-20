@@ -13,7 +13,13 @@ import (
 
 /*
  * loop is the main game loop, it fetches messages from a channel, processes
- * them immediately.
+ * them immediately. After performing some initialization, it waits forever,
+ * waiting for a wake-up call coming from any one of those events:
+ * - external loop close request -> exits immediately
+ * - arrival of a message -> process it
+ * - logic tick -> perform logic update
+ * - gamestate tick -> pack and broadcast the current game state
+ * - telnet request -> perform a game state related telnet request
  */
 func (g *Game) loop() {
 
@@ -54,14 +60,15 @@ func (g *Game) loop() {
 				}
 
 			case <-sendTickChan:
-
 				// pack the gamestate into a message
-				if gsmsg := gs.pack(); gsmsg != nil {
-					g.server.Broadcast(gsmsg)
+				if gsMsg := gs.pack(); gsMsg != nil {
+					// wrap the GameStateMsg into a generic Message
+					if msg := messages.NewMessage(messages.GameStateId, *gsMsg); msg != nil {
+						g.server.Broadcast(msg)
+					}
 				}
 
 			case <-tickChan:
-
 				// compute delta time
 				cur_time = time.Now()
 				dt := cur_time.Sub(last_time)
@@ -72,8 +79,11 @@ func (g *Game) loop() {
 				}
 				last_time = cur_time
 
-			default:
+			case tnr := <-g.telnetChan:
+				// received a telnet request
+				g.telnetHandler(tnr, &gs)
 
+			default:
 				// let the rest of the world spin
 				time.Sleep(1 * time.Millisecond)
 			}

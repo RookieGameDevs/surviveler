@@ -13,10 +13,9 @@ import (
 var factory *Factory
 
 /*
- * Factory associates unique message ids with their corresponding message
- * structures. Once every know message has been registered with RegisterMsgType,
- * a new message struct can be instantiated by passing its type to
- * Factory.NewMsg()
+ * Factory associates unique message ids with the corresponding message
+ * structures. Once a message has been registered, a message struct can
+ * be instantiated by passing its type to newMsg()
  */
 type Factory struct {
 	registry map[uint16]reflect.Type
@@ -62,29 +61,27 @@ func (mf Factory) registerMsgType(t uint16, i interface{}) {
  * newMsg returns a new (zero'ed) message struct
  */
 func (mf Factory) newMsg(t uint16) interface{} {
-	var it reflect.Type
 	var ok bool
-	if it, ok = mf.registry[t]; !ok {
+	var reft reflect.Type
+	if reft, ok = mf.registry[t]; !ok {
 		log.WithField("msgtype", t).Panic("Unknown message type")
 	}
-	return reflect.New(it).Elem().Interface()
+	return reflect.New(reft).Elem().Interface()
 }
 
 /*
  * DecodePayload returns a new message struct, decoded from given payload
  */
-func (mf Factory) DecodePayload(t uint16, p []byte) (interface{}, error) {
+func (mf Factory) DecodePayload(t uint16, p []byte) interface{} {
 	var mh codec.MsgpackHandle
 	// Create a struct having the corresponding underlying type
 	msg := mf.newMsg(t)
 
 	// Decode msgpack payload into interface
-	var dec *codec.Decoder = codec.NewDecoderBytes(p, &mh)
-	err := dec.Decode(&msg)
+	decoder := codec.NewDecoderBytes(p, &mh)
+	err := decoder.Decode(&msg)
 	if err != nil {
-		log.WithError(err).Error("Couldn't decode payload")
-		return nil, err
+		log.WithError(err).Panic("Couldn't decode payload")
 	}
-
-	return msg, nil
+	return msg
 }

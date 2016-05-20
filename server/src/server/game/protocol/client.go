@@ -31,11 +31,13 @@ type ClientData struct {
 }
 
 /*
- * Init initializes the ClientRegistry
+ * NewClientRegistry initializes and returns a ClientRegistry
  */
-func (reg *ClientRegistry) init() {
-	reg.clients = make(map[uint32]*network.Conn, 0)
-	reg.nextId = 0
+func NewClientRegistry() *ClientRegistry {
+	return &ClientRegistry{
+		clients: make(map[uint32]*network.Conn, 0),
+		nextId:  0,
+	}
 }
 
 /*
@@ -97,14 +99,14 @@ func (reg *ClientRegistry) Broadcast(msg *messages.Message) error {
 
 	for _, client := range reg.clients {
 		// we tolerate only a very short delay
-		err := client.AsyncSendPacket(msg, 5*time.Millisecond)
+		err := client.AsyncSendPacket(msg, 10*time.Millisecond)
 		if !client.IsClosed() {
 			switch err {
 			case network.ErrClosedConnection:
 				// the connection could still have been closed in the meantime
 				log.WithField("msg", msg).Warning("Client connection already closed")
 			case network.ErrBlockingWrite:
-				// this should not be tolerated, as we can make the rest of the world wait
+				// this should not be tolerated, as we can't make the rest of the world wait
 				log.WithError(err).WithField("msg", msg).Error("Blocking broadcast")
 				return err
 			}
@@ -114,7 +116,7 @@ func (reg *ClientRegistry) Broadcast(msg *messages.Message) error {
 }
 
 /*
- * ClientDataFunc is the type of functions accetping a ClientData and returning
+ * ClientDataFunc is the type of functions accepting a ClientData and returning
  * a boolean.
  */
 type ClientDataFunc func(ClientData) bool
