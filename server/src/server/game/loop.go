@@ -81,7 +81,7 @@ func (g *Game) loop() {
 
 			case tnr := <-g.telnetChan:
 				// received a telnet request
-				g.telnetHandler(tnm, &gs)
+				g.telnetHandler(tnr, &gs)
 
 			default:
 				// let the rest of the world spin
