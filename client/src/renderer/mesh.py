@@ -8,6 +8,8 @@ from OpenGL.GL import GL_UNSIGNED_INT
 from OpenGL.GL import glBindBuffer
 from OpenGL.GL import glBindVertexArray
 from OpenGL.GL import glBufferData
+from OpenGL.GL import glDeleteBuffers
+from OpenGL.GL import glDeleteVertexArrays
 from OpenGL.GL import glDrawElements
 from OpenGL.GL import glEnableVertexAttribArray
 from OpenGL.GL import glGenBuffers
@@ -95,6 +97,14 @@ class Mesh:
 
         # unbind the vertex array object
         glBindVertexArray(0)
+
+    def __del__(self):
+        """Destructor.
+
+        Destroys the VAO and related buffers associated with mesh.
+        """
+        glDeleteVertexArrays(1, [self.vao])
+        glDeleteBuffers(len(self.buffers), self.buffers)
 
     def render(self, rndr):
         """Draws the model using the given renderer.
