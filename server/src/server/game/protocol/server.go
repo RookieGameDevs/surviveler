@@ -17,16 +17,6 @@ const (
 	MAX_IN_CHANNELS  = 100
 )
 
-/*
- * Broadcaster is the interface that wraps that Broadcast method. It implements
- * the Broadcaster interface.
- */
-// TODO: to remove if not planned to use
-type Broadcaster interface {
-	// Broadcast broadcasts a message.
-	Broadcast(msg *messages.Message) error
-}
-
 type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
 
 /*
@@ -59,7 +49,6 @@ func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, teln
  * Start creates the TCP server and starts the listening goroutine
  */
 func (srv *Server) Start() {
-
 	// creates a tcp listener
 	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+srv.port)
 	if err != nil {

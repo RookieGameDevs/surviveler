@@ -13,10 +13,9 @@ import (
 var factory *Factory
 
 /*
- * Factory associates unique message ids with their corresponding message
- * structures. Once every know message has been registered with RegisterMsgType,
- * a new message struct can be instantiated by passing its type to
- * Factory.NewMsg()
+ * Factory associates unique message ids with the corresponding message
+ * structures. Once a message has been registered, a message struct can
+ * be instantiated by passing its type to newMsg()
  */
 type Factory struct {
 	registry map[uint16]reflect.Type

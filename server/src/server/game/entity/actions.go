@@ -8,7 +8,6 @@ type ActionType uint16
 
 const (
 	IdleAction ActionType = 0 + iota
-	// TODO: set the real action type Ids
 	MovingAction
 )
 
@@ -23,14 +22,16 @@ type EntityState struct {
 }
 
 /*
+ * Idle action
+ */
+type IdleActionData struct {
+}
+
+/*
  * Movement action data.
  */
 type MoveActionData struct {
 	Speed float32
 	Xpos  float32
 	Ypos  float32
-}
-
-type IdleActionData struct {
-	// empty
 }

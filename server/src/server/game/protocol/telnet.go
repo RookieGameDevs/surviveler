@@ -50,7 +50,6 @@ func NewTelnetServer(port string, registry *ClientRegistry) *TelnetServer {
  * Start starts the telnet server. This call is not blocking
  */
 func (tns *TelnetServer) Start() {
-
 	globalHandler := func(c *telgo.Client, args []string) bool {
 		tw := &telnetWriter{c}
 		if cmd, ok := tns.commands[args[0]]; ok {

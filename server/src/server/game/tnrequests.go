@@ -1,6 +1,6 @@
 /*
  * Surviveler game package
- * game related telnet request
+ * game related telnet commands
  */
 package game
 
@@ -27,11 +27,7 @@ const (
 
 /*
  * setTelnetHandlers sets the handlers for game related telnet commands. Game
- * related telnet requests use a channel to signal the game loop, thus
- * guaranteeing us that the functions handling those requests won't be compete
- * with others functions having access to the game stae. Therefore, those
- * handlers can read and modify the game state without problem.
- */
+ * related telnet commands use a channel to signal the game loop,  */
 func (g *Game) setTelnetHandlers() {
 	cmd := protocol.NewTelnetCmd("gamestate")
 	cmd.Descr = "prints the gamestate"
@@ -45,9 +41,14 @@ func (g *Game) setTelnetHandlers() {
 	g.telnet.RegisterCommand(cmd)
 }
 
+/*
+ * telnetHandler is exclusively called from the game loop, when it has been
+ * signaled about an incoming telnet request. This guaranty implies that nobody
+ * else has access to the game state. However, no blocking call should ever be
+ * performed inside this handler.
+ */
 func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) {
 	log.WithField("msg", msg).Info("Received telnet game messages")
-
 	switch msg.Type {
 	case TnGameStateId:
 		if gsMsg := gs.pack(); gsMsg != nil {

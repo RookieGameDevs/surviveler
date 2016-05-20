@@ -39,9 +39,7 @@ type MessageManager struct {
  * performs the decoding of the payload into an interface.
  */
 func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
-	handlers := mm.listeners[msg.Type]
-
-	for _, handler := range handlers {
+	for _, handler := range mm.listeners[msg.Type] {
 		iface := mm.factory.DecodePayload(msg.Type, msg.Payload)
 		err := handler.handleMsg(iface, clientId)
 		if err != nil {
