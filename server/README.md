@@ -29,11 +29,11 @@ file is located).
 
 ### Build and install
 
-Change to the directory where resides the file `main.go`, that is
-`/path/to/surviveler/server/src/server` and then issue:
+In order to build, at once, the dependencies and the server executable
+(originally called `server`), just type, from anywhere in the `$GOPATH`:
 
 ```
-go install
+go install server
 ```
 
 On success, as for any other Go project, `bin/` and `pkg/` directories will be
