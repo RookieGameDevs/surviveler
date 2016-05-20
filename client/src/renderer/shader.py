@@ -11,6 +11,7 @@ from OpenGL.GL import glAttachShader
 from OpenGL.GL import glCompileShader
 from OpenGL.GL import glCreateProgram
 from OpenGL.GL import glCreateShader
+from OpenGL.GL import glDeleteProgram
 from OpenGL.GL import glGetActiveUniform
 from OpenGL.GL import glGetProgramInfoLog
 from OpenGL.GL import glGetProgramiv
@@ -77,6 +78,13 @@ class Shader:
                 'type': prim_type,
                 'size': size,
             }
+
+    def __del__(self):
+        """Destructor.
+
+        Destroys the shader program object associated with instance.
+        """
+        glDeleteProgram(self.prog)
 
     @classmethod
     def from_glsl(cls, vert_shader_file, frag_shader_file):
