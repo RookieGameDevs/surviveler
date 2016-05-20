@@ -48,7 +48,7 @@ func (g *Game) setTelnetHandlers() {
  * performed inside this handler.
  */
 func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) {
-	log.WithField("msg", msg).Info("Received telnet game messages")
+	log.WithField("msg", msg).Info("Received telnet game message")
 	switch msg.Type {
 	case TnGameStateId:
 		if gsMsg := gs.pack(); gsMsg != nil {
