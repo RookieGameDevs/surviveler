@@ -11,6 +11,8 @@ from OpenGL.GL import GL_UNSIGNED_BYTE
 from OpenGL.GL import glActiveTexture
 from OpenGL.GL import glBindSampler
 from OpenGL.GL import glBindTexture
+from OpenGL.GL import glDeleteSamplers
+from OpenGL.GL import glDeleteTextures
 from OpenGL.GL import glGenSamplers
 from OpenGL.GL import glGenTextures
 from OpenGL.GL import glSamplerParameteri
@@ -82,6 +84,15 @@ class Texture:
         self.sampler = glGenSamplers(1)
         self._width = width
         self._height = height
+
+    def __del__(self):
+        """Destructor.
+
+        Destroys texture and sampler objects associated with the instance.
+        """
+        glDeleteTextures(self.tex_id)
+        glDeleteSamplers(1, [self.sampler])
+        self.tex_id = self.sampler = 0
 
     @property
     def width(self):

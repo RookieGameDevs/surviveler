@@ -205,6 +205,7 @@ class TextNode(SceneNode):
     def __init__(self, font, shader, text, color=Vec3(1, 1, 1)):
         super(TextNode, self).__init__()
         self.font = font
+        self._text = None
         self.text = text
         self.shader = shader
         self.color = color
@@ -215,9 +216,10 @@ class TextNode(SceneNode):
 
     @text.setter
     def text(self, text):
-        self._text = text
-        self._texture = self.font.render_to_texture(text)
-        self._rect = Rect(self._texture.width, self._texture.height, False)
+        if self._text != text:
+            self._text = text
+            self._texture = self.font.render_to_texture(text)
+            self._rect = Rect(self._texture.width, self._texture.height, False)
 
     @property
     def width(self):
