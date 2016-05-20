@@ -7,6 +7,8 @@ from game.events import CharacterLeave
 from game.events import EntityIdle
 from game.events import EntityMove
 from loaders import load_obj
+from math import atan
+from math import copysign
 from math import pi
 from matlib import Mat4
 from matlib import Vec3
@@ -48,6 +50,15 @@ class Character(Entity):
         self.name = name
         self.rot_angle = 0.0
 
+    def orientate(self):
+        """Orientate the character towards the current destination."""
+        dest = self[Movable].destination
+        if dest:
+            x, y = self[Movable].position
+            dx = dest[0] - x
+            dy = dest[1] - y
+            self.rot_angle = atan(dy / dx) + (pi / 2) * copysign(1, dx)
+
     def destroy(self):
         """Removes itself from the scene.
         """
@@ -58,7 +69,7 @@ class Character(Entity):
     def update(self, dt):
         """Update the character.
 
-        This method computes player's game logic as a function of time.
+        This method computes character's game logic as a function of time.
 
         :param dt: Time delta from last update.
         :type dt: float
@@ -68,6 +79,8 @@ class Character(Entity):
         self[Renderable].transform = (
             Mat4.trans(Vec3(x, y, 0)) *
             Mat4.rot(Z, self.rot_angle))
+
+        self.orientate()
 
 
 @subscriber(CharacterJoin)
