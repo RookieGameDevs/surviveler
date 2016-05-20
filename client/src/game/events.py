@@ -83,9 +83,11 @@ class CharacterLeave(Event):
 
     Event emitted when a character leaves the game.
     """
-    def __init__(self, srv_id, reason):
+    def __init__(self, srv_id, name, reason):
         self.srv_id = srv_id
+        self.name = name
         self.reason = reason
 
     def __str__(self):
-        return '<CharacterLeave({}, {})>'.format(self.srv_id, self.reason)
+        return '<CharacterLeave({}, {}, {})>'.format(
+            self.srv_id, self.name, self.reason)

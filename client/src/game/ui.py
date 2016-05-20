@@ -1,6 +1,7 @@
 from datetime import datetime
 from events import subscriber
 from game.events import CharacterJoin
+from game.events import CharacterLeave
 from matlib import Mat4
 from matlib import Vec3
 from renderer import Font
@@ -67,7 +68,17 @@ class UI:
 @subscriber(CharacterJoin)
 def log_join(evt):
     """Logs the name and ID of the joined character to UI console."""
-    evt.context.ui.log('[{}] {} joined with ID {}'.format(
+    if evt.name:
+        evt.context.ui.log('[{}] {} joined with ID {}'.format(
+            datetime.now().time().replace(microsecond=0).isoformat(),
+            evt.name,
+            evt.srv_id))
+
+
+@subscriber(CharacterLeave)
+def log_leave(evt):
+    """Logs the name of the character which just left the party."""
+    evt.context.ui.log('[{}] {} left the game:'.format(
         datetime.now().time().replace(microsecond=0).isoformat(),
         evt.name,
-        evt.srv_id))
+        evt.reason or 'disconnected'))

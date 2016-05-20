@@ -277,7 +277,8 @@ class Client:
             self.exit = True
         else:
             LOG.info('Player "{}" disconnected'.format(srv_id))
-            send_event(CharacterLeave(srv_id, reason))
+            char = self.context.resolve_entity(srv_id)
+            send_event(CharacterLeave(srv_id, char.name, reason))
 
     @message_handler(MT.gamestate)
     def gamestate_handler(self, msg):
