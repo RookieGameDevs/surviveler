@@ -10,19 +10,22 @@ from renderer import SceneNode
 from renderer import Shader
 from renderer import TextNode
 
+
 class UI:
     """User interface."""
 
     def __init__(self, renderer):
         self.renderer = renderer
+        self.w = renderer.width
+        self.h = renderer.height
         self.scene = Scene()
 
-        aspect = renderer.height / float(renderer.width)
+        aspect = self.h / float(self.w)
         self.camera = OrthoCamera(
             0,
-            self.renderer.width,
+            self.w,
             0,
-            aspect * self.renderer.height,
+            aspect * self.h,
             1)
 
         self.log_line_height = 18
@@ -34,13 +37,25 @@ class UI:
             'data/shaders/text.frag')
         self.log_node = self.scene.root.add_child(SceneNode())
 
+        self.fps_counter_node = self.scene.root.add_child(TextNode(
+            self.log_font,
+            self.log_shader,
+            'FPS',
+            self.log_color))
+        self.fps_counter_node.transform = Mat4.trans(Vec3(
+            self.w - self.w * 0.1, 0, 0))
+
+    def set_fps(self, number):
+        """Set the current frame rate in FPS widget."""
+        self.fps_counter_node.text = 'FPS: {}'.format(number)
+
     def log(self, msg):
         """Log a message on screen console.
 
         :param msg: Message to log.
         :type msg: str
         """
-        if self.log_height >= self.renderer.width - self.log_line_height:
+        if self.log_height >= self.w - self.log_line_height:
             self.log_node.children = []
 
         txt = self.log_node.add_child(TextNode(

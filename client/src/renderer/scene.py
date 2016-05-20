@@ -219,6 +219,14 @@ class TextNode(SceneNode):
         self._texture = self.font.render_to_texture(text)
         self._rect = Rect(self._texture.width, self._texture.height, False)
 
+    @property
+    def width(self):
+        return self._texture.width
+
+    @property
+    def height(self):
+        return self._texture.height
+
     def render(self, ctx, transform):
         params = {
             'transform': ctx.camera.modelview * transform,

@@ -178,9 +178,20 @@ class Client:
         self.ping()
         self.join(self.context.player_name)
 
+        time_acc = 0.0
+        fps_count = 0
+
         while not self.exit:
             # Compute time delta
             dt = self.dt
+
+            # Update FPS stats
+            time_acc += dt
+            fps_count += 1
+            if time_acc >= 1:
+                time_acc -= 1
+                self.context.ui.set_fps(fps_count)
+                fps_count = 0
 
             # Poll messages from network
             self.poll_network()
