@@ -19,14 +19,7 @@ class UI:
         self.w = renderer.width
         self.h = renderer.height
         self.scene = Scene()
-
-        aspect = self.h / float(self.w)
-        self.camera = OrthoCamera(
-            0,
-            self.w,
-            0,
-            aspect * self.h,
-            1)
+        self.camera = OrthoCamera(0, self.w, 0, self.h, 1)
 
         self.log_line_height = 18
         self.log_height = 0
