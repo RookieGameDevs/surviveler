@@ -200,9 +200,23 @@ class GeometryNode(SceneNode):
 
 
 class TextNode(SceneNode):
-    """A node for rendering static text."""
+    """A node for rendering text."""
 
     def __init__(self, font, shader, text, color=Vec3(1, 1, 1)):
+        """Constructor.
+
+        :param font: Font to use.
+        :type font: :class:`renderer.Font`
+
+        :param shader: Shader to use.
+        :type shader: :class:`renderer.Shader`
+
+        :param text: Initial text string to render, must not be empty.
+        :type text: tr
+
+        :param color: Text color.
+        :type color: :class:`matlib.Vec3`
+        """
         super(TextNode, self).__init__()
         self.font = font
         self._text = None
@@ -212,10 +226,20 @@ class TextNode(SceneNode):
 
     @property
     def text(self):
+        """Text string currently rendered.
+
+        :returns: Text
+        :rtype: str
+        """
         return self._text
 
     @text.setter
     def text(self, text):
+        """Sets the text string to render.
+
+        :param text: New text.
+        :type text: str
+        """
         if self._text != text:
             self._text = text
             self._texture = self.font.render_to_texture(text)
@@ -223,10 +247,12 @@ class TextNode(SceneNode):
 
     @property
     def width(self):
+        """Width of the text node's underlying texture."""
         return self._texture.width
 
     @property
     def height(self):
+        """Height of the text node's underlying texture."""
         return self._texture.height
 
     def render(self, ctx, transform):

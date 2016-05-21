@@ -19,8 +19,20 @@ TTF_INITIALIZED = False
 
 
 class Font:
+    """Font.
+
+    This class incapsulates fonts loading and rendering primitives.
+    """
 
     def __init__(self, filename, size):
+        """Constructor.
+
+        :param filename: Font file to load.
+        :type filename: str
+
+        :param size: Font size to use.
+        :type size: int
+        """
         global TTF_INITIALIZED
         if not TTF_INITIALIZED:
             ttf.TTF_Init()
@@ -37,6 +49,14 @@ class Font:
                 ttf.TTF_GetError()))
 
     def render_to_texture(self, text):
+        """Renders the given string to a texture object.
+
+        :param text: Text to render.
+        :type text: str
+
+        :returns: The resulting texture object.
+        :rtype: :class:`renderer.Texture`
+        """
         # render the text to a SDL_Surface structure
         surf_ptr = ttf.TTF_RenderText_Solid(
             self.font,

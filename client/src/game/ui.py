@@ -13,9 +13,17 @@ from renderer import TextNode
 
 
 class UI:
-    """User interface."""
+    """User interface.
+
+    This class encapsulates the user interface creation and management.
+    """
 
     def __init__(self, renderer):
+        """Constructor.
+
+        :param renderer: Renderer to use for UI rendering.
+        :type renderer: :class:`renderer.Renderer`
+        """
         self.renderer = renderer
         self.w = renderer.width
         self.h = renderer.height
@@ -40,7 +48,11 @@ class UI:
             self.w - self.w * 0.1, 0, 0))
 
     def set_fps(self, number):
-        """Set the current frame rate in FPS widget."""
+        """Set the current frame rate in FPS widget.
+
+        :param number: Number of frames per second to visualize.
+        :type number: int
+        """
         self.fps_counter_node.text = 'FPS: {}'.format(number)
 
     def log(self, msg):

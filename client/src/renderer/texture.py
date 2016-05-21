@@ -77,6 +77,16 @@ class Texture:
 
         :param tex_id: Identifier of OpenGL object representing the texture.
         :type tex_id: int
+
+        :param width: Width of the texture.
+        :type width: int
+
+        :param height: Height of the texture.
+        :type height: int
+
+        :param tex_type: OpenGL type of the texture. Must be a valid 2D texture
+            enum value.
+        :type tex_type: int
         """
         self.tex_id = tex_id
         self.tex_type = tex_type
