@@ -129,4 +129,8 @@ def load_obj(filename):
                 continue
             func_map.get(keyword, do_nothing)(lineno, keyword, values)
 
+    # NOTE: the indices are reversed because of the requirements for polygon
+    # winding order for our camera setup
+    # TODO: perform this in a better place and based on the OpenGL context
+    # configuration
     return vertices, normals, uvs, list(reversed(indices))
