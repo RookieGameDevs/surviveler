@@ -8,6 +8,8 @@ from OpenGL.GL import GL_UNSIGNED_INT
 from OpenGL.GL import glBindBuffer
 from OpenGL.GL import glBindVertexArray
 from OpenGL.GL import glBufferData
+from OpenGL.GL import glDeleteBuffers
+from OpenGL.GL import glDeleteVertexArrays
 from OpenGL.GL import glDrawElements
 from OpenGL.GL import glEnableVertexAttribArray
 from OpenGL.GL import glGenBuffers
@@ -96,6 +98,14 @@ class Mesh:
         # unbind the vertex array object
         glBindVertexArray(0)
 
+    def __del__(self):
+        """Destructor.
+
+        Destroys the VAO and related buffers associated with mesh.
+        """
+        glDeleteVertexArrays(1, [self.vao])
+        glDeleteBuffers(len(self.buffers), self.buffers)
+
     def render(self, rndr):
         """Draws the model using the given renderer.
 
@@ -108,3 +118,44 @@ class Mesh:
         glBindVertexArray(self.vao)
         glDrawElements(GL_TRIANGLES, self.num_elements, GL_UNSIGNED_INT, None)
         glBindVertexArray(0)
+
+
+class Rect(Mesh):
+    """2D rectangle mesh with origin in top left corner."""
+
+    def __init__(self, width, height, normalize_uvs=True):
+        """Constructor.
+
+        :param width: Width of the rectangle.
+        :type width: float
+
+        :param height: Height of the rectangle.
+        :type height: float
+
+        :param normalize_uvs: Should UV coordinates be in [0, 1] range or
+            extend to width and height values.
+        :type normalize_uvs: bool
+        """
+        left = 0
+        top = height
+        right = width
+        bottom = 0
+        vertices = [
+            left, top, 0.0,
+            left, bottom, 0.0,
+            right, bottom, 0.0,
+            right, top, 0.0,
+        ]
+        indices = [
+            0, 1, 2,
+            0, 2, 3,
+        ]
+        u = 1.0 if normalize_uvs else width
+        v = 1.0 if normalize_uvs else height
+        uvs = [
+            0, 0,
+            0, v,
+            u, v,
+            u, 0,
+        ]
+        super(Rect, self).__init__(vertices, indices, uvs)

@@ -2,3 +2,4 @@
 *.sublime-*
 .vimtags
 *.sw*
+.DS_Store

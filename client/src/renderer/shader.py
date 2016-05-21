@@ -3,6 +3,7 @@ from OpenGL.GL import GL_COMPILE_STATUS
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
 from OpenGL.GL import GL_FRAGMENT_SHADER
+from OpenGL.GL import GL_INT
 from OpenGL.GL import GL_LINK_STATUS
 from OpenGL.GL import GL_SAMPLER_2D
 from OpenGL.GL import GL_VERTEX_SHADER
@@ -10,6 +11,7 @@ from OpenGL.GL import glAttachShader
 from OpenGL.GL import glCompileShader
 from OpenGL.GL import glCreateProgram
 from OpenGL.GL import glCreateShader
+from OpenGL.GL import glDeleteProgram
 from OpenGL.GL import glGetActiveUniform
 from OpenGL.GL import glGetProgramInfoLog
 from OpenGL.GL import glGetProgramiv
@@ -36,13 +38,15 @@ UNIFORM_VALIDATORS = {
     GL_FLOAT_MAT4: lambda v: type(v) == Mat4,
     GL_FLOAT_VEC3: lambda v: type(v) == Vec3,
     GL_SAMPLER_2D: lambda v: type(v) == Texture,
+    GL_INT: lambda v: type(v) == int,
 }
 
 
 UNIFORM_SETTERS = {
     GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, np.asarray(v)),
     GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, np.asarray(v)),
-    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v.tex_unit)
+    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v.tex_unit),
+    GL_INT: lambda i, v: glUniform1i(i, v),
 }
 
 
@@ -74,6 +78,13 @@ class Shader:
                 'type': prim_type,
                 'size': size,
             }
+
+    def __del__(self):
+        """Destructor.
+
+        Destroys the shader program object associated with instance.
+        """
+        glDeleteProgram(self.prog)
 
     @classmethod
     def from_glsl(cls, vert_shader_file, frag_shader_file):

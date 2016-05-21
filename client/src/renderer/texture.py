@@ -11,6 +11,8 @@ from OpenGL.GL import GL_UNSIGNED_BYTE
 from OpenGL.GL import glActiveTexture
 from OpenGL.GL import glBindSampler
 from OpenGL.GL import glBindTexture
+from OpenGL.GL import glDeleteSamplers
+from OpenGL.GL import glDeleteTextures
 from OpenGL.GL import glGenSamplers
 from OpenGL.GL import glGenTextures
 from OpenGL.GL import glSamplerParameteri
@@ -70,15 +72,45 @@ class Texture:
     This class abstracts OpenGL texture objects and their usage in a convenient
     interface.
     """
-    def __init__(self, tex_id):
+    def __init__(self, tex_id, width, height, tex_type=GL_TEXTURE_2D):
         """Constructor.
 
         :param tex_id: Identifier of OpenGL object representing the texture.
         :type tex_id: int
+
+        :param width: Width of the texture.
+        :type width: int
+
+        :param height: Height of the texture.
+        :type height: int
+
+        :param tex_type: OpenGL type of the texture. Must be a valid 2D texture
+            enum value.
+        :type tex_type: int
         """
         self.tex_id = tex_id
+        self.tex_type = tex_type
         self.tex_unit = 0
         self.sampler = glGenSamplers(1)
+        self._width = width
+        self._height = height
+
+    def __del__(self):
+        """Destructor.
+
+        Destroys texture and sampler objects associated with the instance.
+        """
+        glDeleteTextures(self.tex_id)
+        glDeleteSamplers(1, [self.sampler])
+        self.tex_id = self.sampler = 0
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
 
     def set_param(self, param):
         """Applies sampling parameter.
@@ -108,7 +140,7 @@ class Texture:
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img.tobytes())
         glBindTexture(GL_TEXTURE_2D, 0)
 
-        return Texture(tex)
+        return Texture(tex, w, h)
 
     @contextmanager
     def use(self, tex_unit):
@@ -119,7 +151,7 @@ class Texture:
         """
         self.tex_unit = tex_unit
         glActiveTexture(GL_TEXTURE0 + self.tex_unit)
-        glBindTexture(GL_TEXTURE_2D, self.tex_id)
+        glBindTexture(self.tex_type, self.tex_id)
         glBindSampler(self.tex_unit, self.sampler)
         yield
-        glBindTexture(GL_TEXTURE_2D, 0)
+        glBindTexture(self.tex_type, 0)

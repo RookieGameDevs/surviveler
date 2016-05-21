@@ -2,7 +2,7 @@ from game import Entity
 from game.components import Renderable
 from matlib import Mat4
 from matlib import Vec3
-from renderer import Mesh
+from renderer import Rect
 from renderer import Shader
 from renderer import Texture
 from renderer import TextureParamWrap
@@ -15,7 +15,7 @@ class Terrain(Entity):
         """Constructor.
 
         :param parent_node: Parent node to attach the terrain entity to.
-        :type param_node: subclass of :class:`renderer.AbstractSceneNode`
+        :type param_node: subclass of :class:`renderer.SceneNode`
 
         :param width: Width of the terrain in game units.
         :type width: float
@@ -23,23 +23,7 @@ class Terrain(Entity):
         :param height: Height of the terrain in game units.
         :type height: float
         """
-        vertices = [
-            -0.5, +0.5, +0.0,  # top left
-            -0.5, -0.5, +0.0,  # bottom left
-            +0.5, -0.5, +0.0,  # bottom right
-            +0.5, +0.5, +0.0,  # top right
-        ]
-        indices = [
-            2, 1, 0,
-            3, 2, 0,
-        ]
-        uvs = [
-            0, 0,
-            0, 1,
-            1, 1,
-            1, 0,
-        ]
-        mesh = Mesh(vertices, indices, uvs)
+        mesh = Rect(1, 1)
 
         shader = Shader.from_glsl(
             'data/shaders/terrain.vert',
@@ -54,7 +38,7 @@ class Terrain(Entity):
         renderable = Renderable(parent_node, mesh, shader, textures=[texture])
         renderable.node.params['tex'] = texture
         renderable.transform = (
-            Mat4.trans(Vec3(0, 0, 0.5)) *
+            Mat4.trans(Vec3(-50, -50, 0.5)) *
             Mat4.scale(Vec3(100, 100, 1)))
 
         super(Terrain, self).__init__(renderable)

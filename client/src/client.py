@@ -1,6 +1,7 @@
 from context import Context
 from events import send_event
 from game import Terrain
+from game import UI
 from game import process_gamestate
 from game.events import CharacterJoin
 from game.events import CharacterLeave
@@ -53,6 +54,7 @@ class Client:
         context = Context(conf)
         context.scene = self.setup_scene(context)
         context.camera = self.setup_camera(context)
+        context.ui = UI(self.renderer)
         context.player_name = player_name
         self.context = context
 
@@ -63,6 +65,9 @@ class Client:
         self.sync_counter = count()  # The computed time delta with the server
         self._syncing = {}
         self.delta = 0  # The computed time delta with the server
+
+        self.time_acc = 0.0  # FPS time accumulator
+        self.fps_count = 0  # FPS counter
 
     def setup_scene(self, context):
         """Sets up the scene.
@@ -87,22 +92,22 @@ class Client:
         :type context: :class:`context.Context`
 
         :return: The camera
-        :rtype: :class:`renderer.camera.OrthoCamera`
+        :rtype: :class:`renderer.camera.Camera`
         """
         # Field of view in game units
         fov = context.conf['Game'].getint('fov')
 
         # Aspect ratio
-        aspect_ratio = self.renderer.height / float(self.renderer.width)
+        aspect = self.renderer.height / float(self.renderer.width)
 
         # Setup an orthographic camera with given field of view and flipped Y
         # coordinate (Y+ points down)
         camera = OrthoCamera(
-            -fov / 2,                  # left plane
-            +fov / 2,                  # right plane
-            -fov / 2 * aspect_ratio,   # top plane
-            +fov / 2 * aspect_ratio,   # bottom plane
-            100)                       # view distance
+            -fov / 2,            # left plane
+            +fov / 2,            # right plane
+            -fov / 2 * aspect,   # top plane
+            +fov / 2 * aspect,   # bottom plane
+            100)                 # view distance
 
         camera.look_at(eye=Vec3(0, -2.5, 5), center=Vec3(0, 0, 0))
 
@@ -114,9 +119,10 @@ class Client:
         """
         return len(self._syncing) > 0
 
-    @property
     def dt(self):
         """Returns the dt from the last update.
+
+        NOTE: this method updates the internal status of the client.
 
         :return: The dt from the last update in seconds
         :rtype: float
@@ -127,6 +133,20 @@ class Client:
         dt = (now - self.last_update) / 1000.0
         self.last_update = now
         return dt
+
+    def update_fps_counter(self, dt):
+        """Helper function to handle the fps counter.
+
+        :param dt: The time delta from the last frame.
+        :type dt: float
+        """
+        self.time_acc += dt
+        self.fps_count += 1
+        if self.time_acc >= 1:
+            # Update fps count and reset the helper variables.
+            self.time_acc -= 1
+            self.context.ui.set_fps(self.fps_count)
+            self.fps_count = 0
 
     def process_message(self, msg):
         """Processes a message received from the server.
@@ -178,7 +198,10 @@ class Client:
 
         while not self.exit:
             # Compute time delta
-            dt = self.dt
+            dt = self.dt()
+
+            # Update FPS stats
+            self.update_fps_counter(dt)
 
             # Poll messages from network
             self.poll_network()
@@ -193,6 +216,7 @@ class Client:
             # rendering
             self.renderer.clear()
             self.context.scene.render(self.renderer, self.context.camera)
+            self.context.ui.render()
             self.renderer.present()
 
             # Enqueue messages in context and emtpy the queue
@@ -234,7 +258,7 @@ class Client:
         send_event(PlayerJoin(self.context.player_id, self.context.player_name))
 
         for srv_id, name in msg.data[MF.players].items():
-            send_event(CharacterJoin(srv_id, name))
+            send_event(CharacterJoin(srv_id, as_utf8(name)))
 
     @message_handler(MT.joined)
     def handle_joined(self, msg):
@@ -263,7 +287,8 @@ class Client:
             self.exit = True
         else:
             LOG.info('Player "{}" disconnected'.format(srv_id))
-            send_event(CharacterLeave(srv_id, reason))
+            char = self.context.resolve_entity(srv_id)
+            send_event(CharacterLeave(srv_id, char.name, reason))
 
     @message_handler(MT.gamestate)
     def gamestate_handler(self, msg):
