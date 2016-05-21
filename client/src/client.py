@@ -66,6 +66,9 @@ class Client:
         self._syncing = {}
         self.delta = 0  # The computed time delta with the server
 
+        self.time_acc = 0.0  # FPS time accumulator
+        self.fps_count = 0  # FPS counter
+
     def setup_scene(self, context):
         """Sets up the scene.
 
@@ -116,9 +119,10 @@ class Client:
         """
         return len(self._syncing) > 0
 
-    @property
     def dt(self):
         """Returns the dt from the last update.
+
+        NOTE: this method updates the internal status of the client.
 
         :return: The dt from the last update in seconds
         :rtype: float
@@ -129,6 +133,20 @@ class Client:
         dt = (now - self.last_update) / 1000.0
         self.last_update = now
         return dt
+
+    def update_fps_counter(self, dt):
+        """Helper function to handle the fps counter.
+
+        :param dt: The time delta from the last frame.
+        :type dt: float
+        """
+        self.time_acc += dt
+        self.fps_count += 1
+        if self.time_acc >= 1:
+            # Update fps count and reset the helper variables.
+            self.time_acc -= 1
+            self.context.ui.set_fps(self.fps_count)
+            self.fps_count = 0
 
     def process_message(self, msg):
         """Processes a message received from the server.
@@ -178,20 +196,12 @@ class Client:
         self.ping()
         self.join(self.context.player_name)
 
-        time_acc = 0.0
-        fps_count = 0
-
         while not self.exit:
             # Compute time delta
-            dt = self.dt
+            dt = self.dt()
 
             # Update FPS stats
-            time_acc += dt
-            fps_count += 1
-            if time_acc >= 1:
-                time_acc -= 1
-                self.context.ui.set_fps(fps_count)
-                fps_count = 0
+            self.update_fps_counter(dt)
 
             # Poll messages from network
             self.poll_network()
