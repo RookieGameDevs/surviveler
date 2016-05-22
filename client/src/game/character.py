@@ -49,15 +49,39 @@ class Character(Entity):
 
         self.name = name
         self.rot_angle = 0.0
+        # rotation speed = 2π / fps / desired_2π_rotation_time
+        self.rot_speed = 2 * pi / 60 / 0.5
 
     def orientate(self):
         """Orientate the character towards the current destination."""
+
         dest = self[Movable].destination
         if dest:
             x, y = self[Movable].position
             dx = dest[0] - x
             dy = dest[1] - y
-            self.rot_angle = atan(dy / dx) + (pi / 2) * copysign(1, dx)
+            target_heading = atan(dy / dx) + (pi / 2) * copysign(1, dx)
+
+            # Compute remaining rotation
+            delta = target_heading - self.rot_angle
+            abs_delta = abs(delta)
+            if abs_delta > WHOLE_ANGLE / 2:
+                abs_delta = WHOLE_ANGLE - abs(delta)
+                delta = -delta
+
+            if abs_delta < self.rot_speed * 2:
+                # Rotation is complete within a small error.
+                # Force it to the exact value:
+                self.rot_angle = target_heading
+                return
+
+            self.rot_angle += copysign(1, delta) * self.rot_speed
+
+            # normalize angle to be in (-pi, pi)
+            if self.rot_angle >= WHOLE_ANGLE / 2:
+                self.rot_angle = -WHOLE_ANGLE + self.rot_angle
+            if self.rot_angle < -WHOLE_ANGLE / 2:
+                self.rot_angle = WHOLE_ANGLE + self.rot_angle
 
     def destroy(self):
         """Removes itself from the scene.
