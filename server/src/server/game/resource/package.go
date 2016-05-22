@@ -1,11 +1,11 @@
 /*
  * Surviveler resource package
- * resource package type and current implementation
+ * surviveler resource package implementation
  */
 package resource
 
 import (
-	//log "github.com/Sirupsen/logrus"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	MapUri string = "map/data.json"
+	mapUri string = "map/data.json"
 )
 
 /*
@@ -38,23 +38,40 @@ func NewSurvivelerPackage(path string) SurvivelerPackage {
 /*
  * Exists check if an uri exists inside a package
  */
-func (rr SurvivelerPackage) Exists(uri string) bool {
-	p := path.Join(rr.root, uri)
+func (sp SurvivelerPackage) Exists(uri string) bool {
+	p := path.Join(sp.root, uri)
 	_, err := os.Stat(p)
 	return err == nil
 }
 
 /*
- * GetReader obtains a ready to use reader, for the specified uri.
+ * getReader obtains a ready to use reader, for the specified uri.
  *
  * It the responsibility of the caller to close the returned ReadCloser once
  * done
  */
-func (rr SurvivelerPackage) GetReader(uri string) (io.ReadCloser, error) {
-
-	if !rr.Exists(uri) {
+func (sp SurvivelerPackage) getReader(uri string) (io.ReadCloser, error) {
+	if !sp.Exists(uri) {
 		return nil, fmt.Errorf("Resource not found: %s", uri)
 	}
-	p := path.Join(rr.root, uri)
+	p := path.Join(sp.root, uri)
 	return os.Open(p)
+}
+
+/*
+ * loadJSON decodes a JSON resource, which location is specified by uri, into
+ * an interface
+ */
+func (sp SurvivelerPackage) loadJSON(uri string, i interface{}) error {
+	r, err := sp.getReader(uri)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	decoder := json.NewDecoder(r)
+	return decoder.Decode(i)
+}
+
+func (sp SurvivelerPackage) LoadMap(i interface{}) error {
+	return sp.loadJSON(mapUri, i)
 }
