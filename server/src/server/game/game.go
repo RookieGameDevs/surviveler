@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"server/game/messages"
 	"server/game/protocol"
+	"server/game/resource"
 	"syscall"
 	"time"
 )
@@ -28,6 +29,7 @@ type Game struct {
 	clients       *protocol.ClientRegistry    // the client registry
 	telnet        *protocol.TelnetServer      // if enabled, the telnet server
 	telnetChan    chan TelnetRequest          // channel for game related telnet commands
+	assets        resource.SurvivelerPackage  // game assets package
 }
 
 /*
@@ -45,6 +47,9 @@ func (g *Game) Setup() {
 
 	// setup go runtime
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	// load assets
+	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
 
 	// init channels
 	g.msgChan = make(chan messages.ClientMessage)
