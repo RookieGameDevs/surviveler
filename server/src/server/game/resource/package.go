@@ -12,6 +12,10 @@ import (
 	"path"
 )
 
+const (
+	MapUri string = "map/data.json"
+)
+
 /*
  * SurvivelerPackage represents a package of data, resource files and assets for
  * the game Surviveler, grouped into a package.
@@ -41,20 +45,16 @@ func (rr SurvivelerPackage) Exists(uri string) bool {
 }
 
 /*
- * getReader obtains a ready to use reader, for the specified uri.
+ * GetReader obtains a ready to use reader, for the specified uri.
  *
  * It the responsibility of the caller to close the returned ReadCloser once
  * done
  */
-func (rr SurvivelerPackage) getReader(uri string) (io.ReadCloser, error) {
+func (rr SurvivelerPackage) GetReader(uri string) (io.ReadCloser, error) {
 
 	if !rr.Exists(uri) {
 		return nil, fmt.Errorf("Resource not found: %s", uri)
 	}
 	p := path.Join(rr.root, uri)
 	return os.Open(p)
-}
-
-func (rr SurvivelerPackage) MapReader() (io.ReadCloser, error) {
-	return rr.getReader("map/data.json")
 }
