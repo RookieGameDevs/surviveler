@@ -10,3 +10,6 @@
 [submodule "telgo"]
 	path = server/src/server/vendor/github.com/aurelien-rainone/telgo
 	url = git@github.com:aurelien-rainone/telgo
+[submodule "go-astar"]
+	path = server/src/server/vendor/github.com/beefsack/go-astar
+	url = git@github.com:beefsack/go-astar
