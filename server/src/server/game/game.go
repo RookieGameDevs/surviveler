@@ -5,6 +5,7 @@
 package game
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
@@ -30,12 +31,13 @@ type Game struct {
 	telnet        *protocol.TelnetServer      // if enabled, the telnet server
 	telnetChan    chan TelnetRequest          // channel for game related telnet commands
 	assets        resource.SurvivelerPackage  // game assets package
+	grid          Grid                        // world grid
 }
 
 /*
  * Setup initializes the different game subsystems
  */
-func (g *Game) Setup() {
+func (g *Game) Setup() bool {
 	// get configuration
 	g.cfg = ParseConfig()
 
@@ -49,7 +51,10 @@ func (g *Game) Setup() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// load assets
-	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
+	if err := g.loadAssets(g.cfg.AssetsPath); err != nil {
+		log.WithError(err).Error("Couldn't load assets")
+		return false
+	}
 
 	// init channels
 	g.msgChan = make(chan messages.ClientMessage)
@@ -72,6 +77,7 @@ func (g *Game) Setup() {
 		return nil
 	}
 	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet)
+	return true
 }
 
 /*
@@ -92,6 +98,23 @@ func (g *Game) Start() {
 	log.WithField("signal", <-chSig).Warn("Received termination signal")
 
 	g.stop()
+}
+
+/*
+ * loadAssets will load all the needed assets from the specifiec Surviveler
+ * package
+ */
+func (g *Game) loadAssets(path string) error {
+
+	if len(path) == 0 {
+		return fmt.Errorf("Can't start without a specified assets path")
+	}
+	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
+	if err := g.grid.LoadFrom(g.assets); err != nil {
+		return err
+	}
+	log.WithField("path", path).Info("Assets loaded successfully")
+	return nil
 }
 
 /*

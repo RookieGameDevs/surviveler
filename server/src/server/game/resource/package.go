@@ -5,18 +5,11 @@
 package resource
 
 import (
-	"errors"
 	//log "github.com/Sirupsen/logrus"
+	"fmt"
 	"io"
 	"os"
 	"path"
-)
-
-/*
- * Error types
- */
-var (
-	ErrResNotFound = errors.New("resource not found")
 )
 
 /*
@@ -44,20 +37,24 @@ func NewSurvivelerPackage(path string) SurvivelerPackage {
 func (rr SurvivelerPackage) Exists(uri string) bool {
 	p := path.Join(rr.root, uri)
 	_, err := os.Stat(p)
-	return os.IsExist(err)
+	return err == nil
 }
 
 /*
- * GetReader obtains a ready to use reader, for the specified uri.
+ * getReader obtains a ready to use reader, for the specified uri.
  *
  * It the responsibility of the caller to close the returned ReadCloser once
  * done
  */
-func (rr SurvivelerPackage) GetReader(uri string) (io.ReadCloser, error) {
+func (rr SurvivelerPackage) getReader(uri string) (io.ReadCloser, error) {
 
 	if !rr.Exists(uri) {
-		return nil, ErrResNotFound
+		return nil, fmt.Errorf("Resource not found: %s", uri)
 	}
 	p := path.Join(rr.root, uri)
 	return os.Open(p)
+}
+
+func (rr SurvivelerPackage) MapReader() (io.ReadCloser, error) {
+	return rr.getReader("map/data.json")
 }

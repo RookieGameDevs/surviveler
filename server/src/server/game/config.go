@@ -17,7 +17,7 @@ var (
 	DefaultLogicTickPeriod = 10
 	DefaultSendTickPeriod  = 100
 	DefaultTelnetPort      = ""
-	DefaultAssetsPath      = ""
+	DefaultAssetsPath      = "../../../data"
 )
 
 var (
