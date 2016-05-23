@@ -5,7 +5,7 @@ import os
 DATAFILE = 'data.json'
 
 
-class Resource:
+class Resource(dict):
     def __init__(self, r_mgr, r_path, data=None):
         """Constructor.
 
@@ -15,11 +15,13 @@ class Resource:
         :param r_path: The resource path
         :type r_path: str
 
-        :param data: Optional data (for resource modules)
+        :param data: Optional data (for resource packages)
         :type data: dict
         """
         self.r_mgr = r_mgr
         self.r_path = r_path
+
+        self.resources = {}
 
         # Load the content
         self.load(data)
@@ -27,26 +29,26 @@ class Resource:
     def load(self, data=None):
         """Loads the resource data.
 
-        The resource can be a resource module: in this case data will contains
-        the module metadata, otherwise it's a resource object (and data will be
-        None).
+        The resource can be a resource package: in this case data will contains
+        the package metadata, otherwise it's a resource object (and data will
+        be None).
 
-        Resource modules will cause the resource manager to load all the related
-        resource objects. The name defined in the module's own data.json will be
-        used as attribute names for that relevant data.
+        Resource packages will cause the resource manager to load all the
+        related resource objects. The name defined in the package's own
+        data.json will be used as attribute names for that relevant data.
 
-        :param data: Optional module data
+        :param data: Optional package data
         :type data: dict
         """
         if data:
-            # This is a resource module. Set the given data as data and load all
-            # the linked resources. Each resource object can be referenced from
-            # the resource module with the name with which it's identified in
-            # the data.json file.
+            # This is a resource package. Set the given data as data and load
+            # all the linked resources. Each resource object can be referenced
+            # from the resource package with the name with which it's identified
+            # in the data.json file.
             self.data = data
             for name, path in data.get('resources', {}).items():
                 r = self.r_mgr.get(os.path.join(self.r_path, path))
-                setattr(self, name, r.data)
+                self[name] = r.data
         else:
             # This is a resource item. Use the appropriate loader to load the
             # relevant data and set self.data as the resulting value.
