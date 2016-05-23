@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import os
 
@@ -5,17 +6,17 @@ import os
 DATAFILE = 'data.json'
 
 
-def load_data(f, r_mgr, cwd):
+def load_data(f, cwd, r_mgr):
     """Loader for json files.
 
     :param f: The file pointer
     :type f: File
 
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
     :param cwd: The current working directory
     :type cwd: str
+
+    :param r_mgr: The resource manager
+    :type r_mgr: :class:`ResourceManager`
 
     :return: A dictionary containing the loaded data
     :rtype: dict
@@ -23,17 +24,17 @@ def load_data(f, r_mgr, cwd):
     return json.load(f)
 
 
-def load_mesh(f, r_mgr, cwd):
+def load_mesh(f, cwd, r_mgr):
     """Loader for obj files.
 
     :param f: The file pointer
     :type f: File
 
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
     :param cwd: The current working directory
     :type cwd: str
+
+    :param r_mgr: The resource manager
+    :type r_mgr: :class:`ResourceManager`
 
     :return: The resulting mesh object
     :rtype: :class:`renderer.Mesh`
@@ -43,7 +44,7 @@ def load_mesh(f, r_mgr, cwd):
     return {'mesh': f.read()}
 
 
-def load_vertex(f, r_mgr, cwd):
+def load_vertex(f, cwd, r_mgr):
     """Loader for vert files.
 
     TODO: define the object that is going to be returned by this function.
@@ -51,11 +52,11 @@ def load_vertex(f, r_mgr, cwd):
     :param f: The file pointer
     :type f: File
 
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
     :param cwd: The current working directory
     :type cwd: str
+
+    :param r_mgr: The resource manager
+    :type r_mgr: :class:`ResourceManager`
 
     :return: The resulting vert object
     :rtype: TBD
@@ -65,7 +66,7 @@ def load_vertex(f, r_mgr, cwd):
     return {'vert': f.read()}
 
 
-def load_fragment(f, r_mgr, cwd):
+def load_fragment(f, cwd, r_mgr):
     """Loader for frag files.
 
     TODO: define the object that is going to be returned by this function.
@@ -73,11 +74,11 @@ def load_fragment(f, r_mgr, cwd):
     :param f: The file pointer
     :type f: File
 
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
     :param cwd: The current working directory
     :type cwd: str
+
+    :param r_mgr: The resource manager
+    :type r_mgr: :class:`ResourceManager`
 
     :return: The resulting frag object
     :rtype: TBD
@@ -87,7 +88,7 @@ def load_fragment(f, r_mgr, cwd):
     return {'frag': f.read()}
 
 
-def load_shader(f, r_mgr, cwd):
+def load_shader(f, cwd, r_mgr):
     """Loader for shader files.
 
     The shader file is just a desriptive wrapper around the vert/frag/geom files
@@ -95,11 +96,11 @@ def load_shader(f, r_mgr, cwd):
     :param f: The file pointer
     :type f: File
 
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
     :param cwd: The current working directory
     :type cwd: str
+
+    :param r_mgr: The resource manager
+    :type r_mgr: :class:`ResourceManager`
 
     :return: The resulting shader program object
     :rtype: :class:`renderer.Shader`
@@ -115,24 +116,6 @@ def load_shader(f, r_mgr, cwd):
     # the filename will help us understanding the type of shader file we are
     # linking.
     return {'shader': shaders}
-
-
-def get_loader(ext):
-    """Returns the appropriate loader function based on the given extension.
-
-    :param ext: The file extension
-    :type ext: string
-
-    :return: The loader function
-    :rtype: function
-    """
-    return {
-        '.json': load_data,
-        '.obj': load_mesh,
-        '.shader': load_shader,
-        '.vert': load_vertex,
-        '.frag': load_fragment,
-    }[ext]
 
 
 class Resource:
@@ -181,16 +164,14 @@ class Resource:
             # This is a resource item. Use the appropriate loader to load the
             # relevant data and set self.data as the resulting value.
             _, ext = os.path.splitext(self.r_path)
-            load = get_loader(ext)
+            load = self.r_mgr.get_loader(ext)
 
             # NOTE: Politely ask the resource manager to get the resource file.
             f = self.r_mgr.get_file(self.r_path)
 
-            # NOTE: we need to pass the resource manager to the loader in case
-            # the resource would need to load other resources. And we need the
-            # directory name of the current resource object, to calculate
-            # eventual relative linked objects.
-            self.data = load(f, self.r_mgr, os.path.dirname(self.r_path))
+            # NOTE: we need to pass the directory name of the current resource
+            # object, to calculate eventual relative linked objects.
+            self.data = load(f, os.path.dirname(self.r_path))
 
     def __repr__(self):
         """Print the proper representation of the resource."""
@@ -234,6 +215,25 @@ class ResourceManager:
             # FIXME: posix only. BAD.
             path = path[1:]
         return os.path.join(self.r_path, path)
+
+    def get_loader(self, ext):
+        """Returns the appropriate loader function based on the given extension.
+
+        :param ext: The file extension
+        :type ext: string
+
+        :return: The loader function
+        :rtype: function
+        """
+        loader = {
+            '.json': load_data,
+            '.obj': load_mesh,
+            '.shader': load_shader,
+            '.vert': load_vertex,
+            '.frag': load_fragment,
+        }[ext]
+
+        return partial(loader, r_mgr=self)
 
     def get(self, path):
         """Gets a resource, loading it lazily in case it's not available.

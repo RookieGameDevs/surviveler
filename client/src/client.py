@@ -28,7 +28,7 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, renderer, proxy, input_mgr, conf):
+    def __init__(self, player_name, renderer, proxy, input_mgr, res_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
@@ -45,6 +45,9 @@ class Client:
         :param input_mgr: The input manager
         :type input_mgr: :class:`core.InputManager`
 
+        :param res_mgr: The resource manager
+        :type res_mgr: :class:`loader.ResourceManager`
+
         :param conf: Configuration
         :type conf: mapping
         """
@@ -54,7 +57,9 @@ class Client:
 
         # Setup the context
         context = Context(conf)
+        context.res_mgr = res_mgr
         context.scene = self.setup_scene(context)
+
         context.camera = self.setup_camera(context)
         context.ui = UI(self.renderer)
         context.player_name = player_name
