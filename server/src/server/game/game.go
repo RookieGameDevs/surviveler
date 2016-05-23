@@ -13,6 +13,7 @@ import (
 	"server/game/messages"
 	"server/game/protocol"
 	"server/game/resource"
+	"server/game/world"
 	"syscall"
 	"time"
 )
@@ -31,7 +32,7 @@ type Game struct {
 	telnet        *protocol.TelnetServer      // if enabled, the telnet server
 	telnetChan    chan TelnetRequest          // channel for game related telnet commands
 	assets        resource.SurvivelerPackage  // game assets package
-	worldMap      Map                         // world map
+	world         *world.World                // the world
 }
 
 /*
@@ -105,14 +106,17 @@ func (g *Game) Start() {
  * package
  */
 func (g *Game) loadAssets(path string) error {
-
 	if len(path) == 0 {
 		return fmt.Errorf("Can't start without a specified assets path")
 	}
 	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
-	if err := g.worldMap.LoadFrom(g.assets); err != nil {
+
+	log.Info("Loading world")
+	var err error
+	if g.world, err = world.LoadWorldFrom(g.assets); err != nil {
 		return err
 	}
+
 	log.WithField("path", path).Info("Assets loaded successfully")
 	return nil
 }

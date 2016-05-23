@@ -1,8 +1,8 @@
 /*
- * Surviveler game package
- * map representation
+ * Surviveler world package
+ * map loader
  */
-package game
+package world
 
 import (
 	"fmt"
@@ -15,36 +15,16 @@ type MapData struct {
 }
 
 /*
- * A Tile is a tile in a grid which implements Pather.
+ * LoadWorldFrom initializes a world representation from a SurvivelerPackage
  */
-type Tile struct {
-	Kind int   // kind of tile, each kind has its own cost
-	X, Y int   // 2D coordinates of the world
-	W    World // W is a reference to the World that the tile is a part of.
-}
-
-/*
- * World is a two dimensional map of Tiles.
- */
-type World map[int]map[int]*Tile
-
-/*
- * A Map is the high-level structure for map reading, processing, etc.
- */
-type Map struct {
-	data  MapData // raw map data as read from the data package
-	world World   // world representation, in tiles
-}
-
-/*
- * LoadFrom initializes a map from a SurvivelerPackage
- */
-func (m *Map) LoadFrom(pkg resource.SurvivelerPackage) (err error) {
-	if err = pkg.LoadMap(&m.data); err != nil {
+func LoadWorldFrom(pkg resource.SurvivelerPackage) (w *World, err error) {
+	w = new(World)
+	var data MapData
+	if err = pkg.LoadMap(&data); err != nil {
 		return
 	}
 	// semantic validity checks
-	if err = m.data.IsValid(); err != nil {
+	if err = data.IsValid(); err != nil {
 		return
 	}
 
