@@ -4,7 +4,7 @@
  */
 package resource
 
-type Pos2D []float32
+type Pos2D []int
 
 /*
  * IsValid checks the semantic validity.
@@ -36,5 +36,5 @@ func (r Rect2D) IsValid() bool {
 type Object struct {
 	Ref      string `json:"ref"`      // uri of the object inside the package
 	Pos      Pos2D  `json:"pos"`      // position of the object on the map
-	Rotation uint16 `json:"rotation"` // rotation of the object on the map
+	Rotation int    `json:"rotation"` // rotation of the object on the map
 }
