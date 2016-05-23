@@ -53,8 +53,8 @@ class Character(Entity):
         self.rot_speed = 2 * pi / 60 / 0.5
 
     def orientate(self):
-        """Orientate the character towards the current destination."""
-
+        """Orientate the character towards the current destination.
+        """
         dest = self[Movable].destination
         if dest:
             x, y = self[Movable].position
