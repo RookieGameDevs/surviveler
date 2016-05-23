@@ -72,6 +72,8 @@ func (sp SurvivelerPackage) loadJSON(uri string, i interface{}) error {
 	return decoder.Decode(i)
 }
 
+// LoadMap loads and decodes the world map contained in a package, into the
+// provided interface
 func (sp SurvivelerPackage) LoadMap(i interface{}) error {
 	return sp.loadJSON(mapUri, i)
 }
