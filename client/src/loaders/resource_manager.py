@@ -6,118 +6,6 @@ import os
 DATAFILE = 'data.json'
 
 
-def load_data(f, cwd, r_mgr):
-    """Loader for json files.
-
-    :param f: The file pointer
-    :type f: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
-    :return: A dictionary containing the loaded data
-    :rtype: dict
-    """
-    return json.load(f)
-
-
-def load_mesh(f, cwd, r_mgr):
-    """Loader for obj files.
-
-    :param f: The file pointer
-    :type f: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
-    :return: The resulting mesh object
-    :rtype: :class:`renderer.Mesh`
-    """
-    # TODO: use the obj_loader to load the obj data, create the Mesh object and
-    # return it.
-    return {'mesh': f.read()}
-
-
-def load_vertex(f, cwd, r_mgr):
-    """Loader for vert files.
-
-    TODO: define the object that is going to be returned by this function.
-
-    :param f: The file pointer
-    :type f: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
-    :return: The resulting vert object
-    :rtype: TBD
-    """
-    # TODO: read and compile the .vert file returning something that can be
-    # linked in another step.
-    return {'vert': f.read()}
-
-
-def load_fragment(f, cwd, r_mgr):
-    """Loader for frag files.
-
-    TODO: define the object that is going to be returned by this function.
-
-    :param f: The file pointer
-    :type f: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
-    :return: The resulting frag object
-    :rtype: TBD
-    """
-    # TODO: read and compile the .frag file returning something that can be
-    # linked in another step.
-    return {'frag': f.read()}
-
-
-def load_shader(f, cwd, r_mgr):
-    """Loader for shader files.
-
-    The shader file is just a desriptive wrapper around the vert/frag/geom files
-
-    :param f: The file pointer
-    :type f: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :param r_mgr: The resource manager
-    :type r_mgr: :class:`ResourceManager`
-
-    :return: The resulting shader program object
-    :rtype: :class:`renderer.Shader`
-    """
-    shader_data = json.load(f)
-    shaders = {}
-    for r in shader_data.get('shaders', []):
-        res = r_mgr.get(os.path.join(cwd, r))
-        shaders[r] = res.data
-
-    # TODO: in shaders we have the map filename => compiled shader file: now we
-    # need to link the compiled shaders and return the shader program. Knowing
-    # the filename will help us understanding the type of shader file we are
-    # linking.
-    return {'shader': shaders}
-
-
 class Resource:
     def __init__(self, r_mgr, r_path, data=None):
         """Constructor.
@@ -216,25 +104,6 @@ class ResourceManager:
             path = path[1:]
         return os.path.join(self.r_path, path)
 
-    def get_loader(self, ext):
-        """Returns the appropriate loader function based on the given extension.
-
-        :param ext: The file extension
-        :type ext: string
-
-        :return: The loader function
-        :rtype: function
-        """
-        loader = {
-            '.json': load_data,
-            '.obj': load_mesh,
-            '.shader': load_shader,
-            '.vert': load_vertex,
-            '.frag': load_fragment,
-        }[ext]
-
-        return partial(loader, r_mgr=self)
-
     def get(self, path):
         """Gets a resource, loading it lazily in case it's not available.
 
@@ -258,3 +127,114 @@ class ResourceManager:
 
             self.cache[path] = res
         return res
+
+    def get_loader(self, ext):
+        """Returns the appropriate loader function based on the given extension.
+
+        :param ext: The file extension
+        :type ext: string
+
+        :return: The loader function
+        :rtype: function
+        """
+        loader = {
+            '.json': self.load_data,
+            '.obj': self.load_mesh,
+            '.shader': self.load_shader,
+            '.vert': self.load_vertex,
+            '.frag': self.load_fragment,
+        }[ext]
+
+        return loader
+
+    def load_data(self, f, cwd):
+        """Loader for json files.
+
+        :param f: The file pointer
+        :type f: File
+
+        :param cwd: The current working directory
+        :type cwd: str
+
+        :return: A dictionary containing the loaded data
+        :rtype: dict
+        """
+        return json.load(f)
+
+    def load_mesh(self, f, cwd):
+        """Loader for obj files.
+
+        :param f: The file pointer
+        :type f: File
+
+        :param cwd: The current working directory
+        :type cwd: str
+
+        :return: The resulting mesh object
+        :rtype: :class:`renderer.Mesh`
+        """
+        # TODO: use the obj_loader to load the obj data, create the Mesh object and
+        # return it.
+        return {'mesh': f.read()}
+
+    def load_vertex(self, f, cwd):
+        """Loader for vert files.
+
+        TODO: define the object that is going to be returned by this function.
+
+        :param f: The file pointer
+        :type f: File
+
+        :param cwd: The current working directory
+        :type cwd: str
+
+        :return: The resulting vert object
+        :rtype: TBD
+        """
+        # TODO: read and compile the .vert file returning something that can be
+        # linked in another step.
+        return {'vert': f.read()}
+
+    def load_fragment(self, f, cwd):
+        """Loader for frag files.
+
+        TODO: define the object that is going to be returned by this function.
+
+        :param f: The file pointer
+        :type f: File
+
+        :param cwd: The current working directory
+        :type cwd: str
+
+        :return: The resulting frag object
+        :rtype: TBD
+        """
+        # TODO: read and compile the .frag file returning something that can be
+        # linked in another step.
+        return {'frag': f.read()}
+
+    def load_shader(self, f, cwd):
+        """Loader for shader files.
+
+        The shader file is just a desriptive wrapper around the vert/frag/geom files
+
+        :param f: The file pointer
+        :type f: File
+
+        :param cwd: The current working directory
+        :type cwd: str
+
+        :return: The resulting shader program object
+        :rtype: :class:`renderer.Shader`
+        """
+        shader_data = json.load(f)
+        shaders = {}
+        for r in shader_data.get('shaders', []):
+            res = self.get(os.path.join(cwd, r))
+            shaders[r] = res.data
+
+        # TODO: in shaders we have the map filename => compiled shader file: now we
+        # need to link the compiled shaders and return the shader program. Knowing
+        # the filename will help us understanding the type of shader file we are
+        # linking.
+        return {'shader': shaders}
