@@ -1,3 +1,4 @@
+from functools import partial
 import json
 import os
 
@@ -5,62 +6,35 @@ import os
 DATAFILE = 'data.json'
 
 
-class Resource(dict):
-    def __init__(self, r_mgr, r_path, data=None):
+class ResourceHandlerAlreadyExists(Exception):
+    """Exception raised when there's already an existing extension handler for
+    the given extension.
+    """
+    def __init__(self, ext):
         """Constructor.
 
-        :param r_mgr: The resource manager
-        :type r_mgr: :class:`ResourceManager`
+        :param ext: The resource extension
+        :type ext: str
+        """
+        super(ResourceHandlerAlreadyExists, self).__init__(
+            'Handler for resources {} already exist'.format(ext))
+
+
+class Resource(dict):
+
+    def __init__(self, r_path, data):
+        """Constructor.
 
         :param r_path: The resource path
         :type r_path: str
 
-        :param data: Optional data (for resource packages)
+        :param data: The resource data
         :type data: dict
         """
-        self.r_mgr = r_mgr
         self.r_path = r_path
+        self.data = data
 
         self.resources = {}
-
-        # Load the content
-        self.load(data)
-
-    def load(self, data=None):
-        """Loads the resource data.
-
-        The resource can be a resource package: in this case data will contains
-        the package metadata, otherwise it's a resource object (and data will
-        be None).
-
-        Resource packages will cause the resource manager to load all the
-        related resource objects. The name defined in the package's own
-        data.json will be used as attribute names for that relevant data.
-
-        :param data: Optional package data
-        :type data: dict
-        """
-        if data:
-            # This is a resource package. Set the given data as data and load
-            # all the linked resources. Each resource object can be referenced
-            # from the resource package with the name with which it's identified
-            # in the data.json file.
-            self.data = data
-            for name, path in data.get('resources', {}).items():
-                r = self.r_mgr.get(os.path.join(self.r_path, path))
-                self[name] = r.data
-        else:
-            # This is a resource item. Use the appropriate loader to load the
-            # relevant data and set self.data as the resulting value.
-            _, ext = os.path.splitext(self.r_path)
-            load = self.r_mgr.get_loader(ext)
-
-            # NOTE: Politely ask the resource manager to get the resource file.
-            f = self.r_mgr.get_file(self.r_path)
-
-            # NOTE: we need to pass the directory name of the current resource
-            # object, to calculate eventual relative linked objects.
-            self.data = load(f, os.path.dirname(self.r_path))
 
     def __repr__(self):
         """Print the proper representation of the resource."""
@@ -68,6 +42,10 @@ class Resource(dict):
 
 
 class ResourceManager:
+
+    #: Mapping of the various resource handlers
+    __RESOURCE_HANDLERS = {}
+
     def __init__(self, conf):
         """Constructor.
 
@@ -118,124 +96,194 @@ class ResourceManager:
         if not res:
             abspath = self.norm_path(path)
             if os.path.isdir(abspath):
-                # Resource group load the data json
-                datafile = os.path.join(path, DATAFILE)
-                res = Resource(
-                    self, path,
-                    data=json.load(open(self.norm_path(datafile), 'r')))
+                res = self.load_package(path)
             else:
-                res = Resource(self, path)
+                res = self.load(path)
 
             self.cache[path] = res
+        return res
+
+    def load_package(self, package):
+        """Loads the specified resource package.
+
+        :param package: The package to be loaded
+        :type package: str
+
+        :return: The loaded resource
+        :rtype: :class:`Resource`
+        """
+        datafile = os.path.join(package, DATAFILE)
+        data = json.load(open(self.norm_path(datafile), 'r'))
+
+        # Create the bare resource structure
+        res = Resource(package, data)
+
+        # Parse the package data.json file and load linked resources
+        for name, path in data.get('resources', {}).items():
+            r = self.get(os.path.join(package, path))
+            res[name] = r.data
+
+        return res
+
+    def load(self, resource):
+        """Loads the specified resource.
+
+        :param resource: The resource to be loaded
+        :type resource: str
+
+        :return: The loaded resource
+        :rtype: :class:`Resource`
+        """
+        _, ext = os.path.splitext(resource)
+        load = self.get_loader(ext)
+
+        # NOTE: we need to pass the directory name of the current resource
+        # object, to calculate eventual relative linked objects.
+        res = Resource(resource, load(
+            fp=open(self.norm_path(resource), 'r'),
+            cwd=os.path.dirname(resource)))
+
         return res
 
     def get_loader(self, ext):
         """Returns the appropriate loader function based on the given extension.
 
         :param ext: The file extension
-        :type ext: string
+        :type ext: str
 
         :return: The loader function
         :rtype: function
         """
-        loader = {
-            '.json': self.load_data,
-            '.obj': self.load_mesh,
-            '.shader': self.load_shader,
-            '.vert': self.load_vertex,
-            '.frag': self.load_fragment,
-        }[ext]
+        return partial(ResourceManager.__RESOURCE_HANDLERS[ext], manager=self)
 
-        return loader
+    @classmethod
+    def resource_handler(cls, ext):
+        """Registers a resource handler.
 
-    def load_data(self, f, cwd):
-        """Loader for json files.
-
-        :param f: The file pointer
-        :type f: File
-
-        :param cwd: The current working directory
-        :type cwd: str
-
-        :return: A dictionary containing the loaded data
-        :rtype: dict
+        :param ext: The file extension
+        :type ext: str
         """
-        return json.load(f)
+        if ext in cls.__RESOURCE_HANDLERS:
+            raise ResourceHandlerAlreadyExists(ext)
 
-    def load_mesh(self, f, cwd):
-        """Loader for obj files.
+        def wrap(f):
+            cls.__RESOURCE_HANDLERS[ext] = f
+            return f
+        return wrap
 
-        :param f: The file pointer
-        :type f: File
 
-        :param cwd: The current working directory
-        :type cwd: str
+@ResourceManager.resource_handler('.json')
+def load_data(manager, fp, cwd):
+    """Loader for json files.
 
-        :return: The resulting mesh object
-        :rtype: :class:`renderer.Mesh`
-        """
-        # TODO: use the obj_loader to load the obj data, create the Mesh object and
-        # return it.
-        return {'mesh': f.read()}
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
 
-    def load_vertex(self, f, cwd):
-        """Loader for vert files.
+    :param fp: The file pointer
+    :type fp: File
 
-        TODO: define the object that is going to be returned by this function.
+    :param cwd: The current working directory
+    :type cwd: str
 
-        :param f: The file pointer
-        :type f: File
+    :return: A dictionary containing the loaded data
+    :rtype: dict
+    """
+    return json.load(fp)
 
-        :param cwd: The current working directory
-        :type cwd: str
 
-        :return: The resulting vert object
-        :rtype: TBD
-        """
-        # TODO: read and compile the .vert file returning something that can be
-        # linked in another step.
-        return {'vert': f.read()}
+@ResourceManager.resource_handler('.obj')
+def load_mesh(manager, fp, cwd):
+    """Loader for obj files.
 
-    def load_fragment(self, f, cwd):
-        """Loader for frag files.
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
 
-        TODO: define the object that is going to be returned by this function.
+    :param fp: The file pointer
+    :type fp: File
 
-        :param f: The file pointer
-        :type f: File
+    :param cwd: The current working directory
+    :type cwd: str
 
-        :param cwd: The current working directory
-        :type cwd: str
+    :return: The resulting mesh object
+    :rtype: :class:`renderer.Mesh`
+    """
+    # TODO: use the obj_loader to load the obj data, create the Mesh object and
+    # return it.
+    return {'mesh': fp.read()}
 
-        :return: The resulting frag object
-        :rtype: TBD
-        """
-        # TODO: read and compile the .frag file returning something that can be
-        # linked in another step.
-        return {'frag': f.read()}
 
-    def load_shader(self, f, cwd):
-        """Loader for shader files.
+@ResourceManager.resource_handler('.vert')
+def load_vertex(manager, fp, cwd):
+    """Loader for vert files.
 
-        The shader file is just a desriptive wrapper around the vert/frag/geom files
+    TODO: define the object that is going to be returned by this function.
 
-        :param f: The file pointer
-        :type f: File
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
 
-        :param cwd: The current working directory
-        :type cwd: str
+    :param fp: The file pointer
+    :type fp: File
 
-        :return: The resulting shader program object
-        :rtype: :class:`renderer.Shader`
-        """
-        shader_data = json.load(f)
-        shaders = {}
-        for r in shader_data.get('shaders', []):
-            res = self.get(os.path.join(cwd, r))
-            shaders[r] = res.data
+    :param cwd: The current working directory
+    :type cwd: str
 
-        # TODO: in shaders we have the map filename => compiled shader file: now we
-        # need to link the compiled shaders and return the shader program. Knowing
-        # the filename will help us understanding the type of shader file we are
-        # linking.
-        return {'shader': shaders}
+    :return: The resulting vert object
+    :rtype: TBD
+    """
+    # TODO: read and compile the .vert file returning something that can be
+    # linked in another step.
+    return {'vert': fp.read()}
+
+
+@ResourceManager.resource_handler('.frag')
+def load_fragment(manager, fp, cwd):
+    """Loader for frag files.
+
+    TODO: define the object that is going to be returned by this function.
+
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
+
+    :param fp: The file pointer
+    :type fp: File
+
+    :param cwd: The current working directory
+    :type cwd: str
+
+    :return: The resulting frag object
+    :rtype: TBD
+    """
+    # TODO: read and compile the .frag file returning something that can be
+    # linked in another step.
+    return {'frag': fp.read()}
+
+
+@ResourceManager.resource_handler('.shader')
+def load_shader(manager, fp, cwd):
+    """Loader for shader files.
+
+    The shader file is just a desriptive wrapper around the vert/frag/geom files
+
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
+
+    :param fp: The file pointer
+    :type fp: File
+
+    :param cwd: The current working directory
+    :type cwd: str
+
+    :return: The resulting shader program object
+    :rtype: :class:`renderer.Shader`
+    """
+    shader_data = json.load(fp)
+    shaders = {}
+    for r in shader_data.get('shaders', []):
+        res = manager.get(os.path.join(cwd, r))
+        shaders[r] = res.data
+
+    # TODO: in shaders we have the map filename => compiled shader file: now we
+    # need to link the compiled shaders and return the shader program. Knowing
+    # the filename will help us understanding the type of shader file we are
+    # linking.
+    return {'shader': shaders}
