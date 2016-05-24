@@ -12,7 +12,6 @@ from math import copysign
 from math import pi
 from matlib import Vec
 from renderer import Mesh
-from renderer import Shader
 import logging
 
 
@@ -25,7 +24,7 @@ WHOLE_ANGLE = 2.0 * pi
 class Character(Entity):
     """Game entity which represents a character."""
 
-    def __init__(self, name, parent_node):
+    def __init__(self, name, parent_node, shader):
         """Constructor.
 
         :param name: Character's name.
@@ -33,12 +32,12 @@ class Character(Entity):
 
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
+
+        :param shader: The character shader
+        :type shader: :class:`renderer.Shader`
         """
-        vertices, normals, _, indices = load_obj('data/models/cube.obj')
+        vertices, normals, _, indices = load_obj('data/models/player.obj')
         mesh = Mesh(vertices, indices, normals=normals)
-        shader = Shader.from_glsl(
-            'data/shaders/default.vert',
-            'data/shaders/default.frag')
 
         # shader params
         params = {
@@ -54,6 +53,7 @@ class Character(Entity):
             shader,
             params,
             enable_light=True)
+
         movable = Movable((0.0, 0.0))
 
         # initialize entity
@@ -132,9 +132,10 @@ def add_character(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
+    char_res = context.res_mgr.get('/characters/grunt')
     # Only instantiate the new character if it does not exist
     if not context.resolve_entity(evt.srv_id):
-        player = Character(evt.name, context.scene.root)
+        player = Character(evt.name, context.scene.root, char_res['shader'])
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
 

@@ -1,7 +1,10 @@
 from functools import partial
 import json
+import logging
 import os
 
+
+LOG = logging.getLogger(__name__)
 
 DATAFILE = 'data.json'
 
@@ -56,18 +59,6 @@ class ResourceManager:
         self.r_path = os.path.abspath(conf['ResourceLocation'])
         self.cache = {}
 
-    def get_file(self, filename):
-        """Gets the file pointer to the given filename.
-
-        :param filename: Filename to be opened (to be normalized)
-        :type filename: str
-
-        :return: The file pointer
-        :rtype: File
-        """
-        fname = self.norm_path(filename)
-        return open(fname, 'r')
-
     def norm_path(self, path):
         """Normalizes the given path relative to the resource location
         configuration.
@@ -112,6 +103,7 @@ class ResourceManager:
         :return: The loaded resource
         :rtype: :class:`Resource`
         """
+        LOG.info('Loading package {}'.format(package))
         datafile = os.path.join(package, DATAFILE)
         data = json.load(open(self.norm_path(datafile), 'r'))
 
@@ -134,6 +126,7 @@ class ResourceManager:
         :return: The loaded resource
         :rtype: :class:`Resource`
         """
+        LOG.info('Loading resource {}'.format(resource))
         _, ext = os.path.splitext(resource)
         load = self.get_loader(ext)
 
@@ -230,9 +223,9 @@ def load_vertex(manager, fp, cwd):
     :return: The resulting vert object
     :rtype: TBD
     """
-    # TODO: read and compile the .vert file returning something that can be
-    # linked in another step.
-    return {'vert': fp.read()}
+    from renderer import ShaderSource
+    from OpenGL.GL import GL_VERTEX_SHADER
+    return ShaderSource.load_and_compile(fp.read(), GL_VERTEX_SHADER)
 
 
 @ResourceManager.resource_handler('.frag')
@@ -253,9 +246,10 @@ def load_fragment(manager, fp, cwd):
     :return: The resulting frag object
     :rtype: TBD
     """
-    # TODO: read and compile the .frag file returning something that can be
-    # linked in another step.
-    return {'frag': fp.read()}
+    from renderer import ShaderSource
+    from OpenGL.GL import GL_FRAGMENT_SHADER
+
+    return ShaderSource.load_and_compile(fp.read(), GL_FRAGMENT_SHADER)
 
 
 @ResourceManager.resource_handler('.shader')
@@ -276,14 +270,12 @@ def load_shader(manager, fp, cwd):
     :return: The resulting shader program object
     :rtype: :class:`renderer.Shader`
     """
+    from renderer import Shader
+
     shader_data = json.load(fp)
-    shaders = {}
+    shaders = []
     for r in shader_data.get('shaders', []):
         res = manager.get(os.path.join(cwd, r))
-        shaders[r] = res.data
+        shaders.append(res.data)
 
-    # TODO: in shaders we have the map filename => compiled shader file: now we
-    # need to link the compiled shaders and return the shader program. Knowing
-    # the filename will help us understanding the type of shader file we are
-    # linking.
-    return {'shader': shaders}
+    return Shader.from_glsl(shaders, shader_data.get('params'))

@@ -59,9 +59,9 @@ class Client:
         context = Context(conf)
         context.res_mgr = res_mgr
         context.scene = self.setup_scene(context)
-
         context.camera = self.setup_camera(context)
-        context.ui = UI(self.renderer)
+        ui_res = context.res_mgr.get('/ui')
+        context.ui = UI(ui_res['shader'], self.renderer)
         context.player_name = player_name
         self.context = context
 
@@ -93,7 +93,8 @@ class Client:
         light_node = scene.root.add_child(LightNode(light))
         light_node.transform.translate(Vec(0, 10, 10))
 
-        terrain = Terrain(scene.root, 30, 30)
+        res = context.res_mgr.get('/terrain')
+        terrain = Terrain(scene.root, 30, 30, res['shader'])
         context.entities[terrain.e_id] = terrain
         return scene
 
