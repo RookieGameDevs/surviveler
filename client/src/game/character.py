@@ -24,8 +24,11 @@ WHOLE_ANGLE = 2.0 * pi
 class Character(Entity):
     """Game entity which represents a character."""
 
-    def __init__(self, name, parent_node, shader):
+    def __init__(self, resource, name, parent_node):
         """Constructor.
+
+        :param resource: The character resource
+        :type resource: :class:`loaders.Resource`
 
         :param name: Character's name.
         :type name: str
@@ -33,9 +36,8 @@ class Character(Entity):
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
 
-        :param shader: The character shader
-        :type shader: :class:`renderer.Shader`
         """
+        shader = resource['shader']
         vertices, normals, _, indices = load_obj('data/models/player.obj')
         mesh = Mesh(vertices, indices, normals=normals)
 
@@ -132,10 +134,10 @@ def add_character(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
-    char_res = context.res_mgr.get('/characters/grunt')
+    resource = context.res_mgr.get('/characters/grunt')
     # Only instantiate the new character if it does not exist
     if not context.resolve_entity(evt.srv_id):
-        player = Character(evt.name, context.scene.root, char_res['shader'])
+        player = Character(resource, evt.name, context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
 

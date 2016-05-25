@@ -16,11 +16,11 @@ class UI:
     This class encapsulates the user interface creation and management.
     """
 
-    def __init__(self, shader, renderer):
+    def __init__(self, resource, renderer):
         """Constructor.
 
-        :param shader: The ui shader
-        :type shader: :class:`renderer.Shader`
+        :param resource: The ui resource
+        :type resource: :class:`loaders.Resource`
 
         :param renderer: Renderer to use for UI rendering.
         :type renderer: :class:`renderer.Renderer`
@@ -35,7 +35,7 @@ class UI:
         self.log_height = 0
         self.log_color = Vec(0.4, 0.4, 0.4)
         self.log_font = Font('data/fonts/Monaco-Linux.ttf', 14)
-        self.log_shader = shader
+        self.log_shader = resource['shader']
         self.log_node = self.scene.root.add_child(SceneNode())
 
         self.fps_counter_node = self.scene.root.add_child(TextNode(

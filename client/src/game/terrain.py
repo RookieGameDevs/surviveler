@@ -9,8 +9,11 @@ from renderer import TextureParamWrap
 class Terrain(Entity):
     """Terrain entity."""
 
-    def __init__(self, parent_node, width, height, shader):
+    def __init__(self, resource, parent_node, width, height):
         """Constructor.
+
+        :param resource: The terrain resource
+        :type resource: :class:`loaders.Resource`
 
         :param parent_node: Parent node to attach the terrain entity to.
         :type param_node: subclass of :class:`renderer.SceneNode`
@@ -20,11 +23,10 @@ class Terrain(Entity):
 
         :param height: Height of the terrain in game units.
         :type height: float
-
-        :param shader: The terrain shader
-        :type shader: :class:`renderer.Shader`
         """
         mesh = Rect(1, 1)
+
+        shader = resource['shader']
 
         texture = Texture.from_file('data/textures/tiles.jpg')
         texture.set_param(TextureParamWrap(
