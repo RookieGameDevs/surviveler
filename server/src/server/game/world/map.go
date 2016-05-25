@@ -22,7 +22,7 @@ type Tile struct {
 }
 
 const (
-	KindNotWalkable = iota << 0
+	KindNotWalkable = iota
 	KindWalkable
 	KindTurret
 )
