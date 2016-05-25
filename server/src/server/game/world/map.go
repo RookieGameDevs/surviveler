@@ -6,6 +6,7 @@ package world
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"io"
 )
 
@@ -58,27 +59,28 @@ func (m Map) SetTile(t *Tile, x, y int) {
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	Map                        // the embedded map
-	Xmin, Xmax, Ymin, Ymax int // world boundaries
+	Map               // the embedded map
+	Width, Height int // world dimensions
 }
 
 /*
  * BrandNewWorld creates a brand new world
  */
-func BrandNewWorld(x1, y1 int, x2, y2 int) *World {
+func BrandNewWorld(matrix [][]TileKind) *World {
 	w := new(World)
-	w.Xmin = x1
-	w.Xmax = x2
-	w.Ymin = y1
-	w.Ymax = y2
+	w.Height = len(matrix)
+	w.Width = len(matrix[0])
+	log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
+		Info("Building world")
 
-	// pre allocate all tiles
+	// allocate tiles
 	w.Map = make(map[int]map[int]*Tile)
-	for x := w.Xmin; x < w.Xmax; x++ {
+	for x := 0; x < w.Width; x++ {
 		w.Map[x] = make(map[int]*Tile)
-		for y := w.Ymin; y < w.Ymax; y++ {
+		for y := 0; y < w.Height; y++ {
+			kind := matrix[y][x]
 			w.SetTile(&Tile{
-				Kind: KindNotWalkable,
+				Kind: kind,
 				M:    w.Map,
 			}, x, y)
 		}
@@ -90,8 +92,8 @@ func BrandNewWorld(x1, y1 int, x2, y2 int) *World {
  * Dump writes a string representation of the world in the provided Writer
  */
 func (w World) Dump(w_ io.Writer) {
-	for y := w.Ymin; y < w.Ymax; y++ {
-		for x := w.Xmin; x < w.Xmax; x++ {
+	for y := 0; y < w.Height; y++ {
+		for x := 0; x < w.Width; x++ {
 			t := w.Tile(x, y)
 			io.WriteString(w_, fmt.Sprintf("%2v", t.Kind))
 		}

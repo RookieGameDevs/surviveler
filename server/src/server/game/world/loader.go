@@ -11,9 +11,8 @@ import (
 )
 
 type MapData struct {
-	WorldBoundaries resource.Rect2D   `json:"world_boundaries"`
-	Walkables       []resource.Rect2D `json:"walkables"`
-	Objects         []resource.Object `json:"objects"`
+	Matrix  [][]TileKind      `json:"matrix"`
+	Objects []resource.Object `json:"objects"`
 }
 
 /*
@@ -27,27 +26,11 @@ func LoadWorldFrom(pkg resource.SurvivelerPackage) (*World, error) {
 	// semantic validity checks
 	if err := data.IsValid(); err != nil {
 		return nil, err
+	} else {
+		log.Info("Validating world")
 	}
 
-	w := BrandNewWorld(
-		data.WorldBoundaries[0][0],
-		data.WorldBoundaries[0][1],
-		data.WorldBoundaries[1][0],
-		data.WorldBoundaries[1][1])
-
-	for i := range data.Walkables {
-		tl_pos := data.Walkables[i][0]
-		br_pos := data.Walkables[i][1]
-		for x := tl_pos[0]; x < br_pos[0]; x++ {
-			for y := tl_pos[1]; y < br_pos[1]; y++ {
-				t := Tile{
-					Kind: KindWalkable,
-					M:    w.Map,
-				}
-				w.SetTile(&t, x, y)
-			}
-		}
-	}
+	w := BrandNewWorld(data.Matrix)
 
 	logw := log.StandardLogger().Writer()
 	defer logw.Close()
@@ -60,32 +43,37 @@ func LoadWorldFrom(pkg resource.SurvivelerPackage) (*World, error) {
  */
 func (md MapData) IsValid() error {
 
-	// validate various fields
-	if !md.WorldBoundaries.IsValid() {
-		return fmt.Errorf("Invalid 'world boundaries': %v\n", md.WorldBoundaries)
+	// minimal size for a functionning map is 3x3:
+	// 1 walkable cell surrounded by walls
+	height := len(md.Matrix)
+	if height < 3 {
+		return fmt.Errorf("Minimal matrix height is 3")
 	}
-	for i := range md.Walkables {
-		if !md.Walkables[i].IsValid() {
-			return fmt.Errorf("Invalid 'walkable': %v\n", md.Walkables[i])
+	width := len(md.Matrix[0])
+	if width < 3 {
+		return fmt.Errorf("Minimal matrix width is 3")
+	}
+
+	// check all rows have the same width
+	for row := 0; row < height; row++ {
+		if len(md.Matrix[row]) != width {
+			return fmt.Errorf("width the of rows 0 and %v differs (%v != %v)",
+				row, width, len(md.Matrix[row]))
 		}
 	}
 
 	for i := range md.Objects {
 		if !md.Objects[i].Pos.IsValid() {
-			return fmt.Errorf("Invalid 'object' 'pos' field: %v\n", md.Objects[i].Pos)
+			return fmt.Errorf("Invalid 'object' 'pos' field: %v\n",
+				md.Objects[i].Pos)
 		}
 		switch md.Objects[i].Rotation {
 		case 0, 90, 180, 270:
 			break
 		default:
-			return fmt.Errorf("Invalid 'objects' 'rotation' field: %v\n", md.Objects[i].Rotation)
+			return fmt.Errorf("Invalid 'objects' 'rotation' field: %v\n",
+				md.Objects[i].Rotation)
 		}
 	}
-
-	// actual semantic validation
-
-	// TODO:  check objects are not outside of world boundaries
-	// TODO:  check not objects are inside walkable areas
-
 	return nil
 }
