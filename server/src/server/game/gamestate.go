@@ -10,6 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
+	"server/game/world"
 	"server/math"
 	"time"
 )
@@ -19,6 +20,7 @@ import (
  */
 type GameState struct {
 	players map[uint32]*entity.Player
+	World   *world.World
 }
 
 func NewGameState() GameState {
@@ -52,7 +54,7 @@ func (gs GameState) pack() *messages.GameStateMsg {
 func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("we have a new player")
-	gs.players[clientId] = entity.NewPlayer(0, 0, 2)
+	gs.players[clientId] = entity.NewPlayer(0, 0, 2, &entity.BasicPathFinder{})
 	return nil
 }
 

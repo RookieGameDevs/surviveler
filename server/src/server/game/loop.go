@@ -34,6 +34,7 @@ func (g *Game) loop() {
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
 	gs := NewGameState()
+	gs.World = g.world
 
 	msgmgr := new(messages.MessageManager)
 	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(gs.onMovePlayer))

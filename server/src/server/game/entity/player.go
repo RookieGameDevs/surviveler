@@ -22,10 +22,10 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(startX, startY, speed float32) *Player {
+func NewPlayer(startX, startY, speed float32, pathfinder PathFinder) *Player {
 	p := new(Player)
 	p.Speed = speed
-	p.Pathfinder = &BasicPathFinder{}
+	p.Pathfinder = pathfinder
 	p.Pos = math.Vec2{startX, startY}
 	p.CurAction = IdleAction
 	return p
