@@ -6,12 +6,10 @@ from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import EntityIdle
 from game.events import EntityMove
-from loaders import load_obj
 from math import atan
 from math import copysign
 from math import pi
 from matlib import Vec
-from renderer import Mesh
 import logging
 
 
@@ -38,8 +36,7 @@ class Character(Entity):
 
         """
         shader = resource['shader']
-        vertices, normals, _, indices = load_obj('data/models/player.obj')
-        mesh = Mesh(vertices, indices, normals=normals)
+        mesh = resource['model']
 
         # shader params
         params = {

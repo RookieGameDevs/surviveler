@@ -28,12 +28,12 @@ class OBJTypeError(OBJFormatError):
     pass
 
 
-def load_obj(filename):
-    """Loads `filename` and return a tuple of vertices, normals, uvs, indices
+def load_obj(fp):
+    """Loads `fp` and return a tuple of vertices, normals, uvs, indices
     lists.
 
-    :param filename: The .obj file to load.
-    :type filename: str
+    :param fp: The .obj file point.
+    :type fp: File
 
     :returns: The mesh vertices, normals, UVs and vertex indices parsed from the
         .obj file.
@@ -119,15 +119,14 @@ def load_obj(filename):
         'f': parse_face,
     }
 
-    with open(filename, 'r') as fp:
-        for lineno, line in enumerate(fp):
-            data = line.split()
-            try:
-                keyword, values = data[0], data[1:]
-            except IndexError:
-                # skip empty lines
-                continue
-            func_map.get(keyword, do_nothing)(lineno, keyword, values)
+    for lineno, line in enumerate(fp.splitlines()):
+        data = line.split()
+        try:
+            keyword, values = data[0], data[1:]
+        except IndexError:
+            # skip empty lines
+            continue
+        func_map.get(keyword, do_nothing)(lineno, keyword, values)
 
     # NOTE: the indices are reversed because of the requirements for polygon
     # winding order for our camera setup

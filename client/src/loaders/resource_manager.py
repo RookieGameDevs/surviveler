@@ -1,4 +1,5 @@
 from functools import partial
+from loaders import load_obj
 from utils import as_utf8
 import json
 import logging
@@ -202,9 +203,9 @@ def load_mesh(manager, fp, cwd):
     :return: The resulting mesh object
     :rtype: :class:`renderer.Mesh`
     """
-    # TODO: use the obj_loader to load the obj data, create the Mesh object and
-    # return it.
-    return {'mesh': fp.read()}
+    from renderer import Mesh
+    v, n, u, i = load_obj(as_utf8(fp.read()))
+    return Mesh(v, i, n, u)
 
 
 @ResourceManager.resource_handler('.vert')
@@ -250,7 +251,6 @@ def load_fragment(manager, fp, cwd):
     """
     from renderer import ShaderSource
     from OpenGL.GL import GL_FRAGMENT_SHADER
-
     return ShaderSource.load_and_compile(fp.read(), GL_FRAGMENT_SHADER)
 
 
@@ -300,6 +300,5 @@ def load_image(manager, fp, cwd):
     :rtype: :class:`PIL.Image`
     """
     from PIL import Image
-
     img = Image.open(fp)
     return img
