@@ -121,23 +121,22 @@ class Texture:
         param.apply(self.sampler)
 
     @classmethod
-    def from_file(cls, filename):
+    def from_image(cls, image):
         """Creates a texture from given image file.
 
-        :param filename: Image file.
-        :type filename: str
+        :param image: Image.
+        :type image: :class:`PIL.Image`
 
         :returns: The texture instance.
         :rtype: :class:`renderer.Texture`
         """
-        img = Image.open(filename)
-        w, h = img.size
+        w, h = image.size
 
         tex = glGenTextures(1)
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, tex)
         glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, w, h)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img.tobytes())
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, image.tobytes())
         glBindTexture(GL_TEXTURE_2D, 0)
 
         return Texture(tex, w, h)

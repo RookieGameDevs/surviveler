@@ -1,4 +1,5 @@
 from functools import partial
+from utils import as_utf8
 import json
 import logging
 import os
@@ -133,7 +134,7 @@ class ResourceManager:
         # NOTE: we need to pass the directory name of the current resource
         # object, to calculate eventual relative linked objects.
         res = Resource(resource, load(
-            fp=open(self.norm_path(resource), 'r'),
+            fp=open(self.norm_path(resource), 'rb'),
             cwd=os.path.dirname(resource)))
 
         return res
@@ -150,7 +151,7 @@ class ResourceManager:
         return partial(ResourceManager.__RESOURCE_HANDLERS[ext], manager=self)
 
     @classmethod
-    def resource_handler(cls, ext):
+    def resource_handler(cls, *ext):
         """Registers a resource handler.
 
         :param ext: The file extension
@@ -160,7 +161,8 @@ class ResourceManager:
             raise ResourceHandlerAlreadyExists(ext)
 
         def wrap(f):
-            cls.__RESOURCE_HANDLERS[ext] = f
+            for e in ext:
+                cls.__RESOURCE_HANDLERS[e] = f
             return f
         return wrap
 
@@ -181,7 +183,7 @@ def load_data(manager, fp, cwd):
     :return: A dictionary containing the loaded data
     :rtype: dict
     """
-    return json.load(fp)
+    return json.loads(as_utf8(fp.read()))
 
 
 @ResourceManager.resource_handler('.obj')
@@ -272,10 +274,32 @@ def load_shader(manager, fp, cwd):
     """
     from renderer import Shader
 
-    shader_data = json.load(fp)
+    shader_data = json.loads(as_utf8(fp.read()))
     shaders = []
     for r in shader_data.get('shaders', []):
         res = manager.get(os.path.join(cwd, r))
         shaders.append(res.data)
 
     return Shader.from_glsl(shaders, shader_data.get('params'))
+
+
+@ResourceManager.resource_handler('.png', '.jpg')
+def load_image(manager, fp, cwd):
+    """Loader for image files.
+
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
+
+    :param fp: The file pointer
+    :type fp: File
+
+    :param cwd: The current working directory
+    :type cwd: str
+
+    :return: The resulting shader program object
+    :rtype: :class:`PIL.Image`
+    """
+    from PIL import Image
+
+    img = Image.open(fp)
+    return img

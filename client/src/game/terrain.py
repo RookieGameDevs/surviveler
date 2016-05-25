@@ -27,8 +27,9 @@ class Terrain(Entity):
         mesh = Rect(1, 1)
 
         shader = resource['shader']
+        tiles = resource['tiles']
 
-        texture = Texture.from_file('data/textures/tiles.jpg')
+        texture = Texture.from_image(tiles)
         texture.set_param(TextureParamWrap(
             TextureParamWrap.Coord.s, TextureParamWrap.WrapType.repeat))
         texture.set_param(TextureParamWrap(
