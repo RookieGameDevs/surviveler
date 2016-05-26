@@ -19,8 +19,9 @@ import (
  * GameState is the structure that contains all the complete game state
  */
 type GameState struct {
-	players map[uint32]*entity.Player
-	World   *world.World
+	players          map[uint32]*entity.Player
+	World            *world.World
+	PlayerPathfinder Pathfinder
 }
 
 func NewGameState() GameState {
@@ -75,7 +76,14 @@ func (gs *GameState) onMovePlayer(msg interface{}, clientId uint32) error {
 	move := msg.(messages.MoveMsg)
 	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("onMovePlayer")
 	if p, ok := gs.players[clientId]; ok {
-		p.Move(math.Vec2{move.Xpos, move.Ypos})
+		// compute pathfinding
+		dst := math.Vec2{move.Xpos, move.Ypos}
+		if path, distance, found := gs.PlayerPathfinder.FindPath(p.Pos, dst); found {
+			log.WithField("path", path).Info("Defined player path")
+			p.SetPath(path)
+		} else {
+			log.WithFields(log.WithFields{"pos": p.Pos, "dst": dst}).Warn("PathFinder failed to find path")
+		}
 	} else {
 		return fmt.Errorf("Client Id not found: %v", clientId)
 	}

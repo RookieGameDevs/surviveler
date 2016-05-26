@@ -1,8 +1,8 @@
 /*
- * Surviveler world package
- * map representation
+ * Surviveler game package
+ * world representation
  */
-package world
+package game
 
 import (
 	"fmt"

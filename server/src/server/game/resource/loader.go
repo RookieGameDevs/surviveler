@@ -1,24 +1,23 @@
 /*
- * Surviveler world package
- * map loader
+ * Surviveler resource package
+ * loader implementation
  */
-package world
+package resource
 
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"server/game/resource"
 )
 
 type MapData struct {
-	Matrix  [][]TileKind      `json:"matrix"`
-	Objects []resource.Object `json:"objects"`
+	Matrix  [][]TileKind `json:"matrix"`
+	Objects []Object     `json:"objects"`
 }
 
 /*
  * LoadWorldFrom initializes a world representation from a SurvivelerPackage
  */
-func LoadWorldFrom(pkg resource.SurvivelerPackage) (*World, error) {
+func LoadWorldFrom(pkg SurvivelerPackage) (*World, error) {
 	var data MapData
 	if err := pkg.LoadMap(&data); err != nil {
 		return nil, err
