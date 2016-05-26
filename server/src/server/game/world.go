@@ -10,6 +10,60 @@ import (
 	"io"
 )
 
+/*
+ * World is the spatial reference on which game entities are located
+ */
+type World struct {
+	Map               // the embedded map
+	Width, Height int // world dimensions
+}
+
+/*
+ * NewWorld creates a brand new world.
+ *
+ * It loads the map from the provided Surviveler Package and initializes the
+ * world representation from it.
+ */
+func NewWorld(pkg SurvivelerPackage) (*World, error) {
+	// read and parse the map in the package
+	var data MapData
+	if err := pkg.LoadMap(&data); err != nil {
+		return nil, err
+	}
+	// semantic validity checks
+	if err := data.IsValid(); err != nil {
+		return nil, err
+	} else {
+		log.Info("Validating world")
+	}
+
+	w := World{
+		Width:  len(data.matrix[0]),
+		Height: len(data.matrix),
+	}
+	log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
+		Info("Building world")
+
+	// allocate tiles
+	w.Map = make(map[int]map[int]*Tile)
+	for x := 0; x < w.Width; x++ {
+		w.Map[x] = make(map[int]*Tile)
+		for y := 0; y < w.Height; y++ {
+			kind := data.matrix[y][x]
+			w.SetTile(&Tile{
+				Kind: kind,
+				M:    w.Map,
+			}, x, y)
+		}
+	}
+
+	// dump the world matrix
+	logw := log.StandardLogger().Writer()
+	defer logw.Close()
+	w.Dump(logw)
+	return &w, nil
+}
+
 type TileKind int
 
 /*
@@ -22,7 +76,7 @@ type Tile struct {
 }
 
 const (
-	KindNotWalkable = iota
+	KindNotWalkable TileKind = iota
 	KindWalkable
 	KindTurret
 )
@@ -53,39 +107,6 @@ func (m Map) SetTile(t *Tile, x, y int) {
 	t.X = x
 	t.Y = y
 	t.M = m
-}
-
-/*
- * World is the spatial reference on which game entities are located
- */
-type World struct {
-	Map               // the embedded map
-	Width, Height int // world dimensions
-}
-
-/*
- * BrandNewWorld creates a brand new world
- */
-func BrandNewWorld(matrix [][]TileKind) *World {
-	w := new(World)
-	w.Height = len(matrix)
-	w.Width = len(matrix[0])
-	log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
-		Info("Building world")
-
-	// allocate tiles
-	w.Map = make(map[int]map[int]*Tile)
-	for x := 0; x < w.Width; x++ {
-		w.Map[x] = make(map[int]*Tile)
-		for y := 0; y < w.Height; y++ {
-			kind := matrix[y][x]
-			w.SetTile(&Tile{
-				Kind: kind,
-				M:    w.Map,
-			}, x, y)
-		}
-	}
-	return w
 }
 
 /*

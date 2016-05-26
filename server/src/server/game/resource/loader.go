@@ -6,35 +6,11 @@ package resource
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 )
 
 type MapData struct {
-	Matrix  [][]TileKind `json:"matrix"`
-	Objects []Object     `json:"objects"`
-}
-
-/*
- * LoadWorldFrom initializes a world representation from a SurvivelerPackage
- */
-func LoadWorldFrom(pkg SurvivelerPackage) (*World, error) {
-	var data MapData
-	if err := pkg.LoadMap(&data); err != nil {
-		return nil, err
-	}
-	// semantic validity checks
-	if err := data.IsValid(); err != nil {
-		return nil, err
-	} else {
-		log.Info("Validating world")
-	}
-
-	w := BrandNewWorld(data.Matrix)
-
-	logw := log.StandardLogger().Writer()
-	defer logw.Close()
-	w.Dump(logw)
-	return w, nil
+	Matrix  [][]int  `json:"matrix"`
+	Objects []Object `json:"objects"`
 }
 
 /*

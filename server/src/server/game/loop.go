@@ -22,6 +22,8 @@ import (
  * - telnet request -> perform a game state related telnet request
  */
 func (g *Game) loop() {
+	// loop local stop condition
+	quit := false
 
 	// will tick when it's time to send the gamestate to the clients
 	sendTickChan := time.NewTicker(
@@ -33,16 +35,16 @@ func (g *Game) loop() {
 
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
-	gs := NewGameState()
-	gs.World = g.world
+	gs := newGameState()
+	if err := gs.init(g.assets); err != nil {
+		log.WithError(err).Error("Game state initialization failed...")
+		quit = true
+	}
 
 	msgmgr := new(messages.MessageManager)
 	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(gs.onMovePlayer))
 	msgmgr.Listen(messages.JoinedId, messages.MsgHandlerFunc(gs.onPlayerJoined))
 	msgmgr.Listen(messages.LeaveId, messages.MsgHandlerFunc(gs.onPlayerLeft))
-
-	// loop local stop condition
-	quit := false
 
 	var last_time, cur_time time.Time
 	last_time = time.Now()

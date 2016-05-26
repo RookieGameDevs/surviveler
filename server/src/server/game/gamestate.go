@@ -10,7 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
-	"server/game/world"
+	"server/game/resource"
 	"server/math"
 	"time"
 )
@@ -19,15 +19,20 @@ import (
  * GameState is the structure that contains all the complete game state
  */
 type GameState struct {
-	players          map[uint32]*entity.Player
-	World            *world.World
-	PlayerPathfinder Pathfinder
+	players    map[uint32]*entity.Player
+	World      *World
 }
 
-func NewGameState() GameState {
+func newGameState() GameState {
 	return GameState{
 		players: make(map[uint32]*entity.Player),
 	}
+}
+
+func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
+	var err error
+	gs.World, err = NewWorld(pkg)
+	return err
 }
 
 /*
@@ -55,7 +60,7 @@ func (gs GameState) pack() *messages.GameStateMsg {
 func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("we have a new player")
-	gs.players[clientId] = entity.NewPlayer(0, 0, 2, &entity.BasicPathFinder{})
+	gs.players[clientId] = entity.NewPlayer(0, 0, 2)
 	return nil
 }
 
