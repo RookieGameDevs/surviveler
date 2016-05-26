@@ -21,6 +21,7 @@ import (
 type GameState struct {
 	players    map[uint32]*entity.Player
 	World      *World
+	Pathfinder Pathfinder
 }
 
 func newGameState() GameState {
@@ -32,6 +33,7 @@ func newGameState() GameState {
 func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 	var err error
 	gs.World, err = NewWorld(pkg)
+	gs.Pathfinder.World = gs.World
 	return err
 }
 
@@ -80,14 +82,17 @@ func (gs *GameState) onPlayerLeft(msg interface{}, clientId uint32) error {
 func (gs *GameState) onMovePlayer(msg interface{}, clientId uint32) error {
 	move := msg.(messages.MoveMsg)
 	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("onMovePlayer")
-	if p, ok := gs.players[clientId]; ok {
+
+	if player, ok := gs.players[clientId]; ok {
+
 		// compute pathfinding
 		dst := math.Vec2{move.Xpos, move.Ypos}
-		if path, distance, found := gs.PlayerPathfinder.FindPath(p.Pos, dst); found {
+		if path, distance, found := gs.Pathfinder.FindPlayerPath(player, player.Pos, dst); found {
 			log.WithField("path", path).Info("Defined player path")
-			p.SetPath(path)
+			player.SetPath(path)
 		} else {
-			log.WithFields(log.WithFields{"pos": p.Pos, "dst": dst}).Warn("PathFinder failed to find path")
+			log.WithFields(log.Fields{"clientId": clientId, "pos": player.Pos, "dst": dst}).
+				Warn("Pathfinder failed to find path")
 		}
 	} else {
 		return fmt.Errorf("Client Id not found: %v", clientId)

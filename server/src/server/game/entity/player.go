@@ -15,65 +15,81 @@ import (
  */
 type Player struct {
 	MovableEntity
-	Pathfinder PathFinder
-	CurAction  ActionType // current action
+	curAction  ActionType  // current action
+	curPath    []math.Vec2 // player path
+	curPathIdx int         // index in the path
 }
 
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(startX, startY, speed float32, pathfinder PathFinder) *Player {
+func NewPlayer(startX, startY, speed float32) *Player {
 	p := new(Player)
 	p.Speed = speed
-	p.Pathfinder = pathfinder
 	p.Pos = math.Vec2{startX, startY}
-	p.CurAction = IdleAction
+	p.curAction = IdleAction
 	return p
 }
 
 func (p *Player) Update(dt time.Duration) {
-	// update position
-	if p.CurAction != IdleAction {
+	if p.curAction != IdleAction {
+		// update position on current path
 
-		curDst := p.Pathfinder.GetCurrentDestination()
+		pathLength := len(p.curPath)
+		if pathLength > 0 {
+			// get sub-destination (current path segment)
+			subDst := p.curPath[p.curPathIdx]
 
-		// compute translation vector
-		moveVec := curDst.Sub(p.Pos).Normalize()
-		p.Pos = p.Pos.Add(moveVec.Mul(float32(p.Speed * float32(dt.Seconds()))))
+			// compute translation vector
+			moveVec := subDst.Sub(p.Pos).Normalize()
+			p.Pos = p.Pos.Add(moveVec.Mul(float32(p.Speed * float32(dt.Seconds()))))
 
-		// arrived at destination?
-		if p.Pos.ApproxEqualThreshold(curDst, 0.01) {
-			// destination reached
-			p.CurAction = IdleAction
+			if p.Pos.ApproxEqualThreshold(subDst, 0.01) {
+				// reached current sub-destination?
+				if p.curPathIdx+1 > pathLength {
+					// walk along next path segment
+					p.curPathIdx++
+				} else {
+					// end of path
+					if p.curAction == MovingAction {
+						// we were just moving there
+						p.curAction = IdleAction
+					}
+				}
+			}
+
 		}
 	}
 }
 
-func (p *Player) Move(dst math.Vec2) {
-	// setup pathfinding
-	p.Pathfinder.SetOrigin(p.Pos)
-	p.Pathfinder.SetDestination(dst)
-	p.CurAction = MovingAction
+/*
+ * SetPath defines the path that the player should follow
+ */
+func (p *Player) SetPath(path []math.Vec2) {
+	p.curPath = path
+	p.curPathIdx = 0
+	p.curAction = MovingAction
 }
-
 func (p *Player) GetState() EntityState {
 	// first compile the data depending on current action
 	var actionData interface{}
-	if p.CurAction == IdleAction {
+
+	switch p.curAction {
+	case IdleAction:
 		actionData = IdleActionData{}
-	} else {
-		dst := p.Pathfinder.GetCurrentDestination()
+
+	case MovingAction:
+		dst := p.curPath[p.curPathIdx]
 		actionData = MoveActionData{
 			Speed: p.Speed,
 			Xpos:  dst[0],
 			Ypos:  dst[1],
 		}
 	}
-
 	return EntityState{
 		Xpos:       p.Pos[0],
 		Ypos:       p.Pos[1],
-		ActionType: p.CurAction,
+		ActionType: p.curAction,
 		Action:     actionData,
 	}
 }

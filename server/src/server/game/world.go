@@ -8,6 +8,7 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"io"
+	"server/game/resource"
 )
 
 /*
@@ -24,9 +25,9 @@ type World struct {
  * It loads the map from the provided Surviveler Package and initializes the
  * world representation from it.
  */
-func NewWorld(pkg SurvivelerPackage) (*World, error) {
+func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 	// read and parse the map in the package
-	var data MapData
+	var data resource.MapData
 	if err := pkg.LoadMap(&data); err != nil {
 		return nil, err
 	}
@@ -38,8 +39,8 @@ func NewWorld(pkg SurvivelerPackage) (*World, error) {
 	}
 
 	w := World{
-		Width:  len(data.matrix[0]),
-		Height: len(data.matrix),
+		Width:  len(data.Matrix[0]),
+		Height: len(data.Matrix),
 	}
 	log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
 		Info("Building world")
@@ -49,9 +50,9 @@ func NewWorld(pkg SurvivelerPackage) (*World, error) {
 	for x := 0; x < w.Width; x++ {
 		w.Map[x] = make(map[int]*Tile)
 		for y := 0; y < w.Height; y++ {
-			kind := data.matrix[y][x]
+			kind := data.Matrix[y][x]
 			w.SetTile(&Tile{
-				Kind: kind,
+				Kind: TileKind(kind),
 				M:    w.Map,
 			}, x, y)
 		}
