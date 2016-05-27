@@ -48,6 +48,7 @@ func (g *Game) loop() {
 
 	var last_time, cur_time time.Time
 	last_time = time.Now()
+	log.Info("Starting game loop")
 
 	go func() {
 		for !quit {
