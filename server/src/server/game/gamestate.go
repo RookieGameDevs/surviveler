@@ -62,7 +62,7 @@ func (gs GameState) pack() *messages.GameStateMsg {
 func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("we have a new player")
-	gs.players[clientId] = entity.NewPlayer(0, 0, 2)
+	gs.players[clientId] = entity.NewPlayer(1, 1, 2)
 	return nil
 }
 
@@ -87,7 +87,7 @@ func (gs *GameState) onMovePlayer(msg interface{}, clientId uint32) error {
 
 		// compute pathfinding
 		dst := math.Vec2{move.Xpos, move.Ypos}
-		if path, distance, found := gs.Pathfinder.FindPlayerPath(player, player.Pos, dst); found {
+		if path, _, found := gs.Pathfinder.FindPlayerPath(player, player.Pos, dst); found {
 			log.WithField("path", path).Info("Defined player path")
 			player.SetPath(path)
 		} else {
