@@ -15,8 +15,22 @@ import (
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	Map               // the embedded map
+	Grid              // the embedded map
 	Width, Height int // world dimensions
+}
+
+/*
+ * Grid is a two dimensional grid of tiles
+ */
+type Grid map[int]map[int]*Tile
+
+/*
+ * A Tile is a tile in a grid which implements Pather.
+ */
+type Tile struct {
+	Kind TileKind // kind of tile, each kind has its own cost
+	X, Y int      // 2D coordinates
+	W    *World   // reference to the map this is tile is part of
 }
 
 /*
@@ -46,15 +60,18 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 		Info("Building world")
 
 	// allocate tiles
-	w.Map = make(map[int]map[int]*Tile)
+	w.Grid = make(map[int]map[int]*Tile)
 	for x := 0; x < w.Width; x++ {
-		w.Map[x] = make(map[int]*Tile)
+		w.Grid[x] = make(map[int]*Tile)
 		for y := 0; y < w.Height; y++ {
 			kind := data.Matrix[y][x]
-			w.SetTile(&Tile{
+			tile := &Tile{
 				Kind: TileKind(kind),
-				M:    w.Map,
-			}, x, y)
+				W:    &w,
+				X:    x,
+				Y:    y,
+			}
+			w.SetTile(tile)
 		}
 	}
 
@@ -67,15 +84,6 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 
 type TileKind int
 
-/*
- * A Tile is a tile in a grid which implements Pather.
- */
-type Tile struct {
-	Kind TileKind // kind of tile, each kind has its own cost
-	X, Y int      // 2D coordinates
-	M    Map      // reference to the map this is tile is part of
-}
-
 const (
 	KindNotWalkable TileKind = iota
 	KindWalkable
@@ -83,31 +91,26 @@ const (
 )
 
 /*
- * Map is a two dimensional map of tiles
+ * Tile gets the tile at the given coordinates in the grid
  */
-type Map map[int]map[int]*Tile
-
-/*
- * Tile gets the tile at the given coordinates in the map
- */
-func (w Map) Tile(x, y int) *Tile {
-	if w[x] == nil {
+func (w World) Tile(x, y int) *Tile {
+	switch {
+	case x < 0, x >= w.Width, y < 0, y >= w.Height:
 		return nil
+	default:
+		return w.Grid[x][y]
 	}
-	return w[x][y]
 }
 
 /*
  * SetTile sets a tile at the given coordinates in the world
  */
-func (m Map) SetTile(t *Tile, x, y int) {
-	if m[x] == nil {
-		m[x] = map[int]*Tile{}
+func (w *World) SetTile(t *Tile) {
+	if w.Grid[t.X] == nil {
+		w.Grid[t.X] = map[int]*Tile{}
 	}
-	m[x][y] = t
-	t.X = x
-	t.Y = y
-	t.M = m
+	w.Grid[t.X][t.Y] = t
+	t.W = w
 }
 
 /*
