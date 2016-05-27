@@ -83,9 +83,8 @@ func (g *Game) Setup() bool {
  * Start starts the server and game loops
  */
 func (g *Game) Start() {
-	log.Info("Starting Surviveler server")
-
 	// start everything
+	log.Info("Starting Surviveler server")
 	g.server.Start()
 	g.loop()
 
