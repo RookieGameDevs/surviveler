@@ -86,10 +86,19 @@ func (gs *GameState) onMovePlayer(msg interface{}, clientId uint32) error {
 	if player, ok := gs.players[clientId]; ok {
 
 		// compute pathfinding
+		//# TODO: remove this TEST
 		dst := math.Vec2{move.Xpos, move.Ypos}
+		// dst := math.Vec2{6.2, 6.2}
 		if path, _, found := gs.Pathfinder.FindPlayerPath(player, player.Pos, dst); found {
-			log.WithField("path", path).Info("Defined player path")
-			player.SetPath(path)
+			if len(path) >= 2 {
+				log.WithFields(log.Fields{"path": path, "clientId": clientId}).
+					Info("PlayerPathfinder found a path")
+				player.SetPath(path)
+			} else {
+				// TODO: probably better to manage this somewhere else (maybe even on the client side?)
+				log.WithFields(log.Fields{"path": path, "clientId": clientId}).
+					Warn("PlayerPathfinder: destination cell too close")
+			}
 		} else {
 			log.WithFields(log.Fields{"clientId": clientId, "pos": player.Pos, "dst": dst}).
 				Warn("Pathfinder failed to find path")

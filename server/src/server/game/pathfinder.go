@@ -5,17 +5,22 @@
 package game
 
 import (
-	"server/game/entity"
-	"server/math"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/beefsack/go-astar"
+	"server/game/entity"
+	"server/math"
 )
 
 type Pathfinder struct {
 	World *World
 }
 
+/*
+ * FindPlayerPath searches for the best path for a player to reach a destination.
+ *
+ * The search is performed with the A* algorithm, running on a matrix shaped graph
+ * representing the world.
+ */
 func (pf Pathfinder) FindPlayerPath(player *entity.Player, org, dst math.Vec2) (vpath []math.Vec2, dist float64, found bool) {
 	// retrieve origin and destination tiles
 	porg := pf.World.Tile(int(org[0]), int(org[1]))
@@ -43,109 +48,79 @@ func (pf Pathfinder) FindPlayerPath(player *entity.Player, org, dst math.Vec2) (
 	return
 }
 
+/*
+ * PathNeighbors returns a slice containing the neighbors
+ */
 func (t *Tile) PathNeighbors() []astar.Pather {
 	w := t.W
-	//neighbors := make([]astar.Pather, 0, 8)
-	neighbors := []astar.Pather{}
+	neighbors := make([]astar.Pather, 0, 8)
 
 	// up
-	up := w.Tile(t.X, t.Y-1)
-	upw := true
-	if up != nil {
-		if upw = up.Kind&KindWalkable == KindWalkable; upw {
-			neighbors = append(neighbors, up)
-		}
+	if up := w.Tile(t.X, t.Y-1); up != nil {
+		neighbors = append(neighbors, up)
 	}
-
 	// left
-	left := w.Tile(t.X-1, t.Y)
-	leftw := true
-	if left != nil {
-		if leftw = left.Kind&KindWalkable == KindWalkable; leftw {
-			neighbors = append(neighbors, left)
-		}
+	if left := w.Tile(t.X-1, t.Y); left != nil {
+		neighbors = append(neighbors, left)
 	}
-
 	// down
-	down := w.Tile(t.X, t.Y+1)
-	downw := true
-	if down != nil {
-		if downw = down.Kind&KindWalkable == KindWalkable; downw {
-			neighbors = append(neighbors, down)
-		}
+	if down := w.Tile(t.X, t.Y+1); down != nil {
+		neighbors = append(neighbors, down)
 	}
-
 	// right
-	right := w.Tile(t.X+1, t.Y)
-	rightw := true
-	if right != nil {
-		if rightw = right.Kind&KindWalkable == KindWalkable; rightw {
-			neighbors = append(neighbors, right)
-		}
+	if right := w.Tile(t.X+1, t.Y); right != nil {
+		neighbors = append(neighbors, right)
 	}
 
 	// up left
-	if upw && leftw {
-		if upleft := w.Tile(t.X-1, t.Y-1); upleft != nil {
-			if upleft.Kind&KindWalkable == KindWalkable {
-				neighbors = append(neighbors, upleft)
-			}
-		}
+	if upleft := w.Tile(t.X-1, t.Y-1); upleft != nil {
+		neighbors = append(neighbors, upleft)
 	}
 
 	// down left
-	if downw && leftw {
-		if downleft := w.Tile(t.X-1, t.Y+1); downleft != nil {
-			if downleft.Kind&KindWalkable == KindWalkable {
-				neighbors = append(neighbors, downleft)
-			}
-		}
+	if downleft := w.Tile(t.X-1, t.Y+1); downleft != nil {
+		neighbors = append(neighbors, downleft)
 	}
 
 	// up right
-	if upw && rightw {
-		if upright := w.Tile(t.X+1, t.Y-1); upright != nil {
-			if upright.Kind&KindWalkable == KindWalkable {
-				neighbors = append(neighbors, upright)
-			}
-		}
+	if upright := w.Tile(t.X+1, t.Y-1); upright != nil {
+		neighbors = append(neighbors, upright)
 	}
 
 	// down right
-	if downw && rightw {
-		if downright := w.Tile(t.X+1, t.Y+1); downright != nil {
-			if downright.Kind&KindWalkable == KindWalkable {
-				neighbors = append(neighbors, downright)
-			}
-		}
+	if downright := w.Tile(t.X+1, t.Y+1); downright != nil {
+		neighbors = append(neighbors, downright)
 	}
-
-	if len(neighbors) == 0 {
-		log.WithField("tile", t).Panic("Tile has no neighbors...")
-	} else {
-		log.WithField("tile", t).Debug("Computed tile neighbors:")
-		for _, n := range neighbors {
-			log.WithField("n", *n.(*Tile)).Debug("neighbor")
-		}
-	}
-
 	return neighbors
 }
 
-func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
-	n := to.(*Tile)
-	if t.X == n.X || t.Y == n.Y {
-		// neighbor has one common coordinate
-		return 1.0
-	} else {
-		// diagonal neighbors
-		return 1.42
+/*
+ * costFromKind returns the cost associated with a kind of tile
+ */
+func costFromKind(kind TileKind) float64 {
+	switch kind {
+	case KindWalkable:
+		return 10.0
+	case KindNotWalkable:
+		return 1000000.0
 	}
+	log.WithField("kind", kind).Panic("TileKind not implemented")
+	return 0.0
 }
 
+/*
+ * PathNeighborCost returns the exact movement cost to reach a neighbor tile
+ */
+func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
+	n := to.(*Tile)
+	return costFromKind(n.Kind)
+}
+
+/*
+ * PathEstimatedCost estimates the movement cost required to reach a tile
+ */
 func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
 	n := to.(*Tile)
 	md := float64(math.Abs(float32(n.X-t.X)) + math.Abs(float32(n.Y-t.Y)))
-	log.WithFields(log.Fields{"md": md, "t": t, "to": to}).Debug("PathEstimatedCost")
 	return md
 }

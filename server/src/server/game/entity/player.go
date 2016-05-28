@@ -31,10 +31,12 @@ func NewPlayer(startX, startY, speed float32) *Player {
 	return p
 }
 
+/*
+ * Update updates the local state of the player
+ */
 func (p *Player) Update(dt time.Duration) {
 	if p.curAction != IdleAction {
-		// update position on current path
-
+		// update position on the player path
 		pathLength := len(p.curPath)
 		if pathLength > 0 {
 			// get sub-destination (current path segment)
@@ -43,21 +45,18 @@ func (p *Player) Update(dt time.Duration) {
 			// compute translation vector
 			moveVec := subDst.Sub(p.Pos).Normalize()
 			p.Pos = p.Pos.Add(moveVec.Mul(float32(p.Speed * float32(dt.Seconds()))))
-
 			if p.Pos.ApproxEqualThreshold(subDst, 0.01) {
-				// reached current sub-destination?
-				if p.curPathIdx+1 > pathLength {
-					// walk along next path segment
-					p.curPathIdx++
-				} else {
-					// end of path
+				// reached current sub-destination
+				p.curPathIdx--
+				switch {
+				case p.curPathIdx < 0:
+					// this was the last path segment
 					if p.curAction == MovingAction {
-						// we were just moving there
+						// come back to Idle if nothing better to do...
 						p.curAction = IdleAction
 					}
 				}
 			}
-
 		}
 	}
 }
@@ -67,11 +66,15 @@ func (p *Player) Update(dt time.Duration) {
  */
 func (p *Player) SetPath(path []math.Vec2) {
 	p.curPath = path
-	p.curPathIdx = 0
 	p.curAction = MovingAction
+	// the tail element of that path slice represents the starting point
+	// it's also the position the player is already located, so we don't
+	// want to send this position to the client
+	p.curPathIdx = len(path) - 2
 }
+
 func (p *Player) GetState() EntityState {
-	// first compile the data depending on current action
+	// first, compile the data depending on current action
 	var actionData interface{}
 
 	switch p.curAction {
