@@ -65,7 +65,6 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 		w.Grid[x] = make(map[int]*Tile)
 		for y := 0; y < w.Height; y++ {
 			kind := data.Matrix[y][x]
-			fmt.Printf("x: %v y: %v kind: %v\n", x, y, kind)
 			tile := &Tile{
 				Kind: TileKind(kind),
 				W:    &w,
