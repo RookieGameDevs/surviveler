@@ -86,9 +86,7 @@ func (gs *GameState) onMovePlayer(msg interface{}, clientId uint32) error {
 	if player, ok := gs.players[clientId]; ok {
 
 		// compute pathfinding
-		//# TODO: remove this TEST
 		dst := math.Vec2{move.Xpos, move.Ypos}
-		// dst := math.Vec2{6.2, 6.2}
 		if path, _, found := gs.Pathfinder.FindPlayerPath(player, player.Pos, dst); found {
 			if len(path) >= 2 {
 				log.WithFields(log.Fields{"path": path, "clientId": clientId}).
