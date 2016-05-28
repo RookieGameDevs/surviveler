@@ -1,7 +1,5 @@
 from game import Entity
 from game.components import Renderable
-from renderer import Texture
-from renderer import TextureParamWrap
 
 
 class Map(Entity):
