@@ -204,8 +204,8 @@ def load_mesh(manager, fp, cwd):
     :rtype: :class:`renderer.Mesh`
     """
     from renderer import Mesh
-    v, n, u, i = load_obj(as_utf8(fp.read()))
-    return Mesh(v, i, n, u)
+    v, n, _, i = load_obj(as_utf8(fp.read()))
+    return Mesh(v, i, n)
 
 
 @ResourceManager.resource_handler('.vert')
@@ -302,6 +302,7 @@ def load_image(manager, fp, cwd):
     from PIL import Image
     img = Image.open(fp)
     return img
+
 
 @ResourceManager.resource_handler('.ttf')
 def load_font(manager, fp, cwd):

@@ -1,5 +1,6 @@
 from context import Context
 from events import send_event
+from game import Map
 from game import Terrain
 from game import UI
 from game import process_gamestate
@@ -60,6 +61,7 @@ class Client:
         context.res_mgr = res_mgr
         context.scene = self.setup_scene(context)
         context.camera = self.setup_camera(context)
+        context.map = self.setup_map(context)
         ui_res = context.res_mgr.get('/ui')
         context.ui = UI(ui_res, self.renderer)
         context.player_name = player_name
@@ -98,6 +100,17 @@ class Client:
         context.entities[terrain.e_id] = terrain
         return scene
 
+    def setup_map(self, context):
+        """Sets up the map.
+
+        TODO: add proper documentation
+        """
+        root = context.scene.root
+        resource = context.res_mgr.get('/map')
+        m = Map(resource, root)
+        context.entities[m.e_id] = m
+        return m
+
     def setup_camera(self, context):
         """Sets up camera.
 
@@ -120,9 +133,9 @@ class Client:
             +fov / 2,            # right plane
             -fov / 2 * aspect,   # top plane
             +fov / 2 * aspect,   # bottom plane
-            100)                 # view distance
+            1000)                 # view distance
 
-        camera.look_at(eye=Vec(0, 2.5, 5), center=Vec(0, 0, 0))
+        camera.look_at(eye=Vec(0, 250, 500), center=Vec(0, 0, 0))
 
         return camera
 

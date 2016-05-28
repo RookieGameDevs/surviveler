@@ -39,7 +39,7 @@ class Terrain(Entity):
         renderable.node.params['tex'] = texture
 
         t = renderable.transform
-        t.translate(Vec(-50, -50, 0.5))
+        t.translate(Vec(-50, -50, 5))
         t.scale(Vec(100, 100, 1))
 
         super(Terrain, self).__init__(renderable)
