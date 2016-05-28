@@ -43,9 +43,7 @@ class Font:
 
         self.font = ttf.TTF_OpenFontRW(font, True, size)
         if not self.font:
-            raise SDLError('failed to load font {} with size {}: {}'.format(
-                filename,
-                size,
+            raise SDLError('failed to load font: {}'.format(
                 ttf.TTF_GetError()))
 
     def render_to_texture(self, text):

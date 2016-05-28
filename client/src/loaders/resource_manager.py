@@ -320,6 +320,7 @@ def load_font(manager, fp, cwd):
     :return: Simply the bytes read from file
     :rtype: :class:`sdl2.SDL_RWops.`
     """
-    from sdl2 import SDL_RWFromConstMem
+    from io import BytesIO
+    from sdl2 import rw_from_object
     content = fp.read()
-    return SDL_RWFromConstMem(content, len(content))
+    return rw_from_object(BytesIO(content))
