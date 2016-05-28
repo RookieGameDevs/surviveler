@@ -296,9 +296,29 @@ def load_image(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: The resulting shader program object
+    :return: The opened image
     :rtype: :class:`PIL.Image`
     """
     from PIL import Image
     img = Image.open(fp)
     return img
+
+@ResourceManager.resource_handler('.ttf')
+def load_font(manager, fp, cwd):
+    """Loader for font files.
+
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
+
+    :param fp: The file pointer
+    :type fp: File
+
+    :param cwd: The current working directory
+    :type cwd: str
+
+    :return: Simply the bytes read from file
+    :rtype: :class:`sdl2.SDL_RWops.`
+    """
+    from sdl2 import SDL_RWFromConstMem
+    content = fp.read()
+    return SDL_RWFromConstMem(content, len(content))

@@ -24,11 +24,11 @@ class Font:
     This class incapsulates fonts loading and rendering primitives.
     """
 
-    def __init__(self, filename, size):
+    def __init__(self, font, size):
         """Constructor.
 
-        :param filename: Font file to load.
-        :type filename: str
+        :param fong: Binary font of the font file.
+        :type font: :class:`sdl2.SDL_RWops`
 
         :param size: Font size to use.
         :type size: int
@@ -41,7 +41,7 @@ class Font:
                     ttf.TTF_GetError()))
             TTF_INITIALIZED = True
 
-        self.font = ttf.TTF_OpenFont(filename.encode('utf8'), size)
+        self.font = ttf.TTF_OpenFontRW(font, True, size)
         if not self.font:
             raise SDLError('failed to load font {} with size {}: {}'.format(
                 filename,
