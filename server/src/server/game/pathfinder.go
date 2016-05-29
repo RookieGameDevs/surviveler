@@ -39,12 +39,20 @@ func (pf Pathfinder) FindPlayerPath(player *entity.Player, org, dst math.Vec2) (
 		return
 	}
 
-	// TODO: smooth path
+	// TODO: path smoothing
+
+	// replace origin and destination with real positions
 	vpath = make([]math.Vec2, 0, len(path))
 	for pidx := range path {
-		//
-		tile := path[pidx].(*Tile)
-		vpath = append(vpath, math.Vec2{float32(tile.X), float32(tile.Y)})
+		if pidx == 0 {
+			// replace destination
+			vpath = append(vpath, dst)
+		} else if pidx == len(path)-1 {
+			vpath = append(vpath, org)
+		} else {
+			tile := path[pidx].(*Tile)
+			vpath = append(vpath, math.Vec2{float32(tile.X), float32(tile.Y)})
+		}
 	}
 	return
 }
@@ -57,40 +65,61 @@ func (t *Tile) PathNeighbors() []astar.Pather {
 	neighbors := make([]astar.Pather, 0, 8)
 
 	// up
+	upWalkable, downWalkable, leftWalkable, rightWalkable := false, false, false, false
 	if up := w.Tile(t.X, t.Y-1); up != nil {
-		neighbors = append(neighbors, up)
+		if up.Kind == KindWalkable {
+			upWalkable = true
+			neighbors = append(neighbors, up)
+		}
 	}
 	// left
 	if left := w.Tile(t.X-1, t.Y); left != nil {
-		neighbors = append(neighbors, left)
+		if left.Kind == KindWalkable {
+			leftWalkable = true
+			neighbors = append(neighbors, left)
+		}
 	}
 	// down
 	if down := w.Tile(t.X, t.Y+1); down != nil {
-		neighbors = append(neighbors, down)
+		if down.Kind == KindWalkable {
+			downWalkable = true
+			neighbors = append(neighbors, down)
+		}
 	}
 	// right
 	if right := w.Tile(t.X+1, t.Y); right != nil {
-		neighbors = append(neighbors, right)
+		if right.Kind == KindWalkable {
+			rightWalkable = true
+			neighbors = append(neighbors, right)
+		}
 	}
 
 	// up left
 	if upleft := w.Tile(t.X-1, t.Y-1); upleft != nil {
-		neighbors = append(neighbors, upleft)
+		if upleft.Kind == KindWalkable && (upWalkable || leftWalkable) {
+			neighbors = append(neighbors, upleft)
+		}
 	}
 
 	// down left
 	if downleft := w.Tile(t.X-1, t.Y+1); downleft != nil {
-		neighbors = append(neighbors, downleft)
+		if downleft.Kind == KindWalkable && (downWalkable || leftWalkable) {
+			neighbors = append(neighbors, downleft)
+		}
 	}
 
 	// up right
 	if upright := w.Tile(t.X+1, t.Y-1); upright != nil {
-		neighbors = append(neighbors, upright)
+		if upright.Kind == KindWalkable && (upWalkable || rightWalkable) {
+			neighbors = append(neighbors, upright)
+		}
 	}
 
 	// down right
 	if downright := w.Tile(t.X+1, t.Y+1); downright != nil {
-		neighbors = append(neighbors, downright)
+		if downright.Kind == KindWalkable && (downWalkable || rightWalkable) {
+			neighbors = append(neighbors, downright)
+		}
 	}
 	return neighbors
 }
