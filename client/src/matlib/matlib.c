@@ -353,10 +353,13 @@ typedef struct _PyVecObject {
 	Vec4 vec;
 } PyVecObject;
 
+#define to_vec4(pyobj) (((PyVecObject*)pyobj)->vec)
+#define to_vec4_ptr(pyobj) (&((PyVecObject*)pyobj)->vec)
+
 static PyObject*
 py_vec_repr(PyObject *self)
 {
-	Vec4 v = ((PyVecObject*)self)->vec;
+	Vec4 v = to_vec4(self);
 	PyObject *x = PyFloat_FromDouble(v.data[0]);
 	PyObject *y = PyFloat_FromDouble(v.data[1]);
 	PyObject *z = PyFloat_FromDouble(v.data[2]);
@@ -379,15 +382,15 @@ py_vec_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 
 	float data[] = { x, y, z, w };
-	memcpy(((PyVecObject*)self)->vec.data, data, sizeof(float) * 4);
+	memcpy(to_vec4(self).data, data, sizeof(float) * 4);
 	return 0;
 }
 
 static PyObject*
 py_vec_norm(PyObject *self)
 {
-	// TODO
-	return NULL;
+	vec4_norm(to_vec4_ptr(self));
+	Py_RETURN_NONE;
 }
 
 static PyObject*
@@ -412,7 +415,7 @@ py_vec_cross(PyObject *self, PyObject *other)
 }
 
 static PyMethodDef vec_methods[] = {
-	{ "norm", (PyCFunction)py_vec_norm, 0,
+	{ "norm", (PyCFunction)py_vec_norm, METH_VARARGS,
 	  "Normalize the vector." },
 	{ "add", (PyCFunction)py_vec_add, 0,
 	  "Add a scalar or another vector." },
