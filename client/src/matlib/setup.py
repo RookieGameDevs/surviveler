@@ -1,13 +1,20 @@
 from distutils.core import Extension
 from distutils.core import setup
 
+
+cflags = [
+    '-std=c99',
+    '-Wall',
+]
+
+libs = [
+    'cblas',
+]
+
 module = Extension(
     'matlib',
-    extra_compile_args=[
-        '-std=c99',
-        '-Wall',
-    ],
-    libraries=['cblas'],
+    extra_compile_args=cflags,
+    libraries=libs,
     sources=['matlib.c'])
 
 setup(

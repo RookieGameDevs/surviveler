@@ -1,7 +1,11 @@
 #include <Python.h>  // must be first
 
 #include "matlib.h"
-#include <cblas.h>
+#ifdef __APPLE__
+# include <Accelerate/Accelerate.h>
+#else
+# include <cblas.h>
+#endif
 
 void
 mat4_mul(const Mat4 *a, const Mat4 *b, Mat4 *r)
@@ -341,12 +345,67 @@ static struct PyModuleDef module = {
 	NULL
 };
 
+static PyObject*
+py_vec4_repr(PyObject *self)
+{
+	PyObject *x = PyFloat_FromDouble(0.0);
+	PyObject *y = PyFloat_FromDouble(0.0);
+	PyObject *z = PyFloat_FromDouble(0.0);
+	PyObject *w = PyFloat_FromDouble(0.0);
+	PyObject *repr = PyUnicode_FromFormat("Vec([%A, %A, %A, %A])", x, y, z, w);
+	Py_DECREF(x);
+	Py_DECREF(y);
+	Py_DECREF(z);
+	Py_DECREF(w);
+	return repr;
+}
+
+static PyObject*
+py_vec4_norm(PyObject *self)
+{
+	// TODO
+	return NULL;
+}
+
+static PyObject*
+py_vec4_add(PyObject *self, PyObject *other)
+{
+	// TODO
+	return NULL;
+}
+
+static PyObject*
+py_vec4_mul(PyObject *self, PyObject *other)
+{
+	// TODO
+	return NULL;
+}
+
+static PyObject*
+py_vec4_cross(PyObject *self, PyObject *other)
+{
+	// TODO
+	return NULL;
+}
+
+static PyMethodDef vec_methods[] = {
+	{ "norm", (PyCFunction)py_vec4_norm, 0,
+	  "Normalize the vector." },
+	{ "add", (PyCFunction)py_vec4_add, 0,
+	  "Add a scalar or another vector." },
+	{ "mul", (PyCFunction)py_vec4_mul, 0,
+	  "Multiply by a scalar, another vector (dot product) or matrix." },
+	{ "cross", (PyCFunction)py_vec4_cross, 0,
+	  "Perform cross product with another vector." },
+	{ NULL }
+};
+
 /**
  * Vec4 object type definition.
  */
 static PyTypeObject vec4_type = {
 	{ PyObject_HEAD_INIT(NULL) },
-	.tp_name = "matlib.Vec4",
+	.tp_name = "matlib.Vec",
 	.tp_doc = "Vector with X,Y,Z,W components.",
 	.tp_basicsize = sizeof(Vec4),
 	.tp_itemsize = 0,
@@ -356,7 +415,7 @@ static PyTypeObject vec4_type = {
 	.tp_print = NULL,
 	.tp_getattr = NULL,
 	.tp_setattr = NULL,
-	.tp_repr = NULL,
+	.tp_repr = py_vec4_repr,
 	.tp_as_number = NULL,
 	.tp_as_sequence = NULL,
 	.tp_as_mapping = NULL,
@@ -367,7 +426,8 @@ static PyTypeObject vec4_type = {
 	.tp_str = NULL,
 	.tp_getattro = NULL,
 	.tp_setattro = NULL,
-	.tp_flags = Py_TPFLAGS_DEFAULT
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_methods = vec_methods
 };
 
 static void
@@ -389,7 +449,7 @@ PyInit_matlib(void)
 		raise_pyerror();
 
 	// add Vec4 type
-	if (PyType_Ready(&vec4_type) < 0 || PyModule_AddObject(m, "Vec4", (PyObject*)&vec4_type) < 0)
+	if (PyType_Ready(&vec4_type) < 0 || PyModule_AddObject(m, "Vec", (PyObject*)&vec4_type) < 0)
 		raise_pyerror();
 
 	return m;
