@@ -9,6 +9,7 @@ import (
 	"github.com/beefsack/go-astar"
 	"server/game/entity"
 	"server/math"
+	gomath "math"
 )
 
 type Pathfinder struct {
@@ -113,7 +114,9 @@ func costFromKind(kind TileKind) float64 {
  */
 func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
 	n := to.(*Tile)
-	return costFromKind(n.Kind)
+	cf := costFromKind(n.Kind)
+	md := float64(gomath.Sqrt(gomath.Pow(float64(n.X - t.X), 2) + gomath.Pow(float64(n.Y - t.Y), 2)))
+	return cf * md
 }
 
 /*
@@ -121,6 +124,5 @@ func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
  */
 func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
 	n := to.(*Tile)
-	md := float64(math.Abs(float32(n.X-t.X)) + math.Abs(float32(n.Y-t.Y)))
-	return md
+	return float64(math.Abs(float32(n.X-t.X)) + math.Abs(float32(n.Y-t.Y)))
 }
