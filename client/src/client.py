@@ -1,6 +1,6 @@
 from context import Context
 from events import send_event
-from game import Map
+# from game import Map
 from game import Terrain
 from game import UI
 from game import process_gamestate
@@ -60,8 +60,9 @@ class Client:
         context = Context(conf)
         context.res_mgr = res_mgr
         context.scene = self.setup_scene(context)
+        context.terrain = self.setup_terrain(context)
         context.camera = self.setup_camera(context)
-        context.map = self.setup_map(context)
+        # context.map = self.setup_map(context)
         ui_res = context.res_mgr.get('/ui')
         context.ui = UI(ui_res, self.renderer)
         context.player_name = player_name
@@ -95,21 +96,25 @@ class Client:
         light_node = scene.root.add_child(LightNode(light))
         light_node.transform.translate(Vec(0, 10, 10))
 
-        resource = context.res_mgr.get('/terrain')
-        terrain = Terrain(resource, scene.root, 30, 30)
-        context.entities[terrain.e_id] = terrain
         return scene
 
-    def setup_map(self, context):
-        """Sets up the map.
-
-        TODO: add proper documentation
-        """
+    def setup_terrain(self, context):
         root = context.scene.root
+        # NOTE: we are using the map resources to get the appropriate walkable
+        # matrix.
         resource = context.res_mgr.get('/map')
-        m = Map(resource, root)
-        context.entities[m.e_id] = m
-        return m
+        terrain = Terrain(resource, root)
+        context.entities[terrain.e_id] = terrain
+        return terrain
+
+    # def setup_map(self, context):
+    #     """Sets up the map.
+    #
+    #     TODO: add proper documentation
+    #     """
+    #     root = context.scene.root
+    #     resource = context.res_mgr.get('/map')
+    #     return terrain
 
     def setup_camera(self, context):
         """Sets up camera.

@@ -2,14 +2,40 @@ from game import Entity
 from game.components import Renderable
 from matlib import Vec
 from renderer import Rect
-from renderer import Texture
-from renderer import TextureParamWrap
+
+
+WALKABLE = Vec(0, 1, 0)
+NOT_WALKABLE = Vec(1, 0, 0)
+
+
+class GridCell(Entity):
+    def __init__(self, renderable, x, y, terrain):
+        """Constructor.
+
+        TODO: add documentation.
+        """
+        self.terrain = terrain
+        self.x = x
+        self.y = y
+
+        renderable.transform.identity()
+        renderable.transform.translate(Vec(x, y, 5))
+        super().__init__(renderable)
+
+        # Trigger a fake update event to set the color
+        self[Renderable].node.params['color'] = (
+            WALKABLE
+            if self.terrain.is_walkable(self.x, self.y) else
+            NOT_WALKABLE)
+
+    def update(self, dt):
+        pass
 
 
 class Terrain(Entity):
     """Terrain entity."""
 
-    def __init__(self, resource, parent_node, width, height):
+    def __init__(self, resource, parent_node,):
         """Constructor.
 
         :param resource: The terrain resource
@@ -17,33 +43,33 @@ class Terrain(Entity):
 
         :param parent_node: Parent node to attach the terrain entity to.
         :type param_node: subclass of :class:`renderer.SceneNode`
-
-        :param width: Width of the terrain in game units.
-        :type width: float
-
-        :param height: Height of the terrain in game units.
-        :type height: float
         """
+        super().__init__()
+
         mesh = Rect(1, 1)
-
         shader = resource['shader']
-        tiles = resource['tiles']
+        self.cells = []
+        self.matrix = resource.data['matrix']
 
-        texture = Texture.from_image(tiles)
-        texture.set_param(TextureParamWrap(
-            TextureParamWrap.Coord.s, TextureParamWrap.WrapType.repeat))
-        texture.set_param(TextureParamWrap(
-            TextureParamWrap.Coord.t, TextureParamWrap.WrapType.repeat))
+        for y, x_axis in enumerate(self.matrix):
+            for x, walkable in enumerate(x_axis):
+                renderable = Renderable(parent_node, mesh, shader)
+                self.cells.append(GridCell(renderable, x, y, self))
 
-        renderable = Renderable(parent_node, mesh, shader, textures=[texture])
-        renderable.node.params['tex'] = texture
+    def is_walkable(self, x, y):
+        """Returns if the selected cell is walkable.
 
-        t = renderable.transform
-        t.translate(Vec(-50, -50, 5))
-        t.scale(Vec(100, 100, 1))
+        :param x: The x in world coordinates
+        :type x: int
 
-        super(Terrain, self).__init__(renderable)
+        :param y: The y in world coordinates
+        :type y: int
+
+        :return: Wether the cell is walkable or not
+        :rtype: bool
+        """
+        return bool(self.matrix[y][x])
 
     def update(self, dt):
-        # NOTE: nothing to do
+        # NOTE: nothing to do here
         pass
