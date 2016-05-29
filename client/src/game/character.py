@@ -61,7 +61,7 @@ class Character(Entity):
         self.name = name
         self.heading = 0.0
         # rotation speed = 2π / fps / desired_2π_rotation_time
-        self.rot_speed = 2 * pi / 60 / 1.0
+        self.rot_speed = 2 * pi / 60 / 0.5
 
     def orientate(self):
         """Orientate the character towards the current destination.
