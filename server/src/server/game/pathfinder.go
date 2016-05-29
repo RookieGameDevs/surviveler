@@ -7,9 +7,9 @@ package game
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/beefsack/go-astar"
+	gomath "math"
 	"server/game/entity"
 	"server/math"
-	gomath "math"
 )
 
 type Pathfinder struct {
@@ -113,10 +113,16 @@ func costFromKind(kind TileKind) float64 {
  * PathNeighborCost returns the exact movement cost to reach a neighbor tile
  */
 func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
-	n := to.(*Tile)
-	cf := costFromKind(n.Kind)
-	md := float64(gomath.Sqrt(gomath.Pow(float64(n.X - t.X), 2) + gomath.Pow(float64(n.Y - t.Y), 2)))
-	return cf * md
+	to_ := to.(*Tile)
+	cf := costFromKind(to_.Kind)
+
+	if t.X == to_.X || t.Y == to_.Y {
+		// same axis, return the movement cost
+		return cf
+	} else {
+		// diagonal
+		return gomath.Sqrt2 * cf
+	}
 }
 
 /*
