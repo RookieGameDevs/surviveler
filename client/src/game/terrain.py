@@ -19,7 +19,7 @@ class GridCell(Entity):
         self.y = y
 
         renderable.transform.identity()
-        renderable.transform.translate(Vec(x, y, 5))
+        renderable.transform.translate(Vec(x, y, 0))
         super().__init__(renderable)
 
         # Trigger a fake update event to set the color
