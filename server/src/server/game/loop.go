@@ -21,7 +21,7 @@ import (
  * - gamestate tick -> pack and broadcast the current game state
  * - telnet request -> perform a game state related telnet request
  */
-func (g *Game) loop() {
+func (g *Game) loop() error {
 	// loop local stop condition
 	quit := false
 
@@ -36,9 +36,11 @@ func (g *Game) loop() {
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
 	gs := newGameState()
-	if err := gs.init(g.assets); err != nil {
-		log.WithError(err).Error("Game state initialization failed...")
+
+	var err error
+	if err = gs.init(g.assets); err != nil {
 		quit = true
+		return err
 	}
 
 	msgmgr := new(messages.MessageManager)
@@ -51,6 +53,11 @@ func (g *Game) loop() {
 	log.Info("Starting game loop")
 
 	go func() {
+		g.waitGroup.Add(1)
+		defer func() {
+			g.waitGroup.Done()
+		}()
+
 		for !quit {
 			select {
 
@@ -94,4 +101,5 @@ func (g *Game) loop() {
 		}
 		log.Info("Game just stopped ticking")
 	}()
+	return nil
 }

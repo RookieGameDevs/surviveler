@@ -13,6 +13,7 @@ import (
 	"server/game/messages"
 	"server/game/protocol"
 	"server/game/resource"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -26,11 +27,12 @@ type Game struct {
 	server        protocol.Server             // server core
 	ticker        time.Ticker                 // our tick source
 	msgChan       chan messages.ClientMessage // conducts ClientMessage to the game loop
-	loopCloseChan chan struct{}               // signal the game loop it must end
+	loopCloseChan chan struct{}               // to signal the game loop goroutine it must end
 	clients       *protocol.ClientRegistry    // the client registry
 	telnet        *protocol.TelnetServer      // if enabled, the telnet server
 	telnetChan    chan TelnetRequest          // channel for game related telnet commands
 	assets        resource.SurvivelerPackage  // game assets package
+	waitGroup     sync.WaitGroup              // wait for the different goroutine to finish
 }
 
 /*
@@ -86,14 +88,20 @@ func (g *Game) Start() {
 	// start everything
 	log.Info("Starting Surviveler server")
 	g.server.Start()
-	g.loop()
 
-	// be notified of termination signals
-	chSig := make(chan os.Signal)
-	defer close(chSig)
+	// start the game loop (will return immedialtely as the game loop runs
+	// in a goroutine)
+	if err := g.loop(); err == nil {
+		// ok, the game loop started without errors
+		// wait for the server to be terminated
+		chSig := make(chan os.Signal)
+		defer close(chSig)
 
-	signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
-	log.WithField("signal", <-chSig).Warn("Received termination signal")
+		signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
+		log.WithField("signal", <-chSig).Warn("Received termination signal")
+	} else {
+		log.WithError(err).Error("Game state initialization failed...")
+	}
 
 	g.stop()
 }
@@ -118,6 +126,7 @@ func (g *Game) stop() {
 
 	// stop game loop
 	log.Info("Stopping game loop")
-	g.loopCloseChan <- struct{}{}
+
 	close(g.loopCloseChan)
+	g.waitGroup.Wait()
 }
