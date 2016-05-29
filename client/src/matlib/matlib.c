@@ -326,8 +326,12 @@ vec4_norm(Vec4 *v)
 	vec4_mul(v, 1.0f / vec4_len(v));
 }
 
-/***
- * Python wrappers.
+/******************************************************************************
+ * Python3 wrappers.
+ *****************************************************************************/
+
+/**
+ * Module definition.
  */
 static struct PyModuleDef module = {
 	PyModuleDef_HEAD_INIT,
@@ -337,8 +341,56 @@ static struct PyModuleDef module = {
 	NULL
 };
 
+/**
+ * Vec4 object type definition.
+ */
+static PyTypeObject vec4_type = {
+	{ PyObject_HEAD_INIT(NULL) },
+	.tp_name = "matlib.Vec4",
+	.tp_doc = "Vector with X,Y,Z,W components.",
+	.tp_basicsize = sizeof(Vec4),
+	.tp_itemsize = 0,
+	.tp_alloc = PyType_GenericAlloc,
+	.tp_dealloc = NULL,
+	.tp_new = PyType_GenericNew,
+	.tp_print = NULL,
+	.tp_getattr = NULL,
+	.tp_setattr = NULL,
+	.tp_repr = NULL,
+	.tp_as_number = NULL,
+	.tp_as_sequence = NULL,
+	.tp_as_mapping = NULL,
+	.tp_as_buffer = NULL,
+	.tp_as_async = NULL,
+	.tp_hash = NULL,
+	.tp_call = NULL,
+	.tp_str = NULL,
+	.tp_getattro = NULL,
+	.tp_setattro = NULL,
+	.tp_flags = Py_TPFLAGS_DEFAULT
+};
+
+static void
+raise_pyerror(void)
+{
+	fprintf(stderr, "Python error occurred\n");
+	exit(EXIT_FAILURE);
+}
+
+/**
+ * Module initialization function.
+ */
 PyMODINIT_FUNC
 PyInit_matlib(void)
 {
-	return PyModule_Create(&module);
+
+	PyObject *m = PyModule_Create(&module);
+	if (!m)
+		raise_pyerror();
+
+	// add Vec4 type
+	if (PyType_Ready(&vec4_type) < 0 || PyModule_AddObject(m, "Vec4", (PyObject*)&vec4_type) < 0)
+		raise_pyerror();
+
+	return m;
 }
