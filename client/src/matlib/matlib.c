@@ -320,55 +320,6 @@ static struct PyModuleDef module = {
 };
 
 /**
- * Mat type wrapper.
- */
-typedef struct _PyMatObject {
-	PyObject_HEAD
-	Mat mat;
-} PyMatObject;
-
-#define to_mat(pyobj) (((PyMatObject*)pyobj)->vec)
-#define to_mat_ptr(pyobj) (&((PyMatObject*)pyobj)->vec)
-
-/**
- * Mat method definitions.
- */
-static PyMethodDef mat_methods[] = {
-	{ NULL }
-};
-
-/**
- * Mat object type definition.
- */
-static PyTypeObject py_mat_type = {
-	{ PyObject_HEAD_INIT(NULL) },
-	.tp_name = "matlib.Mat",
-	.tp_doc = "Matrix 4x4.",
-	.tp_basicsize = sizeof(PyMatObject),
-	.tp_itemsize = 0,
-	.tp_alloc = PyType_GenericAlloc,
-	.tp_dealloc = NULL,
-	.tp_new = PyType_GenericNew,
-	.tp_init = NULL,
-	.tp_print = NULL,
-	.tp_getattr = NULL,
-	.tp_setattr = NULL,
-	.tp_repr = NULL,
-	.tp_as_number = NULL,
-	.tp_as_sequence = NULL,
-	.tp_as_mapping = NULL,
-	.tp_as_buffer = NULL,
-	.tp_as_async = NULL,
-	.tp_hash = NULL,
-	.tp_call = NULL,
-	.tp_str = NULL,
-	.tp_getattro = NULL,
-	.tp_setattro = NULL,
-	.tp_flags = Py_TPFLAGS_DEFAULT,
-	.tp_methods = mat_methods
-};
-
-/**
  * Vec type wrapper.
  */
 typedef struct _PyVecObject {
@@ -564,6 +515,105 @@ raise_pyerror(void)
 	fprintf(stderr, "Python error occurred\n");
 	exit(EXIT_FAILURE);
 }
+
+/**
+ * Mat type wrapper.
+ */
+typedef struct _PyMatObject {
+	PyObject_HEAD
+	Mat mat;
+} PyMatObject;
+
+#define to_mat(pyobj) (((PyMatObject*)pyobj)->mat)
+#define to_mat_ptr(pyobj) (&((PyMatObject*)pyobj)->mat)
+
+static int
+py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs);
+
+static PyObject*
+py_mat_identity(void);
+
+/**
+ * Mat method definitions.
+ */
+static PyMethodDef mat_methods[] = {
+	{ "identity", (PyCFunction)py_mat_identity, METH_NOARGS | METH_STATIC,
+	  "Create an identity matrix." },
+	{ NULL }
+};
+
+/**
+ * Mat object type definition.
+ */
+static PyTypeObject py_mat_type = {
+	{ PyObject_HEAD_INIT(NULL) },
+	.tp_name = "matlib.Mat",
+	.tp_doc = "Matrix 4x4.",
+	.tp_basicsize = sizeof(PyMatObject),
+	.tp_itemsize = 0,
+	.tp_alloc = PyType_GenericAlloc,
+	.tp_dealloc = NULL,
+	.tp_new = PyType_GenericNew,
+	.tp_init = py_mat_init,
+	.tp_print = NULL,
+	.tp_getattr = NULL,
+	.tp_setattr = NULL,
+	.tp_repr = NULL,
+	.tp_as_number = NULL,
+	.tp_as_sequence = NULL,
+	.tp_as_mapping = NULL,
+	.tp_as_buffer = NULL,
+	.tp_as_async = NULL,
+	.tp_hash = NULL,
+	.tp_call = NULL,
+	.tp_str = NULL,
+	.tp_getattro = NULL,
+	.tp_setattro = NULL,
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_methods = mat_methods
+};
+
+static int
+py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	PyObject *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL;
+	if (!PyArg_ParseTuple(args, "OOOO", &r0, &r1, &r2, &r3) ||
+	    !PyObject_TypeCheck(r0, &py_vec_type) ||
+	    !PyObject_TypeCheck(r1, &py_vec_type) ||
+	    !PyObject_TypeCheck(r2, &py_vec_type) ||
+	    !PyObject_TypeCheck(r3, &py_vec_type)) {
+		PyErr_SetString(
+			PyExc_RuntimeError,
+			"Mat() expects 4 Vec instances as rows");
+		return -1;
+	}
+
+	Mat *m = to_mat_ptr(self);
+	Vec *vr0 = to_vec_ptr(r0);
+	Vec *vr1 = to_vec_ptr(r1);
+	Vec *vr2 = to_vec_ptr(r2);
+	Vec *vr3 = to_vec_ptr(r3);
+
+	size_t size = sizeof(float) * 4;
+	memcpy(m->data, vr0->data, size);
+	memcpy(m->data + 4, vr1->data, size);
+	memcpy(m->data + 8, vr2->data, size);
+	memcpy(m->data + 12, vr3->data, size);
+
+	return 0;
+}
+
+static PyObject*
+py_mat_identity(void)
+{
+	PyMatObject *mo = PyObject_New(PyMatObject, &py_mat_type);
+	if (mo) {
+		mat_ident(&mo->mat);
+		return (PyObject*)mo;
+	}
+	return NULL;
+}
+
 
 /**
  * Module initialization function.
