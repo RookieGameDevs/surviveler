@@ -356,8 +356,8 @@ static PyMethodDef vec_methods[] = {
 	  "Normalize the vector." },
 	{ "add", (PyCFunction)py_vec_add, METH_VARARGS,
 	  "Add a scalar or another vector." },
-	{ "mul", (PyCFunction)py_vec_mul, 0,
-	  "Multiply by a scalar, another vector (dot product) or matrix." },
+	{ "mul", (PyCFunction)py_vec_mul, METH_VARARGS,
+	  "Multiply by a scalar." },
 	{ "cross", (PyCFunction)py_vec_cross, 0,
 	  "Perform cross product with another vector." },
 	{ NULL }
@@ -456,10 +456,16 @@ py_vec_add(PyObject *self, PyObject *args)
 }
 
 static PyObject*
-py_vec_mul(PyObject *self, PyObject *other)
+py_vec_mul(PyObject *self, PyObject *args)
 {
-	// TODO
-	return NULL;
+	float scalar = 0.0;
+	Vec *v = to_vec_ptr(self);
+	if (!PyArg_ParseTuple(args, "f", &scalar)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected a scalar");
+		return NULL;
+	}
+	vec_mul(v, scalar, v);
+	Py_RETURN_NONE;
 }
 
 static PyObject*
