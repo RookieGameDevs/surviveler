@@ -61,12 +61,16 @@ func (g *Game) loop() error {
 		for !quit {
 			select {
 
-			case <-g.loopCloseChan:
+			case <-g.gameQuitChan:
+				// stop game loop
+				log.Info("Stopping game loop")
 				quit = true
 
 			case msg := <-g.msgChan:
 				// dispatch msg to listeners
 				if err := msgmgr.Dispatch(msg.Message, msg.ClientId); err != nil {
+					// a listener can return an error, we log it but it should not
+					// perturb the rest of the game
 					log.WithField("err", err).Error("Dispatch returned an error")
 				}
 
@@ -99,7 +103,6 @@ func (g *Game) loop() error {
 				time.Sleep(1 * time.Millisecond)
 			}
 		}
-		log.Info("Game just stopped ticking")
 	}()
 	return nil
 }

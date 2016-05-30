@@ -23,16 +23,17 @@ import (
  * network.ConnEvtHandler interface
  */
 type Game struct {
-	cfg           Config                      // configuration settings
-	server        protocol.Server             // server core
-	ticker        time.Ticker                 // our tick source
-	msgChan       chan messages.ClientMessage // conducts ClientMessage to the game loop
-	loopCloseChan chan struct{}               // to signal the game loop goroutine it must end
-	clients       *protocol.ClientRegistry    // the client registry
-	telnet        *protocol.TelnetServer      // if enabled, the telnet server
-	telnetChan    chan TelnetRequest          // channel for game related telnet commands
-	assets        resource.SurvivelerPackage  // game assets package
-	waitGroup     sync.WaitGroup              // wait for the different goroutine to finish
+	cfg             Config                      // configuration settings
+	server          protocol.Server             // server core
+	clients         *protocol.ClientRegistry    // the client registry
+	movementPlanner *MovementPlanner            // the movement planner
+	assets          resource.SurvivelerPackage  // game assets package
+	ticker          time.Ticker                 // the main tick source
+	telnet          *protocol.TelnetServer      // if enabled, the telnet server
+	telnetChan      chan TelnetRequest          // channel for game related telnet commands
+	msgChan         chan messages.ClientMessage // conducts ClientMessage to the game loop
+	gameQuitChan    chan struct{}               // to signal the game loop goroutine it must end
+	waitGroup       sync.WaitGroup              // wait for the different goroutine to finish
 }
 
 /*
@@ -59,7 +60,7 @@ func (g *Game) Setup() bool {
 
 	// init channels
 	g.msgChan = make(chan messages.ClientMessage)
-	g.loopCloseChan = make(chan struct{})
+	g.gameQuitChan = make(chan struct{})
 
 	// creates the client registry
 	g.clients = protocol.NewClientRegistry()
@@ -71,39 +72,18 @@ func (g *Game) Setup() bool {
 		g.setTelnetHandlers()
 	}
 
+	// init the movement planner
+	g.movementPlanner = NewMovementPlanner(g.gameQuitChan, &g.waitGroup)
+
 	// setup TCP server
 	rootHandler := func(msg *messages.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
 		g.msgChan <- messages.ClientMessage{msg, clientId}
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet)
+	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.waitGroup)
+
 	return true
-}
-
-/*
- * Start starts the server and game loops
- */
-func (g *Game) Start() {
-	// start everything
-	log.Info("Starting Surviveler server")
-	g.server.Start()
-
-	// start the game loop (will return immedialtely as the game loop runs
-	// in a goroutine)
-	if err := g.loop(); err == nil {
-		// ok, the game loop started without errors
-		// wait for the server to be terminated
-		chSig := make(chan os.Signal)
-		defer close(chSig)
-
-		signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
-		log.WithField("signal", <-chSig).Warn("Received termination signal")
-	} else {
-		log.WithError(err).Error("Game state initialization failed...")
-	}
-
-	g.stop()
 }
 
 /*
@@ -119,14 +99,37 @@ func (g *Game) loadAssets(path string) error {
 }
 
 /*
+ * Start starts the server and game loops
+ */
+func (g *Game) Start() {
+	// start everything
+	g.server.Start()
+
+	// start the movement planner
+	g.movementPlanner.Start()
+
+	// start the game loop (will return immedialtely as the game loop runs
+	// in a goroutine)
+	if err := g.loop(); err != nil {
+		log.WithError(err).Error("Game state initialization failed...")
+	} else {
+		// game loop started, make this goroutine wait for
+		// for an operating system signal
+		chSig := make(chan os.Signal)
+		defer close(chSig)
+		signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
+		log.WithField("signal", <-chSig).Warn("Received termination signal")
+	}
+
+	g.stop()
+}
+
+/*
  * stop cleanups the server and exits the various loops
  */
 func (g *Game) stop() {
 	g.server.Stop()
 
-	// stop game loop
-	log.Info("Stopping game loop")
-
-	close(g.loopCloseChan)
+	close(g.gameQuitChan)
 	g.waitGroup.Wait()
 }

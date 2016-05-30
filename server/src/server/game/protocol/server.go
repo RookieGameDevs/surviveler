@@ -9,6 +9,7 @@ import (
 	"net"
 	"server/game/messages"
 	"server/network"
+	"sync"
 	"time"
 )
 
@@ -24,24 +25,26 @@ type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
  * network.ConnEvtHandler interfaces.
  */
 type Server struct {
-	port    string
-	server  network.Server    // tcp server instance
-	clients ClientRegistry    // manage the connected clients
-	msgcb   MsgCallbackFunc   // incoming messages callback
-	telnet  *TelnetServer     // embedded telnet server
-	factory *messages.Factory // the unique message factory
+	port          string
+	server        network.Server    // tcp server instance
+	clients       ClientRegistry    // manage the connected clients
+	msgcb         MsgCallbackFunc   // incoming messages callback
+	telnet        *TelnetServer     // embedded telnet server
+	factory       *messages.Factory // the unique message factory
+	gameWaitGroup *sync.WaitGroup   // game wait group
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, telnet *TelnetServer) *Server {
+func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, telnet *TelnetServer, waitGroup *sync.WaitGroup) *Server {
 	return &Server{
-		clients: *clients,
-		msgcb:   msgcb,
-		port:    port,
-		telnet:  telnet,
-		factory: messages.GetFactory(),
+		clients:       *clients,
+		msgcb:         msgcb,
+		port:          port,
+		telnet:        telnet,
+		factory:       messages.GetFactory(),
+		gameWaitGroup: waitGroup,
 	}
 }
 
@@ -72,9 +75,11 @@ func (srv *Server) Start() {
 		registerTelnetCommands(srv.telnet, &srv.clients)
 	}
 
+	srv.gameWaitGroup.Add(1)
+
 	// starts the server in a listening goroutine
 	go srv.server.Start(listener, time.Second)
-	log.WithField("addr", listener.Addr()).Info("Server ready , starting to listen")
+	log.WithField("addr", listener.Addr()).Info("Server ready, listening for incoming connections")
 }
 
 /*
@@ -169,4 +174,5 @@ func (srv *Server) Broadcast(msg *messages.Message) error {
 func (srv *Server) Stop() {
 	log.Info("Stopping server")
 	srv.server.Stop()
+	srv.gameWaitGroup.Done()
 }
