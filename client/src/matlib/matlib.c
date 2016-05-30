@@ -1,6 +1,8 @@
 #include <Python.h>  // must be first
 
 #include "matlib.h"
+#include <stdarg.h>
+
 #ifdef __APPLE__
 # include <Accelerate/Accelerate.h>
 #else
@@ -305,6 +307,29 @@ vec_cross(const Vec *a, const Vec *b, Vec *r_v)
 }
 
 /******************************************************************************
+ *  Utility functions
+ *****************************************************************************/
+char*
+strfmt(const char *fmt, ...)
+{
+	va_list ap, ap_copy;
+	va_start(ap, fmt);
+
+	va_copy(ap_copy, ap);
+	size_t msg_len = vsnprintf(NULL, 0, fmt, ap_copy) + 1;
+	va_end(ap_copy);
+
+	char *msg = malloc(msg_len);
+	if (msg) {
+		va_copy(ap_copy, ap);
+		vsnprintf(msg, msg_len, fmt, ap_copy);
+		va_end(ap_copy);
+	}
+	va_end(ap);
+	return msg;
+}
+
+/******************************************************************************
  * Python3 wrappers.
  *****************************************************************************/
 
@@ -403,15 +428,16 @@ static PyObject*
 py_vec_repr(PyObject *self)
 {
 	Vec v = to_vec(self);
-	PyObject *x = PyFloat_FromDouble(v.data[0]);
-	PyObject *y = PyFloat_FromDouble(v.data[1]);
-	PyObject *z = PyFloat_FromDouble(v.data[2]);
-	PyObject *w = PyFloat_FromDouble(v.data[3]);
-	PyObject *repr = PyUnicode_FromFormat("Vec(%A, %A, %A, %A)", x, y, z, w);
-	Py_DECREF(x);
-	Py_DECREF(y);
-	Py_DECREF(z);
-	Py_DECREF(w);
+	char *s = strfmt(
+		"Vec(%f, %f, %f, %f)",
+		v.data[0],
+		v.data[1],
+		v.data[2],
+		v.data[3]
+	);
+	PyObject *repr = PyUnicode_FromString(s);
+	free(s);
+
 	return repr;
 }
 
@@ -533,6 +559,9 @@ py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs);
 static PyObject*
 py_mat_identity(void);
 
+static PyObject*
+py_mat_repr(PyObject *self);
+
 /**
  * Mat method definitions.
  */
@@ -558,7 +587,7 @@ static PyTypeObject py_mat_type = {
 	.tp_print = NULL,
 	.tp_getattr = NULL,
 	.tp_setattr = NULL,
-	.tp_repr = NULL,
+	.tp_repr = py_mat_repr,
 	.tp_as_number = NULL,
 	.tp_as_sequence = NULL,
 	.tp_as_mapping = NULL,
@@ -614,6 +643,25 @@ py_mat_identity(void)
 	return NULL;
 }
 
+static PyObject*
+py_mat_repr(PyObject *self)
+{
+	Mat m = to_mat(self);
+	char *s = strfmt(
+		"Mat(\n"
+		"    Vec(%f, %f, %f, %f),\n"
+		"    Vec(%f, %f, %f, %f),\n"
+		"    Vec(%f, %f, %f, %f),\n"
+		"    Vec(%f, %f, %f, %f))\n",
+		m.data[0], m.data[1], m.data[2], m.data[3],
+		m.data[4], m.data[5], m.data[6], m.data[7],
+		m.data[8], m.data[9], m.data[10], m.data[11],
+		m.data[12], m.data[13], m.data[14], m.data[15]
+	);
+	PyObject *repr = PyUnicode_FromString(s);
+	free(s);
+	return repr;
+}
 
 /**
  * Module initialization function.
