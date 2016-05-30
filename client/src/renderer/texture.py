@@ -1,5 +1,7 @@
 from OpenGL.GL import GL_CLAMP_TO_EDGE
 from OpenGL.GL import GL_MIRRORED_REPEAT
+from OpenGL.GL import GL_R8
+from OpenGL.GL import GL_RED
 from OpenGL.GL import GL_REPEAT
 from OpenGL.GL import GL_RGB
 from OpenGL.GL import GL_RGB8
@@ -18,12 +20,12 @@ from OpenGL.GL import glGenTextures
 from OpenGL.GL import glSamplerParameteri
 from OpenGL.GL import glTexStorage2D
 from OpenGL.GL import glTexSubImage2D
-from PIL import Image
 from abc import ABC
 from abc import abstractmethod
 from contextlib import contextmanager
 from enum import IntEnum
 from enum import unique
+from itertools import chain
 
 
 class TextureParam(ABC):
@@ -137,6 +139,29 @@ class Texture:
         glBindTexture(GL_TEXTURE_2D, tex)
         glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, w, h)
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, image.tobytes())
+        glBindTexture(GL_TEXTURE_2D, 0)
+
+        return Texture(tex, w, h)
+
+    @classmethod
+    def from_matrix(cls, matrix):
+        """Creates a texture from given matrix file.
+
+        :param matrix: The matrix.
+        :type matrix: list
+
+        :returns: The texture instance.
+        :rtype: :class:`renderer.Texture`
+        """
+        w, h = len(matrix[0]), len(matrix)
+
+        grid = bytes(chain.from_iterable(matrix))
+
+        tex = glGenTextures(1)
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, tex)
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_R8, w, h)
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RED, GL_UNSIGNED_BYTE, grid)
         glBindTexture(GL_TEXTURE_2D, 0)
 
         return Texture(tex, w, h)

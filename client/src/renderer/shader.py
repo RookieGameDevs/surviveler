@@ -322,7 +322,6 @@ class Shader:
                 block = self.uniform_blocks.get(block_name)
                 block[param_name] = v
             except (TypeError, KeyError, ValueError):
-                import pdb; pdb.set_trace()
                 raise ShaderError('Unknown shader parameter "{}"'.format(k))
 
     def use(self):

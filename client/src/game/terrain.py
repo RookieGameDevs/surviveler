@@ -2,40 +2,17 @@ from game import Entity
 from game.components import Renderable
 from matlib import Vec
 from renderer import Rect
+from renderer import Texture
 
 
 WALKABLE = Vec(0, 1, 0)
 NOT_WALKABLE = Vec(1, 0, 0)
 
 
-class GridCell(Entity):
-    def __init__(self, renderable, x, y, terrain):
-        """Constructor.
-
-        TODO: add documentation.
-        """
-        self.terrain = terrain
-        self.x = x
-        self.y = y
-
-        renderable.transform.identity()
-        renderable.transform.translate(Vec(x, y, 0))
-        super().__init__(renderable)
-
-        # Trigger a fake update event to set the color
-        self[Renderable].node.params['color'] = (
-            WALKABLE
-            if self.terrain.is_walkable(self.x, self.y) else
-            NOT_WALKABLE)
-
-    def update(self, dt):
-        pass
-
-
 class Terrain(Entity):
     """Terrain entity."""
 
-    def __init__(self, resource, parent_node,):
+    def __init__(self, resource, parent_node):
         """Constructor.
 
         :param resource: The terrain resource
@@ -44,17 +21,20 @@ class Terrain(Entity):
         :param parent_node: Parent node to attach the terrain entity to.
         :type param_node: subclass of :class:`renderer.SceneNode`
         """
-        super().__init__()
+        # matrix = resource.data['matrix']
+        import random
+        matrix = [[random.choice([0, 1]) for i in range(256)] for j in range(256)]
+        shader = resource['terrain_shader']
 
-        mesh = Rect(1, 1)
-        shader = resource['shader']
-        self.cells = []
-        self.matrix = resource.data['matrix']
+        w, h = len(matrix[0]), len(matrix)
+        rect = Rect(w, h)
 
-        for y, x_axis in enumerate(self.matrix):
-            for x, walkable in enumerate(x_axis):
-                renderable = Renderable(parent_node, mesh, shader)
-                self.cells.append(GridCell(renderable, x, y, self))
+        texture = Texture.from_matrix(matrix)
+
+        renderable = Renderable(parent_node, rect, shader, textures=[texture])
+        renderable.node.params['tex'] = texture
+
+        super().__init__(renderable)
 
     def is_walkable(self, x, y):
         """Returns if the selected cell is walkable.
