@@ -565,6 +565,9 @@ py_mat_repr(PyObject *self);
 static PyObject*
 py_mat_mul(PyObject *self, PyObject *other);
 
+static PyObject*
+py_mat_mul_vec(PyObject *self, PyObject *vec);
+
 /**
  * Mat method definitions.
  */
@@ -573,6 +576,8 @@ static PyMethodDef mat_methods[] = {
 	  "Create an identity matrix." },
 	{ "mul", (PyCFunction)py_mat_mul, METH_O,
 	  "Multiply the matrix by another matrix." },
+	{ "mulv", (PyCFunction)py_mat_mul_vec, METH_O,
+	  "Pre-multiply a vector." },
 	{ NULL }
 };
 
@@ -683,6 +688,21 @@ py_mat_mul(PyObject *self, PyObject *other)
 	memcpy(self_mat, &tmp, sizeof(Mat));
 
 	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_mat_mul_vec(PyObject *self, PyObject *arg)
+{
+	if (!PyObject_TypeCheck(arg, &py_vec_type)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected a Vec instance");
+		return NULL;
+	}
+
+	Mat *mat = to_mat_ptr(self);
+	Vec *vec = to_vec_ptr(arg);
+	PyVecObject *result = PyObject_New(PyVecObject, &py_vec_type);
+	mat_mul_vec(mat, vec, &result->vec);
+	return (PyObject*)result;
 }
 
 /**
