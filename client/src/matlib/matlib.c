@@ -28,9 +28,9 @@ mat4_mul(const Mat4 *a, const Mat4 *b, Mat4 *r)
 }
 
 void
-mat4_mul_vec(const Mat4 *m, const Vec4 *v, Vec4 *r_v)
+mat4_mul_vec(const Mat4 *m, const Vec *v, Vec *r_v)
 {
-	memset(r_v, 0, sizeof(Vec4));
+	memset(r_v, 0, sizeof(Vec));
 	cblas_sgemv(
 		CblasRowMajor,  // row-major order
 		CblasNoTrans,   // do not transpose the matrix
@@ -47,7 +47,7 @@ mat4_mul_vec(const Mat4 *m, const Vec4 *v, Vec4 *r_v)
 }
 
 void
-mat4_rotate(Mat4 *m, const Vec3 *v, float angle)
+mat4_rotate(Mat4 *m, const Vec *v, float angle)
 {
 	const float x = v->data[0];
 	const float y = v->data[1];
@@ -83,7 +83,7 @@ mat4_scale(Mat4 *m, float sx, float sy, float sz)
 }
 
 void
-mat4_scalev(Mat4 *m, const Vec3 *sv)
+mat4_scalev(Mat4 *m, const Vec *sv)
 {
 	mat4_scale(m, sv->data[0], sv->data[1], sv->data[2]);
 }
@@ -98,7 +98,7 @@ mat4_translate(Mat4 *m, float tx, float ty, float tz)
 }
 
 void
-mat4_translatev(Mat4 *m, const Vec3 *tv)
+mat4_translatev(Mat4 *m, const Vec *tv)
 {
 	mat4_translate(m, tv->data[0], tv->data[1], tv->data[2]);
 }
@@ -242,92 +242,66 @@ mat4_inv(Mat4 *m, Mat4 *out_m)
 	return 1;
 }
 
-Vec3
-vec3(float x, float y, float z)
+Vec
+vec(float x, float y, float z, float w)
 {
-	Vec3 v = {{ x, y, z }};
+	Vec v = {{ x, y, z, w }};
 	return v;
 }
 
 void
-vec3_sum(const Vec3 *a, const Vec3 *b, Vec3 *r_v)
+vec_addf(const Vec *a, float scalar, Vec *r_v)
 {
-	for (short i = 0; i < 3; i++) {
-		r_v->data[i] = a->data[i] + b->data[i];
-	}
+	r_v->data[0] = a->data[0] + scalar;
+	r_v->data[1] = a->data[1] + scalar;
+	r_v->data[2] = a->data[2] + scalar;
+	r_v->data[3] = a->data[3] + scalar;
 }
 
 void
-vec3_mul(Vec3 *v, float scalar)
+vec_addv(const Vec *a, const Vec *b, Vec *r_v)
 {
-	for (short i = 0; i < 3; i++) {
-		v->data[i] *= scalar;
-	}
+	r_v->data[0] = a->data[0] + b->data[0];
+	r_v->data[1] = a->data[1] + b->data[1];
+	r_v->data[2] = a->data[2] + b->data[2];
+	r_v->data[3] = a->data[3] + b->data[3];
+}
+
+void
+vec_mul(Vec *v, float scalar, Vec *r_v)
+{
+	r_v->data[0] = v->data[0] * scalar;
+	r_v->data[1] = v->data[1] * scalar;
+	r_v->data[2] = v->data[2] * scalar;
+	r_v->data[3] = v->data[3] * scalar;
 }
 
 float
-vec3_len(const Vec3 *v)
+vec_dot(const Vec *a, const Vec *b)
 {
-	float x = v->data[0], y = v->data[1], z = v->data[2];
-	return sqrt(x * x + y * y + z * z);
-}
-
-void
-vec3_norm(Vec3 *v)
-{
-	vec3_mul(v, 1.0f / vec3_len(v));
-}
-
-
-float
-vec3_dot(const Vec3 *a, const Vec3 *b)
-{
-	return cblas_sdot(3, a->data, 1, b->data, 1);
-
-}
-
-void
-vec3_cross(const Vec3 *a, const Vec3 *b, Vec3 *r_v)
-{
-	r_v->data[0] = a->data[1] * b->data[2] - a->data[2] * b->data[1];
-	r_v->data[1] = a->data[2] * b->data[0] - a->data[0] * b->data[2];
-	r_v->data[2] = a->data[0] * b->data[1] - a->data[1] * b->data[0];
-}
-
-Vec4
-vec4(float x, float y, float z, float w)
-{
-	Vec4 v = {{ x, y, z, w }};
-	return v;
-}
-
-void
-vec4_sum(const Vec4 *a, const Vec4 *b, Vec4 *r_v)
-{
-	for (short i = 0; i < 4; i++) {
-		r_v->data[i] = a->data[i] + b->data[i];
-	}
-}
-
-void
-vec4_mul(Vec4 *v, float scalar)
-{
-	for (short i = 0; i < 4; i++) {
-		v->data[i] *= scalar;
-	}
+	return cblas_sdot(4, a->data, 1, b->data, 1);
 }
 
 float
-vec4_len(const Vec4 *v)
+vec_len(const Vec *v)
 {
 	float x = v->data[0], y = v->data[1], z = v->data[2], w = v->data[3];
 	return sqrt(x * x + y * y + z * z + w * w);
 }
 
 void
-vec4_norm(Vec4 *v)
+vec_norm(Vec *v)
 {
-	vec4_mul(v, 1.0f / vec4_len(v));
+	vec_mul(v, 1.0f / vec_len(v), v);
+}
+
+void
+vec_cross(const Vec *a, const Vec *b, Vec *r_v)
+{
+	r_v->data[0] = a->data[1] * b->data[2] - a->data[2] * b->data[1];
+	r_v->data[1] = a->data[2] * b->data[0] - a->data[0] * b->data[2];
+	r_v->data[2] = a->data[0] * b->data[1] - a->data[1] * b->data[0];
+	r_v->data[3] = 0;  // no cross product exists for 4D vectors
 }
 
 /******************************************************************************
@@ -346,15 +320,15 @@ static struct PyModuleDef module = {
 };
 
 /**
- * Vec4 type wrapper.
+ * Vec type wrapper.
  */
 typedef struct _PyVecObject {
 	PyObject_HEAD
-	Vec4 vec;
+	Vec vec;
 } PyVecObject;
 
-#define to_vec4(pyobj) (((PyVecObject*)pyobj)->vec)
-#define to_vec4_ptr(pyobj) (&((PyVecObject*)pyobj)->vec)
+#define to_vec(pyobj) (((PyVecObject*)pyobj)->vec)
+#define to_vec_ptr(pyobj) (&((PyVecObject*)pyobj)->vec)
 
 static int
 py_vec_init(PyObject *self, PyObject *args, PyObject *kwargs);
@@ -423,7 +397,7 @@ static PyTypeObject py_vec_type = {
 static PyObject*
 py_vec_repr(PyObject *self)
 {
-	Vec4 v = to_vec4(self);
+	Vec v = to_vec(self);
 	PyObject *x = PyFloat_FromDouble(v.data[0]);
 	PyObject *y = PyFloat_FromDouble(v.data[1]);
 	PyObject *z = PyFloat_FromDouble(v.data[2]);
@@ -444,14 +418,14 @@ py_vec_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		PyErr_SetString(PyExc_RuntimeError, "expected at most 4 floats");
 		return -1;
 	}
-	memcpy(to_vec4(self).data, data, sizeof(float) * 4);
+	memcpy(to_vec(self).data, data, sizeof(float) * 4);
 	return 0;
 }
 
 static PyObject*
 py_vec_norm(PyObject *self)
 {
-	vec4_norm(to_vec4_ptr(self));
+	vec_norm(to_vec_ptr(self));
 	Py_RETURN_NONE;
 }
 
@@ -459,15 +433,12 @@ static PyObject*
 py_vec_add(PyObject *self, PyObject *args)
 {
 	float scalar = 0.0;
-	Vec4 *v = to_vec4_ptr(self);
+	Vec *v = to_vec_ptr(self);
 	PyObject *o = NULL;
 
 	if (PyArg_ParseTuple(args, "f", &scalar)) {
 		// add the scalar to each component
-		v->data[0] += scalar;
-		v->data[1] += scalar;
-		v->data[2] += scalar;
-		v->data[3] += scalar;
+		vec_addf(v, scalar, v);
 		Py_RETURN_NONE;
 	} else if (PyArg_ParseTuple(args, "O", &o)) {
 		// discard the error generated by previous PyArg_ParseTuple() call
@@ -475,11 +446,8 @@ py_vec_add(PyObject *self, PyObject *args)
 
 		if (PyObject_TypeCheck(o, &py_vec_type)) {
 			// add other vector's components to self
-			Vec4 *other = to_vec4_ptr(o);
-			v->data[0] += other->data[0];
-			v->data[1] += other->data[1];
-			v->data[2] += other->data[2];
-			v->data[3] += other->data[3];
+			Vec *other = to_vec_ptr(o);
+			vec_addv(v, other, v);
 			Py_RETURN_NONE;
 		}
 	}
@@ -520,7 +488,7 @@ PyInit_matlib(void)
 	if (!m)
 		raise_pyerror();
 
-	// add Vec4 type
+	// add Vec type
 	if (PyType_Ready(&py_vec_type) < 0 || PyModule_AddObject(m, "Vec", (PyObject*)&py_vec_type) < 0)
 		raise_pyerror();
 
