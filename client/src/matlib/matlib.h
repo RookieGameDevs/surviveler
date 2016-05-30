@@ -6,44 +6,61 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+typedef struct Vec Vec;
+typedef struct Mat Mat;
 
-typedef struct Mat4 {
+
+/*******************************************************************************
+ * Matrix type and matrix operations.
+*******************************************************************************/
+
+/**
+ * Mat - 4x4 matrix.
+ */
+struct Mat {
 	float data[16];
-} Mat4;
-
-typedef struct Vec {
-	float data[4];
-} Vec;
+};
 
 void
-mat4_mul(const Mat4 *a, const Mat4 *b, Mat4 *r_m);
+mat_mul(const Mat *a, const Mat *b, Mat *r_m);
 
 void
-mat4_mul_vec(const Mat4 *m, const Vec *v, Vec *r_v);
+mat_mul_vec(const Mat *m, const Vec *v, Vec *r_v);
 
 void
-mat4_rotate(Mat4 *m, const Vec *v, float angle);
+mat_rotate(Mat *m, const Vec *v, float angle);
 
 void
-mat4_scale(Mat4 *m, float sx, float sy, float sz);
+mat_scale(Mat *m, float sx, float sy, float sz);
 
 void
-mat4_scalev(Mat4 *m, const Vec *sv);
+mat_scalev(Mat *m, const Vec *sv);
 
 void
-mat4_translate(Mat4 *m, float tx, float ty, float tz);
+mat_translate(Mat *m, float tx, float ty, float tz);
 
 void
-mat4_translatev(Mat4 *m, const Vec *tv);
+mat_translatev(Mat *m, const Vec *tv);
 
 void
-mat4_ident(Mat4 *m);
+mat_ident(Mat *m);
 
 int
-mat4_inv(Mat4 *m, Mat4 *out_m);
+mat_inv(Mat *m, Mat *out_m);
 
 void
-mat4_print(const Mat4 *m);
+mat_print(const Mat *m);
+
+/*******************************************************************************
+ * Vector type and vector operations.
+*******************************************************************************/
+
+/**
+ * Vec - 4D vector.
+ */
+struct Vec {
+	float data[4];
+};
 
 Vec
 vec(float x, float y, float z, float w);

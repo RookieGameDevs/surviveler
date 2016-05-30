@@ -8,9 +8,9 @@
 #endif
 
 void
-mat4_mul(const Mat4 *a, const Mat4 *b, Mat4 *r)
+mat_mul(const Mat *a, const Mat *b, Mat *r)
 {
-	memset(r, 0, sizeof(Mat4));
+	memset(r, 0, sizeof(Mat));
 	cblas_sgemm(
 		CblasRowMajor,  // row-major order
 		CblasNoTrans,   // don't transpose the first matrix
@@ -28,7 +28,7 @@ mat4_mul(const Mat4 *a, const Mat4 *b, Mat4 *r)
 }
 
 void
-mat4_mul_vec(const Mat4 *m, const Vec *v, Vec *r_v)
+mat_mul_vec(const Mat *m, const Vec *v, Vec *r_v)
 {
 	memset(r_v, 0, sizeof(Vec));
 	cblas_sgemv(
@@ -47,7 +47,7 @@ mat4_mul_vec(const Mat4 *m, const Vec *v, Vec *r_v)
 }
 
 void
-mat4_rotate(Mat4 *m, const Vec *v, float angle)
+mat_rotate(Mat *m, const Vec *v, float angle)
 {
 	const float x = v->data[0];
 	const float y = v->data[1];
@@ -56,7 +56,7 @@ mat4_rotate(Mat4 *m, const Vec *v, float angle)
 	const float cos_a = cos(angle);
 	const float k = 1 - cos(angle);
 
-	memset(m, 0, sizeof(Mat4));
+	memset(m, 0, sizeof(Mat));
 	float *md = m->data;
 	md[0] = cos_a + k * x * x;
 	md[1] = k * x * y - z * sin_a;
@@ -74,44 +74,44 @@ mat4_rotate(Mat4 *m, const Vec *v, float angle)
 }
 
 void
-mat4_scale(Mat4 *m, float sx, float sy, float sz)
+mat_scale(Mat *m, float sx, float sy, float sz)
 {
-	mat4_ident(m);
+	mat_ident(m);
 	m->data[0] = sx;
 	m->data[5] = sy;
 	m->data[10] = sz;
 }
 
 void
-mat4_scalev(Mat4 *m, const Vec *sv)
+mat_scalev(Mat *m, const Vec *sv)
 {
-	mat4_scale(m, sv->data[0], sv->data[1], sv->data[2]);
+	mat_scale(m, sv->data[0], sv->data[1], sv->data[2]);
 }
 
 void
-mat4_translate(Mat4 *m, float tx, float ty, float tz)
+mat_translate(Mat *m, float tx, float ty, float tz)
 {
-	mat4_ident(m);
+	mat_ident(m);
 	m->data[3] = tx;
 	m->data[7] = ty;
 	m->data[11] = tz;
 }
 
 void
-mat4_translatev(Mat4 *m, const Vec *tv)
+mat_translatev(Mat *m, const Vec *tv)
 {
-	mat4_translate(m, tv->data[0], tv->data[1], tv->data[2]);
+	mat_translate(m, tv->data[0], tv->data[1], tv->data[2]);
 }
 
 void
-mat4_ident(Mat4 *m)
+mat_ident(Mat *m)
 {
-	memset(m, 0, sizeof(Mat4));
+	memset(m, 0, sizeof(Mat));
 	m->data[0] = m->data[5] = m->data[10] = m->data[15] = 1;
 }
 
 int
-mat4_inv(Mat4 *m, Mat4 *out_m)
+mat_inv(Mat *m, Mat *out_m)
 {
 	float inv[16], det;
 	float *mdata = m->data;
