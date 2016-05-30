@@ -8,10 +8,14 @@
 package math
 
 import (
+	"fmt"
 	"math"
 )
 
 // Vec2 is a 2-element vector.
+//
+// It implements the Value interface, and thus can be read from and written to
+// a string
 type Vec2 [2]float32
 
 // Elem extracts the elements of the vector for direct value assignment.
@@ -132,6 +136,17 @@ func (v Vec2) X() float32 {
 // inlining, so use v[0] or v.X() depending on personal preference.
 func (v Vec2) Y() float32 {
 	return v[1]
+}
+
+func (v *Vec2) String() string {
+	return fmt.Sprintf("%f,%f", v[0], v[1])
+}
+
+func (v *Vec2) Set(s string) error {
+	if _, err := fmt.Sscanf(s, "%f,%f", &v[0], &v[1]); err != nil {
+		return fmt.Errorf("invalid syntax \"%s\"", s)
+	}
+	return nil
 }
 
 // Does the vector outer product
