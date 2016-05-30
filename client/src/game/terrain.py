@@ -3,6 +3,7 @@ from game.components import Renderable
 from matlib import Vec
 from renderer import Rect
 from renderer import Texture
+from renderer import TextureParamFilter
 
 
 WALKABLE = Vec(0, 1, 0)
@@ -21,15 +22,16 @@ class Terrain(Entity):
         :param parent_node: Parent node to attach the terrain entity to.
         :type param_node: subclass of :class:`renderer.SceneNode`
         """
-        # matrix = resource.data['matrix']
-        import random
-        matrix = [[random.choice([0, 1]) for i in range(256)] for j in range(256)]
+        matrix = resource.data['matrix']
         shader = resource['terrain_shader']
 
         w, h = len(matrix[0]), len(matrix)
         rect = Rect(w, h)
 
         texture = Texture.from_matrix(matrix)
+        texture.set_param(TextureParamFilter(
+            TextureParamFilter.Type.magnify,
+            TextureParamFilter.Mode.nearest))
 
         renderable = Renderable(parent_node, rect, shader, textures=[texture])
         renderable.node.params['tex'] = texture

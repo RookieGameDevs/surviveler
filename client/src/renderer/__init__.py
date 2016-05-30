@@ -13,4 +13,5 @@ from renderer.shader import Shader  # noqa
 from renderer.shader import ShaderSource  # noqa
 from renderer.text import TextNode  # noqa
 from renderer.texture import Texture  # noqa
+from renderer.texture import TextureParamFilter  # noqa
 from renderer.texture import TextureParamWrap  # noqa
