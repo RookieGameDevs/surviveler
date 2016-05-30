@@ -19,43 +19,49 @@ func (v Vec2) Elem() (x, y float32) {
 	return v[0], v[1]
 }
 
-// Add performs element-wise addition between two vectors. It is equivalent to iterating
-// over every element of v1 and adding the corresponding element of v2 to it.
+// Add performs element-wise addition between two vectors. It is equivalent to
+// iterating over every element of v1 and adding the corresponding element of v2
+// to it.
 func (v1 Vec2) Add(v2 Vec2) Vec2 {
 	return Vec2{v1[0] + v2[0], v1[1] + v2[1]}
 }
 
-// Sub performs element-wise subtraction between two vectors. It is equivalent to iterating
-// over every element of v1 and subtracting the corresponding element of v2 from it.
+// Sub performs element-wise subtraction between two vectors. It is equivalent
+// to iterating over every element of v1 and subtracting the corresponding element
+// of v2 from it.
 func (v1 Vec2) Sub(v2 Vec2) Vec2 {
 	return Vec2{v1[0] - v2[0], v1[1] - v2[1]}
 }
 
-// Mul performs a scalar multiplication between the vector and some constant value
-// c. This is equivalent to iterating over every vector element and multiplying by c.
+// Mul performs a scalar multiplication between the vector and some constant
+// value c. This is equivalent to iterating over every vector element and
+// multiplying by c.
 func (v1 Vec2) Mul(c float32) Vec2 {
 	return Vec2{v1[0] * c, v1[1] * c}
 }
 
-// Dot returns the dot product of this vector with another. There are multiple ways
-// to describe this value. One is the multiplication of their lengths and cos(theta) where
-// theta is the angle between the vectors: v1.v2 = |v1||v2|cos(theta).
-//
-// The other (and what is actually done) is the sum of the element-wise multiplication of all
-// elements. So for instance, two Vec3s would yield v1.x * v2.x + v1.y * v2.y + v1.z * v2.z.
-//
-// This means that the dot product of a vector and itself is the square of its Len (within
-// the bounds of floating points error).
-//
-// The dot product is roughly a measure of how closely two vectors are to pointing in the same
-// direction. If both vectors are normalized, the value will be -1 for opposite pointing,
-// one for same pointing, and 0 for perpendicular vectors.
+// Dot returns the dot product of this vector with another. There are multiple
+// ways to describe this value. One is the multiplication of their lengths and
+// cos(theta) where theta is the angle between the vectors: v1.v2 =
+// |v1||v2|cos(theta).
+
+// The other (and what is actually done) is the sum of the element-wise
+// multiplication of all elements. So for instance, two Vec3s would yield v1.x *
+// v2.x + v1.y * v2.y + v1.z * v2.z.
+
+// This means that the dot product of a vector and itself is the square of its
+// Len (within the bounds of floating points error).
+
+// The dot product is roughly a measure of how closely two vectors are to
+// pointing in the same direction. If both vectors are normalized, the value will
+// be -1 for opposite pointing, one for same pointing, and 0 for perpendicular
+// vectors.
 func (v1 Vec2) Dot(v2 Vec2) float32 {
 	return v1[0]*v2[0] + v1[1]*v2[1]
 }
 
-// Len returns the vector's length. Note that this is NOT the dimension of
-// the vector (len(v)), but the mathematical length. This is equivalent to the square
+// Len returns the vector's length. Note that this is NOT the dimension of the
+// vector (len(v)), but the mathematical length. This is equivalent to the square
 // root of the sum of the squares of all elements. E.G. for a Vec2 it's
 // math.Hypot(v[0], v[1]).
 func (v1 Vec2) Len() float32 {
@@ -69,8 +75,8 @@ func (v1 Vec2) Len() float32 {
 // this function will return an infinite value for all elements due
 // to how floating point division works in Go (n/0.0 = math.Inf(Sign(n))).
 //
-// Normalization makes a vector's Len become 1.0 (within the margin of floating point error),
-// while maintaining its directionality.
+// Normalization makes a vector's Len become 1.0 (within the margin of floating
+// point error), while maintaining its directionality.
 //
 // (Can be seen here: http://play.golang.org/p/Aaj7SnbqIp )
 func (v1 Vec2) Normalize() Vec2 {
@@ -89,8 +95,8 @@ func (v1 Vec2) ApproxEqual(v2 Vec2) bool {
 	return true
 }
 
-// ApproxThresholdEq takes in a threshold for comparing two floats, and uses it to do an
-// element-wise comparison of the vector to another.
+// ApproxThresholdEq takes in a threshold for comparing two floats, and uses it
+// to do an element-wise comparison of the vector to another.
 func (v1 Vec2) ApproxEqualThreshold(v2 Vec2, threshold float32) bool {
 	for i := range v1 {
 		if !FloatEqualThreshold(v1[i], v2[i], threshold) {
@@ -100,8 +106,9 @@ func (v1 Vec2) ApproxEqualThreshold(v2 Vec2, threshold float32) bool {
 	return true
 }
 
-// ApproxFuncEq takes in a func that compares two floats, and uses it to do an element-wise
-// comparison of the vector to another. This is intended to be used with FloatEqualFunc
+// ApproxFuncEq takes in a func that compares two floats, and uses it to do an
+// element-wise comparison of the vector to another. This is intended to be used
+// with FloatEqualFunc
 func (v1 Vec2) ApproxFuncEqual(v2 Vec2, eq func(float32, float32) bool) bool {
 	for i := range v1 {
 		if !eq(v1[i], v2[i]) {
