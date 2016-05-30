@@ -562,12 +562,17 @@ py_mat_identity(void);
 static PyObject*
 py_mat_repr(PyObject *self);
 
+static PyObject*
+py_mat_mul(PyObject *self, PyObject *other);
+
 /**
  * Mat method definitions.
  */
 static PyMethodDef mat_methods[] = {
 	{ "identity", (PyCFunction)py_mat_identity, METH_NOARGS | METH_STATIC,
 	  "Create an identity matrix." },
+	{ "mul", (PyCFunction)py_mat_mul, METH_O,
+	  "Multiply the matrix by another matrix." },
 	{ NULL }
 };
 
@@ -661,6 +666,23 @@ py_mat_repr(PyObject *self)
 	PyObject *repr = PyUnicode_FromString(s);
 	free(s);
 	return repr;
+}
+
+static PyObject*
+py_mat_mul(PyObject *self, PyObject *other)
+{
+	if (!PyObject_TypeCheck(other, &py_mat_type)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected a Mat instance");
+		return NULL;
+	}
+
+	Mat *self_mat = to_mat_ptr(self);
+	Mat *other_mat = to_mat_ptr(other);
+	Mat tmp;
+	mat_mul(self_mat, other_mat, &tmp);
+	memcpy(self_mat, &tmp, sizeof(Mat));
+
+	Py_RETURN_NONE;
 }
 
 /**
