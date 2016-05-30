@@ -375,13 +375,11 @@ py_vec_repr(PyObject *self)
 static int
 py_vec_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	double x, y, z, w;
-	if (!PyArg_ParseTuple(args, "|dddd", &x, &y, &z, &w)) {
+	float data[] = { 0, 0, 0, 0 };
+	if (!PyArg_ParseTuple(args, "|ffff", data, data + 1, data + 2, data + 3)) {
 		PyErr_SetString(PyExc_RuntimeError, "expected at most 4 floats");
 		return -1;
 	}
-
-	float data[] = { x, y, z, w };
 	memcpy(to_vec4(self).data, data, sizeof(float) * 4);
 	return 0;
 }
