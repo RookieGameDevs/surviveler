@@ -346,7 +346,7 @@ static PyObject*
 py_vec_mul(PyObject *self, PyObject *args);
 
 static PyObject*
-py_vec_cross(PyObject *self, PyObject *args);
+py_vec_cross(PyObject *unused, PyObject *args);
 
 /**
  * Vec class methods.
@@ -358,8 +358,8 @@ static PyMethodDef vec_methods[] = {
 	  "Add a scalar or another vector." },
 	{ "mul", (PyCFunction)py_vec_mul, METH_VARARGS,
 	  "Multiply by a scalar." },
-	{ "cross", (PyCFunction)py_vec_cross, 0,
-	  "Perform cross product with another vector." },
+	{ "cross", (PyCFunction)py_vec_cross, METH_VARARGS | METH_STATIC,
+	  "Perform cross product between two vectors." },
 	{ NULL }
 };
 
@@ -469,10 +469,21 @@ py_vec_mul(PyObject *self, PyObject *args)
 }
 
 static PyObject*
-py_vec_cross(PyObject *self, PyObject *other)
+py_vec_cross(PyObject *unused, PyObject *args)
 {
-	// TODO
-	return NULL;
+	PyObject *a = NULL, *b = NULL;
+	if (!PyArg_ParseTuple(args, "OO", &a, &b) ||
+	    !PyObject_TypeCheck(a, &py_vec_type) ||
+	    !PyObject_TypeCheck(b, &py_vec_type)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected two Vec instances");
+		return NULL;
+	}
+	Vec *va = to_vec_ptr(a);
+	Vec *vb = to_vec_ptr(b);
+	PyVecObject *result = PyObject_New(PyVecObject, &py_vec_type);
+	vec_cross(va, vb, &result->vec);
+
+	return (PyObject*)result;
 }
 
 
