@@ -320,6 +320,55 @@ static struct PyModuleDef module = {
 };
 
 /**
+ * Mat type wrapper.
+ */
+typedef struct _PyMatObject {
+	PyObject_HEAD
+	Mat mat;
+} PyMatObject;
+
+#define to_mat(pyobj) (((PyMatObject*)pyobj)->vec)
+#define to_mat_ptr(pyobj) (&((PyMatObject*)pyobj)->vec)
+
+/**
+ * Mat method definitions.
+ */
+static PyMethodDef mat_methods[] = {
+	{ NULL }
+};
+
+/**
+ * Mat object type definition.
+ */
+static PyTypeObject py_mat_type = {
+	{ PyObject_HEAD_INIT(NULL) },
+	.tp_name = "matlib.Mat",
+	.tp_doc = "Matrix 4x4.",
+	.tp_basicsize = sizeof(PyMatObject),
+	.tp_itemsize = 0,
+	.tp_alloc = PyType_GenericAlloc,
+	.tp_dealloc = NULL,
+	.tp_new = PyType_GenericNew,
+	.tp_init = NULL,
+	.tp_print = NULL,
+	.tp_getattr = NULL,
+	.tp_setattr = NULL,
+	.tp_repr = NULL,
+	.tp_as_number = NULL,
+	.tp_as_sequence = NULL,
+	.tp_as_mapping = NULL,
+	.tp_as_buffer = NULL,
+	.tp_as_async = NULL,
+	.tp_hash = NULL,
+	.tp_call = NULL,
+	.tp_str = NULL,
+	.tp_getattro = NULL,
+	.tp_setattro = NULL,
+	.tp_flags = Py_TPFLAGS_DEFAULT,
+	.tp_methods = mat_methods
+};
+
+/**
  * Vec type wrapper.
  */
 typedef struct _PyVecObject {
@@ -529,6 +578,10 @@ PyInit_matlib(void)
 
 	// add Vec type
 	if (PyType_Ready(&py_vec_type) < 0 || PyModule_AddObject(m, "Vec", (PyObject*)&py_vec_type) < 0)
+		raise_pyerror();
+
+	// add Mat type
+	if (PyType_Ready(&py_mat_type) < 0 || PyModule_AddObject(m, "Mat", (PyObject*)&py_mat_type) < 0)
 		raise_pyerror();
 
 	return m;
