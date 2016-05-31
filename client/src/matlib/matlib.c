@@ -617,6 +617,9 @@ py_mat_mul(PyObject *self, PyObject *other);
 static PyObject*
 py_mat_mul_vec(PyObject *self, PyObject *vec);
 
+static PyObject*
+py_mat_rotate(PyObject *self, PyObject *args);
+
 /**
  * Mat method definitions.
  */
@@ -627,6 +630,8 @@ static PyMethodDef mat_methods[] = {
 	  "Multiply the matrix by another matrix." },
 	{ "mulv", (PyCFunction)py_mat_mul_vec, METH_O,
 	  "Pre-multiply a vector." },
+	{ "rotate", (PyCFunction)py_mat_rotate, METH_VARARGS,
+	  "Apply a rotation defined by an axis and angle." },
 	{ NULL }
 };
 
@@ -752,6 +757,21 @@ py_mat_mul_vec(PyObject *self, PyObject *arg)
 	PyVecObject *result = PyObject_New(PyVecObject, &py_vec_type);
 	mat_mul_vec(mat, vec, &result->vec);
 	return (PyObject*)result;
+}
+
+static PyObject*
+py_mat_rotate(PyObject *self, PyObject *args)
+{
+	PyObject *axis = NULL;
+	float angle = 0;
+	if (!PyArg_ParseTuple(args, "Of", &axis, &angle)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected a Vec instance and a float");
+		return NULL;
+	}
+	Mat *mat = to_mat_ptr(self);
+	Vec *vec = to_vec_ptr(axis);
+	mat_rotate(mat, vec, angle);
+	Py_RETURN_NONE;
 }
 
 /**
