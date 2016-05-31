@@ -81,7 +81,7 @@ float
 vec_dot(const Vec *a, const Vec *b);
 
 float
-vec_len(const Vec *v);
+vec_mag(const Vec *v);
 
 void
 vec_cross(const Vec *a, const Vec *b, Vec *r_v);

@@ -309,7 +309,7 @@ vec_dot(const Vec *a, const Vec *b)
 }
 
 float
-vec_len(const Vec *v)
+vec_mag(const Vec *v)
 {
 	float x = v->data[0], y = v->data[1], z = v->data[2], w = v->data[3];
 	return sqrt(x * x + y * y + z * z + w * w);
@@ -318,7 +318,7 @@ vec_len(const Vec *v)
 void
 vec_norm(Vec *v)
 {
-	vec_mul(v, 1.0f / vec_len(v), v);
+	vec_mul(v, 1.0f / vec_mag(v), v);
 }
 
 void
@@ -389,6 +389,9 @@ static PyObject*
 py_vec_norm(PyObject *self);
 
 static PyObject*
+py_vec_mag(PyObject *self);
+
+static PyObject*
 py_vec_add(PyObject *self, PyObject *args);
 
 static PyObject*
@@ -424,6 +427,8 @@ py_vec_setter(PyObject *self, PyObject *arg, void *offset);
 static PyMethodDef vec_methods[] = {
 	{ "norm", (PyCFunction)py_vec_norm, METH_NOARGS,
 	  "Normalize the vector." },
+	{ "mag", (PyCFunction)py_vec_mag, METH_NOARGS,
+	  "Get vector's magnitude (length)." },
 	{ "cross", (PyCFunction)py_vec_cross, METH_VARARGS | METH_STATIC,
 	  "Perform cross product between two vectors." },
 	{ "dot", (PyCFunction)py_vec_dot, METH_VARARGS | METH_STATIC,
@@ -525,6 +530,12 @@ py_vec_norm(PyObject *self)
 {
 	vec_norm(to_vec_ptr(self));
 	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_vec_mag(PyObject *self)
+{
+	return PyFloat_FromDouble(vec_mag(to_vec_ptr(self)));
 }
 
 static PyObject*
