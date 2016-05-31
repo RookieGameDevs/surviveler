@@ -376,6 +376,12 @@ py_vec_cross(PyObject *unused, PyObject *args);
 static PyObject*
 py_vec_dot(PyObject *unused, PyObject *args);
 
+static PyObject*
+py_vec_getter(PyObject *self, void *offset);
+
+static int
+py_vec_setter(PyObject *self, PyObject *arg, void *offset);
+
 /**
  * Vec class methods.
  */
@@ -392,6 +398,22 @@ static PyMethodDef vec_methods[] = {
 	  "Perform dot product between two vectors." },
 	{ NULL }
 };
+
+/**
+ * Vec computed attributes.
+ */
+static PyGetSetDef vec_attrs[] = {
+	{ "x", py_vec_getter, py_vec_setter, .closure = (void*)0UL, .doc =
+	  "X component" },
+	{ "y", py_vec_getter, py_vec_setter, .closure = (void*)1UL, .doc =
+	  "Y component" },
+	{ "z", py_vec_getter, py_vec_setter, .closure = (void*)2UL, .doc =
+	  "Z component" },
+	{ "w", py_vec_getter, py_vec_setter, .closure = (void*)3UL, .doc =
+	  "W component" },
+	{ NULL }
+};
+
 
 /**
  * Vec object type definition.
@@ -421,7 +443,8 @@ static PyTypeObject py_vec_type = {
 	.tp_getattro = NULL,
 	.tp_setattro = NULL,
 	.tp_flags = Py_TPFLAGS_DEFAULT,
-	.tp_methods = vec_methods
+	.tp_methods = vec_methods,
+	.tp_getset = vec_attrs
 };
 
 static PyObject*
@@ -534,6 +557,32 @@ py_vec_dot(PyObject *unused, PyObject *args)
 		return NULL;
 	return PyFloat_FromDouble(vec_dot(a, b));
 }
+
+static PyObject*
+py_vec_getter(PyObject *self, void *offset)
+{
+	Vec *v = to_vec_ptr(self);
+	float value = v->data[(size_t)offset];
+	return PyFloat_FromDouble(value);
+}
+
+static int
+py_vec_setter(PyObject *self, PyObject *arg, void *offset)
+{
+	float value;
+	if (PyFloat_Check(arg)) {
+		value = PyFloat_AsDouble(arg);
+	} else if (PyLong_Check(arg)) {
+		value = PyLong_AsDouble(arg);
+	} else {
+		PyErr_SetString(PyExc_AttributeError, "expected a number");
+		return -1;
+	}
+	Vec *v = to_vec_ptr(self);
+	v->data[(size_t)offset] = value;
+	return 0;
+}
+
 
 static void
 raise_pyerror(void)
