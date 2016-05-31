@@ -276,6 +276,24 @@ vec_addv(const Vec *a, const Vec *b, Vec *r_v)
 }
 
 void
+vec_subf(const Vec *a, float scalar, Vec *r_v)
+{
+	r_v->data[0] = a->data[0] - scalar;
+	r_v->data[1] = a->data[1] - scalar;
+	r_v->data[2] = a->data[2] - scalar;
+	r_v->data[3] = a->data[3] - scalar;
+}
+
+void
+vec_subv(const Vec *a, const Vec *b, Vec *r_v)
+{
+	r_v->data[0] = a->data[0] - b->data[0];
+	r_v->data[1] = a->data[1] - b->data[1];
+	r_v->data[2] = a->data[2] - b->data[2];
+	r_v->data[3] = a->data[3] - b->data[3];
+}
+
+void
 vec_mul(Vec *v, float scalar, Vec *r_v)
 {
 	r_v->data[0] = v->data[0] * scalar;
@@ -377,6 +395,12 @@ static PyObject*
 py_vec_iadd(PyObject *self, PyObject *args);
 
 static PyObject*
+py_vec_sub(PyObject *self, PyObject *other);
+
+static PyObject*
+py_vec_isub(PyObject *self, PyObject *other);
+
+static PyObject*
 py_vec_mul(PyObject *self, PyObject *args);
 
 static PyObject*
@@ -426,7 +450,9 @@ static PyGetSetDef vec_attrs[] = {
  */
 static PyNumberMethods vec_num_methods = {
 	.nb_add = py_vec_add,
-	.nb_inplace_add = py_vec_iadd
+	.nb_inplace_add = py_vec_iadd,
+	.nb_subtract = py_vec_sub,
+	.nb_inplace_subtract = py_vec_isub
 };
 
 
@@ -499,17 +525,22 @@ py_vec_norm(PyObject *self)
 }
 
 static PyObject*
-py_vec_add_helper(PyObject *self, PyObject *other, int in_place)
-{
+py_vec_op_helper(
+	PyObject *self,
+	PyObject *other,
+	void (*scalar_op)(const Vec *a, float scalar, Vec *r_v),
+	void (*vector_op)(const Vec *a, const Vec *b, Vec *r_v),
+	int in_place
+) {
 	Vec *v = to_vec_ptr(self);
 	Vec r_v;
 
 	if (PyFloat_Check(other)) {
-		vec_addf(v, PyFloat_AsDouble(other), &r_v);
+		scalar_op(v, PyFloat_AsDouble(other), &r_v);
 	} else if (PyLong_Check(other)) {
-		vec_addf(v, PyLong_AsDouble(other), &r_v);
+		scalar_op(v, PyLong_AsDouble(other), &r_v);
 	} else if (PyObject_TypeCheck(other, &py_vec_type)) {
-		vec_addv(v, to_vec_ptr(other), &r_v);
+		vector_op(v, to_vec_ptr(other), &r_v);
 	} else {
 		PyErr_SetString(PyExc_RuntimeError, "expected a scalar or Vec instance");
 		return NULL;
@@ -529,13 +560,25 @@ py_vec_add_helper(PyObject *self, PyObject *other, int in_place)
 static PyObject*
 py_vec_add(PyObject *self, PyObject *other)
 {
-	return py_vec_add_helper(self, other, 0);
+	return py_vec_op_helper(self, other, vec_addf, vec_addv, 0);
 }
 
 static PyObject*
 py_vec_iadd(PyObject *self, PyObject *other)
 {
-	return py_vec_add_helper(self, other, 1);
+	return py_vec_op_helper(self, other, vec_addf, vec_addv, 1);
+}
+
+static PyObject*
+py_vec_sub(PyObject *self, PyObject *other)
+{
+	return py_vec_op_helper(self, other, vec_subf, vec_subv, 0);
+}
+
+static PyObject*
+py_vec_isub(PyObject *self, PyObject *other)
+{
+	return py_vec_op_helper(self, other, vec_subf, vec_subv, 1);
 }
 
 static PyObject*

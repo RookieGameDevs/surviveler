@@ -69,6 +69,12 @@ void
 vec_addv(const Vec *a, const Vec *b, Vec *r_v);
 
 void
+vec_subf(const Vec *a, float scalar, Vec *r_v);
+
+void
+vec_subv(const Vec *a, const Vec *b, Vec *r_v);
+
+void
 vec_mul(Vec *v, float scalar, Vec *r_v);
 
 float
