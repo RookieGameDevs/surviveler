@@ -96,10 +96,13 @@ mat_scalev(Mat *m, const Vec *sv)
 void
 mat_translate(Mat *m, float tx, float ty, float tz)
 {
-	mat_ident(m);
-	m->data[3] = tx;
-	m->data[7] = ty;
-	m->data[11] = tz;
+	Mat tm, tmp;
+	mat_ident(&tm);
+	tm.data[3] = tx;
+	tm.data[7] = ty;
+	tm.data[11] = tz;
+	mat_mul(m, &tm, &tmp);
+	memcpy(m, &tmp, sizeof(Mat));
 }
 
 void
@@ -626,6 +629,9 @@ py_mat_rotate(PyObject *self, PyObject *args);
 static PyObject*
 py_mat_scale(PyObject *self, PyObject *svec);
 
+static PyObject*
+py_mat_translate(PyObject *self, PyObject *tvec);
+
 /**
  * Mat method definitions.
  */
@@ -640,6 +646,8 @@ static PyMethodDef mat_methods[] = {
 	  "Apply a rotation defined by an axis and angle." },
 	{ "scale", (PyCFunction)py_mat_scale, METH_O,
 	  "Apply a scale defined by X, Y, Z components of given vector." },
+	{ "translate", (PyCFunction)py_mat_translate, METH_O,
+	  "Apply a translation defined by X, Y, Z components of given vector." },
 	{ NULL }
 };
 
@@ -792,6 +800,19 @@ py_mat_scale(PyObject *self, PyObject *svec)
 	Mat *mat = to_mat_ptr(self);
 	Vec *vec = to_vec_ptr(svec);
 	mat_scalev(mat, vec);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_mat_translate(PyObject *self, PyObject *tvec)
+{
+	if (!PyObject_TypeCheck(tvec, &py_vec_type)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected a Vec instance");
+		return NULL;
+	}
+	Mat *mat = to_mat_ptr(self);
+	Vec *vec = to_vec_ptr(tvec);
+	mat_translatev(mat, vec);
 	Py_RETURN_NONE;
 }
 
