@@ -78,10 +78,13 @@ mat_rotate(Mat *m, const Vec *v, float angle)
 void
 mat_scale(Mat *m, float sx, float sy, float sz)
 {
-	mat_ident(m);
-	m->data[0] = sx;
-	m->data[5] = sy;
-	m->data[10] = sz;
+	Mat sm, tmp;
+	mat_ident(&sm);
+	sm.data[0] = sx;
+	sm.data[5] = sy;
+	sm.data[10] = sz;
+	mat_mul(m, &sm, &tmp);
+	memcpy(m, &tmp, sizeof(Mat));
 }
 
 void
@@ -620,6 +623,9 @@ py_mat_mul_vec(PyObject *self, PyObject *vec);
 static PyObject*
 py_mat_rotate(PyObject *self, PyObject *args);
 
+static PyObject*
+py_mat_scale(PyObject *self, PyObject *svec);
+
 /**
  * Mat method definitions.
  */
@@ -632,6 +638,8 @@ static PyMethodDef mat_methods[] = {
 	  "Pre-multiply a vector." },
 	{ "rotate", (PyCFunction)py_mat_rotate, METH_VARARGS,
 	  "Apply a rotation defined by an axis and angle." },
+	{ "scale", (PyCFunction)py_mat_scale, METH_O,
+	  "Apply a scale defined by X, Y, Z components of given vector." },
 	{ NULL }
 };
 
@@ -771,6 +779,19 @@ py_mat_rotate(PyObject *self, PyObject *args)
 	Mat *mat = to_mat_ptr(self);
 	Vec *vec = to_vec_ptr(axis);
 	mat_rotate(mat, vec, angle);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_mat_scale(PyObject *self, PyObject *svec)
+{
+	if (!PyObject_TypeCheck(svec, &py_vec_type)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected a Vec instance");
+		return NULL;
+	}
+	Mat *mat = to_mat_ptr(self);
+	Vec *vec = to_vec_ptr(svec);
+	mat_scalev(mat, vec);
 	Py_RETURN_NONE;
 }
 
