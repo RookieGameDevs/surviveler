@@ -75,7 +75,7 @@ void
 vec_subv(const Vec *a, const Vec *b, Vec *r_v);
 
 void
-vec_mul(Vec *v, float scalar, Vec *r_v);
+vec_mul(const Vec *v, float scalar, Vec *r_v);
 
 float
 vec_dot(const Vec *a, const Vec *b);

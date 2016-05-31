@@ -294,7 +294,7 @@ vec_subv(const Vec *a, const Vec *b, Vec *r_v)
 }
 
 void
-vec_mul(Vec *v, float scalar, Vec *r_v)
+vec_mul(const Vec *v, float scalar, Vec *r_v)
 {
 	r_v->data[0] = v->data[0] * scalar;
 	r_v->data[1] = v->data[1] * scalar;
@@ -401,7 +401,10 @@ static PyObject*
 py_vec_isub(PyObject *self, PyObject *other);
 
 static PyObject*
-py_vec_mul(PyObject *self, PyObject *args);
+py_vec_mul(PyObject *self, PyObject *other);
+
+static PyObject*
+py_vec_imul(PyObject *self, PyObject *other);
 
 static PyObject*
 py_vec_cross(PyObject *unused, PyObject *args);
@@ -421,8 +424,6 @@ py_vec_setter(PyObject *self, PyObject *arg, void *offset);
 static PyMethodDef vec_methods[] = {
 	{ "norm", (PyCFunction)py_vec_norm, METH_NOARGS,
 	  "Normalize the vector." },
-	{ "mul", (PyCFunction)py_vec_mul, METH_VARARGS,
-	  "Multiply by a scalar." },
 	{ "cross", (PyCFunction)py_vec_cross, METH_VARARGS | METH_STATIC,
 	  "Perform cross product between two vectors." },
 	{ "dot", (PyCFunction)py_vec_dot, METH_VARARGS | METH_STATIC,
@@ -452,7 +453,9 @@ static PyNumberMethods vec_num_methods = {
 	.nb_add = py_vec_add,
 	.nb_inplace_add = py_vec_iadd,
 	.nb_subtract = py_vec_sub,
-	.nb_inplace_subtract = py_vec_isub
+	.nb_inplace_subtract = py_vec_isub,
+	.nb_multiply = py_vec_mul,
+	.nb_inplace_multiply = py_vec_imul
 };
 
 
@@ -535,14 +538,19 @@ py_vec_op_helper(
 	Vec *v = to_vec_ptr(self);
 	Vec r_v;
 
-	if (PyFloat_Check(other)) {
+	if (PyFloat_Check(other) && scalar_op) {
 		scalar_op(v, PyFloat_AsDouble(other), &r_v);
-	} else if (PyLong_Check(other)) {
+	} else if (PyLong_Check(other) && scalar_op) {
 		scalar_op(v, PyLong_AsDouble(other), &r_v);
-	} else if (PyObject_TypeCheck(other, &py_vec_type)) {
+	} else if (PyObject_TypeCheck(other, &py_vec_type) && vector_op) {
 		vector_op(v, to_vec_ptr(other), &r_v);
 	} else {
-		PyErr_SetString(PyExc_RuntimeError, "expected a scalar or Vec instance");
+		if (scalar_op && vector_op)
+			PyErr_SetString(PyExc_RuntimeError, "expected a scalar or Vec instance");
+		else if (scalar_op)
+			PyErr_SetString(PyExc_RuntimeError, "expected a scalar");
+		else
+			PyErr_SetString(PyExc_RuntimeError, "expected a Vec instance");
 		return NULL;
 	}
 
@@ -582,16 +590,15 @@ py_vec_isub(PyObject *self, PyObject *other)
 }
 
 static PyObject*
-py_vec_mul(PyObject *self, PyObject *args)
+py_vec_mul(PyObject *self, PyObject *other)
 {
-	float scalar = 0.0;
-	Vec *v = to_vec_ptr(self);
-	if (!PyArg_ParseTuple(args, "f", &scalar)) {
-		PyErr_SetString(PyExc_RuntimeError, "expected a scalar");
-		return NULL;
-	}
-	vec_mul(v, scalar, v);
-	Py_RETURN_NONE;
+	return py_vec_op_helper(self, other, vec_mul, NULL, 0);
+}
+
+static PyObject*
+py_vec_imul(PyObject *self, PyObject *other)
+{
+	return py_vec_op_helper(self, other, vec_mul, NULL, 1);
 }
 
 static int
