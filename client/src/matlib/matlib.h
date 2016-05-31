@@ -46,7 +46,7 @@ void
 mat_ident(Mat *m);
 
 int
-mat_inv(Mat *m, Mat *out_m);
+mat_invert(Mat *m, Mat *out_m);
 
 /*******************************************************************************
  * Vector type and vector operations.

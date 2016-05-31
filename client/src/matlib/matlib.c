@@ -119,7 +119,7 @@ mat_ident(Mat *m)
 }
 
 int
-mat_inv(Mat *m, Mat *out_m)
+mat_invert(Mat *m, Mat *out_m)
 {
 	float inv[16], det;
 	float *mdata = m->data;
@@ -632,6 +632,9 @@ py_mat_scale(PyObject *self, PyObject *svec);
 static PyObject*
 py_mat_translate(PyObject *self, PyObject *tvec);
 
+static PyObject*
+py_mat_invert(PyObject *self);
+
 /**
  * Mat method definitions.
  */
@@ -648,6 +651,8 @@ static PyMethodDef mat_methods[] = {
 	  "Apply a scale defined by X, Y, Z components of given vector." },
 	{ "translate", (PyCFunction)py_mat_translate, METH_O,
 	  "Apply a translation defined by X, Y, Z components of given vector." },
+	{ "invert", (PyCFunction)py_mat_invert, METH_NOARGS,
+	  "Invert the matrix." },
 	{ NULL }
 };
 
@@ -813,6 +818,16 @@ py_mat_translate(PyObject *self, PyObject *tvec)
 	Mat *mat = to_mat_ptr(self);
 	Vec *vec = to_vec_ptr(tvec);
 	mat_translatev(mat, vec);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_mat_invert(PyObject *self)
+{
+	Mat *mat = to_mat_ptr(self);
+	Mat tmp;
+	mat_invert(mat, &tmp);
+	memcpy(mat, &tmp, sizeof(Mat));
 	Py_RETURN_NONE;
 }
 
