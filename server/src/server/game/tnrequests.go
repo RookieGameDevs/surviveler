@@ -33,20 +33,29 @@ type TnTeleportEntity struct {
 }
 
 /*
- * setTelnetHandlers sets the handlers for game related telnet commands. Game
- * related telnet commands use a channel to signal the game loop,  */
-func (g *Game) setTelnetHandlers() {
+ * registerTelnetHandlers declares and registers the game-related telnet
+ * handlers.
+ *
+ * By *game-related* telnet handler, it is intented a telnet handler that is to
+ * be treated by the game loop. The telnet handlers do nothing more than
+ * forwarding the TelnetRequest to a specific channel, read exclusively in the
+ * game loop, that will trigger the final handler (i.e the actual handler of the
+ * request)
+ */
+func (g *Game) registerTelnetHandlers() {
+	// function that creates and returns telnet handlers on the fly
+	createHandler := func(req TelnetRequest) protocol.TelnetHandlerFunc {
+		return func(w io.Writer) {
+			req.Writer = w
+			g.telnetChan <- req
+		}
+	}
+
 	func() {
 		// register 'gamestate' command
 		cmd := protocol.NewTelnetCmd("gamestate")
 		cmd.Descr = "prints the gamestate"
-		cmd.Handler = func(w io.Writer) {
-			req := TelnetRequest{
-				Type:   TnGameStateId,
-				Writer: w,
-			}
-			g.telnetChan <- req
-		}
+		cmd.Handler = createHandler(TelnetRequest{Type: TnGameStateId})
 		g.telnet.RegisterCommand(cmd)
 	}()
 
@@ -56,24 +65,23 @@ func (g *Game) setTelnetHandlers() {
 		cmd.Descr = "teleport an entity onto a specific -walkable- point"
 		entityId := cmd.Parms.Int("id", -1, "entity id (integer)")
 		pos := math.Vec2{}
-		cmd.Parms.Var(&pos, "dest", "destination (Vec2, example 3.12,4.56)")
-		cmd.Handler = func(w io.Writer) {
-			req := TelnetRequest{
+		cmd.Parms.Var(&pos, "dest", "destination (Vec2, ex: 3.12,4.56)")
+		cmd.Handler = createHandler(
+			TelnetRequest{
 				Type:    TnTeleportEntityId,
-				Writer:  w,
 				Content: &TnTeleportEntity{*entityId, pos},
-			}
-			g.telnetChan <- req
-		}
+			})
 		g.telnet.RegisterCommand(cmd)
 	}()
 }
 
 /*
- * telnetHandler is exclusively called from the game loop, when it has been
- * signaled about an incoming telnet request. This guaranty implies that nobody
- * else has access to the game state. However, no blocking call should ever be
- * performed inside this handler.
+ * telnetHandler is the unique handlers for game related telnet request.
+ *
+ * Because it is exclusively called from inside a select case of the game loop,
+ * it is safe to read/write the gamestate here. However, every call should only
+ * perform non-blocking only operations, as the game logic is **not** updated
+ * as long as the handler is in execution.
  */
 func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) {
 	log.WithField("msg", msg).Info("Received telnet game message")

@@ -69,7 +69,7 @@ func (g *Game) Setup() bool {
 	if len(g.cfg.TelnetPort) > 0 {
 		g.telnetChan = make(chan TelnetRequest)
 		g.telnet = protocol.NewTelnetServer(g.cfg.TelnetPort, g.clients)
-		g.setTelnetHandlers()
+		g.registerTelnetHandlers()
 	}
 
 	// init the movement planner
