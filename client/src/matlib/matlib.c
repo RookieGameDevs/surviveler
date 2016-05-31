@@ -635,6 +635,12 @@ py_mat_translate(PyObject *self, PyObject *tvec);
 static PyObject*
 py_mat_invert(PyObject *self);
 
+static PyObject*
+py_mat_getitem(PyObject *self, PyObject *key);
+
+static int
+py_mat_setitem(PyObject *self, PyObject *key, PyObject *value);
+
 /**
  * Mat method definitions.
  */
@@ -657,6 +663,15 @@ static PyMethodDef mat_methods[] = {
 };
 
 /**
+ * Mat mapping methods (for accessing single values)
+ */
+static PyMappingMethods mat_map_methods = {
+	.mp_length = NULL,
+	.mp_subscript = py_mat_getitem,
+	.mp_ass_subscript = py_mat_setitem
+};
+
+/**
  * Mat object type definition.
  */
 static PyTypeObject py_mat_type = {
@@ -675,7 +690,7 @@ static PyTypeObject py_mat_type = {
 	.tp_repr = py_mat_repr,
 	.tp_as_number = NULL,
 	.tp_as_sequence = NULL,
-	.tp_as_mapping = NULL,
+	.tp_as_mapping = &mat_map_methods,
 	.tp_as_buffer = NULL,
 	.tp_as_async = NULL,
 	.tp_hash = NULL,
@@ -829,6 +844,52 @@ py_mat_invert(PyObject *self)
 	mat_invert(mat, &tmp);
 	memcpy(mat, &tmp, sizeof(Mat));
 	Py_RETURN_NONE;
+}
+
+static int
+py_mat_parse_indices(PyObject *key, unsigned short *r_i, unsigned short *r_j)
+{
+	unsigned short i, j;
+	if (!PyTuple_Check(key) || !PyArg_ParseTuple(key, "HH", &i, &j)) {
+		PyErr_SetString(
+			PyExc_KeyError,
+			"the key must be an (i,j) tuple of unsigned indices"
+		);
+		return 0;
+	} else if (i > 3 || j > 3) {
+		PyErr_SetString(PyExc_KeyError, "indices out of bounds");
+		return 0;
+	}
+	*r_i = i;
+	*r_j = j;
+	return 1;
+}
+
+static PyObject*
+py_mat_getitem(PyObject *self, PyObject *key)
+{
+	unsigned short i, j;
+	if (!py_mat_parse_indices(key, &i, &j))
+		return NULL;
+
+	Mat mat = to_mat(self);
+	return PyFloat_FromDouble(mat.data[i * 4 + j]);
+}
+
+static int
+py_mat_setitem(PyObject *self, PyObject *key, PyObject *value)
+{
+	unsigned short i, j;
+	if (!py_mat_parse_indices(key, &i, &j)) {
+		return -1;
+	} else if (!PyFloat_Check(value)) {
+		PyErr_SetString(PyExc_ValueError, "expected a float");
+		return 0;
+	}
+
+	Mat *mat = to_mat_ptr(self);
+	mat->data[i * 4 + j] = PyFloat_AsDouble(value);
+	return 0;
 }
 
 /**
