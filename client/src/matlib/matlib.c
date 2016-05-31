@@ -621,7 +621,7 @@ static PyObject*
 py_mat_mul(PyObject *self, PyObject *other);
 
 static PyObject*
-py_mat_mul_vec(PyObject *self, PyObject *vec);
+py_mat_imul(PyObject *self, PyObject *other);
 
 static PyObject*
 py_mat_rotate(PyObject *self, PyObject *args);
@@ -647,10 +647,6 @@ py_mat_setitem(PyObject *self, PyObject *key, PyObject *value);
 static PyMethodDef mat_methods[] = {
 	{ "identity", (PyCFunction)py_mat_identity, METH_NOARGS | METH_STATIC,
 	  "Create an identity matrix." },
-	{ "mul", (PyCFunction)py_mat_mul, METH_O,
-	  "Multiply the matrix by another matrix." },
-	{ "mulv", (PyCFunction)py_mat_mul_vec, METH_O,
-	  "Pre-multiply a vector." },
 	{ "rotate", (PyCFunction)py_mat_rotate, METH_VARARGS,
 	  "Apply a rotation defined by an axis and angle." },
 	{ "scale", (PyCFunction)py_mat_scale, METH_O,
@@ -672,6 +668,14 @@ static PyMappingMethods mat_map_methods = {
 };
 
 /**
+ * Mat number protocol methods.
+ */
+static PyNumberMethods mat_num_methods = {
+	.nb_multiply = py_mat_mul,
+	.nb_inplace_multiply = py_mat_imul,
+};
+
+/**
  * Mat object type definition.
  */
 static PyTypeObject py_mat_type = {
@@ -688,7 +692,7 @@ static PyTypeObject py_mat_type = {
 	.tp_getattr = NULL,
 	.tp_setattr = NULL,
 	.tp_repr = py_mat_repr,
-	.tp_as_number = NULL,
+	.tp_as_number = &mat_num_methods,
 	.tp_as_sequence = NULL,
 	.tp_as_mapping = &mat_map_methods,
 	.tp_as_buffer = NULL,
@@ -764,7 +768,37 @@ py_mat_repr(PyObject *self)
 }
 
 static PyObject*
+py_mat_mul_vec(PyObject *self, PyObject *arg)
+{
+	Mat *mat = to_mat_ptr(self);
+	Vec *vec = to_vec_ptr(arg);
+	PyVecObject *result = PyObject_New(PyVecObject, &py_vec_type);
+	mat_mul_vec(mat, vec, &result->vec);
+	return (PyObject*)result;
+}
+
+static PyObject*
 py_mat_mul(PyObject *self, PyObject *other)
+{
+	if (PyObject_TypeCheck(other, &py_vec_type)) {
+		// matrix - vector multiplication
+		return py_mat_mul_vec(self, other);
+	}
+	if (!PyObject_TypeCheck(other, &py_mat_type)) {
+		PyErr_SetString(PyExc_RuntimeError, "expected a Mat instance");
+		return NULL;
+	}
+
+	Mat *self_mat = to_mat_ptr(self);
+	Mat other_mat;
+	memcpy(&other_mat, to_mat_ptr(other), sizeof(Mat));
+	PyMatObject *result = PyObject_New(PyMatObject, &py_mat_type);
+	mat_mul(self_mat, &other_mat, &result->mat);
+	return (PyObject*)result;
+}
+
+static PyObject*
+py_mat_imul(PyObject *self, PyObject *other)
 {
 	if (!PyObject_TypeCheck(other, &py_mat_type)) {
 		PyErr_SetString(PyExc_RuntimeError, "expected a Mat instance");
@@ -772,27 +806,13 @@ py_mat_mul(PyObject *self, PyObject *other)
 	}
 
 	Mat *self_mat = to_mat_ptr(self);
-	Mat *other_mat = to_mat_ptr(other);
+	Mat other_mat;
+	memcpy(&other_mat, to_mat_ptr(other), sizeof(Mat));
 	Mat tmp;
-	mat_mul(self_mat, other_mat, &tmp);
+	mat_mul(self_mat, &other_mat, &tmp);
 	memcpy(self_mat, &tmp, sizeof(Mat));
 
-	Py_RETURN_NONE;
-}
-
-static PyObject*
-py_mat_mul_vec(PyObject *self, PyObject *arg)
-{
-	if (!PyObject_TypeCheck(arg, &py_vec_type)) {
-		PyErr_SetString(PyExc_RuntimeError, "expected a Vec instance");
-		return NULL;
-	}
-
-	Mat *mat = to_mat_ptr(self);
-	Vec *vec = to_vec_ptr(arg);
-	PyVecObject *result = PyObject_New(PyVecObject, &py_vec_type);
-	mat_mul_vec(mat, vec, &result->vec);
-	return (PyObject*)result;
+	return (PyObject*)self;
 }
 
 static PyObject*
