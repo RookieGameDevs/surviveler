@@ -812,6 +812,7 @@ py_mat_imul(PyObject *self, PyObject *other)
 	mat_mul(self_mat, &other_mat, &tmp);
 	memcpy(self_mat, &tmp, sizeof(Mat));
 
+	Py_INCREF(self);
 	return (PyObject*)self;
 }
 
