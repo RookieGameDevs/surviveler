@@ -1,12 +1,12 @@
 from renderer.scene import SceneNode
 from renderer.mesh import Rect
-from matlib import Vec3
+from matlib import Vec
 
 
 class TextNode(SceneNode):
     """A node for rendering text."""
 
-    def __init__(self, font, shader, text, color=Vec3(1, 1, 1)):
+    def __init__(self, font, shader, text, color=Vec(1, 1, 1, 1)):
         """Constructor.
 
         :param font: Font to use.
@@ -19,7 +19,7 @@ class TextNode(SceneNode):
         :type text: tr
 
         :param color: Text color.
-        :type color: :class:`matlib.Vec3`
+        :type color: :class:`matlib.Vec`
         """
         super(TextNode, self).__init__()
         self.font = font
@@ -61,8 +61,9 @@ class TextNode(SceneNode):
 
     def render(self, ctx, transform):
         params = {
-            'transform': ctx.camera.modelview * transform,
-            'projection': ctx.camera.projection,
+            'transform': transform,
+            'modelview': ctx.modelview,
+            'projection': ctx.projection,
             'width': self._texture.width,
             'height': self._texture.height,
             'tex': self._texture,

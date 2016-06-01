@@ -32,8 +32,9 @@ class GeometryNode(SceneNode):
         self.textures = textures or []
 
     def render(self, ctx, transform):
-        self.params['transform'] = ctx.modelview_transform * transform
-        self.params['projection'] = ctx.projection_transform
+        self.params['transform'] = transform
+        self.params['modelview'] = ctx.modelview
+        self.params['projection'] = ctx.projection
 
         if len(self.textures) >= MAX_TEXTURES:
             raise OpenGLError(

@@ -26,25 +26,24 @@ from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
 from exceptions import ShaderError
 from exceptions import UniformError
-from matlib import Mat4
-from matlib import Vec3
+from matlib import Mat
+from matlib import Vec
 from renderer.texture import Texture
 from utils import as_ascii
 from utils import as_utf8
-import numpy as np
 
 
 UNIFORM_VALIDATORS = {
-    GL_FLOAT_MAT4: lambda v: type(v) == Mat4,
-    GL_FLOAT_VEC3: lambda v: type(v) == Vec3,
+    GL_FLOAT_MAT4: lambda v: type(v) == Mat,
+    GL_FLOAT_VEC3: lambda v: type(v) == Vec,
     GL_SAMPLER_2D: lambda v: type(v) == Texture,
     GL_INT: lambda v: type(v) == int,
 }
 
 
 UNIFORM_SETTERS = {
-    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, np.asarray(v)),
-    GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, np.asarray(v)),
+    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, bytes(v)),
+    GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, bytes(v)),
     GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v.tex_unit),
     GL_INT: lambda i, v: glUniform1i(i, v),
 }

@@ -2,8 +2,7 @@ from datetime import datetime
 from events import subscriber
 from game.events import CharacterJoin
 from game.events import CharacterLeave
-from matlib import Mat4
-from matlib import Vec3
+from matlib import Vec
 from renderer import Font
 from renderer import OrthoCamera
 from renderer import Scene
@@ -32,7 +31,7 @@ class UI:
 
         self.log_line_height = 18
         self.log_height = 0
-        self.log_color = Vec3(0.4, 0.4, 0.4)
+        self.log_color = Vec(0.4, 0.4, 0.4)
         self.log_font = Font('data/fonts/Monaco-Linux.ttf', 14)
         self.log_shader = Shader.from_glsl(
             'data/shaders/text.vert',
@@ -44,8 +43,9 @@ class UI:
             self.log_shader,
             'FPS',
             self.log_color))
-        self.fps_counter_node.transform = Mat4.trans(Vec3(
-            self.w - self.w * 0.1, 0, 0))
+
+        self.fps_counter_node.transform.translate(
+            Vec(self.w - self.w * 0.1, 0, 0))
 
     def set_fps(self, number):
         """Set the current frame rate in FPS widget.
@@ -69,7 +69,9 @@ class UI:
             self.log_shader,
             msg,
             self.log_color))
-        txt.transform = Mat4.trans(Vec3(0, self.log_height, 0))
+
+        txt.transform.identity()
+        txt.transform.translate(Vec(0, self.log_height, 0))
         self.log_height += self.log_line_height
 
     def render(self):

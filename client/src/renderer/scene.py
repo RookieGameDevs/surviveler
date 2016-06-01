@@ -1,6 +1,4 @@
-from matlib import Mat4
-from matlib import Vec3
-import numpy as np
+from matlib import Mat
 
 
 class SceneRenderContext:
@@ -31,12 +29,12 @@ class SceneRenderContext:
         return self._camera
 
     @property
-    def modelview_transform(self):
+    def modelview(self):
         """Computed model-view transformation matrix."""
         return self._modelview_t
 
     @property
-    def projection_transform(self):
+    def projection(self):
         """Computed projection transformation matrix."""
         return self._projection_t
 
@@ -78,7 +76,7 @@ class SceneNode:
     def __init__(self):
         self._children = []
         self.parent = None
-        self.transform = Mat4()
+        self.transform = Mat()
 
     def render(self, ctx, transform):
         """Renders the node.
@@ -92,7 +90,7 @@ class SceneNode:
         :param transform: Node's computed transformation matrix. Not to be
             confused with `self.transform`, which describes node's local
             transformation.
-        :type transform: :class:`matlib.Mat4`
+        :type transform: :class:`matlib.Mat`
         """
         pass
 
@@ -130,19 +128,18 @@ class SceneNode:
         """Transform local coordinate to world.
 
         :param pos: Position in node's local coordinate system.
-        :type pos: :class:`matlib.Vec3`
+        :type pos: :class:`matlib.Vec`
 
         :returns: Position in world coordinates.
-        :rtype: :class:`matlib.Vec3`
+        :rtype: :class:`matlib.Vec`
         """
         transform = self.transform
         parent = self.parent
         while parent:
-            transform = parent.transform * transform
+            transform *= transform
             parent = parent.parent
 
-        v = transform * np.array([pos.x, pos.y, pos.z, 1.0]).reshape((4, 1))
-        return Vec3(v[0], v[1], v[2])
+        return transform * pos
 
 
 class RootNode(SceneNode):
@@ -152,9 +149,13 @@ class RootNode(SceneNode):
     """
 
     def render(self, ctx, transform=None):
+        self.t = Mat()
 
         def render_all(node, parent_transform):
-            node.render(ctx, parent_transform * node.transform)
+            self.t.identity()
+            self.t *= parent_transform
+            self.t *= node.transform
+            node.render(ctx, self.t)
 
             for child in node.children:
                 render_all(child, node.transform)

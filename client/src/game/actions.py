@@ -1,7 +1,7 @@
 from core.events import MouseClickEvent
 from events import subscriber
 from game.components import Movable
-from matlib import Vec3
+from matlib import Vec
 from network import Message
 from network import MessageField
 from network import MessageType
@@ -31,8 +31,8 @@ def handle_mouse_click(evt):
         # transform using matrices, since player's position is the actual offset
         # from world origin)
         player = evt.context.player
-        player_pos = Vec3(*player[Movable].position)
-        pos = evt.context.scene.root.to_world(Vec3(x, y) + player_pos)
+        player_pos = Vec(*player[Movable].position)
+        pos = evt.context.scene.root.to_world(Vec(x, y) + player_pos)
         LOG.debug('World pos: {},{},{}'.format(pos.x, pos.y, pos.z))
 
         msg = Message(MessageType.move, {

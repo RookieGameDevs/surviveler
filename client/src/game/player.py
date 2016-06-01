@@ -3,7 +3,7 @@ from events import subscriber
 from game import Character
 from game.components import Movable
 from game.events import PlayerJoin
-from matlib import Vec3
+from matlib import Vec
 import logging
 
 
@@ -25,8 +25,10 @@ class Player(Character):
         super(Player, self).update(dt)
 
         x, y = self[Movable].position
+
+        # update camera position
         context = Context.get_instance()
-        context.camera.translate(-Vec3(x, y, 0))
+        context.camera.position = Vec(-x, -y)
 
 
 @subscriber(PlayerJoin)

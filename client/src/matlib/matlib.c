@@ -723,7 +723,7 @@ static int
 py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs);
 
 static PyObject*
-py_mat_identity(void);
+py_mat_identity(PyObject *self);
 
 static PyObject*
 py_mat_repr(PyObject *self);
@@ -759,8 +759,8 @@ py_mat_getbuffer(PyObject *self, Py_buffer *view, int flags);
  * Mat method definitions.
  */
 static PyMethodDef mat_methods[] = {
-	{ "identity", (PyCFunction)py_mat_identity, METH_NOARGS | METH_STATIC,
-	  "Create an identity matrix." },
+	{ "identity", (PyCFunction)py_mat_identity, METH_NOARGS,
+	  "Initialize to identity matrix." },
 	{ "rotate", (PyCFunction)py_mat_rotate, METH_VARARGS,
 	  "Apply a rotation defined by an axis and angle." },
 	{ "scale", (PyCFunction)py_mat_scale, METH_O,
@@ -832,11 +832,12 @@ static int
 py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	PyObject *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL;
-	if (!PyArg_ParseTuple(args, "OOOO", &r0, &r1, &r2, &r3) ||
+	if (!PyArg_ParseTuple(args, "|(OOOO)", &r0, &r1, &r2, &r3) || (
+	    (r0 && r1 && r2 && r3) && (
 	    !PyObject_TypeCheck(r0, &py_vec_type) ||
 	    !PyObject_TypeCheck(r1, &py_vec_type) ||
 	    !PyObject_TypeCheck(r2, &py_vec_type) ||
-	    !PyObject_TypeCheck(r3, &py_vec_type)) {
+	    !PyObject_TypeCheck(r3, &py_vec_type)))) {
 		PyErr_SetString(
 			PyExc_RuntimeError,
 			"Mat() expects 4 Vec instances as rows");
@@ -844,6 +845,13 @@ py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 
 	Mat *m = to_mat_ptr(self);
+
+	if (!(r0 && r1 && r2 && r3)) {
+		// if no rows are provided, initialize the matrix to identity
+		mat_ident(m);
+		return 0;
+	}
+
 	Vec *vr0 = to_vec_ptr(r0);
 	Vec *vr1 = to_vec_ptr(r1);
 	Vec *vr2 = to_vec_ptr(r2);
@@ -859,14 +867,11 @@ py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs)
 }
 
 static PyObject*
-py_mat_identity(void)
+py_mat_identity(PyObject *self)
 {
-	PyMatObject *mo = PyObject_New(PyMatObject, &py_mat_type);
-	if (mo) {
-		mat_ident(&mo->mat);
-		return (PyObject*)mo;
-	}
-	return NULL;
+	Mat *m = to_mat_ptr(self);
+	mat_ident(m);
+	Py_RETURN_NONE;
 }
 
 static PyObject*
