@@ -125,10 +125,17 @@ func (g *Game) Start() {
 }
 
 /*
- * stop cleanups the server and exits the various loops
+ * stop cleanups the servers and exits the various loops
+ *
+ * Main tcp server and telnet server are successively closed, each in a
+ * blocking call to Stop that let them cleanups the various goroutines and
+ * connections still opened.
  */
 func (g *Game) stop() {
 	g.server.Stop()
+	if g.telnet != nil {
+		g.telnet.Stop()
+	}
 
 	close(g.gameQuitChan)
 	g.waitGroup.Wait()

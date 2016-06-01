@@ -71,7 +71,7 @@ func (srv *Server) Start() {
 
 	if srv.telnet != nil {
 		// start telnet server if present
-		srv.telnet.Start()
+		srv.telnet.Start(srv.gameWaitGroup)
 		registerTelnetCommands(srv.telnet, &srv.clients)
 	}
 

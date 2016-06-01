@@ -10,12 +10,14 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/telgo"
 	"io"
+	"sync"
 )
 
 type TelnetServer struct {
 	port     string               // port on which listening
 	commands map[string]TelnetCmd // the registered telnet commands
 	registry *ClientRegistry      // the unique client registry
+	server   *telgo.Server
 }
 
 type TelnetHandlerFunc func(io.Writer)
@@ -47,9 +49,12 @@ func NewTelnetServer(port string, registry *ClientRegistry) *TelnetServer {
 }
 
 /*
- * Start starts the telnet server. This call is not blocking
+ * Start starts the telnet server.
+ *
+ * This call is not blocking and starts its own goroutine. When this goroutine
+ * is started, the TelnetServer increments the provided waitGroup parameter.
  */
-func (tns *TelnetServer) Start() {
+func (tns *TelnetServer) Start(waitGroup *sync.WaitGroup) {
 	globalHandler := func(c *telgo.Client, args []string) bool {
 		tw := &telnetWriter{c}
 		if cmd, ok := tns.commands[args[0]]; ok {
@@ -73,12 +78,25 @@ func (tns *TelnetServer) Start() {
 	}
 
 	// start the server in a go routine
-	s := telgo.NewServer(":"+tns.port, "surviveler> ", globalHandler, "anonymous")
+	tns.server = telgo.NewServer(":"+tns.port, "surviveler> ", globalHandler, "anonymous")
 	go func() {
-		if err := s.Run(); err != nil {
+		waitGroup.Add(1)
+		defer func() {
+			log.Info("Stopping admin telnet server")
+			waitGroup.Done()
+		}()
+		log.Info("Starting admin telnet server")
+		if err := tns.server.Run(); err != nil {
 			log.WithError(err).Error("Telnet server error")
 		}
 	}()
+}
+
+/*
+ * Stop requests the underlying telnet server to stop
+ */
+func (tns *TelnetServer) Stop() {
+	tns.server.Quit()
 }
 
 /*
