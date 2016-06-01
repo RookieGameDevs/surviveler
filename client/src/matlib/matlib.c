@@ -414,6 +414,9 @@ static PyObject*
 py_vec_imul(PyObject *self, PyObject *other);
 
 static PyObject*
+py_vec_neg(PyObject *self);
+
+static PyObject*
 py_vec_cross(PyObject *unused, PyObject *args);
 
 static PyObject*
@@ -465,6 +468,7 @@ static PyNumberMethods vec_num_methods = {
 	.nb_add = py_vec_add,
 	.nb_inplace_add = py_vec_iadd,
 	.nb_subtract = py_vec_sub,
+	.nb_negative = py_vec_neg,
 	.nb_inplace_subtract = py_vec_isub,
 	.nb_multiply = py_vec_mul,
 	.nb_inplace_multiply = py_vec_imul
@@ -624,6 +628,14 @@ static PyObject*
 py_vec_imul(PyObject *self, PyObject *other)
 {
 	return py_vec_op_helper(self, other, vec_mul, NULL, 1);
+}
+
+static PyObject*
+py_vec_neg(PyObject *self)
+{
+	PyVecObject *result = PyObject_New(PyVecObject, &py_vec_type);
+	vec_mul(to_vec_ptr(self), -1, &result->vec);
+	return (PyObject*)result;
 }
 
 static PyObject*
