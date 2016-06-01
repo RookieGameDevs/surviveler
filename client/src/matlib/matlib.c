@@ -739,6 +739,9 @@ py_mat_getitem(PyObject *self, PyObject *key);
 static int
 py_mat_setitem(PyObject *self, PyObject *key, PyObject *value);
 
+static int
+py_mat_getbuffer(PyObject *self, Py_buffer *view, int flags);
+
 /**
  * Mat method definitions.
  */
@@ -774,6 +777,14 @@ static PyNumberMethods mat_num_methods = {
 };
 
 /**
+ * Mat buffer methods.
+ */
+static PyBufferProcs mat_buf_methods = {
+	.bf_getbuffer = py_mat_getbuffer,
+	.bf_releasebuffer = NULL
+};
+
+/**
  * Mat object type definition.
  */
 static PyTypeObject py_mat_type = {
@@ -793,7 +804,7 @@ static PyTypeObject py_mat_type = {
 	.tp_as_number = &mat_num_methods,
 	.tp_as_sequence = NULL,
 	.tp_as_mapping = &mat_map_methods,
-	.tp_as_buffer = NULL,
+	.tp_as_buffer = &mat_buf_methods,
 	.tp_as_async = NULL,
 	.tp_hash = NULL,
 	.tp_call = NULL,
@@ -1009,6 +1020,19 @@ py_mat_setitem(PyObject *self, PyObject *key, PyObject *value)
 	Mat *mat = to_mat_ptr(self);
 	mat->data[i * 4 + j] = PyFloat_AsDouble(value);
 	return 0;
+}
+
+static int
+py_mat_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+	return PyBuffer_FillInfo(
+		view,
+		self,
+		(void*)to_mat_ptr(self)->data,
+		sizeof(float) * 16,
+		1,
+		flags
+	);
 }
 
 /**
