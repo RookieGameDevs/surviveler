@@ -425,6 +425,9 @@ py_vec_getter(PyObject *self, void *offset);
 static int
 py_vec_setter(PyObject *self, PyObject *arg, void *offset);
 
+static int
+py_vec_getbuffer(PyObject *self, Py_buffer *view, int flags);
+
 /**
  * Vec class methods.
  */
@@ -467,6 +470,13 @@ static PyNumberMethods vec_num_methods = {
 	.nb_inplace_multiply = py_vec_imul
 };
 
+/**
+ * Vec buffer methods.
+ */
+static PyBufferProcs vec_buf_methods = {
+	.bf_getbuffer = py_vec_getbuffer,
+	.bf_releasebuffer = NULL
+};
 
 /**
  * Vec object type definition.
@@ -488,7 +498,7 @@ static PyTypeObject py_vec_type = {
 	.tp_as_number = &vec_num_methods,
 	.tp_as_sequence = NULL,
 	.tp_as_mapping = NULL,
-	.tp_as_buffer = NULL,
+	.tp_as_buffer = &vec_buf_methods,
 	.tp_as_async = NULL,
 	.tp_hash = NULL,
 	.tp_call = NULL,
@@ -665,6 +675,18 @@ py_vec_setter(PyObject *self, PyObject *arg, void *offset)
 	return 0;
 }
 
+static int
+py_vec_getbuffer(PyObject *self, Py_buffer *view, int flags)
+{
+	return PyBuffer_FillInfo(
+		view,
+		self,
+		(void*)to_vec_ptr(self)->data,
+		sizeof(float) * 4,
+		1,
+		flags
+	);
+}
 
 static void
 raise_pyerror(void)
