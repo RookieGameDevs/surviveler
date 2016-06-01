@@ -55,6 +55,9 @@ mat_mul_vec(const Mat *m, const Vec *v, Vec *r_v)
 void
 mat_rotate(Mat *m, const Vec *v, float angle)
 {
+	Mat rm, tmp;
+	mat_ident(&rm);
+
 	const float x = v->data[0];
 	const float y = v->data[1];
 	const float z = v->data[2];
@@ -62,21 +65,19 @@ mat_rotate(Mat *m, const Vec *v, float angle)
 	const float cos_a = cos(angle);
 	const float k = 1 - cos(angle);
 
-	memset(m, 0, sizeof(Mat));
-	float *md = m->data;
-	md[0] = cos_a + k * x * x;
-	md[1] = k * x * y - z * sin_a;
-	md[2] = k * x * z + y * sin_a;
+	rm.data[0] = cos_a + k * x * x;
+	rm.data[1] = k * x * y - z * sin_a;
+	rm.data[2] = k * x * z + y * sin_a;
+	rm.data[4] = k * x * y + z * sin_a;
+	rm.data[5] = cos_a + k * y * y;
+	rm.data[6] = k * y * z - x * sin_a;
+	rm.data[8] = k * x * z - y * sin_a;
+	rm.data[9] = k * y * z + x * sin_a;
+	rm.data[10] = cos_a + k * z * z;
+	rm.data[15] = 1.0f;
 
-	md[4] = k * x * y + z * sin_a;
-	md[5] = cos_a + k * y * y;
-	md[6] = k * y * z - x * sin_a;
-
-	md[8] = k * x * z - y * sin_a;
-	md[9] = k * y * z + x * sin_a;
-	md[10] = cos_a + k * z * z;
-
-	md[15] = 1.0f;
+	mat_mul(m, &rm, &tmp);
+	memcpy(m, &tmp, sizeof(Mat));
 }
 
 void
@@ -309,14 +310,14 @@ vec_mul(const Vec *v, float scalar, Vec *r_v)
 float
 vec_dot(const Vec *a, const Vec *b)
 {
-	return cblas_sdot(4, a->data, 1, b->data, 1);
+	return cblas_sdot(3, a->data, 1, b->data, 1);
 }
 
 float
 vec_mag(const Vec *v)
 {
-	float x = v->data[0], y = v->data[1], z = v->data[2], w = v->data[3];
-	return sqrt(x * x + y * y + z * z + w * w);
+	float x = v->data[0], y = v->data[1], z = v->data[2];
+	return sqrt(x * x + y * y + z * z);
 }
 
 void
@@ -438,11 +439,11 @@ static PyMethodDef vec_methods[] = {
 	{ "norm", (PyCFunction)py_vec_norm, METH_NOARGS,
 	  "Normalize the vector." },
 	{ "mag", (PyCFunction)py_vec_mag, METH_NOARGS,
-	  "Get vector's magnitude (length)." },
+	  "Get vector's magnitude (length) for X, Y, Z components." },
 	{ "cross", (PyCFunction)py_vec_cross, METH_O,
-	  "Perform cross product between two vectors." },
+	  "Perform cross product between two vectors using X, Y, Z componets." },
 	{ "dot", (PyCFunction)py_vec_dot, METH_O,
-	  "Perform dot product between two vectors." },
+	  "Perform dot product between two vectors using X, Y, Z components." },
 	{ NULL }
 };
 
