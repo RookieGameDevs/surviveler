@@ -1021,16 +1021,18 @@ py_mat_getitem(PyObject *self, PyObject *key)
 static int
 py_mat_setitem(PyObject *self, PyObject *key, PyObject *value)
 {
+	Mat *mat = to_mat_ptr(self);
 	unsigned short i, j;
 	if (!py_mat_parse_indices(key, &i, &j)) {
 		return -1;
-	} else if (!PyFloat_Check(value)) {
-		PyErr_SetString(PyExc_ValueError, "expected a float");
-		return 0;
+	} else if (PyFloat_Check(value)) {
+		mat->data[i * 4 + j] = PyFloat_AsDouble(value);
+	} else if (PyLong_Check(value)) {
+		mat->data[i * 4 + j] = PyLong_AsDouble(value);
+	} else {
+		PyErr_SetString(PyExc_ValueError, "expected a number");
+		return -1;
 	}
-
-	Mat *mat = to_mat_ptr(self);
-	mat->data[i * 4 + j] = PyFloat_AsDouble(value);
 	return 0;
 }
 
