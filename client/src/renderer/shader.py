@@ -34,12 +34,14 @@ from OpenGL.GL import glShaderSource
 from OpenGL.GL import glUniform1i
 from OpenGL.GL import glUniform3fv
 from OpenGL.GL import glUniform4fv
+from OpenGL.GL import glUniformBlockBinding
 from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
 from collections import defaultdict
 from exceptions import ShaderError
 from exceptions import UniformError
 from functools import partial
+from itertools import count
 from matlib import Mat
 from matlib import Vec
 from renderer.texture import Texture
@@ -179,6 +181,7 @@ class Shader:
 
         # create uniform blocks map
         self.uniform_blocks = {}
+        binding_index = count()
         for ub_id in range(glGetProgramiv(self.prog, GL_ACTIVE_UNIFORM_BLOCKS)):
             # partial which retrieves a given parameter about uniform block
             binfo = partial(glGetActiveUniformBlockiv, self.prog, ub_id)
@@ -194,20 +197,24 @@ class Shader:
             uniform_indices = (ctypes.c_int * num_uniforms)()
             binfo(GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniform_indices)
 
-            # partial which retrieves a given parameter about uniforms in the
-            # block
-            uinfo = partial(glGetActiveUniformsiv, self.prog, num_uniforms, uniform_indices)
-
             # offsets
             uniform_offsets = (ctypes.c_int * num_uniforms)()
-            uinfo(GL_UNIFORM_OFFSET, uniform_offsets)
+            glGetActiveUniformsiv(
+                self.prog,
+                num_uniforms,
+                uniform_indices,
+                GL_UNIFORM_OFFSET,
+                uniform_offsets)
+
+            # assign a binding index to the uniform block
+            glUniformBlockBinding(self.prog, ub_id, next(binding_index))
 
             # store info about the uniform block
             self.uniform_blocks[as_ascii(name_buf.value)] = {
                 'size': binfo(GL_UNIFORM_BLOCK_DATA_SIZE),
                 'binding': binfo(GL_UNIFORM_BLOCK_BINDING),
                 'uniforms': {
-                    as_ascii(u_name): {
+                    as_ascii(u_name).split('.', 1)[-1]: {
                         'type': u_type,
                         'size': u_size,
                         'offset': uniform_offsets[i],
