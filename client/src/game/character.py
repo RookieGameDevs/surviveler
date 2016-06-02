@@ -6,6 +6,7 @@ from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import EntityIdle
 from game.events import EntityMove
+from itertools import chain
 from loaders import load_obj
 from math import atan
 from math import copysign
@@ -34,16 +35,38 @@ class Character(Entity):
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
-        vertices, _, _, indices = load_obj('data/models/player.obj')
-        mesh = Mesh(vertices, indices)
+        vertices, normals, _, indices = load_obj('data/models/cube.obj')
+        mesh = Mesh(vertices, indices, normals=normals)
         shader = Shader.from_glsl(
-            'data/shaders/simple.vert',
-            'data/shaders/simple.frag')
+            'data/shaders/default.vert',
+            'data/shaders/default.frag')
 
         renderable = Renderable(parent_node, mesh, shader)
-        renderable.node.params['color'] = shader.make_param(
-            'color',
-            Vec(0.04, 0.67, 0.87))
+
+        # define material
+        colors = {
+            'color_ambient': Vec(0, 0.3, 0.5, 1),
+            'color_diffuse': Vec(0.04, 0.67, 0.87, 1),
+            'color_specular': Vec(1, 1, 1, 1),
+        }
+
+        # lighting parameters
+        light_dir = Vec(0, 0, -1)
+        eye_dir = Vec(0, 2.5, -5)
+        light_hv = light_dir + eye_dir
+        light_hv.norm()
+        light = {
+            'light_color': Vec(1, 1, 1, 1),
+            'light_direction': light_dir,
+            'light_halfvector': light_hv,
+        }
+
+        # initialize shader parameters
+        renderable.node.params.update({
+            p: shader.make_param(p, v)
+            for p, v in chain(colors.items(), light.items())
+        })
+
         movable = Movable((0.0, 0.0))
         super(Character, self).__init__(renderable, movable)
 

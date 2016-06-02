@@ -1,7 +1,7 @@
 #version 330 core
 
 layout(location = 0) in vec3 in_pos;
-layout(location = 1) in vec2 in_uv;
+layout(location = 2) in vec2 in_uv;
 uniform mat4 transform;
 uniform mat4 modelview;
 uniform mat4 projection;

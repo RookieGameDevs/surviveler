@@ -2,6 +2,7 @@ from OpenGL.GL import GL_ACTIVE_UNIFORMS
 from OpenGL.GL import GL_COMPILE_STATUS
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
+from OpenGL.GL import GL_FLOAT_VEC4
 from OpenGL.GL import GL_FRAGMENT_SHADER
 from OpenGL.GL import GL_INT
 from OpenGL.GL import GL_LINK_STATUS
@@ -22,6 +23,7 @@ from OpenGL.GL import glLinkProgram
 from OpenGL.GL import glShaderSource
 from OpenGL.GL import glUniform1i
 from OpenGL.GL import glUniform3fv
+from OpenGL.GL import glUniform4fv
 from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
 from collections import defaultdict
@@ -37,6 +39,7 @@ from utils import as_utf8
 UNIFORM_TYPES_MAP = {
     GL_FLOAT_MAT4: Mat,
     GL_FLOAT_VEC3: Vec,
+    GL_FLOAT_VEC4: Vec,
     GL_SAMPLER_2D: Texture,
     GL_INT: int,
 }
@@ -49,6 +52,7 @@ def pass_through(v):
 UNIFORM_CONVERTERS = {
     GL_FLOAT_MAT4: bytes,
     GL_FLOAT_VEC3: bytes,
+    GL_FLOAT_VEC4: bytes,
     GL_SAMPLER_2D: lambda v: v.tex_unit,
     GL_INT: pass_through,
 }
@@ -57,6 +61,7 @@ UNIFORM_CONVERTERS = {
 UNIFORM_DEFAULTS = {
     GL_FLOAT_MAT4: Mat,
     GL_FLOAT_VEC3: Vec,
+    GL_FLOAT_VEC4: Vec,
     GL_SAMPLER_2D: lambda: Texture(0, 0, 0),
     GL_INT: lambda: 0,
 }
@@ -65,6 +70,7 @@ UNIFORM_DEFAULTS = {
 UNIFORM_SETTERS = {
     GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, v),
     GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, v),
+    GL_FLOAT_VEC4: lambda i, v: glUniform4fv(i, 1, v),
     GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v),
     GL_INT: lambda i, v: glUniform1i(i, v),
 }

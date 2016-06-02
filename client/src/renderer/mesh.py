@@ -29,7 +29,7 @@ class Mesh:
     context is set up and active.
     """
 
-    def __init__(self, vertices, indices, uvs=None):
+    def __init__(self, vertices, indices, normals=None, uvs=None):
         """Constructor.
 
         Creates and initializes corresponding OpenGL objects with given data.
@@ -43,16 +43,27 @@ class Mesh:
             be a multiple of 3.
         :type indices: list
 
-        :param uvs: List of texture coordinates. List length must be a multiple
-            of 2.
+        :param normals: Normals data, specified as a contiguos list of Xn,Yn,Zn
+            floating point values. List length must be a multiple of 3.
+        :type normals: list
+
+        :param uvs: List of texture coordinates, specified as a contigous array
+            of U,V floating pont values.. List length must be a multiple of 2.
         :type uvs: list
         """
         if len(vertices) < 3 or len(vertices) % 3:
             raise ValueError(
                 'Vertex data must be an array of floats, which length is a '
                 'positive multiple of 3')
+
         if len(indices) < 3 or len(indices) % 3:
             raise ValueError('Indices count must be a positive multiple of 3')
+
+        if normals and (len(normals) < 3 or len(normals) % 3):
+            raise ValueError(
+                'Normals data must be an array of floats, which length is a '
+                'positive multiple of 3')
+
         if uvs is not None and len(uvs) % 2:
             raise ValueError('UVs count must be a positive multiple of 2')
 
@@ -68,10 +79,19 @@ class Mesh:
 
         # initialize vertex buffer
         vertex_data = np.array(vertices, np.float32)
+
+        # append normals data, if provided
+        normals_offset = 0
+        if normals:
+            normals_offset = vertex_data.nbytes
+            vertex_data = np.append(vertex_data, np.array(normals, np.float32))
+
+        # append UVs data, if provided
         uvs_offset = 0
         if uvs:
             uvs_offset = vertex_data.nbytes
             vertex_data = np.append(vertex_data, np.array(uvs, np.float32))
+
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(GL_ARRAY_BUFFER, vertex_data.nbytes, vertex_data, GL_STATIC_DRAW)
 
@@ -84,11 +104,22 @@ class Mesh:
         glEnableVertexAttribArray(0)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
 
-        # if provided, specify UVs as second attribute
-        if uvs is not None:
+        # if provided, specify normals as second attribute
+        if normals is not None:
             glEnableVertexAttribArray(1)
             glVertexAttribPointer(
                 1,
+                3,
+                GL_FLOAT,
+                GL_FALSE,
+                0,
+                ctypes.c_void_p(normals_offset))
+
+        # if provided, specify UVs as third attribute
+        if uvs is not None:
+            glEnableVertexAttribArray(2)
+            glVertexAttribPointer(
+                2,
                 2,
                 GL_FLOAT,
                 GL_FALSE,
@@ -158,4 +189,4 @@ class Rect(Mesh):
             u, v,
             u, 0,
         ]
-        super(Rect, self).__init__(vertices, indices, uvs)
+        super(Rect, self).__init__(vertices, indices, uvs=uvs)
