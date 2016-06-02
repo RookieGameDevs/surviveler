@@ -10,9 +10,7 @@ from loaders import load_obj
 from math import atan
 from math import copysign
 from math import pi
-from matlib import Mat4
-from matlib import Vec3
-from matlib import Z
+from matlib import Vec
 from renderer import Mesh
 from renderer import Shader
 import logging
@@ -43,7 +41,9 @@ class Character(Entity):
             'data/shaders/simple.frag')
 
         renderable = Renderable(parent_node, mesh, shader)
-        renderable.node.params['color'] = Vec3(0.04, 0.67, 0.87)
+        renderable.node.params['color'] = shader.make_param(
+            'color',
+            Vec(0.04, 0.67, 0.87))
         movable = Movable((0.0, 0.0))
         super(Character, self).__init__(renderable, movable)
 
@@ -100,9 +100,11 @@ class Character(Entity):
         """
         self[Movable].update(dt)
         x, y = self[Movable].position
-        self[Renderable].transform = (
-            Mat4.trans(Vec3(x, y, 0)) *
-            Mat4.rot(Z, self.heading))
+
+        t = self[Renderable].transform
+        t.identity()
+        t.translate(Vec(x, y, 0))
+        t.rotate(Vec(0, 0, 1), self.heading)
 
         self.orientate()
 

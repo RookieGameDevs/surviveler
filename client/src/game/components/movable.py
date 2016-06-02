@@ -1,5 +1,5 @@
 from game.components import Component
-from matlib import Vec3
+from matlib import Vec
 from utils import distance
 import logging
 
@@ -92,8 +92,9 @@ class Movable(Component):
         LOG.debug('Moving movable from {} to {} at speed {}'.format(
             position, destination, speed))
         self.direction = (
-            Vec3(destination[0], destination[1], 0.0) -
-            Vec3(position[0], position[1], 0.0)).unit()
+            Vec(destination[0], destination[1], 0.0) -
+            Vec(position[0], position[1], 0.0))
+        self.direction.norm()
         self._position = position
         self._destination = destination
         self._speed = speed

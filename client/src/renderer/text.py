@@ -1,12 +1,12 @@
-from renderer.scene import SceneNode
+from matlib import Vec
 from renderer.mesh import Rect
-from matlib import Vec3
+from renderer.scene import SceneNode
 
 
 class TextNode(SceneNode):
     """A node for rendering text."""
 
-    def __init__(self, font, shader, text, color=Vec3(1, 1, 1)):
+    def __init__(self, font, shader, text, color=Vec(1, 1, 1, 1)):
         """Constructor.
 
         :param font: Font to use.
@@ -19,10 +19,24 @@ class TextNode(SceneNode):
         :type text: tr
 
         :param color: Text color.
-        :type color: :class:`matlib.Vec3`
+        :type color: :class:`matlib.Vec`
         """
         super(TextNode, self).__init__()
         self.font = font
+
+        # initialize shader parameters
+        self.params = {
+            k: shader.make_param(k) for k in
+            [
+                'transform',
+                'modelview',
+                'projection',
+                'width',
+                'height',
+                'tex',
+                'color'
+            ]
+        }
         self._text = None
         self.text = text
         self.shader = shader
@@ -48,6 +62,9 @@ class TextNode(SceneNode):
             self._text = text
             self._texture = self.font.render_to_texture(text)
             self._rect = Rect(self._texture.width, self._texture.height, False)
+            self.params['width'].value = self.width
+            self.params['height'].value = self.height
+            self.params['tex'].value = self._texture
 
     @property
     def width(self):
@@ -59,15 +76,21 @@ class TextNode(SceneNode):
         """Height of the text node's underlying texture."""
         return self._texture.height
 
+    @property
+    def color(self):
+        return self._color
+
+    @color.setter
+    def color(self, color):
+        """Color of the text node."""
+        self._color = color
+        self.params['color'].value = color
+
     def render(self, ctx, transform):
-        params = {
-            'transform': ctx.camera.modelview * transform,
-            'projection': ctx.camera.projection,
-            'width': self._texture.width,
-            'height': self._texture.height,
-            'tex': self._texture,
-            'color': self.color,
-        }
+        self.params['transform'].value = transform
+        self.params['modelview'].value = ctx.modelview
+        self.params['projection'].value = ctx.projection
+
         with self._texture.use(0):
-            self.shader.use(params)
+            self.shader.use(self.params.values())
             self._rect.render(ctx.renderer)

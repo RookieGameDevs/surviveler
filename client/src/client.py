@@ -7,7 +7,7 @@ from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import PlayerJoin
 from itertools import count
-from matlib import Vec3
+from matlib import Vec
 from network import Message
 from network import MessageField as MF
 from network import MessageType as MT
@@ -109,7 +109,7 @@ class Client:
             +fov / 2 * aspect,   # bottom plane
             100)                 # view distance
 
-        camera.look_at(eye=Vec3(0, -2.5, 5), center=Vec3(0, 0, 0))
+        camera.look_at(eye=Vec(0, 2.5, 5), center=Vec(0, 0, 0))
 
         return camera
 

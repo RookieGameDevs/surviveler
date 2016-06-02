@@ -1,8 +1,7 @@
 from abc import ABC
 from abc import abstractproperty
-from matlib import UP
-from matlib import Mat4
-from matlib import Vec3
+from matlib import Mat
+from matlib import Vec
 
 
 class Camera(ABC):
@@ -14,59 +13,50 @@ class Camera(ABC):
     """
 
     def __init__(self):
-        self.view_mat = Mat4()
-        self.translate_mat = Mat4()
-        self.scale_vec = Vec3(1.0, 1.0, 1.0)
+        self.view_mat = Mat()
+        self.position = Vec()
 
-    def zoom(self, factor):
-        """Zoom by given factor.
-
-        :param factor: Zoom factor (1.0 for no zoom)
-        :type factor: float
-        """
-        self.scale_vec = Vec3(factor, factor, factor)
-
-    def translate(self, v):
-        """Translate the camera by given vector.
-
-        :param v: Translation vector.
-        :type v: :class:`matlib.Vec3`
-        """
-        self.translate_mat = Mat4.trans(v)
-
-    def look_at(self, eye, center, up=UP):
+    def look_at(self, eye, center, up=None):
         """Sets up camera look transformation.
 
         :param eye: Eye (camera position) coordinates.
-        :type eye: :class:`matlib.Vec3`
+        :type eye: :class:`matlib.Vec`
 
         :param eye: Look at (scene center) coordinates.
-        :type eye: :class:`matlib.Vec3`
+        :type eye: :class:`matlib.Vec`
 
         :param up: Up vector.
-        :type up: :class:`matlib.Vec3`
+        :type up: :class:`matlib.Vec`
         """
-        d = eye - center
-        z = d.unit()
-        x = up.cross(z).unit()
-        if x.mag() == 0:
-            raise ValueError(
-                'Look direction vector must be different from up vector')
+        up = up or Vec(0, 1, 0)
 
-        y = z.cross(x)
-        self.view_mat = (
-            Mat4([
-                [x[0],  x[1],  x[2],  0],
-                [y[0],  y[1],  y[2],  0],
-                [z[0],  z[1],  z[2],  0],
-                [0,     0,     0,     1]
-            ]) *
-            Mat4.trans(d))
+        # forward (Z axis)
+        zaxis = center - eye
+        zaxis.norm()
+
+        # right (X axis)
+        xaxis = zaxis.cross(up)
+        xaxis.norm()
+
+        # up (Y axis)
+        yaxis = xaxis.cross(zaxis)
+        yaxis.norm()
+
+        # orientation + translation matrix
+        self.view_mat = Mat([
+            Vec(xaxis.x, yaxis.x, -zaxis.x, eye.x),
+            Vec(xaxis.y, yaxis.y, -zaxis.y, eye.y),
+            Vec(xaxis.z, yaxis.z, -zaxis.z, eye.z),
+            Vec(0,       0,       0,        1),
+        ])
 
     @property
     def modelview(self):
         """Camera modelview 4x4 matrix."""
-        return Mat4.scale(self.scale_vec) * self.view_mat * self.translate_mat
+        t = Mat()
+        t.translate(self.position)
+        t *= self.view_mat
+        return t
 
     @abstractproperty
     def projection(self):
@@ -88,9 +78,10 @@ class OrthoCamera(Camera):
 
     @property
     def modelview(self):
-        return (
-            Mat4.trans(Vec3(0, 0, self.n)) *
-            super(OrthoCamera, self).modelview)
+        t = Mat()
+        t.translate(Vec(0, 0, self.n))
+        t *= super(OrthoCamera, self).modelview
+        return t
 
     @property
     def projection(self):
@@ -100,11 +91,11 @@ class OrthoCamera(Camera):
         tx = -(self.r + self.l) / (self.r - self.l)
         ty = -(self.t + self.b) / (self.t - self.b)
         tz = -(self.f + self.n) / (self.f - self.n)
-        proj_mat = Mat4([
-            [sx, 0,  0,  tx],
-            [0,  sy, 0,  ty],
-            [0,  0,  sz, tz],
-            [0,  0,  0,  1],
+        proj_mat = Mat([
+            Vec(sx, 0,  0,  tx),
+            Vec(0,  sy, 0,  ty),
+            Vec(0,  0,  sz, tz),
+            Vec(0,  0,  0,  1),
         ])
 
         return proj_mat

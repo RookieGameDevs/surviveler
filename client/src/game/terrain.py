@@ -1,7 +1,6 @@
 from game import Entity
 from game.components import Renderable
-from matlib import Mat4
-from matlib import Vec3
+from matlib import Vec
 from renderer import Rect
 from renderer import Shader
 from renderer import Texture
@@ -36,10 +35,11 @@ class Terrain(Entity):
             TextureParamWrap.Coord.t, TextureParamWrap.WrapType.repeat))
 
         renderable = Renderable(parent_node, mesh, shader, textures=[texture])
-        renderable.node.params['tex'] = texture
-        renderable.transform = (
-            Mat4.trans(Vec3(-50, -50, 0.5)) *
-            Mat4.scale(Vec3(100, 100, 1)))
+        renderable.node.params['tex'] = shader.make_param('tex', texture)
+
+        t = renderable.transform
+        t.translate(Vec(-50, -50, 0.5))
+        t.scale(Vec(100, 100, 1))
 
         super(Terrain, self).__init__(renderable)
 

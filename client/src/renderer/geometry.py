@@ -1,7 +1,7 @@
 from OpenGL.GL import GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS as MAX_TEXTURES
-from renderer.scene import SceneNode
-from exceptions import OpenGLError
 from contextlib import ExitStack
+from exceptions import OpenGLError
+from renderer.scene import SceneNode
 
 
 class GeometryNode(SceneNode):
@@ -28,12 +28,16 @@ class GeometryNode(SceneNode):
         super(GeometryNode, self).__init__()
         self.mesh = mesh
         self.shader = shader
-        self.params = params or {}
+        self.params = {
+            k: shader.make_param(k) for k in
+            ('transform', 'modelview', 'projection')
+        }
         self.textures = textures or []
 
     def render(self, ctx, transform):
-        self.params['transform'] = ctx.camera.modelview * transform
-        self.params['projection'] = ctx.camera.projection
+        self.params['transform'].value = transform
+        self.params['modelview'].value = ctx.modelview
+        self.params['projection'].value = ctx.projection
 
         if len(self.textures) >= MAX_TEXTURES:
             raise OpenGLError(
@@ -44,5 +48,5 @@ class GeometryNode(SceneNode):
             for tex_unit, tex in enumerate(self.textures):
                 stack.enter_context(tex.use(tex_unit))
 
-            self.shader.use(self.params)
+            self.shader.use(self.params.values())
             self.mesh.render(ctx.renderer)
