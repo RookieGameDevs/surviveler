@@ -5,6 +5,7 @@ from distutils.core import setup
 cflags = [
     '-std=c99',
     '-Wall',
+    '-O3',
 ]
 
 libs = [
