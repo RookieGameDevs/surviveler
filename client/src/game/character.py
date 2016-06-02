@@ -41,7 +41,9 @@ class Character(Entity):
             'data/shaders/simple.frag')
 
         renderable = Renderable(parent_node, mesh, shader)
-        renderable.node.params['color'] = Vec(0.04, 0.67, 0.87)
+        renderable.node.params['color'] = shader.make_param(
+            'color',
+            Vec(0.04, 0.67, 0.87))
         movable = Movable((0.0, 0.0))
         super(Character, self).__init__(renderable, movable)
 

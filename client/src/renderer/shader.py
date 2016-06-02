@@ -24,6 +24,7 @@ from OpenGL.GL import glUniform1i
 from OpenGL.GL import glUniform3fv
 from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
+from collections import defaultdict
 from exceptions import ShaderError
 from exceptions import UniformError
 from matlib import Mat
@@ -33,20 +34,94 @@ from utils import as_ascii
 from utils import as_utf8
 
 
-UNIFORM_VALIDATORS = {
-    GL_FLOAT_MAT4: lambda v: type(v) == Mat,
-    GL_FLOAT_VEC3: lambda v: type(v) == Vec,
-    GL_SAMPLER_2D: lambda v: type(v) == Texture,
-    GL_INT: lambda v: type(v) == int,
+UNIFORM_TYPES_MAP = {
+    GL_FLOAT_MAT4: Mat,
+    GL_FLOAT_VEC3: Vec,
+    GL_SAMPLER_2D: Texture,
+    GL_INT: int,
+}
+
+
+def pass_through(v):
+    return v
+
+
+UNIFORM_CONVERTERS = {
+    GL_FLOAT_MAT4: bytes,
+    GL_FLOAT_VEC3: bytes,
+    GL_SAMPLER_2D: lambda v: v.tex_unit,
+    GL_INT: pass_through,
+}
+
+
+UNIFORM_DEFAULTS = {
+    GL_FLOAT_MAT4: Mat,
+    GL_FLOAT_VEC3: Vec,
+    GL_SAMPLER_2D: lambda: Texture(0, 0, 0),
+    GL_INT: lambda: 0,
 }
 
 
 UNIFORM_SETTERS = {
-    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, bytes(v)),
-    GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, bytes(v)),
-    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v.tex_unit),
+    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, v),
+    GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, v),
+    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v),
     GL_INT: lambda i, v: glUniform1i(i, v),
 }
+
+
+ACTIVE_PROG = None
+UNIFORMS_CACHE = defaultdict(dict)
+
+
+class ShaderParam:
+    """Shader parameter (uniform) proxy object.
+
+    A shader parameter is a single value which can be passed to the shader
+    during rendering.
+    """
+
+    def __init__(self, name, value, gl_type, gl_loc, gl_setter):
+        """Constructor.
+
+        :param name: Name of the parameter (uniform variable name).
+        :type name: str
+
+        :param value: Value to be passed to the uniform.
+        :type value: any of supported types
+
+        :param gl_type: OpenGL enum value of the uniform type.
+        :type gl_type: int
+
+        :param gl_loc: Location of the uniform in the shader program.
+        :type gl_loc: int
+
+        :param gl_setter: Uniform setter function.
+        :type gl_setter: function
+        """
+        self.name = name
+        self._value = None
+        self.gl_value = None
+        self.gl_loc = gl_loc
+        self.gl_type = gl_type
+        self.gl_setter = gl_setter
+        self.value = value
+
+    @property
+    def value(self):
+        """Current parameter value."""
+        return self._value
+
+    @value.setter
+    def value(self, new_value):
+        """Set the parameter value."""
+        if self._value != new_value:
+            self._value = new_value
+            self.gl_value = UNIFORM_CONVERTERS[self.gl_type](new_value)
+
+    def set(self):
+        """Update the uniform with current parameter value."""
+        self.gl_setter(self.gl_loc, self.gl_value)
 
 
 class Shader:
@@ -132,30 +207,67 @@ class Shader:
 
         return Shader(prog)
 
+    def make_param(self, name, value=None):
+        """Instantiates a shader parameter for the given shader.
+
+        :param name: Name of the parameter (shader uniform variable name).
+        :type name: str
+
+        :param value: The initial value or `None`.
+        :type value: any of supported types
+
+        :returns: The created shader parameter.
+        :rtype: :class:`renderer.shader.ShaderParam`
+
+        :raises: :class`exceptions.UniformError` if no parameter with given name
+            is defined in the shader program or a wrong value type is passed.
+        """
+        try:
+            uni_info = self.uniforms[name]
+        except KeyError:
+            raise UniformError('Unknown uniform {}'.format(name))
+
+        uni_type = uni_info['type']
+        uni_loc = uni_info['loc']
+        value = value or UNIFORM_DEFAULTS[uni_type]()
+
+        exp_type = UNIFORM_TYPES_MAP[uni_type]
+        if exp_type != type(value):
+            raise UniformError('Uniform {} is of type {}, got {}'.format(
+                name, exp_type, type(value)))
+
+        return ShaderParam(
+            name,
+            value,
+            uni_type,
+            uni_loc,
+            UNIFORM_SETTERS[uni_type])
+
     def use(self, params):
         """Makes the shader active and sets up its parameters (uniforms).
 
-        :param params: Mapping of parameter names to their values.
-        :type params: map
-
-        :raises UniformError: On attempt to set an undefined uniform or pass
-            data of wrong type.
+        :param params: List of parameters to use for the shader.
+        :type params: list of :class:`renderer.shader.ShaderParam` items
         """
-        glUseProgram(self.prog)
+        global ACTIVE_PROG
+        global UNIFORMS_CACHE
+        cache = UNIFORMS_CACHE[ACTIVE_PROG]
+
+        # in case the last used program is different from current one, make the
+        # current one active and invalidate the cache
+        if self.prog != ACTIVE_PROG:
+            ACTIVE_PROG = self.prog
+            glUseProgram(self.prog)
+            cache.clear()
 
         # setup uniforms
-        for k, v in params.items():
-            try:
-                # lookup uniform information
-                uni_info = self.uniforms[k]
+        for p in params:
+            # in case a value is cached and did not changed, skip the
+            # submission to OpenGL
+            cached_v = cache.get(p.name)
+            if cached_v == p.gl_value:
+                continue
 
-                # validate types
-                if not UNIFORM_VALIDATORS[uni_info['type']](v):
-                    raise UniformError('Invalid value for uniform "{}"'.format(k))
-
-                # invoke the setter with uniform's location and new value as
-                # arguments
-                UNIFORM_SETTERS[uni_info['type']](uni_info['loc'], v)
-
-            except KeyError:
-                raise UniformError('Uniform "{}" not found'.format(k))
+            # update the cache and set the uniform
+            cache[p.name] = p.gl_value
+            p.set()
