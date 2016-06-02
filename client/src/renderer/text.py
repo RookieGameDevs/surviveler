@@ -1,6 +1,6 @@
-from renderer.scene import SceneNode
-from renderer.mesh import Rect
 from matlib import Vec
+from renderer.mesh import Rect
+from renderer.scene import SceneNode
 
 
 class TextNode(SceneNode):
