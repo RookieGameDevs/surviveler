@@ -1,4 +1,5 @@
 from OpenGL.GL import GL_ACTIVE_UNIFORMS
+from OpenGL.GL import GL_ACTIVE_UNIFORM_BLOCKS
 from OpenGL.GL import GL_COMPILE_STATUS
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
@@ -7,6 +8,12 @@ from OpenGL.GL import GL_FRAGMENT_SHADER
 from OpenGL.GL import GL_INT
 from OpenGL.GL import GL_LINK_STATUS
 from OpenGL.GL import GL_SAMPLER_2D
+from OpenGL.GL import GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS
+from OpenGL.GL import GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES
+from OpenGL.GL import GL_UNIFORM_BLOCK_BINDING
+from OpenGL.GL import GL_UNIFORM_BLOCK_DATA_SIZE
+from OpenGL.GL import GL_UNIFORM_BLOCK_NAME_LENGTH
+from OpenGL.GL import GL_UNIFORM_OFFSET
 from OpenGL.GL import GL_VERTEX_SHADER
 from OpenGL.GL import glAttachShader
 from OpenGL.GL import glCompileShader
@@ -14,6 +21,9 @@ from OpenGL.GL import glCreateProgram
 from OpenGL.GL import glCreateShader
 from OpenGL.GL import glDeleteProgram
 from OpenGL.GL import glGetActiveUniform
+from OpenGL.GL import glGetActiveUniformBlockName
+from OpenGL.GL import glGetActiveUniformBlockiv
+from OpenGL.GL import glGetActiveUniformsiv
 from OpenGL.GL import glGetProgramInfoLog
 from OpenGL.GL import glGetProgramiv
 from OpenGL.GL import glGetShaderInfoLog
@@ -29,11 +39,13 @@ from OpenGL.GL import glUseProgram
 from collections import defaultdict
 from exceptions import ShaderError
 from exceptions import UniformError
+from functools import partial
 from matlib import Mat
 from matlib import Vec
 from renderer.texture import Texture
 from utils import as_ascii
 from utils import as_utf8
+import ctypes
 
 
 UNIFORM_TYPES_MAP = {
@@ -149,14 +161,61 @@ class Shader:
         """
         self.prog = prog_id
 
-        # create the uniforms map
-        self.uniforms = {}
-        for u_id in range(glGetProgramiv(self.prog, GL_ACTIVE_UNIFORMS)):
+        def get_uniform(index):
             name, size, prim_type = glGetActiveUniform(self.prog, u_id)
-            self.uniforms[as_ascii(name)] = {
+            uniform = {
                 'loc': glGetUniformLocation(self.prog, name),
                 'type': prim_type,
                 'size': size,
+            }
+            return as_ascii(name), uniform
+
+        # create the uniforms map
+        self.uniforms = {}
+        for u_id in range(glGetProgramiv(self.prog, GL_ACTIVE_UNIFORMS)):
+            name, uniform = get_uniform(u_id)
+            if uniform['loc'] >= 0:
+                self.uniforms[name] = uniform
+
+        # create uniform blocks map
+        self.uniform_blocks = {}
+        for ub_id in range(glGetProgramiv(self.prog, GL_ACTIVE_UNIFORM_BLOCKS)):
+            # partial which retrieves a given parameter about uniform block
+            binfo = partial(glGetActiveUniformBlockiv, self.prog, ub_id)
+
+            # retrieve name
+            name_len = binfo(GL_UNIFORM_BLOCK_NAME_LENGTH)
+            name_buf = ctypes.create_string_buffer(int(name_len))
+            glGetActiveUniformBlockName(self.prog, ub_id, name_len, None, name_buf)
+
+            # retrieve number of active uniforms and pre-allocate arrays for
+            # indices, sizes and offsets
+            num_uniforms = int(binfo(GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS))
+            uniform_indices = (ctypes.c_int * num_uniforms)()
+            binfo(GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, uniform_indices)
+
+            # partial which retrieves a given parameter about uniforms in the
+            # block
+            uinfo = partial(glGetActiveUniformsiv, self.prog, num_uniforms, uniform_indices)
+
+            # offsets
+            uniform_offsets = (ctypes.c_int * num_uniforms)()
+            uinfo(GL_UNIFORM_OFFSET, uniform_offsets)
+
+            # store info about the uniform block
+            self.uniform_blocks[as_ascii(name_buf.value)] = {
+                'size': binfo(GL_UNIFORM_BLOCK_DATA_SIZE),
+                'binding': binfo(GL_UNIFORM_BLOCK_BINDING),
+                'uniforms': {
+                    as_ascii(u_name): {
+                        'type': u_type,
+                        'size': u_size,
+                        'offset': uniform_offsets[i],
+                    } for i, (u_name, u_size, u_type) in enumerate([
+                        glGetActiveUniform(self.prog, u_id)
+                        for u_id in uniform_indices
+                    ])
+                },
             }
 
     def __del__(self):
