@@ -755,6 +755,9 @@ py_mat_setitem(PyObject *self, PyObject *key, PyObject *value);
 static int
 py_mat_getbuffer(PyObject *self, Py_buffer *view, int flags);
 
+static PyObject*
+py_mat_cmp(PyObject *self, PyObject *other, int op);
+
 /**
  * Mat method definitions.
  */
@@ -814,6 +817,7 @@ static PyTypeObject py_mat_type = {
 	.tp_getattr = NULL,
 	.tp_setattr = NULL,
 	.tp_repr = py_mat_repr,
+	.tp_richcompare = py_mat_cmp,
 	.tp_as_number = &mat_num_methods,
 	.tp_as_sequence = NULL,
 	.tp_as_mapping = &mat_map_methods,
@@ -1053,6 +1057,28 @@ py_mat_getbuffer(PyObject *self, Py_buffer *view, int flags)
 		1,
 		flags
 	);
+}
+
+static PyObject*
+py_mat_cmp(PyObject *self, PyObject *other, int op)
+{
+	if (!PyObject_TypeCheck(other, &py_mat_type)) {
+		if (op == Py_NE) {
+			Py_RETURN_TRUE;
+		} else if (op == Py_EQ) {
+			Py_RETURN_FALSE;
+		} else {
+			PyErr_SetString(PyExc_TypeError, "unsupported comparison");
+			return NULL;
+		}
+	}
+	Mat *m_self = to_mat_ptr(self);
+	Mat *m_other = to_mat_ptr(other);
+	int equal = memcmp(m_self->data, m_other->data, sizeof(float) * 16) == 0;
+	int retval = op == Py_EQ ? equal : !equal;
+	if (retval)
+		Py_RETURN_TRUE;
+	Py_RETURN_FALSE;
 }
 
 /**
