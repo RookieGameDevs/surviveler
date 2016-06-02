@@ -1,6 +1,8 @@
 from renderer.camera import OrthoCamera  # noqa
 from renderer.font import Font  # noqa
 from renderer.geometry import GeometryNode  # noqa
+from renderer.light import Light  # noqa
+from renderer.light import LightNode  # noqa
 from renderer.mesh import Mesh  # noqa
 from renderer.mesh import Rect  # noqa
 from renderer.renderer import Renderer  # noqa
