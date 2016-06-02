@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # set up virtual environment
+ROOT=$PWD
+
 echo "setting up virtual env..."
 virtualenv --python=$(which python3) --no-site-packages . >/dev/null
 if [ $? -ne 0 ]; then
@@ -27,3 +29,8 @@ if [ $? -ne 0 ]; then
     echo "installation failed"
     exit 1
 fi
+
+# compile and install matlib package
+cd src/matlib
+python setup.py install
+cd $ROOT
