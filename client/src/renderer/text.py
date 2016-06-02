@@ -1,4 +1,5 @@
 from matlib import Vec
+from renderer import RenderOp
 from renderer.mesh import Rect
 from renderer.scene import SceneNode
 
@@ -91,6 +92,9 @@ class TextNode(SceneNode):
         self.params['modelview'].value = ctx.modelview
         self.params['projection'].value = ctx.projection
 
-        with self._texture.use(0):
-            self.shader.use(self.params.values())
-            self._rect.render(ctx.renderer)
+        def op():
+            with self._texture.use(0):
+                self.shader.use(self.params.values())
+                self._rect.render(ctx.renderer)
+
+        ctx.renderer.add_render_op(RenderOp(self.shader, self._rect, op))

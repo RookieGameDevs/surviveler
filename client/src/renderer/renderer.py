@@ -28,6 +28,18 @@ import sdl2 as sdl
 LOG = logging.getLogger(__name__)
 
 
+class RenderOp:
+    """Single render operation."""
+
+    def __init__(self, shader, mesh, op):
+        self.mesh = mesh
+        self.shader = shader
+        self.op = op
+
+    def __call__(self):
+        self.op()
+
+
 class Renderer:
     """An OpenGL rendering context.
 
@@ -87,6 +99,7 @@ class Renderer:
         self._width = width
         self._height = height
         self.gl_setup(width, height)
+        self.render_queue = []
 
     @property
     def width(self):
@@ -119,9 +132,21 @@ class Renderer:
         """Clear buffers."""
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+    def add_render_op(self, op):
+        """Add a rendering operation to render queue."""
+        self.render_queue.append(op)
+
     def present(self):
         """Present updated buffers to screen."""
+
+        def sort_key(op):
+            return (op.shader.prog, op.mesh.vao)
+
+        for op in sorted(self.render_queue, key=sort_key):
+            op()
+
         glFlush()
+        self.render_queue.clear()
         sdl.SDL_GL_SwapWindow(self.window)
 
     def shutdown(self):

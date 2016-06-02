@@ -5,6 +5,7 @@ from renderer.light import Light  # noqa
 from renderer.light import LightNode  # noqa
 from renderer.mesh import Mesh  # noqa
 from renderer.mesh import Rect  # noqa
+from renderer.renderer import RenderOp  # noqa
 from renderer.renderer import Renderer  # noqa
 from renderer.scene import Scene  # noqa
 from renderer.scene import SceneNode  # noqa
