@@ -9,7 +9,8 @@ class Renderable(Component):
     the node.
     """
 
-    def __init__(self, parent_node, mesh, shader, params=None, textures=None,
+    def __init__(
+            self, parent_node, mesh, shader, params=None, textures=None,
             enable_light=False):
         """Constructor.
 

@@ -7,8 +7,8 @@ from renderer.scene import SceneNode
 class GeometryNode(SceneNode):
     """A node for attaching static geometry (mesh) to the scene."""
 
-    def __init__(self, mesh, shader, params=None, textures=None,
-            enable_light=False):
+    def __init__(
+            self, mesh, shader, params=None, textures=None, enable_light=False):
         """Constructor.
 
         :param mesh: Instance of the mesh to render.
