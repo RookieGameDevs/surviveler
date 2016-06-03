@@ -5,9 +5,9 @@
 package game
 
 import (
+	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"io"
 	"server/game/resource"
 )
 
@@ -69,11 +69,8 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 				w.SetTile(&Tile{Kind: kind, W: &w, X: x, Y: y})
 			}
 		}
-
 		// dump the world matrix
-		logw := log.StandardLogger().Writer()
-		defer logw.Close()
-		w.Dump(logw)
+		w.Dump()
 		return &w, nil
 	}
 }
@@ -110,14 +107,17 @@ func (w *World) SetTile(t *Tile) {
 }
 
 /*
- * Dump writes a string representation of the world in the provided Writer
+ * Dump logs a string representation of the world
  */
-func (w World) Dump(w_ io.Writer) {
+func (w World) Dump() {
+	var buffer bytes.Buffer
+	buffer.WriteString("World matrix dump:\n")
 	for y := 0; y < w.Height; y++ {
 		for x := 0; x < w.Width; x++ {
 			t := w.Tile(x, y)
-			io.WriteString(w_, fmt.Sprintf("%2v", t.Kind))
+			buffer.WriteString(fmt.Sprintf("%2v", t.Kind))
 		}
-		io.WriteString(w_, "\n")
+		buffer.WriteString("\n")
 	}
+	log.Debug(buffer.String())
 }
