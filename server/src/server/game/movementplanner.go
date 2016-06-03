@@ -154,8 +154,8 @@ func (mp *MovementPlanner) Start() {
 								}),
 						}
 					} else {
-						log.WithFields(log.Fields{"path": path, "req": mvtReq}).
-							Panic("Path must have at least 1 segment!")
+						//log.WithFields(log.Fields{"path": path, "req": mvtReq}).
+						//Panic("Path must have at least 1 segment!")
 					}
 				} else {
 					log.WithField("req", mvtReq).Warn("Pathfinder failed to find path")
