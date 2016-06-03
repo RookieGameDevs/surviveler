@@ -71,7 +71,10 @@ class Character(Entity):
             x, y = self[Movable].position
             dx = dest[0] - x
             dy = dest[1] - y
-            target_heading = atan(dy / dx) + (pi / 2) * copysign(1, dx)
+            if dx:
+                target_heading = atan(dy / dx) + (pi / 2) * copysign(1, dx)
+            else:
+                target_heading = 0 if dy > 0 else pi
 
             # Compute remaining rotation
             delta = target_heading - self.heading
