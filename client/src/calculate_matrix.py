@@ -1,5 +1,6 @@
 from PIL import Image
 from configparser import ConfigParser
+from functools import partial
 from itertools import chain
 from main import CONFIG_FILE
 from main import setup_logging
@@ -7,6 +8,7 @@ from matlib import Vec3
 import click
 import logging
 import math
+import multiprocessing as mp
 
 
 LOG = logging.getLogger(__name__)
@@ -164,13 +166,51 @@ def set_not_walkable(face, matrix, precision):
     # that can be not walkable.
     for y in range(y0, y1):
         for x in range(x0, x1):
-            # Avoid completely the check in case the cell is already non-walkable
+            # Avoid completely the check in case the cell is already considered
+            # non-walkable.
             if matrix[y][x]:
                 d = 0.5
                 # NOTE: only updates the matrix in case the cell is considered
-                # not walkable
+                # not walkable.
                 if not is_walkable([x, y], d, face, precision):
                     matrix[y][x] = False
+
+
+def process_face(x_axis, y_axis, precision, values):
+    """Process worker"""
+    x0, x1 = x_axis
+    y0, y1 = y_axis
+    matrix = {
+        y: {
+            x: True
+            for x in range(x0, x1)
+        }
+        for y in range(y0, y1)
+    }
+
+    i, face = values
+    LOG.info('Face {}, ({}, {})'.format(i + 1, s_width([face]), s_height([face])))
+    set_not_walkable(face, matrix, precision)
+    return matrix
+
+
+def merge(matrix, part):
+    """Merge the matrix with the single partial.
+
+    :param matrix: The result matrix
+    :type matrix: dict
+
+    :param part: The partial result to be merged
+    :type part: dict
+    """
+    for y, v in part.items():
+        if y not in matrix:
+            matrix[y] = v
+        for x, value in v.items():
+            if x not in matrix[y]:
+                matrix[y][x] = value
+            else:
+                matrix[y][x] &= value
 
 
 def calculate_matrix(faces, precision):
@@ -195,25 +235,23 @@ def calculate_matrix(faces, precision):
     x0, x1 = s_width(relevant)
     y0, y1 = s_height(relevant)
 
-    # Create the all-walkable map
-    matrix = {
-        y: {
-            x: True
-            for x in range(x0, x1)
-        }
-        for y in range(y0, y1)
-    }
+    with mp.Pool() as pool:
+        LOG.info('Found {} faces to be analyzed'.format(len(relevant)))
+        results = pool.map(partial(process_face, (x0, x1), (y0, y1), precision), enumerate(relevant))
 
-    # Calculate the non-walkable areas for every relevan triangle
-    for i, face in enumerate(relevant):
-        LOG.info('Face {} of {}, ({}, {})'.format(i, len(relevant), s_width([face]), s_height([face])))
-        set_not_walkable(face, matrix, precision)
+        pool.close()
+        pool.join()
 
-    # Create a bytearray matrix
-    m = bytearray()
-    for y in reversed(list(matrix.keys())):
-        for x in sorted(matrix[y].keys()):
-            m.append(255 if matrix[y][x] else 0)
+        LOG.info('Calculation finished: generating the matrix')
+        matrix = {}
+        for r in results:
+            merge(matrix, r)
+
+        # Create a bytearray matrix
+        m = bytearray()
+        for y in reversed(list(matrix.keys())):
+            for x in sorted(matrix[y].keys()):
+                m.append(255 if matrix[y][x] else 0)
 
     return (abs(x0 - x1), abs(y0 - y1)), m
 
