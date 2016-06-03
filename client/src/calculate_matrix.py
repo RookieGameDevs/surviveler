@@ -16,6 +16,18 @@ DEFAULT_PRECISION = 4
 
 
 def in_triangle(point, triangle):
+    """Checks if a specified point is inside a triangle using the barycenter
+    technique.
+
+    :param point: The point to be checked
+    :type point: list
+
+    :param triangle: The triangle
+    :type triangle: list
+
+    :return: True if the point is inside the triangle.
+    :rtype: bool
+    """
     A, B, C = map(lambda t: Vec3(*t), triangle)
     P = Vec3(*point)
 
@@ -43,28 +55,84 @@ def in_triangle(point, triangle):
 
 
 def exc(n):
+    """Round by excess taking the sign into consideration.
+
+    :param n: The number to be rounded
+    :type n: float
+
+    :return: The signed rounded items
+    :rtype: int
+    """
     return int(math.copysign(math.ceil(abs(n)), n))
 
 
 def mag(axis, faces):
+    """Calculate the minimum and maximum of the given list of faces on the
+    specified axis. Rounded up (or down for negatives).
+
+    :param axis: The index of the axis in the points of the faces
+    :type axis: int
+
+    :param faces: The list of faces to be considered
+    :type faces: int, int
+
+    :return: The minimum and maximum
+    :rtype: tuple
+    """
     minimum = min(map(lambda v: v[axis], chain.from_iterable(faces)))
     maximum = max(map(lambda v: v[axis], chain.from_iterable(faces)))
     return exc(minimum), exc(maximum)
 
 
 def s_width(faces):
+    """Calculate the minimum and maximum of the given list of faces on the
+    x-axis. Rounded up (or down for negatives).
+
+    :param faces: The list of faces to be considered
+    :type faces: int, int
+
+    :return: The minimum and maximum
+    :rtype: tuple
+    """
     return mag(0, faces)
 
 
 def s_height(faces):
+    """Calculate the minimum and maximum of the given list of faces on the
+    y-axis. Rounded up (or down for negatives).
+
+    :param faces: The list of faces to be considered
+    :type faces: int, int
+
+    :return: The minimum and maximum
+    :rtype: tuple
+    """
     return mag(1, faces)
 
 
 def is_walkable(p, d, face, step=0):
+    """Recursive function that calculates the walkability of a single cell.
+
+    :param p: The point
+    :type p: list
+
+    :param d: The offset of the barycenter of the cell to be analized.
+    :type d: float
+
+    :param face: The triangle that we are considering
+    :type face: list
+
+    :param step: Recursion helper variable
+    :type step: int
+
+    :return: Boolean representing the walkability of the cell
+    :rtype: bool
+    """
     walkable = not in_triangle([p[0] + d, p[1] + d], face)
 
     if not step:
         return walkable
+
     if walkable:
         px, py = p
         ps = [
@@ -78,22 +146,56 @@ def is_walkable(p, d, face, step=0):
 
 
 def set_not_walkable(face, matrix, precision):
+    """Sets all the non_walkable cells on the matrix. Considers only a single
+    triangle.
+
+    :param face: The triangle
+    :type face: list
+
+    :param matrix: The level walkable matrix, modified in place
+    :type matrix: dict
+
+    :param precision: The number of recursive calls to be done
+    :type precision: int
+    """
     x0, x1 = s_width([face])
     y0, y1 = s_height([face])
+    # Iterate over the bounding box of the face to check every possible cell
+    # that can be not walkable.
     for y in range(y0, y1):
         for x in range(x0, x1):
+            # Avoid completely the check in case the cell is already non-walkable
             if matrix[y][x]:
                 d = 0.5
-                matrix[y][x] = is_walkable([x, y], d, face, precision)
+                # NOTE: only updates the matrix in case the cell is considered
+                # not walkable
+                if not is_walkable([x, y], d, face, precision):
+                    matrix[y][x] = False
 
 
 def calculate_matrix(faces, precision):
+    """Matrix calculation main routine.
+
+    :param faces: The list of all the faces parsed from the level obj file.
+    :type faces: list
+
+    :param precision: The precision of the matrix computation
+    :type precision: int
+
+    :return: The generated level walkable matrix
+    :rtype: dict
+    """
+    # Filter out non-relevant faces.
+    # NOTE: relevant faces are the ones completely on the xy plane where
+    # (z <= EPSILON).
     relevant = list(
         filter(lambda face: all(map(lambda x: abs(x[2]) <= EPSILON, face)), faces))
 
+    # Get the bounding box of the map
     x0, x1 = s_width(relevant)
     y0, y1 = s_height(relevant)
 
+    # Create the all-walkable map
     matrix = {
         y: {
             x: True
@@ -102,10 +204,12 @@ def calculate_matrix(faces, precision):
         for y in range(y0, y1)
     }
 
+    # Calculate the non-walkable areas for every relevan triangle
     for i, face in enumerate(relevant):
         LOG.info('Face {} of {}, ({}, {})'.format(i, len(relevant), s_width([face]), s_height([face])))
         set_not_walkable(face, matrix, precision)
 
+    # Create a bytearray matrix
     m = bytearray()
     for y in reversed(list(matrix.keys())):
         for x in sorted(matrix[y].keys()):
@@ -115,6 +219,14 @@ def calculate_matrix(faces, precision):
 
 
 def parse_faces(objfile):
+    """Easy function for parsing the level faces from the level obj file.
+
+    :param objfile: The objfile to be parsed
+    :type objfile: :class:`File`
+
+    :return: The list of parsed faces
+    :rtype: list
+    """
     vertices = []
     faces = []
 
