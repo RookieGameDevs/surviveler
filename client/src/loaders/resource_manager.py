@@ -324,3 +324,31 @@ def load_font(manager, fp, cwd):
     from sdl2 import rw_from_object
     content = fp.read()
     return rw_from_object(BytesIO(content))
+
+
+@ResourceManager.resource_handler('.bmp')
+def load_bitmap(manager, fp, cwd):
+    """Loader for bitmaps.
+
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
+
+    :param fp: The file pointer
+    :type fp: File
+
+    :param cwd: The current working directory
+    :type cwd: str
+
+    :return: Simply the bytes read from file
+    :rtype: :class:`sdl2.SDL_RWops.`
+    """
+    from PIL import Image
+    img = Image.open(fp)
+    size = img.size
+    img_data = img.tobytes()
+    matrix = []
+    for y in range(size[1]):
+        matrix.append([])
+        for x in range(size[0]):
+            matrix[y].append(1 if img_data[y * size[0] + x] else 0)
+    return matrix

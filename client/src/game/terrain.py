@@ -22,7 +22,7 @@ class Terrain(Entity):
         :param parent_node: Parent node to attach the terrain entity to.
         :type param_node: subclass of :class:`renderer.SceneNode`
         """
-        matrix = resource.data['matrix']
+        matrix = resource['matrix']
         shader = resource['terrain_shader']
 
         w, h = len(matrix[0]), len(matrix)
