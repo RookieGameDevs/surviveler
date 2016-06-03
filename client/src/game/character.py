@@ -57,7 +57,7 @@ class Character(Entity):
         movable = Movable((0.0, 0.0))
 
         # initialize entity
-        super(Character, self).__init__(renderable, movable)
+        super().__init__(renderable, movable)
 
         self.name = name
         self.heading = 0.0
