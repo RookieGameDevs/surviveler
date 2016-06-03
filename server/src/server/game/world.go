@@ -17,6 +17,7 @@ import (
 type World struct {
 	Grid              // the embedded map
 	Width, Height int // world dimensions
+	Scale         int // the grid scale
 }
 
 /*
@@ -41,45 +42,40 @@ type Tile struct {
  */
 func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 	// read and parse the map in the package
-	var data resource.MapData
-	if err := pkg.LoadMap(&data); err != nil {
-		return nil, err
-	}
-	// semantic validity checks
-	if err := data.IsValid(); err != nil {
+	if img, err := pkg.LoadMap(); err != nil {
 		return nil, err
 	} else {
-		log.Info("Validating world")
-	}
-
-	w := World{
-		Width:  len(data.Matrix[0]),
-		Height: len(data.Matrix),
-	}
-	log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
-		Info("Building world")
-
-	// allocate tiles
-	w.Grid = make(map[int]map[int]*Tile)
-	for x := 0; x < w.Width; x++ {
-		w.Grid[x] = make(map[int]*Tile)
-		for y := 0; y < w.Height; y++ {
-			kind := data.Matrix[y][x]
-			tile := &Tile{
-				Kind: TileKind(kind),
-				W:    &w,
-				X:    x,
-				Y:    y,
-			}
-			w.SetTile(tile)
+		bounds := img.Bounds()
+		w := World{
+			Width:  bounds.Max.X,
+			Height: bounds.Max.Y,
+			Scale:  2, // TODO: for now hardcoded value, but should be read from the package
 		}
-	}
+		log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
+			Info("Building world")
 
-	// dump the world matrix
-	logw := log.StandardLogger().Writer()
-	defer logw.Close()
-	w.Dump(logw)
-	return &w, nil
+		// allocate tiles
+		var kind TileKind
+		w.Grid = make(map[int]map[int]*Tile)
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			w.Grid[x] = make(map[int]*Tile)
+			for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+				r, _, _, _ := img.At(x, y).RGBA()
+				if r == 0 {
+					kind = KindNotWalkable
+				} else {
+					kind = KindWalkable
+				}
+				w.SetTile(&Tile{Kind: kind, W: &w, X: x, Y: y})
+			}
+		}
+
+		// dump the world matrix
+		logw := log.StandardLogger().Writer()
+		defer logw.Close()
+		w.Dump(logw)
+		return &w, nil
+	}
 }
 
 type TileKind int
