@@ -60,7 +60,7 @@ func (gs GameState) pack() *messages.GameStateMsg {
 func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("We have one more player")
-	gs.players[clientId] = entity.NewPlayer(1, 1, 2)
+	gs.players[clientId] = entity.NewPlayer(1, 1, 3)
 	return nil
 }
 
