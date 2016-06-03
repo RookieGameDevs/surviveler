@@ -6,12 +6,10 @@
 package game
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
 	"server/game/messages"
 	"server/game/resource"
-	"server/math"
 	"time"
 )
 
@@ -24,8 +22,8 @@ type GameState struct {
 	Pathfinder Pathfinder
 }
 
-func newGameState() GameState {
-	return GameState{
+func newGameState() *GameState {
+	return &GameState{
 		players: make(map[uint32]*entity.Player),
 	}
 }
@@ -61,7 +59,7 @@ func (gs GameState) pack() *messages.GameStateMsg {
  */
 func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
-	log.WithField("clientId", clientId).Info("we have a new player")
+	log.WithField("clientId", clientId).Info("We have one more player")
 	gs.players[clientId] = entity.NewPlayer(1, 1, 2)
 	return nil
 }
@@ -71,38 +69,21 @@ func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
  */
 func (gs *GameState) onPlayerLeft(msg interface{}, clientId uint32) error {
 	// one player less, remove him from the map
-	log.WithField("clientId", clientId).Info("we have one less player")
+	log.WithField("clientId", clientId).Info("We have one less player")
 	delete(gs.players, clientId)
 	return nil
 }
 
 /*
- * onMovePlayer handles a MoveMsg by setting the final destination of an entity
+ * onMovementRequestResult handles a MovementRequestResultMsg
  */
-func (gs *GameState) onMovePlayer(msg interface{}, clientId uint32) error {
-	move := msg.(messages.MoveMsg)
-	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("onMovePlayer")
+func (gs *GameState) onMovementRequestResult(msg interface{}, clientId uint32) error {
+	mvtReqRes := msg.(messages.MovementRequestResultMsg)
+	log.WithField("res", mvtReqRes).Info("Received a MovementRequestResultMsg")
 
-	if player, ok := gs.players[clientId]; ok {
-
-		// compute pathfinding
-		dst := math.Vec2{move.Xpos, move.Ypos}
-		if path, _, found := gs.Pathfinder.FindPlayerPath(player, player.Pos, dst); found {
-			if len(path) >= 2 {
-				log.WithFields(log.Fields{"path": path, "clientId": clientId}).
-					Info("PlayerPathfinder found a path")
-				player.SetPath(path)
-			} else {
-				// TODO: probably better to manage this somewhere else (maybe even on the client side?)
-				log.WithFields(log.Fields{"path": path, "clientId": clientId}).
-					Warn("PlayerPathfinder: destination cell too close")
-			}
-		} else {
-			log.WithFields(log.Fields{"clientId": clientId, "pos": player.Pos, "dst": dst}).
-				Warn("Pathfinder failed to find path")
-		}
-	} else {
-		return fmt.Errorf("Client Id not found: %v", clientId)
+	// check that the entity exists
+	if player, ok := gs.players[mvtReqRes.EntityId]; ok {
+		player.SetPath(mvtReqRes.Path)
 	}
 	return nil
 }

@@ -73,7 +73,7 @@ func (g *Game) Setup() bool {
 	}
 
 	// init the movement planner
-	g.movementPlanner = NewMovementPlanner(g.gameQuitChan, &g.waitGroup)
+	g.movementPlanner = NewMovementPlanner(g)
 
 	// setup TCP server
 	rootHandler := func(msg *messages.Message, clientId uint32) error {

@@ -36,6 +36,7 @@ func (g *Game) loop() error {
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
 	gs := newGameState()
+	g.movementPlanner.setGameState(gs)
 
 	var err error
 	if err = gs.init(g.assets); err != nil {
@@ -44,9 +45,10 @@ func (g *Game) loop() error {
 	}
 
 	msgmgr := new(messages.MessageManager)
-	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(gs.onMovePlayer))
+	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(g.movementPlanner.onMovePlayer))
 	msgmgr.Listen(messages.JoinedId, messages.MsgHandlerFunc(gs.onPlayerJoined))
 	msgmgr.Listen(messages.LeaveId, messages.MsgHandlerFunc(gs.onPlayerLeft))
+	msgmgr.Listen(messages.MovementRequestResultId, messages.MsgHandlerFunc(gs.onMovementRequestResult))
 
 	var last_time, cur_time time.Time
 	last_time = time.Now()
@@ -96,7 +98,7 @@ func (g *Game) loop() error {
 
 			case tnr := <-g.telnetChan:
 				// received a telnet request
-				g.telnetHandler(tnr, &gs)
+				g.telnetHandler(tnr, gs)
 
 			default:
 				// let the rest of the world spin
