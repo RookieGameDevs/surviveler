@@ -38,6 +38,7 @@ func GetFactory() *Factory {
  * struct type
  */
 func (mf Factory) registerMsgTypes() {
+	// client/server message types
 	mf.registerMsgType(PingId, PingMsg{})
 	mf.registerMsgType(PongId, PongMsg{})
 	mf.registerMsgType(GameStateId, GameStateMsg{})
@@ -46,6 +47,9 @@ func (mf Factory) registerMsgTypes() {
 	mf.registerMsgType(JoinedId, JoinedMsg{})
 	mf.registerMsgType(StayId, StayMsg{})
 	mf.registerMsgType(LeaveId, LeaveMsg{})
+
+	// server only message types
+	mf.registerMsgType(MovementRequestResultId, MovementRequestResultMsg{})
 }
 
 /*
