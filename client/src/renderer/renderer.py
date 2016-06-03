@@ -147,7 +147,7 @@ class Renderer:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # clear to black
-        glClearColor(1, 1, 1, 1)
+        glClearColor(0.3, 0.5, 0.7, 1)
 
     def clear(self):
         """Clear buffers."""
