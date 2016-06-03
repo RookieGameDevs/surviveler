@@ -29,7 +29,7 @@ class GeometryNode(SceneNode):
         :param enable_light: Enable lighting for the node.
         :type enable_light: bool
         """
-        super(GeometryNode, self).__init__()
+        super().__init__()
         self.mesh = mesh
         self.shader = shader
         self.params = params or {}
