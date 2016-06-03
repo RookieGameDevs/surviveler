@@ -8,7 +8,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/beefsack/go-astar"
 	gomath "math"
-	"server/game/entity"
 	"server/math"
 )
 
@@ -22,7 +21,7 @@ type Pathfinder struct {
  * The search is performed with the A* algorithm, running on a matrix shaped graph
  * representing the world.
  */
-func (pf Pathfinder) FindPlayerPath(player *entity.Player, org, dst math.Vec2) (vpath []math.Vec2, dist float64, found bool) {
+func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (vpath []math.Vec2, dist float64, found bool) {
 	// retrieve origin and destination tiles
 	porg := pf.World.Tile(int(org[0]), int(org[1]))
 	pdst := pf.World.Tile(int(dst[0]), int(dst[1]))
