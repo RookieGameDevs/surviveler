@@ -155,7 +155,7 @@ class RootNode(SceneNode):
             self.t.identity()
             self.t *= parent_transform
             self.t *= node.transform
-            node.render(ctx, self.t)
+            node.render(ctx, Mat(self.t))
 
             for child in node.children:
                 render_all(child, node.transform)

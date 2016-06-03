@@ -1,13 +1,14 @@
-from OpenGL.GL import GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS as MAX_TEXTURES
-from contextlib import ExitStack
-from exceptions import OpenGLError
+from itertools import chain
+from renderer.light import LIGHT_SOURCES
+from renderer.renderer import RenderOp
 from renderer.scene import SceneNode
 
 
 class GeometryNode(SceneNode):
     """A node for attaching static geometry (mesh) to the scene."""
 
-    def __init__(self, mesh, shader, params=None, textures=None):
+    def __init__(
+            self, mesh, shader, params=None, textures=None, enable_light=False):
         """Constructor.
 
         :param mesh: Instance of the mesh to render.
@@ -24,29 +25,34 @@ class GeometryNode(SceneNode):
 
         :param textures: Textures to apply to the mesh
         :type textures: list of :class:`renderer.Texture`
+
+        :param enable_light: Enable lighting for the node.
+        :type enable_light: bool
         """
-        super(GeometryNode, self).__init__()
+        super().__init__()
         self.mesh = mesh
         self.shader = shader
-        self.params = {
-            k: shader.make_param(k) for k in
-            ('transform', 'modelview', 'projection')
-        }
+        self.params = params or {}
         self.textures = textures or []
+        self.enable_light = enable_light
 
     def render(self, ctx, transform):
-        self.params['transform'].value = transform
-        self.params['modelview'].value = ctx.modelview
-        self.params['projection'].value = ctx.projection
+        self.params['transform'] = transform
+        self.params['modelview'] = ctx.modelview
+        self.params['projection'] = ctx.projection
 
-        if len(self.textures) >= MAX_TEXTURES:
-            raise OpenGLError(
-                'Too much textures to render ({}), maximum is {}'.format(
-                    len(self.textures), MAX_TEXTURES))
+        if self.enable_light:
+            self.params.update({
+                'Light[{}].{}'.format(light_id, p): v for light_id, p, v in
+                chain.from_iterable([
+                    [(light_id, p, v) for p, v in params.items()] for light_id, params in
+                    LIGHT_SOURCES.items()
+                ])
+            })
 
-        with ExitStack() as stack:
-            for tex_unit, tex in enumerate(self.textures):
-                stack.enter_context(tex.use(tex_unit))
-
-            self.shader.use(self.params.values())
-            self.mesh.render(ctx.renderer)
+        # schedule the node rendering
+        ctx.renderer.add_render_op(RenderOp(
+            self.shader,
+            self.params,
+            self.mesh,
+            self.textures))

@@ -17,6 +17,7 @@ from OpenGL.GL import glEnable
 from OpenGL.GL import glFlush
 from OpenGL.GL import glFrontFace
 from OpenGL.GL import glGetString
+from contextlib import ExitStack
 from exceptions import ConfigError
 from exceptions import OpenGLError
 from exceptions import SDLError
@@ -26,6 +27,38 @@ import sdl2 as sdl
 
 
 LOG = logging.getLogger(__name__)
+
+
+class RenderOp:
+    """Single render operation.
+
+    This class incapsulates the context of rendering a single mesh, with its
+    shader and shader parameters, textures, etc.
+
+    The renderer internally can reorder rendering operations for better
+    efficiency and less OpenGL context switches.
+    """
+
+    def __init__(self, shader, shader_params, mesh, textures=None):
+        """Constructor.
+
+        :param shader: Shader to use for rendering.
+        :type shader: :class:`renderer.shader.Shader`
+
+        :param shader_params: Shader parameters to submit to the shader.
+        :type shader_params: mapping
+
+        :param mesh: Mesh to render.
+        :type mesh: :class:`renderer.mesh.Mesh`
+
+        :param textures: List of textures to make active and use during
+            rendering.
+        :type textures: list of :class:`renderer.texture.Texture` or `None`
+        """
+        self.mesh = mesh
+        self.shader = shader
+        self.shader_params = shader_params
+        self.textures = textures or []
 
 
 class Renderer:
@@ -87,6 +120,7 @@ class Renderer:
         self._width = width
         self._height = height
         self.gl_setup(width, height)
+        self.render_queue = []
 
     @property
     def width(self):
@@ -113,14 +147,40 @@ class Renderer:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # clear to black
-        glClearColor(0, 0, 0, 0)
+        glClearColor(1, 1, 1, 1)
 
     def clear(self):
         """Clear buffers."""
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
+    def add_render_op(self, op):
+        """Add a rendering operation to rendering queue.
+
+        :param op: Rendering operation to perform.
+        :type op: :class:`renderer.renderer.RenderOp`
+        """
+        self.render_queue.append(op)
+
     def present(self):
         """Present updated buffers to screen."""
+
+        def sort_key(op):
+            return (op.shader.prog, op.mesh.vao)
+
+        for op in sorted(self.render_queue, key=sort_key):
+            # perform actual rendering
+            with ExitStack() as stack:
+                for tex_unit, tex in enumerate(op.textures):
+                    stack.enter_context(tex.use(tex_unit))
+
+                for p, v in op.shader_params.items():
+                    op.shader[p] = v
+
+                op.shader.use()
+                op.mesh.render()
+
+        self.render_queue.clear()
+
         glFlush()
         sdl.SDL_GL_SwapWindow(self.window)
 

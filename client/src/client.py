@@ -13,6 +13,8 @@ from network import MessageField as MF
 from network import MessageType as MT
 from network import get_message_handlers
 from network import message_handler
+from renderer import Light
+from renderer import LightNode
 from renderer import OrthoCamera
 from renderer import Scene
 from utils import as_utf8
@@ -81,6 +83,11 @@ class Client:
         :rtype: :class:`renderer.scene.Scene`
         """
         scene = Scene()
+
+        light = Light()
+        light_node = scene.root.add_child(LightNode(light))
+        light_node.transform.translate(Vec(0, 10, 10))
+
         terrain = Terrain(scene.root, 30, 30)
         context.entities[terrain.e_id] = terrain
         return scene

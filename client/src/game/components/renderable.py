@@ -9,7 +9,9 @@ class Renderable(Component):
     the node.
     """
 
-    def __init__(self, parent_node, mesh, shader, textures=None):
+    def __init__(
+            self, parent_node, mesh, shader, params=None, textures=None,
+            enable_light=False):
         """Constructor.
 
         :param parent_node: Parent node of the new game node.
@@ -21,11 +23,23 @@ class Renderable(Component):
         :param shader: The shader program.
         :type shader: :class:`renderer.Shader`
 
+        :param params: The parameters mapping to pass during rendering to the
+            shader program.
+        :type params: mapping
+
         :param textures: Textures to apply to the mesh.
         :type textures: list of :class:`renderer.Texture`
+
+        :param enable_light: Enable lighting for the renderable.
+        :type enable_light: bool
         """
         self.entity = None
-        self.node = GeometryNode(mesh, shader, textures=textures)
+        self.node = GeometryNode(
+            mesh,
+            shader,
+            params=params,
+            textures=textures,
+            enable_light=enable_light)
         parent_node.add_child(self.node)
 
     @property

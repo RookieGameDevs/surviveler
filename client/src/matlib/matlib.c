@@ -836,6 +836,18 @@ static int
 py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	PyObject *r0 = NULL, *r1 = NULL, *r2 = NULL, *r3 = NULL;
+	PyObject *other = NULL;
+	Mat *m = to_mat_ptr(self);
+
+	if (PyArg_ParseTuple(args, "O", &other) &&
+	    PyObject_TypeCheck(other, &py_mat_type)) {
+		// build the matrix by copying the one passed as argument
+		Mat *other_m = to_mat_ptr(other);
+		memcpy(m, other_m, sizeof(Mat));
+		return 0;
+	}
+	PyErr_Clear();
+
 	if (!PyArg_ParseTuple(args, "|(OOOO)", &r0, &r1, &r2, &r3) || (
 	    (r0 && r1 && r2 && r3) && (
 	    !PyObject_TypeCheck(r0, &py_vec_type) ||
@@ -844,11 +856,9 @@ py_mat_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	    !PyObject_TypeCheck(r3, &py_vec_type)))) {
 		PyErr_SetString(
 			PyExc_RuntimeError,
-			"Mat() expects 4 Vec instances as rows");
+			"Mat() expects 4 Vec instances as rows or another Mat instance");
 		return -1;
 	}
-
-	Mat *m = to_mat_ptr(self);
 
 	if (!(r0 && r1 && r2 && r3)) {
 		// if no rows are provided, initialize the matrix to identity
