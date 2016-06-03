@@ -13,3 +13,6 @@
 [submodule "go-astar"]
 	path = server/src/server/vendor/github.com/beefsack/go-astar
 	url = git@github.com:beefsack/go-astar
+[submodule "golang-x-image"]
+	path = server/src/server/vendor/golang.org/x/image
+	url = https://go.googlesource.com/image
