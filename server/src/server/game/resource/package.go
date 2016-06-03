@@ -14,7 +14,7 @@ import (
 	"path"
 )
 
-const mapUri string = "level2x.bmp"
+const mapUri string = "map/map.bmp"
 
 /*
  * SurvivelerPackage represents a package of data, resource files and assets for
