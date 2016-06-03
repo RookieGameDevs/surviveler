@@ -11,8 +11,4 @@ class OpenGLError(Exception):
 
 
 class ShaderError(Exception):
-    """Shader compile/link error."""
-
-
-class UniformError(Exception):
-    """Uniform value initialization error."""
+    """Shader compile/link/access error."""

@@ -44,9 +44,7 @@ from OpenGL.GL import glUniform4fv
 from OpenGL.GL import glUniformBlockBinding
 from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
-from collections import defaultdict
 from exceptions import ShaderError
-from exceptions import UniformError
 from functools import partial
 from itertools import count
 from matlib import Mat
@@ -74,16 +72,12 @@ UNIFORM_TYPES_SIZE_MAP = {
 }
 
 
-def pass_through(v):
-    return v
-
-
 UNIFORM_CONVERTERS = {
     GL_FLOAT_MAT4: bytes,
     GL_FLOAT_VEC3: bytes,
     GL_FLOAT_VEC4: bytes,
     GL_SAMPLER_2D: lambda v: v.tex_unit,
-    GL_INT: pass_through,
+    GL_INT: lambda v: v,
 }
 
 
@@ -105,64 +99,18 @@ UNIFORM_SETTERS = {
 }
 
 
-ACTIVE_PROG = None
-UNIFORMS_CACHE = defaultdict(dict)
-
-
-class ShaderParam:
-    """Shader parameter (uniform) proxy object.
-
-    A shader parameter is a single value which can be passed to the shader
-    during rendering.
-    """
-
-    def __init__(self, name, value, gl_type, gl_loc, gl_setter):
-        """Constructor.
-
-        :param name: Name of the parameter (uniform variable name).
-        :type name: str
-
-        :param value: Value to be passed to the uniform.
-        :type value: any of supported types
-
-        :param gl_type: OpenGL enum value of the uniform type.
-        :type gl_type: int
-
-        :param gl_loc: Location of the uniform in the shader program.
-        :type gl_loc: int
-
-        :param gl_setter: Uniform setter function.
-        :type gl_setter: function
-        """
-        self.name = name
-        self._value = None
-        self.gl_value = None
-        self.gl_loc = gl_loc
-        self.gl_type = gl_type
-        self.gl_setter = gl_setter
-        self.value = value
-
-    @property
-    def value(self):
-        """Current parameter value."""
-        return self._value
-
-    @value.setter
-    def value(self, new_value):
-        """Set the parameter value."""
-        if self._value != new_value:
-            self._value = new_value
-            self.gl_value = UNIFORM_CONVERTERS[self.gl_type](new_value)
-
-    def set(self):
-        """Update the uniform with current parameter value."""
-        self.gl_setter(self.gl_loc, self.gl_value)
-
-
 class ShaderBlock:
-    """Buffer-backed shader uniform block."""
+    """Buffer-backed shader uniform block.
+
+    NOTE: For internal use only."""
 
     def __init__(self, block_info):
+        """Constructor; allocates an OpenGL buffer for the block and initializes
+        it.
+
+        :param block_info: Information about the uniform block.
+        :type block_info: mapping
+        """
         # create a new buffer big enough to contain all data for the shader
         # block
         self.buf = glGenBuffers(1)
@@ -230,21 +178,18 @@ class Shader:
         """
         self.prog = prog_id
 
-        def get_uniform(index):
-            name, size, prim_type = glGetActiveUniform(self.prog, u_id)
-            uniform = {
-                'loc': glGetUniformLocation(self.prog, name),
-                'type': prim_type,
-                'size': size,
-            }
-            return as_ascii(name), uniform
-
         # create the uniforms map
         self.uniforms = {}
         for u_id in range(glGetProgramiv(self.prog, GL_ACTIVE_UNIFORMS)):
-            name, uniform = get_uniform(u_id)
-            if uniform['loc'] >= 0:
-                self.uniforms[name] = uniform
+            u_name, u_size, u_type = glGetActiveUniform(self.prog, u_id)
+            u_loc = glGetUniformLocation(self.prog, u_name)
+            if u_loc >= 0:
+                self.uniforms[as_ascii(u_name)] = {
+                    'value': UNIFORM_DEFAULTS[u_type](),
+                    'loc': u_loc,
+                    'type': u_type,
+                    'size': u_size,
+                }
 
         # create uniform blocks map
         self.uniform_blocks = {}
@@ -347,71 +292,45 @@ class Shader:
 
         return Shader(prog)
 
-    def make_param(self, name, value=None):
-        """Instantiates a shader parameter for the given shader.
+    def __getitem__(self, k):
+        # check if there's a uniform with given name first
+        uniform = self.uniforms.get(k)
+        if uniform:
+            return uniform['value']
 
-        :param name: Name of the parameter (shader uniform variable name).
-        :type name: str
-
-        :param value: The initial value or `None`.
-        :type value: any of supported types
-
-        :returns: The created shader parameter.
-        :rtype: :class:`renderer.shader.ShaderParam`
-
-        :raises: :class`exceptions.UniformError` if no parameter with given name
-            is defined in the shader program or a wrong value type is passed.
-        """
+        # attempt to lookup an uniform block
         try:
-            uni_info = self.uniforms[name]
-        except KeyError:
-            raise UniformError('Unknown uniform {}'.format(name))
+            block_name, param_name = k.split('.', 1)
+            block = self.uniform_blocks.get(block_name)
+            if block:
+                return block[param_name]
+        except (TypeError, KeyError):
+            raise ShaderError('Unknown shader parameter "{}"'.format(k))
 
-        uni_type = uni_info['type']
-        uni_loc = uni_info['loc']
-        value = value or UNIFORM_DEFAULTS[uni_type]()
+    def __setitem__(self, k, v):
+        # check if there's a uniform with given name first
+        uniform = self.uniforms.get(k)
+        if uniform:
+            uniform['value'] = v
+        else:
+            block_name, param_name = k.split('.', 1)
+            try:
+                block = self.uniform_blocks.get(block_name)
+                block[param_name] = v
+            except (TypeError, KeyError):
+                raise ShaderError('Unknown shader parameter "{}"'.format(k))
 
-        exp_type = UNIFORM_TYPES_MAP[uni_type]
-        if exp_type != type(value):
-            raise UniformError('Uniform {} is of type {}, got {}'.format(
-                name, exp_type, type(value)))
-
-        return ShaderParam(
-            name,
-            value,
-            uni_type,
-            uni_loc,
-            UNIFORM_SETTERS[uni_type])
-
-    def use(self, params):
-        """Makes the shader active and sets up its parameters (uniforms).
-
-        :param params: List of parameters to use for the shader.
-        :type params: list of :class:`renderer.shader.ShaderParam` items
-        """
-        global ACTIVE_PROG
-        global UNIFORMS_CACHE
-        cache = UNIFORMS_CACHE[ACTIVE_PROG]
-
-        # in case the last used program is different from current one, make the
-        # current one active and invalidate the cache
-        if self.prog != ACTIVE_PROG:
-            ACTIVE_PROG = self.prog
-            glUseProgram(self.prog)
-            cache.clear()
+    def use(self):
+        """Makes the shader active and sets up its parameters (uniforms)."""
+        glUseProgram(self.prog)
 
         # setup uniforms
-        for p in params:
-            # TODO: fix this
-            # # in case a value is cached and did not changed, skip the
-            # # submission to OpenGL
-            # cached_v = cache.get(p.name)
-            # if cached_v == p.gl_value:
-            #     continue
-
-            # # update the cache and set the uniform
-            # cache[p.name] = p.gl_value
-            p.set()
+        for uniform in self.uniforms.values():
+            u_type = uniform['type']
+            u_loc = uniform['loc']
+            u_value = uniform['value']
+            gl_value = UNIFORM_CONVERTERS[u_type](u_value)
+            UNIFORM_SETTERS[u_type](u_loc, gl_value)
 
         # setup uniform blocks
         for block in self.uniform_blocks.values():

@@ -6,7 +6,6 @@ from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import EntityIdle
 from game.events import EntityMove
-from itertools import chain
 from loaders import load_obj
 from math import atan
 from math import copysign
@@ -41,33 +40,32 @@ class Character(Entity):
             'data/shaders/default.vert',
             'data/shaders/default.frag')
 
-        renderable = Renderable(parent_node, mesh, shader)
+        # shader params
+        params = {}
 
         # define material
-        colors = {
+        params.update({
             'color_ambient': Vec(0, 0.3, 0.5, 1),
             'color_diffuse': Vec(0.04, 0.67, 0.87, 1),
             'color_specular': Vec(1, 1, 1, 1),
-        }
+        })
 
         # lighting parameters
         light_dir = Vec(0, 0, -1)
         eye_dir = Vec(0, 2.5, -5)
         light_hv = light_dir + eye_dir
         light_hv.norm()
-        light = {
-            'light_color': Vec(1, 1, 1, 1),
-            'light_direction': light_dir,
-            'light_halfvector': light_hv,
-        }
-
-        # initialize shader parameters
-        renderable.node.params.update({
-            p: shader.make_param(p, v)
-            for p, v in chain(colors.items(), light.items())
+        params.update({
+            'Light.color': Vec(1, 1, 1, 1),
+            'Light.direction': light_dir,
+            'Light.halfvector': light_hv,
         })
 
+        # create components
+        renderable = Renderable(parent_node, mesh, shader, params)
         movable = Movable((0.0, 0.0))
+
+        # initialize entity
         super(Character, self).__init__(renderable, movable)
 
         self.name = name

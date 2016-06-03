@@ -137,14 +137,11 @@ class Mesh:
         glDeleteVertexArrays(1, [self.vao])
         glDeleteBuffers(len(self.buffers), self.buffers)
 
-    def render(self, rndr):
-        """Draws the model using the given renderer.
+    def render(self):
+        """Renders the model.
 
         NOTE: The current OpenGL context is used, thus, there *MUST* be one set
         up and active before calling this method.
-
-        :param rndr: Renderer to use.
-        :type rndr: :class:`renderer.Renderer`
         """
         glBindVertexArray(self.vao)
         glDrawElements(GL_TRIANGLES, self.num_elements, GL_UNSIGNED_INT, None)

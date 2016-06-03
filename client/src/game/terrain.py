@@ -35,7 +35,7 @@ class Terrain(Entity):
             TextureParamWrap.Coord.t, TextureParamWrap.WrapType.repeat))
 
         renderable = Renderable(parent_node, mesh, shader, textures=[texture])
-        renderable.node.params['tex'] = shader.make_param('tex', texture)
+        renderable.node.params['tex'] = texture
 
         t = renderable.transform
         t.translate(Vec(-50, -50, 0.5))

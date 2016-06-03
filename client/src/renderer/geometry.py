@@ -1,6 +1,3 @@
-from OpenGL.GL import GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS as MAX_TEXTURES
-from contextlib import ExitStack
-from exceptions import OpenGLError
 from renderer.renderer import RenderOp
 from renderer.scene import SceneNode
 
@@ -29,30 +26,17 @@ class GeometryNode(SceneNode):
         super(GeometryNode, self).__init__()
         self.mesh = mesh
         self.shader = shader
-        self.params = {
-            k: shader.make_param(k) for k in
-            ('transform', 'modelview', 'projection')
-        }
+        self.params = params or {}
         self.textures = textures or []
 
     def render(self, ctx, transform):
-        self.params['transform'].value = transform
-        self.params['modelview'].value = ctx.modelview
-        self.params['projection'].value = ctx.projection
-
-        if len(self.textures) >= MAX_TEXTURES:
-            raise OpenGLError(
-                'Too much textures to render ({}), maximum is {}'.format(
-                    len(self.textures), MAX_TEXTURES))
-
-        # define a rendering operation closure
-        def op():
-            with ExitStack() as stack:
-                for tex_unit, tex in enumerate(self.textures):
-                    stack.enter_context(tex.use(tex_unit))
-
-                self.shader.use(self.params.values())
-                self.mesh.render(ctx.renderer)
+        self.params['transform'] = transform
+        self.params['modelview'] = ctx.modelview
+        self.params['projection'] = ctx.projection
 
         # schedule the node rendering
-        ctx.renderer.add_render_op(RenderOp(self.shader, self.mesh, op))
+        ctx.renderer.add_render_op(RenderOp(
+            self.shader,
+            self.params,
+            self.mesh,
+            self.textures))
