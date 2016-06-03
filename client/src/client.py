@@ -140,7 +140,7 @@ class Client:
             +fov / 2 * aspect,   # bottom plane
             1000)                 # view distance
 
-        camera.look_at(eye=Vec(0, 250, 500), center=Vec(0, 0, 0))
+        camera.look_at(eye=Vec(0, 2.5, 100), center=Vec(0, 0, 0))
 
         return camera
 
