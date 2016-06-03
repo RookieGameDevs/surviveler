@@ -1,7 +1,7 @@
 #version 330 core
 
-in vec3 transformed_position;
 in vec3 transformed_normal;
+in vec3 origin;
 in vec3 eye;
 
 uniform vec4 color_ambient;
@@ -18,8 +18,8 @@ out vec4 out_color;
 void
 main()
 {
-    vec3 direction = normalize(light[0].position - transformed_position);
-    vec3 halfvector = normalize(direction + normalize(eye - transformed_position));
+    vec3 direction = normalize(light[0].position - origin);
+    vec3 halfvector = normalize(direction + normalize(eye - origin));
 
     float diffuse = max(0.0, dot(transformed_normal, direction));
     float specular;
