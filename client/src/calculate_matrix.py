@@ -4,7 +4,7 @@ from functools import partial
 from itertools import chain
 from main import CONFIG_FILE
 from main import setup_logging
-from matlib import Vec3
+from matlib import Vec
 import click
 import logging
 import math
@@ -15,6 +15,22 @@ LOG = logging.getLogger(__name__)
 
 EPSILON = 0.1
 DEFAULT_PRECISION = 4
+
+
+def is_degenerate(triangle):
+    """Checks if the triangle is degenerate.
+
+    :param triangle: The triangle to be checked.
+    :type triangle: list
+
+    :return: Wether the triangle is degenerate or not
+    :rtype: bool
+    """
+    A, B, C = map(lambda t: Vec(*t), triangle)
+    u = B - A
+    v = C - A
+    uxv = u.cross(v)
+    return uxv.mag() == 0
 
 
 def in_triangle(point, triangle):
@@ -30,8 +46,8 @@ def in_triangle(point, triangle):
     :return: True if the point is inside the triangle.
     :rtype: bool
     """
-    A, B, C = map(lambda t: Vec3(*t), triangle)
-    P = Vec3(*point)
+    A, B, C = map(lambda t: Vec(*t), triangle)
+    P = Vec(*point)
 
     u = B - A
     v = C - A
@@ -50,13 +66,14 @@ def in_triangle(point, triangle):
         return False
 
     denom = uxv.mag()
+
     r = vxw.mag() / denom
     t = uxw.mag() / denom
 
     return (r + t <= 1)
 
 
-def exc(n):
+def excess(n):
     """Round by excess taking the sign into consideration.
 
     :param n: The number to be rounded
@@ -66,6 +83,18 @@ def exc(n):
     :rtype: int
     """
     return int(math.copysign(math.ceil(abs(n)), n))
+
+
+def defect(n):
+    """Round by defect taking the sign into consideration.
+
+    :param n: The number to be rounded
+    :type n: float
+
+    :return: The signed rounded items
+    :rtype: int
+    """
+    return int(math.copysign(math.floor(abs(n)), n))
 
 
 def mag(axis, faces):
@@ -83,7 +112,7 @@ def mag(axis, faces):
     """
     minimum = min(map(lambda v: v[axis], chain.from_iterable(faces)))
     maximum = max(map(lambda v: v[axis], chain.from_iterable(faces)))
-    return exc(minimum), exc(maximum)
+    return min(defect(minimum), excess(minimum)), max(defect(maximum), excess(maximum))
 
 
 def s_width(faces):
@@ -165,9 +194,13 @@ def set_not_walkable(face, matrix, precision):
     # Iterate over the bounding box of the face to check every possible cell
     # that can be not walkable.
     for y in range(y0, y1):
+        if y not in matrix:
+            continue
         for x in range(x0, x1):
             # Avoid completely the check in case the cell is already considered
             # non-walkable.
+            if x not in matrix[y]:
+                continue
             if matrix[y][x]:
                 d = 0.5
                 # NOTE: only updates the matrix in case the cell is considered
@@ -228,12 +261,20 @@ def calculate_matrix(faces, precision):
     # Filter out non-relevant faces.
     # NOTE: relevant faces are the ones completely on the xy plane where
     # (z <= EPSILON).
+    def f_func(face):
+        """Filter function for relevant faces.
+        """
+        on_floor = all(map(lambda x: abs(x[2]) <= EPSILON, face))
+        return on_floor and not is_degenerate(face)
+
     relevant = list(
-        filter(lambda face: all(map(lambda x: abs(x[2]) <= EPSILON, face)), faces))
+        filter(f_func, faces))
 
     # Get the bounding box of the map
     x0, x1 = s_width(relevant)
     y0, y1 = s_height(relevant)
+
+    LOG.info('Map bounding box: {}, {}'.format((x0, x1), (y0, y1)))
 
     with mp.Pool() as pool:
         LOG.info('Found {} faces to be analyzed'.format(len(relevant)))
