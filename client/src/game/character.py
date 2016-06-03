@@ -41,28 +41,19 @@ class Character(Entity):
             'data/shaders/default.frag')
 
         # shader params
-        params = {}
-
-        # define material
-        params.update({
+        params = {
             'color_ambient': Vec(0, 0.3, 0.5, 1),
             'color_diffuse': Vec(0.04, 0.67, 0.87, 1),
             'color_specular': Vec(1, 1, 1, 1),
-        })
-
-        # lighting parameters
-        light_dir = Vec(0, 0, -1)
-        eye_dir = Vec(0, 2.5, -5)
-        light_hv = light_dir + eye_dir
-        light_hv.norm()
-        params.update({
-            'Light.color': Vec(1, 1, 1, 1),
-            'Light.direction': light_dir,
-            'Light.halfvector': light_hv,
-        })
+        }
 
         # create components
-        renderable = Renderable(parent_node, mesh, shader, params)
+        renderable = Renderable(
+            parent_node,
+            mesh,
+            shader,
+            params,
+            enable_light=True)
         movable = Movable((0.0, 0.0))
 
         # initialize entity

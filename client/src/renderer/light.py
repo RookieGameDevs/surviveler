@@ -2,7 +2,7 @@ from renderer.scene import SceneNode
 from matlib import Vec
 
 #: Maximum number of sources
-MAX_LIGHT_SOURCES = 8
+MAX_LIGHT_SOURCES = 1
 
 #: Light sources data
 LIGHT_SOURCES = {}
