@@ -334,12 +334,13 @@ class Shader:
 
         # setup uniforms
         for p in params:
-            # in case a value is cached and did not changed, skip the
-            # submission to OpenGL
-            cached_v = cache.get(p.name)
-            if cached_v == p.gl_value:
-                continue
+            # TODO: fix this
+            # # in case a value is cached and did not changed, skip the
+            # # submission to OpenGL
+            # cached_v = cache.get(p.name)
+            # if cached_v == p.gl_value:
+            #     continue
 
-            # update the cache and set the uniform
-            cache[p.name] = p.gl_value
+            # # update the cache and set the uniform
+            # cache[p.name] = p.gl_value
             p.set()
