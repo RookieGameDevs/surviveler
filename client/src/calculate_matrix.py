@@ -9,12 +9,14 @@ import click
 import logging
 import math
 import multiprocessing as mp
+import numpy as np
 
 
 LOG = logging.getLogger(__name__)
 
 EPSILON = 0.1
 DEFAULT_PRECISION = 4
+GRID_CELL = 0.5
 
 
 def is_degenerate(triangle):
@@ -176,7 +178,7 @@ def is_walkable(p, d, face, step=0):
     return walkable
 
 
-def set_not_walkable(face, matrix, precision):
+def set_not_walkable(face, matrix, precision, grid_cell):
     """Sets all the non_walkable cells on the matrix. Considers only a single
     triangle.
 
@@ -188,42 +190,44 @@ def set_not_walkable(face, matrix, precision):
 
     :param precision: The number of recursive calls to be done
     :type precision: int
+
+    :param grid_cell: The size of the grid cell edge
+    :type grid_cell: float
     """
     x0, x1 = s_width([face])
     y0, y1 = s_height([face])
     # Iterate over the bounding box of the face to check every possible cell
     # that can be not walkable.
-    for y in range(y0, y1):
+    for y in np.arange(y0, y1, grid_cell):
         if y not in matrix:
             continue
-        for x in range(x0, x1):
+        for x in np.arange(x0, x1, grid_cell):
             # Avoid completely the check in case the cell is already considered
             # non-walkable.
             if x not in matrix[y]:
                 continue
             if matrix[y][x]:
-                d = 0.5
                 # NOTE: only updates the matrix in case the cell is considered
                 # not walkable.
-                if not is_walkable([x, y], d, face, precision):
+                if not is_walkable([x, y], grid_cell / 2, face, precision):
                     matrix[y][x] = False
 
 
-def process_face(x_axis, y_axis, precision, values):
+def process_face(x_axis, y_axis, precision, grid_cell, values):
     """Process worker"""
     x0, x1 = x_axis
     y0, y1 = y_axis
     matrix = {
         y: {
             x: True
-            for x in range(x0, x1)
+            for x in np.arange(x0, x1, GRID_CELL)
         }
-        for y in range(y0, y1)
+        for y in np.arange(y0, y1, GRID_CELL)
     }
 
     i, face = values
     LOG.info('Face {}, ({}, {})'.format(i + 1, s_width([face]), s_height([face])))
-    set_not_walkable(face, matrix, precision)
+    set_not_walkable(face, matrix, precision, grid_cell)
     return matrix
 
 
@@ -246,7 +250,7 @@ def merge(matrix, part):
                 matrix[y][x] &= value
 
 
-def calculate_matrix(faces, precision):
+def calculate_matrix(faces, precision, grid_cell):
     """Matrix calculation main routine.
 
     :param faces: The list of all the faces parsed from the level obj file.
@@ -254,6 +258,9 @@ def calculate_matrix(faces, precision):
 
     :param precision: The precision of the matrix computation
     :type precision: int
+
+    :param grid_cell: The size of the grid cell edge
+    :type grid_cell: float
 
     :return: The generated level walkable matrix
     :rtype: dict
@@ -278,23 +285,29 @@ def calculate_matrix(faces, precision):
 
     with mp.Pool() as pool:
         LOG.info('Found {} faces to be analyzed'.format(len(relevant)))
-        results = pool.map(partial(process_face, (x0, x1), (y0, y1), precision), enumerate(relevant))
+        results = pool.map(partial(process_face, (x0, x1), (y0, y1), precision, grid_cell), enumerate(relevant))
 
         pool.close()
         pool.join()
 
         LOG.info('Calculation finished: generating the matrix')
-        matrix = {}
+        matrix = {
+            y: {
+                x: True
+                for x in np.arange(x0, x1, grid_cell)
+            }
+            for y in np.arange(y0, y1, grid_cell)
+        }
         for r in results:
             merge(matrix, r)
 
         # Create a bytearray matrix
         m = bytearray()
-        for y in reversed(list(matrix.keys())):
+        for y in sorted(matrix.keys(), reverse=True):
             for x in sorted(matrix[y].keys()):
                 m.append(255 if matrix[y][x] else 0)
 
-    return (abs(x0 - x1), abs(y0 - y1)), m
+    return (int(abs(x0 - x1) / grid_cell), int(abs(y0 - y1) / grid_cell)), m
 
 
 def parse_faces(objfile):
@@ -350,9 +363,10 @@ def parse_faces(objfile):
     type=click.File(mode='wb')
 )
 @click.option('--precision', default=DEFAULT_PRECISION)
-def main(objfile, target, precision):
+@click.option('--grid-cell', default=GRID_CELL)
+def main(objfile, target, precision, grid_cell):
     faces = parse_faces(objfile)
-    size, m = calculate_matrix(faces, precision)
+    size, m = calculate_matrix(faces, precision, grid_cell)
     i = Image.frombytes('L', size, bytes(m))
     i.save(target, format='bmp')
 
