@@ -1,6 +1,7 @@
 from OpenGL.GL import GL_ACTIVE_UNIFORMS
 from OpenGL.GL import GL_ACTIVE_UNIFORM_BLOCKS
 from OpenGL.GL import GL_COMPILE_STATUS
+from OpenGL.GL import GL_DYNAMIC_DRAW
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
 from OpenGL.GL import GL_FLOAT_VEC4
@@ -13,13 +14,19 @@ from OpenGL.GL import GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES
 from OpenGL.GL import GL_UNIFORM_BLOCK_BINDING
 from OpenGL.GL import GL_UNIFORM_BLOCK_DATA_SIZE
 from OpenGL.GL import GL_UNIFORM_BLOCK_NAME_LENGTH
+from OpenGL.GL import GL_UNIFORM_BUFFER
 from OpenGL.GL import GL_UNIFORM_OFFSET
 from OpenGL.GL import GL_VERTEX_SHADER
 from OpenGL.GL import glAttachShader
+from OpenGL.GL import glBindBuffer
+from OpenGL.GL import glBindBufferRange
+from OpenGL.GL import glBufferData
+from OpenGL.GL import glBufferSubData
 from OpenGL.GL import glCompileShader
 from OpenGL.GL import glCreateProgram
 from OpenGL.GL import glCreateShader
 from OpenGL.GL import glDeleteProgram
+from OpenGL.GL import glGenBuffers
 from OpenGL.GL import glGetActiveUniform
 from OpenGL.GL import glGetActiveUniformBlockName
 from OpenGL.GL import glGetActiveUniformBlockiv
@@ -56,6 +63,14 @@ UNIFORM_TYPES_MAP = {
     GL_FLOAT_VEC4: Vec,
     GL_SAMPLER_2D: Texture,
     GL_INT: int,
+}
+
+UNIFORM_TYPES_SIZE_MAP = {
+    GL_FLOAT_MAT4: ctypes.sizeof(ctypes.c_float) * 16,
+    GL_FLOAT_VEC3: ctypes.sizeof(ctypes.c_float) * 3,
+    GL_FLOAT_VEC4: ctypes.sizeof(ctypes.c_float) * 4,
+    GL_SAMPLER_2D: ctypes.sizeof(ctypes.c_int),
+    GL_INT: ctypes.sizeof(ctypes.c_int),
 }
 
 
@@ -144,6 +159,58 @@ class ShaderParam:
         self.gl_setter(self.gl_loc, self.gl_value)
 
 
+class ShaderBlock:
+    """Buffer-backed shader uniform block."""
+
+    def __init__(self, block_info):
+        # create a new buffer big enough to contain all data for the shader
+        # block
+        self.buf = glGenBuffers(1)
+        glBindBuffer(GL_UNIFORM_BUFFER, self.buf)
+        glBufferData(
+            GL_UNIFORM_BUFFER,
+            block_info['size'],
+            ctypes.c_void_p(0),
+            GL_DYNAMIC_DRAW)
+        glBindBuffer(GL_UNIFORM_BUFFER, 0)
+
+        # initialize parameters
+        self.params = {}
+        for u_name, u_info in block_info['uniforms'].items():
+            self.params[u_name] = {
+                'type': u_info['type'],
+                'value': None,
+                'offset': u_info['offset'],
+                'size': u_info['size'],
+            }
+            self[u_name] = UNIFORM_DEFAULTS[u_info['type']]()
+
+        self.block_info = block_info
+
+    def __getitem__(self, k):
+        return self.params[k]['value']
+
+    def __setitem__(self, k, v):
+        param = self.params[k]
+        if param['value'] != v:
+            param['value'] = v
+            glBindBuffer(GL_UNIFORM_BUFFER, self.buf)
+            glBufferSubData(
+                GL_UNIFORM_BUFFER,
+                param['offset'],
+                UNIFORM_TYPES_SIZE_MAP[param['type']],
+                UNIFORM_CONVERTERS[param['type']](v))
+            glBindBuffer(GL_UNIFORM_BUFFER, 0)
+
+    def bind(self):
+        glBindBufferRange(
+            GL_UNIFORM_BUFFER,
+            self.block_info['binding'],
+            self.buf,
+            0,
+            self.block_info['size'])
+
+
 class Shader:
     """Shader program.
 
@@ -210,7 +277,7 @@ class Shader:
             glUniformBlockBinding(self.prog, ub_id, next(binding_index))
 
             # store info about the uniform block
-            self.uniform_blocks[as_ascii(name_buf.value)] = {
+            block = {
                 'size': binfo(GL_UNIFORM_BLOCK_DATA_SIZE),
                 'binding': binfo(GL_UNIFORM_BLOCK_BINDING),
                 'uniforms': {
@@ -224,6 +291,7 @@ class Shader:
                     ])
                 },
             }
+            self.uniform_blocks[as_ascii(name_buf.value)] = ShaderBlock(block)
 
     def __del__(self):
         """Destructor.
@@ -344,3 +412,7 @@ class Shader:
             # # update the cache and set the uniform
             # cache[p.name] = p.gl_value
             p.set()
+
+        # setup uniform blocks
+        for block in self.uniform_blocks.values():
+            block.bind()
