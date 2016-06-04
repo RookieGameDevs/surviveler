@@ -29,7 +29,7 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 	// scale org and dst coordinates
 	scaledOrg, scaledDst := org.Mul(pf.World.GridScale), dst.Mul(pf.World.GridScale)
 
-	// retrieve origin and destination tiles
+	// retrieve origin and destination tiles by rounding the scaled org/dst points down
 	porg := pf.World.Tile(int(scaledOrg[0]), int(scaledOrg[1]))
 	pdst := pf.World.Tile(int(scaledDst[0]), int(scaledDst[1]))
 	switch {
@@ -45,24 +45,39 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 		return
 	}
 
-	// TODO: path smoothing
-
 	// replace origin and destination with real positions
 	invScale := 1.0 / pf.World.GridScale
 	path = make([]math.Vec2, 0, len(rawPath))
+	var last math.Vec2
 	for pidx := range rawPath {
+		tile := rawPath[pidx].(*Tile)
+		pt := math.Vec2{float32(tile.X), float32(tile.Y)}
 		if pidx == 0 {
 			// replace destination
 			path = append(path, dst)
 		} else if pidx == len(path)-1 {
 			path = append(path, org)
 		} else {
-			tile := rawPath[pidx].(*Tile)
+
+			// path smoothing
+			dir := last.Sub(pt)
+			if pidx+1 < len(rawPath)-1 {
+				// there are at least 1 pt between the current one and the last one
+				ntile := rawPath[pidx+1].(*Tile)
+				npt := math.Vec2{float32(ntile.X), float32(ntile.Y)}
+				nextDir := pt.Sub(npt)
+				if dir == nextDir {
+					last = pt
+					continue
+				}
+			}
+
 			// append the path point with scaled coordinates
-			pt := math.Vec2{float32(tile.X), float32(tile.Y)}
 			path = append(path, pt.Mul(invScale))
 		}
+		last = pt
 	}
+	log.WithFields(log.Fields{"raw path length": len(rawPath), "smoothed path length": len(path)}).Debug("Path smoothing result")
 	return
 }
 
