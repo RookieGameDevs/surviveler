@@ -33,6 +33,7 @@ type MovementPlanner struct {
 	lastRequests  map[uint32]time.Time        // record the last movement request, by entity id
 	gameState     *GameState
 	pathfinder    *Pathfinder
+	world         *World
 }
 
 /*
@@ -61,6 +62,7 @@ func NewMovementPlanner(game *Game) *MovementPlanner {
 func (mp *MovementPlanner) setGameState(gs *GameState) {
 	mp.gameState = gs
 	mp.pathfinder = &(gs.Pathfinder)
+	mp.world = gs.Pathfinder.World
 }
 
 /*
@@ -180,7 +182,12 @@ func (mp *MovementPlanner) onMovePlayer(msg interface{}, clientId uint32) error 
 		mvtReq.Org = player.Pos
 		mvtReq.Dst = math.Vec2{move.Xpos, move.Ypos}
 		mvtReq.EntityId = clientId
-		mp.PlanMovement(&mvtReq)
+		if mp.world.PointInBound(mvtReq.Dst) {
+			mp.PlanMovement(&mvtReq)
+		} else {
+			// do not forward a request with out-of-bounds destination
+			log.WithField("dst", mvtReq.Dst).Warn("Out of bounds destination in MoveMsg")
+		}
 	} else {
 		return fmt.Errorf("Client Id not found: %v", clientId)
 	}
