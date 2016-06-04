@@ -74,7 +74,7 @@ class Character(Entity):
             if dx:
                 target_heading = atan(dy / dx) + (pi / 2) * copysign(1, dx)
             else:
-                target_heading = 0 if dy > 0 else pi
+                target_heading = pi if dy > 0 else 0
 
             # Compute remaining rotation
             delta = target_heading - self.heading
