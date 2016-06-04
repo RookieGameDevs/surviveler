@@ -147,7 +147,8 @@ func (mp *MovementPlanner) Start() {
 						// fill and send a MovementRequestResultMsg to the game loop
 						mp.msgChan <- messages.ClientMessage{
 							ClientId: serverOnly,
-							Message: messages.NewMessage(messages.MovementRequestResultId,
+							Message: messages.NewMessage(
+								messages.MovementRequestResultId,
 								messages.MovementRequestResultMsg{
 									EntityId: mvtReq.EntityId,
 									Path:     path,
