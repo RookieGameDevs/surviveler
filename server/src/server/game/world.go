@@ -9,15 +9,19 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"server/game/resource"
+	"server/math"
 )
+
+const WorldScale float32 = 2.0
 
 /*
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	Grid                  // the embedded map
-	Width, Height int     // world dimensions
-	GridScale     float32 // the grid scale
+	Grid                          // the embedded map
+	GridWidth, GridHeight int     // grid dimensions
+	Width, Height         float32 // world dimensions
+	GridScale             float32 // the grid scale
 }
 
 /*
@@ -47,9 +51,11 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 	} else {
 		bounds := img.Bounds()
 		w := World{
-			Width:     bounds.Max.X,
-			Height:    bounds.Max.Y,
-			GridScale: 2.0, // TODO: for now hardcoded value, but should be read from the package
+			GridWidth:  bounds.Max.X,
+			GridHeight: bounds.Max.Y,
+			Width:      float32(bounds.Max.X) / WorldScale,
+			Height:     float32(bounds.Max.Y) / WorldScale,
+			GridScale:  WorldScale,
 		}
 		log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
 			Info("Building world")
@@ -88,7 +94,7 @@ const (
  */
 func (w World) Tile(x, y int) *Tile {
 	switch {
-	case x < 0, x >= w.Width, y < 0, y >= w.Height:
+	case x < 0, x >= w.GridWidth, y < 0, y >= w.GridHeight:
 		return nil
 	default:
 		return w.Grid[x][y]
@@ -107,13 +113,21 @@ func (w *World) SetTile(t *Tile) {
 }
 
 /*
+ * PointInBound indicates if specific point lies in the world bounds
+ */
+func (w World) PointInBound(pt math.Vec2) bool {
+	return pt[0] >= 0 && pt[0] <= w.Width &&
+		pt[1] >= 0 && pt[1] <= w.Height
+}
+
+/*
  * Dump logs a string representation of the world
  */
 func (w World) Dump() {
 	var buffer bytes.Buffer
 	buffer.WriteString("World matrix dump:\n")
-	for y := 0; y < w.Height; y++ {
-		for x := 0; x < w.Width; x++ {
+	for y := 0; y < w.GridHeight; y++ {
+		for x := 0; x < w.GridWidth; x++ {
 			t := w.Tile(x, y)
 			buffer.WriteString(fmt.Sprintf("%2v", t.Kind))
 		}
