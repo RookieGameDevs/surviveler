@@ -15,9 +15,9 @@ import (
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	Grid              // the embedded map
-	Width, Height int // world dimensions
-	GridScale     int // the grid scale
+	Grid                  // the embedded map
+	Width, Height int     // world dimensions
+	GridScale     float32 // the grid scale
 }
 
 /*
@@ -49,7 +49,7 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 		w := World{
 			Width:     bounds.Max.X,
 			Height:    bounds.Max.Y,
-			GridScale: 2, // TODO: for now hardcoded value, but should be read from the package
+			GridScale: 2.0, // TODO: for now hardcoded value, but should be read from the package
 		}
 		log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
 			Info("Building world")

@@ -46,9 +46,9 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 	}
 
 	// TODO: path smoothing
-	invScale := 1.0 / float32(pf.World.GridScale)
 
 	// replace origin and destination with real positions
+	invScale := 1.0 / pf.World.GridScale
 	path = make([]math.Vec2, 0, len(rawPath))
 	for pidx := range rawPath {
 		if pidx == 0 {
