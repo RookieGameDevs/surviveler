@@ -16,3 +16,6 @@
 [submodule "golang-x-image"]
 	path = server/src/server/vendor/golang.org/x/image
 	url = https://go.googlesource.com/image
+[submodule "urfave-cli"]
+	path = server/src/server/vendor/github.com/urfave/cli
+	url = git@github.com:urfave/cli.git
