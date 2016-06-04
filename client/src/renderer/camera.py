@@ -32,6 +32,7 @@ class Camera(ABC):
 
         # forward (Z axis)
         zaxis = center - eye
+        dist = zaxis.mag()
         zaxis.norm()
 
         # right (X axis)
@@ -44,9 +45,9 @@ class Camera(ABC):
 
         # orientation + translation matrix
         self.view_mat = Mat([
-            Vec(xaxis.x, yaxis.x, -zaxis.x, eye.x),
-            Vec(xaxis.y, yaxis.y, -zaxis.y, eye.y),
-            Vec(xaxis.z, yaxis.z, -zaxis.z, eye.z),
+            Vec(xaxis.x, yaxis.x, -zaxis.x, 0),
+            Vec(xaxis.y, yaxis.y, -zaxis.y, 0),
+            Vec(xaxis.z, yaxis.z, -zaxis.z, dist),
             Vec(0,       0,       0,        1),
         ])
 
