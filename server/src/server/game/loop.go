@@ -36,13 +36,12 @@ func (g *Game) loop() error {
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
 	gs := newGameState()
-	g.movementPlanner.setGameState(gs)
-
 	var err error
 	if err = gs.init(g.assets); err != nil {
 		quit = true
 		return err
 	}
+	g.movementPlanner.setGameState(gs)
 
 	msgmgr := new(messages.MessageManager)
 	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(g.movementPlanner.onMovePlayer))
