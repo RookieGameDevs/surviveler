@@ -75,8 +75,6 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 				w.SetTile(&Tile{Kind: kind, W: &w, X: x, Y: y})
 			}
 		}
-		// dump the world matrix
-		w.Dump()
 		return &w, nil
 	}
 }
