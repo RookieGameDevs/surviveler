@@ -15,16 +15,23 @@ type Pathfinder struct {
 	World *World
 }
 
+type Path []math.Vec2
+
 /*
- * FindPlayerPath searches for the best path for a player to reach a destination.
+ * FindPlayerPath searches for the best path for a player to reach a
+ * destination.
  *
- * The search is performed with the A* algorithm, running on a matrix shaped graph
- * representing the world.
+ * The search is performed with the A* algorithm, running on a matrix-shaped
+ * graph representing the world. The grid is scaled to achieve a better
+ * resolution
  */
-func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (vpath []math.Vec2, dist float64, found bool) {
+func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64, found bool) {
+	// scale org and dst coordinates
+	scaledOrg, scaledDst := org.Mul(pf.World.GridScale), dst.Mul(pf.World.GridScale)
+
 	// retrieve origin and destination tiles
-	porg := pf.World.Tile(int(org[0]), int(org[1]))
-	pdst := pf.World.Tile(int(dst[0]), int(dst[1]))
+	porg := pf.World.Tile(int(scaledOrg[0]), int(scaledOrg[1]))
+	pdst := pf.World.Tile(int(scaledDst[0]), int(scaledDst[1]))
 	switch {
 	case porg == nil, pdst == nil:
 		log.WithFields(log.Fields{"org": org, "dst": dst}).Error("Couldn't find origin or destination Tile")
@@ -33,24 +40,27 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (vpath []math.Vec2, dist
 	}
 
 	// perform A*
-	path, dist, found := astar.Path(porg, pdst)
+	rawPath, dist, found := astar.Path(porg, pdst)
 	if !found {
 		return
 	}
 
 	// TODO: path smoothing
+	invScale := 1.0 / float32(pf.World.GridScale)
 
 	// replace origin and destination with real positions
-	vpath = make([]math.Vec2, 0, len(path))
-	for pidx := range path {
+	path = make([]math.Vec2, 0, len(rawPath))
+	for pidx := range rawPath {
 		if pidx == 0 {
 			// replace destination
-			vpath = append(vpath, dst)
+			path = append(path, dst)
 		} else if pidx == len(path)-1 {
-			vpath = append(vpath, org)
+			path = append(path, org)
 		} else {
-			tile := path[pidx].(*Tile)
-			vpath = append(vpath, math.Vec2{float32(tile.X), float32(tile.Y)})
+			tile := rawPath[pidx].(*Tile)
+			// append the path point with scaled coordinates
+			pt := math.Vec2{float32(tile.X), float32(tile.Y)}
+			path = append(path, pt.Mul(invScale))
 		}
 	}
 	return

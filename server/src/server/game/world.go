@@ -17,7 +17,7 @@ import (
 type World struct {
 	Grid              // the embedded map
 	Width, Height int // world dimensions
-	Scale         int // the grid scale
+	GridScale     int // the grid scale
 }
 
 /*
@@ -47,9 +47,9 @@ func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
 	} else {
 		bounds := img.Bounds()
 		w := World{
-			Width:  bounds.Max.X,
-			Height: bounds.Max.Y,
-			Scale:  2, // TODO: for now hardcoded value, but should be read from the package
+			Width:     bounds.Max.X,
+			Height:    bounds.Max.Y,
+			GridScale: 2, // TODO: for now hardcoded value, but should be read from the package
 		}
 		log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
 			Info("Building world")
