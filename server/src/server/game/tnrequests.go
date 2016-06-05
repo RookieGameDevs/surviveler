@@ -5,10 +5,12 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"io"
+	"server/game/messages"
 	"server/math"
 )
 
@@ -64,6 +66,19 @@ func (req *TnMoveEntity) FromContext(c *cli.Context) error {
 	return nil
 }
 
+func (req *TnTeleportEntity) FromContext(c *cli.Context) error {
+	fmt.Println("In TnTeleportEntity")
+	Id := c.Int("id")
+	if Id < 0 {
+		return fmt.Errorf("invalid id")
+	}
+	req.Id = uint32(Id)
+	if err := req.Dest.Set(c.String("pos")); err != nil {
+		return fmt.Errorf("invalid position vector: %s", c.String("pos"))
+	}
+	return nil
+}
+
 /*
  * registerTelnetHandlers declares and registers the game-related telnet
  * handlers.
@@ -88,7 +103,12 @@ func (g *Game) registerTelnetHandlers() {
 			// send the request
 			g.telnetChan <- req
 			// now wait that til' it has been executed
-			if err := <-g.telnetDoneChan; err != nil {
+			// by convention, the handler should return an error in case of failure
+			// and nil in case of success; it means that any success report should
+			// be done from the handler
+			if err := <-g.telnetDoneChan; err == nil {
+				io.WriteString(c.App.Writer, "success!")
+			} else {
 				io.WriteString(c.App.Writer, fmt.Sprintf("error: %v\n", err))
 			}
 			return nil
@@ -121,20 +141,20 @@ func (g *Game) registerTelnetHandlers() {
 		g.telnet.RegisterCommand(&cmd)
 	}()
 
-	//func() {
-	//// register 'teleport' command
-	//cmd := protocol.NewTelnetCmd("teleport")
-	//cmd.Descr = "teleport an entity onto a specific -walkable- point"
-	//entityId := cmd.Parms.Int("id", -1, "entity id (integer)")
-	//pos := math.Vec2{}
-	//cmd.Parms.Var(&pos, "dest", "destination (Vec2, ex: 3.12,4.56)")
-	//cmd.Handler = createHandler(
-	//TelnetRequest{
-	//Type:    TnTeleportEntityId,
-	//Content: &TnTeleportEntity{*entityId, pos},
-	//})
-	//g.telnet.RegisterCommand(cmd)
-	//}()
+	func() {
+		// register 'teleport' command
+		cmd := cli.Command{
+			Name:  "teleport",
+			Usage: "teleport an entity onto a specific -walkable- 2D point",
+			Flags: []cli.Flag{
+				cli.IntFlag{Name: "id", Usage: "entity id", Value: -1},
+				cli.StringFlag{Name: "pos", Usage: "2D vector, ex: 3,4.5"},
+			},
+			Action: createHandler(
+				TelnetRequest{Type: TnTeleportEntityId, Content: &TnTeleportEntity{}}),
+		}
+		g.telnet.RegisterCommand(&cmd)
+	}()
 }
 
 /*
@@ -153,21 +173,29 @@ func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) error {
 			io.WriteString(msg.Context.App.Writer, fmt.Sprintf("%v\n", *gsMsg))
 			return nil
 		} else {
-			return fmt.Errorf("no gamestate to show\n")
+			return errors.New("no gamestate to show")
 		}
 	case TnMoveEntityId:
 		move := msg.Content.(*TnMoveEntity)
-		if player, ok := gs.players[move.Id]; ok {
+		if _, ok := gs.players[move.Id]; ok {
 
-			io.WriteString(msg.Context.App.Writer, fmt.Sprintf("moved player %v\n", *player))
-			io.WriteString(msg.Context.App.Writer, fmt.Sprintf("Handling move %v\n", *move))
+			// convert into MoveMsg
+			if err := g.movementPlanner.onMovePlayer(
+				&messages.MoveMsg{
+					Xpos: move.Dest[0],
+					Ypos: move.Dest[1]},
+				move.Id); err == nil {
+				return nil
+			} else {
+				return err
+			}
 		} else {
 			return fmt.Errorf("unknown entity id: %v", move.Id)
 		}
 		return nil
 	case TnTeleportEntityId:
 		teleport := msg.Content.(*TnTeleportEntity)
-
+		return fmt.Errorf("not implemented! but teleport received: %v", *teleport)
 		// TODO: implement instant telnet teleportation
 		// be aware of the folowing though:
 		// just setting player pos won't work if any pathfinding is in progress
@@ -176,5 +204,5 @@ func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) error {
 		// it's ok if it's a player...
 		// but what will happen when it will be a zombie?
 	}
-	return fmt.Errorf("Unknow telnet message id")
+	return errors.New("Unknow telnet message id")
 }
