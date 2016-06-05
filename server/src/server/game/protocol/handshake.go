@@ -138,10 +138,7 @@ func registerTelnetCommands(tns *TelnetServer, registry *ClientRegistry) {
 		Name:  "kick",
 		Usage: "politely ask a client to leave, then kick him",
 		Flags: []cli.Flag{
-			cli.IntFlag{
-				Name:  "id",
-				Usage: "client id",
-			},
+			cli.IntFlag{Name: "id", Usage: "client id"},
 		},
 		Action: func(c *cli.Context) error {
 			clientId := uint32(c.Int("id"))
