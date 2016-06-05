@@ -107,7 +107,7 @@ func (g *Game) registerTelnetHandlers() {
 			// and nil in case of success; it means that any success report should
 			// be done from the handler
 			if err := <-g.telnetDoneChan; err == nil {
-				io.WriteString(c.App.Writer, "success!")
+				io.WriteString(c.App.Writer, "success!\n")
 			} else {
 				io.WriteString(c.App.Writer, fmt.Sprintf("error: %v\n", err))
 			}
@@ -181,10 +181,11 @@ func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) error {
 
 			// convert into MoveMsg
 			if err := g.movementPlanner.onMovePlayer(
-				&messages.MoveMsg{
+				messages.MoveMsg{
 					Xpos: move.Dest[0],
 					Ypos: move.Dest[1]},
 				move.Id); err == nil {
+				io.WriteString(msg.Context.App.Writer, "request forwarded to the movement planner\n")
 				return nil
 			} else {
 				return err

@@ -187,6 +187,7 @@ func (mp *MovementPlanner) onMovePlayer(msg interface{}, clientId uint32) error 
 		} else {
 			// do not forward a request with out-of-bounds destination
 			log.WithField("dst", mvtReq.Dst).Warn("Out of bounds destination in MoveMsg")
+			return fmt.Errorf("Out of bounds destination: %v", mvtReq.Dst)
 		}
 	} else {
 		return fmt.Errorf("Client Id not found: %v", clientId)
