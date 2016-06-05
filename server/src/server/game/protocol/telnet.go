@@ -9,6 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/telgo"
 	"github.com/urfave/cli"
+	//"io"
 	"sync"
 )
 
@@ -31,6 +32,9 @@ func NewTelnetServer(port string, registry *ClientRegistry) *TelnetServer {
 	tns.CliApp.Name = "Surviveler admin console"
 	tns.CliApp.Usage = "Control a Surviveler game session from the comfort of your telnet console"
 	tns.CliApp.HideVersion = true
+	tns.CliApp.CommandNotFound = func(c *cli.Context, s string) {
+		cli.ShowAppHelp(c)
+	}
 	cli.OsExiter = func(int) {}
 	return &tns
 }
@@ -43,8 +47,9 @@ func NewTelnetServer(port string, registry *ClientRegistry) *TelnetServer {
  */
 func (tns *TelnetServer) Start(waitGroup *sync.WaitGroup) {
 	globalHandler := func(c *telgo.Client, args []string) bool {
-		tns.CliApp.Writer = &telnetWriter{c}
-		tns.CliApp.ErrWriter = &telnetWriter{c}
+		tw := telnetWriter{c}
+		tns.CliApp.Writer = &tw
+		tns.CliApp.ErrWriter = &tw
 		tns.CliApp.Run(append([]string{""}, args...))
 		return false
 	}
@@ -68,6 +73,7 @@ func (tns *TelnetServer) Start(waitGroup *sync.WaitGroup) {
  * RegisterCommand registers a telnet command
  */
 func (tns *TelnetServer) RegisterCommand(cmd *cli.Command) {
+	cmd.OnUsageError = tns.CliApp.OnUsageError
 	tns.CliApp.Commands = append(tns.CliApp.Commands, *cmd)
 }
 
