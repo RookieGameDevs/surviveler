@@ -31,6 +31,7 @@ type Game struct {
 	ticker          time.Ticker                 // the main tick source
 	telnet          *protocol.TelnetServer      // if enabled, the telnet server
 	telnetChan      chan TelnetRequest          // channel for game related telnet commands
+	telnetDoneChan  chan error                  // signals the end of a telnet request
 	msgChan         chan messages.ClientMessage // conducts ClientMessage to the game loop
 	gameQuitChan    chan struct{}               // to signal the game loop goroutine it must end
 	waitGroup       sync.WaitGroup              // wait for the different goroutine to finish
@@ -68,6 +69,7 @@ func (g *Game) Setup() bool {
 	// setup the telnet server
 	if len(g.cfg.TelnetPort) > 0 {
 		g.telnetChan = make(chan TelnetRequest)
+		g.telnetDoneChan = make(chan error)
 		g.telnet = protocol.NewTelnetServer(g.cfg.TelnetPort, g.clients)
 		g.registerTelnetHandlers()
 	}
