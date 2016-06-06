@@ -1,8 +1,8 @@
-// Copyright 2014 The go-gl Authors. All rights reserved.
+// Copyright 2014 The go-gl/mathgl Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// this code is shamefully extracted from
+// this code is shamefully ported to float64 from
 // https://github.com/golang/image/blob/master/math/f32/f32.go
 
 package math
@@ -18,45 +18,33 @@ import (
 //
 // This is, obviously, not mutex protected so be **absolutely sure** that no functions using Epsilon
 // are being executed when you change this.
-var Epsilon float32 = 1e-10
-
-// A direct copy of the math package's Abs. This is here for the mgl32
-// package, to prevent rampant type conversions during equality tests.
-func Abs(a float32) float32 {
-	if a < 0 {
-		return -a
-	} else if a == 0 {
-		return 0
-	}
-
-	return a
-}
+var Epsilon float64 = 1e-10
 
 // FloatEqual is a safe utility function to compare floats.
 // It's Taken from http://floating-point-gui.de/errors/comparison/
 //
 // It is slightly altered to not call Abs when not needed.
-func FloatEqual(a, b float32) bool {
+func FloatEqual(a, b float64) bool {
 	return FloatEqualThreshold(a, b, Epsilon)
 }
 
 // FloatEqualFunc is a utility closure that will generate a function that
 // always approximately compares floats like FloatEqualThreshold with a different
 // threshold.
-func FloatEqualFunc(epsilon float32) func(float32, float32) bool {
-	return func(a, b float32) bool {
+func FloatEqualFunc(epsilon float64) func(float64, float64) bool {
+	return func(a, b float64) bool {
 		return FloatEqualThreshold(a, b, epsilon)
 	}
 }
 
 var (
-	MinNormal = float32(1.1754943508222875e-38) // 1 / 2**(127 - 1)
-	MinValue  = float32(math.SmallestNonzeroFloat32)
-	MaxValue  = float32(math.MaxFloat32)
+	MinNormal = 1.1754943508222875e-38 // 1 / 2**(127 - 1)
+	MinValue  = math.SmallestNonzeroFloat64
+	MaxValue  = math.MaxFloat64
 
-	InfPos = float32(math.Inf(1))
-	InfNeg = float32(math.Inf(-1))
-	NaN    = float32(math.NaN())
+	InfPos = math.Inf(1)
+	InfNeg = math.Inf(-1)
+	NaN    = math.NaN()
 )
 
 // FloatEqualThreshold is a utility function to compare floats.
@@ -65,19 +53,19 @@ var (
 // It is slightly altered to not call Abs when not needed.
 //
 // This differs from FloatEqual in that it lets you pass in your comparison threshold, so that you can adjust the comparison value to your specific needs
-func FloatEqualThreshold(a, b, epsilon float32) bool {
+func FloatEqualThreshold(a, b, epsilon float64) bool {
 	if a == b { // Handles the case of inf or shortcuts the loop when no significant error has accumulated
 		return true
 	}
 
-	diff := Abs(a - b)
+	diff := math.Abs(a - b)
 
 	if a == 0 || b == 0 || diff < MinNormal { // If a or b are 0 or both are extremely close to it
 		return diff < epsilon*MinNormal
 	} else {
 		// Else compare difference
-		absA, absB := Abs(a), Abs(b)
-		return diff/Min32((absA+absB), MaxValue) < epsilon
+		absA, absB := math.Abs(a), math.Abs(b)
+		return diff/math.Min((absA+absB), MaxValue) < epsilon
 	}
 }
 
@@ -87,7 +75,7 @@ func FloatEqualThreshold(a, b, epsilon float32) bool {
 //
 // Useful to prevent some functions from freaking out because a value was
 // teeeeechnically out of range.
-func Clamp(a, low, high float32) float32 {
+func Clamp(a, low, high float64) float64 {
 	if a < low {
 		return low
 	} else if a > high {
@@ -99,8 +87,8 @@ func Clamp(a, low, high float32) float32 {
 
 // ClampFunc generates a closure that returns its parameter
 // clamped to the range [low,high].
-func ClampFunc(low, high float32) func(float32) float32 {
-	return func(a float32) float32 {
+func ClampFunc(low, high float64) func(float64) float64 {
+	return func(a float64) float64 {
 		return Clamp(a, low, high)
 	}
 }
@@ -113,45 +101,31 @@ there shouldn't be any major issues with this since clamp is often used to fix m
 //
 // In most cases it's probably better to just call Clamp
 // without checking this since it's relatively cheap.
-func IsClamped(a, low, high float32) bool {
+func IsClamped(a, low, high float64) bool {
 	return a >= low && a <= high
 }
 
-func Min32(a, b float32) float32 {
-	if a <= b {
-		return a
-	}
-	return b
-}
-
-func Max32(a, b float32) float32 {
-	if a >= b {
-		return a
-	}
-	return b
-}
-
 // If a > b, then a will be set to the value of b.
-func SetMin(a *float32, b float32) {
+func SetMin(a *float64, b float64) {
 	if b < *a {
 		*a = b
 	}
 }
 
 // If a < b, then a will be set to the value of b.
-func SetMax(a *float32, b float32) {
+func SetMax(a *float64, b float64) {
 	if *a < b {
 		*a = b
 	}
 }
 
-// Round shortens a float32 value to a specified precision (number of digits after the decimal point)
+// Round shortens a float64 value to a specified precision (number of digits after the decimal point)
 // with "round half up" tie-braking rule. Half-way values (23.5) are always rounded up (24).
-func Round(v float32, precision int) float32 {
+func Round(v float64, precision int) float64 {
 	p := float64(precision)
 	t := float64(v) * math.Pow(10, p)
 	if t > 0 {
-		return float32(math.Floor(t+0.5) / math.Pow(10, p))
+		return float64(math.Floor(t+0.5) / math.Pow(10, p))
 	}
-	return float32(math.Ceil(t-0.5) / math.Pow(10, p))
+	return float64(math.Ceil(t-0.5) / math.Pow(10, p))
 }
