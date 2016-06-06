@@ -5,11 +5,9 @@
 package protocol
 
 import (
-	//"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/telgo"
 	"github.com/urfave/cli"
-	//"io"
 	"sync"
 )
 
