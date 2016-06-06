@@ -89,54 +89,59 @@ func (t *Tile) PathNeighbors() []astar.Pather {
 	neighbors := make([]astar.Pather, 0, 8)
 
 	// up
+	upw, leftw, rightw, downw := false, false, false, false
 	if up := w.Tile(t.X, t.Y-1); up != nil {
 		if up.Kind == KindWalkable {
+			upw = true
 			neighbors = append(neighbors, up)
 		}
 	}
 	// left
 	if left := w.Tile(t.X-1, t.Y); left != nil {
 		if left.Kind == KindWalkable {
+			leftw = true
 			neighbors = append(neighbors, left)
 		}
 	}
 	// down
 	if down := w.Tile(t.X, t.Y+1); down != nil {
 		if down.Kind == KindWalkable {
+			downw = true
 			neighbors = append(neighbors, down)
 		}
 	}
 	// right
 	if right := w.Tile(t.X+1, t.Y); right != nil {
 		if right.Kind == KindWalkable {
+			rightw = true
 			neighbors = append(neighbors, right)
 		}
 	}
 
 	// up left
 	if upleft := w.Tile(t.X-1, t.Y-1); upleft != nil {
-		if upleft.Kind == KindWalkable {
+		if upleft.Kind == KindWalkable && upw && leftw {
 			neighbors = append(neighbors, upleft)
 		}
 	}
 
 	// down left
 	if downleft := w.Tile(t.X-1, t.Y+1); downleft != nil {
-		if downleft.Kind == KindWalkable {
+		if downleft.Kind == KindWalkable && downw && leftw {
 			neighbors = append(neighbors, downleft)
 		}
 	}
 
 	// up right
 	if upright := w.Tile(t.X+1, t.Y-1); upright != nil {
-		if upright.Kind == KindWalkable {
+		if upright.Kind == KindWalkable && upw && rightw {
 			neighbors = append(neighbors, upright)
 		}
 	}
 
 	// down right
 	if downright := w.Tile(t.X+1, t.Y+1); downright != nil {
-		if downright.Kind == KindWalkable {
+		if downright.Kind == KindWalkable && downw && rightw {
 			neighbors = append(neighbors, downright)
 		}
 	}
