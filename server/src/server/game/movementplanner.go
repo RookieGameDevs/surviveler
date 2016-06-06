@@ -121,9 +121,9 @@ func (mp *MovementPlanner) Start() {
 				}
 			}
 		}
-		mp.waitGroup.Done()
 		close(mp.mvtReqInChan)
 		close(mp.mvtReqOutChan)
+		mp.waitGroup.Done()
 	}()
 
 	// start the movent planner goroutine
@@ -139,6 +139,9 @@ func (mp *MovementPlanner) Start() {
 
 			case mvtReq := <-mp.mvtReqOutChan:
 				// read from the ring buffer
+				if mvtReq == nil {
+					return
+				}
 				log.WithField("req", mvtReq).Info("Processing an movement request")
 
 				// compute pathfinding
