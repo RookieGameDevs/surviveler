@@ -16,3 +16,6 @@
 [submodule "urfave-cli"]
 	path = server/src/server/vendor/github.com/urfave/cli
 	url = git@github.com:urfave/cli.git
+[submodule "go-ini"]
+	path = server/src/server/vendor/gopkg.in/ini.v2
+	url = git@github.com:go-ini/ini.git
