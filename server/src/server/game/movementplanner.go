@@ -144,7 +144,7 @@ func (mp *MovementPlanner) Start() {
 				// compute pathfinding
 				if path, _, found := mp.pathfinder.FindPlayerPath(mvtReq.Org, mvtReq.Dst); found {
 					if len(path) > 1 {
-						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Warn("Pathfinder found a path")
+						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
 						// fill and send a MovementRequestResultMsg to the game loop
 						mp.msgChan <- messages.ClientMessage{
