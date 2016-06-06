@@ -18,8 +18,8 @@ import (
 type World struct {
 	Grid                          // the embedded map
 	GridWidth, GridHeight int     // grid dimensions
-	Width, Height         float32 // world dimensions
-	GridScale             float32 // the grid scale
+	Width, Height         float64 // world dimensions
+	GridScale             float64 // the grid scale
 }
 
 /*
@@ -48,13 +48,13 @@ func (t Tile) GoString() string {
  * It loads the map from the provided Surviveler Package and initializes the
  * world representation from it.
  */
-func NewWorld(img image.Image, gridScale float32) (*World, error) {
+func NewWorld(img image.Image, gridScale float64) (*World, error) {
 	bounds := img.Bounds()
 	w := World{
 		GridWidth:  bounds.Max.X,
 		GridHeight: bounds.Max.Y,
-		Width:      float32(bounds.Max.X) / gridScale,
-		Height:     float32(bounds.Max.Y) / gridScale,
+		Width:      float64(bounds.Max.X) / gridScale,
+		Height:     float64(bounds.Max.Y) / gridScale,
 		GridScale:  gridScale,
 	}
 	log.WithField("world", w).Info("Building world")

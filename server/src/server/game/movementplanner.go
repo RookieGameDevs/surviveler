@@ -185,7 +185,7 @@ func (mp *MovementPlanner) onMovePlayer(imsg interface{}, clientId uint32) error
 		// fills a MovementRequest
 		mvtReq := MovementRequest{}
 		mvtReq.Org = player.Pos
-		mvtReq.Dst = math.Vec2{move.Xpos, move.Ypos}
+		mvtReq.Dst = math.FromFloat32(move.Xpos, move.Ypos)
 		mvtReq.EntityId = clientId
 		if mp.world.PointInBounds(mvtReq.Dst) {
 			// places it into the MovementPlanner

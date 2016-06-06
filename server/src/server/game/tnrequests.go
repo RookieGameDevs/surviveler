@@ -182,8 +182,8 @@ func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) error {
 			// convert into MoveMsg
 			if err := g.movementPlanner.onMovePlayer(
 				messages.MoveMsg{
-					Xpos: move.Dest[0],
-					Ypos: move.Dest[1]},
+					Xpos: float32(move.Dest[0]),
+					Ypos: float32(move.Dest[1])},
 				move.Id); err == nil {
 				io.WriteString(msg.Context.App.Writer, "request forwarded to the movement planner\n")
 				return nil

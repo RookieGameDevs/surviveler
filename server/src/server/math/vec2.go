@@ -35,7 +35,7 @@ func (v Vec2) Elem() (x, y float64) {
 
 // Vec2FromInts creates a Vec2 from a pair of integer numbers
 func Vec2FromInts(x, y int) Vec2 {
-	return Vec2{float32(x), float32(y)}
+	return Vec2{float64(x), float64(y)}
 }
 
 // Add performs element-wise addition between two vectors. It is equivalent to

@@ -54,10 +54,10 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 	var last math.Vec2
 	for pidx := range rawPath {
 		tile := rawPath[pidx].(*Tile)
-		pt := math.Vec2{float32(tile.X), float32(tile.Y)}
+		pt := math.FromInts(tile.X, tile.Y)
 		if pidx == 0 {
 			// clip destination
-			path = append(path, math.Vec2{float32(tile.X), float32(tile.Y)}.Add(txCenter).Mul(invScale))
+			path = append(path, math.Vec2FromInts(tile.X, tile.Y).Add(txCenter).Mul(invScale))
 		} else if pidx == len(path)-1 {
 			path = append(path, org)
 		} else {
@@ -66,7 +66,7 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 			if pidx+1 < len(rawPath)-1 {
 				// there are at least 1 pt between the current one and the last one
 				ntile := rawPath[pidx+1].(*Tile)
-				npt := math.Vec2{float32(ntile.X), float32(ntile.Y)}
+				npt := math.FromInts(ntile.X, ntile.Y)
 				nextDir := pt.Sub(npt)
 				if dir == nextDir {
 					last = pt
@@ -184,5 +184,5 @@ func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
  */
 func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
 	n := to.(*Tile)
-	return float64(math.Abs(float32(n.X-t.X)) + math.Abs(float32(n.Y-t.Y)))
+	return gomath.Abs(float64(n.X-t.X)) + gomath.Abs(float64(n.Y-t.Y))
 }

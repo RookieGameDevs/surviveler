@@ -31,7 +31,7 @@ type Spawn struct {
  */
 type MapData struct {
 	Resources   ResourceList `json:"resources"`
-	ScaleFactor float32      `json:"scale_factor"`
+	ScaleFactor float64      `json:"scale_factor"`
 	Objects     []MapObject  `json:"objects"`
 	Spawn       Spawn        `json:"spawn"`
 }

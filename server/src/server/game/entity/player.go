@@ -21,7 +21,7 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(spawn math.Vec2, speed float32) *Player {
+func NewPlayer(spawn math.Vec2, speed float64) *Player {
 	p := new(Player)
 	p.Speed = speed
 	p.Pos = spawn
@@ -42,7 +42,7 @@ func (p *Player) Update(dt time.Duration) {
 
 			// compute translation vector
 			moveVec := subDst.Sub(p.Pos).Normalize()
-			p.Pos = p.Pos.Add(moveVec.Mul(float32(p.Speed * float32(dt.Seconds()))))
+			p.Pos = p.Pos.Add(moveVec.Mul(p.Speed * dt.Seconds()))
 
 			if math.Abs(subDst[0]-p.Pos[0]) <= 0.01 &&
 				math.Abs(subDst[1]-p.Pos[1]) <= 0.01 {
@@ -86,14 +86,14 @@ func (p *Player) GetState() EntityState {
 	case MovingAction:
 		dst := p.curPath[p.curPathIdx]
 		actionData = MoveActionData{
-			Speed: p.Speed,
-			Xpos:  dst[0],
-			Ypos:  dst[1],
+			Speed: float32(p.Speed),
+			Xpos:  float32(dst[0]),
+			Ypos:  float32(dst[1]),
 		}
 	}
 	return EntityState{
-		Xpos:       p.Pos[0],
-		Ypos:       p.Pos[1],
+		Xpos:       float32(p.Pos[0]),
+		Ypos:       float32(p.Pos[1]),
 		ActionType: p.curAction,
 		Action:     actionData,
 	}
