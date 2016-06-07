@@ -56,6 +56,7 @@ func (p *Player) Update(dt time.Duration) {
 			if p.Pos.ApproxEqualThreshold(subDst, 0.01) {
 				// reached current sub-destination
 				p.curPathIdx--
+				p.Pos = subDst
 				switch {
 				case p.curPathIdx < 0:
 					// this was the last path segment
