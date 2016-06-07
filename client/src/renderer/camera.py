@@ -51,6 +51,53 @@ class Camera(ABC):
             Vec(0,       0,       0,        1),
         ])
 
+    def trace_ray(self, vx, vy, vw, vh):
+        """Computes the direction normal of the ray projected from
+        viewport-space coordinates.
+
+        :param vx: Viewport X coordinate.
+        :type vx: int
+
+        :param vy: Viewport Y coordinate.
+        :type vy: int
+
+        :param vw: Viewport width.
+        :type vw: int
+
+        :param vh: Viewport height.
+        :type vh: int
+
+        :returns: The resulting direction normal.
+        :rtype: :class:`matlib.Vec`
+        """
+        # transform viewport coordinates to NDC space
+        x_ndc = 2.0 * vx / vw - 1.0
+        y_ndc = 1.0 - 2 * vy / vh
+
+        # transform NDC coordinates to homogeneous clip coordinates by making a
+        # 4D vector pointing to negative Z and having W set to 1.0
+        v_clip = Vec(x_ndc, y_ndc, -1, 1.0)
+
+        # transform clip coordinates to eye space by unprojecting them using
+        # camera's projection matrix's inverse
+        m_projection = Mat(self.projection)
+        m_projection.invert()
+        v_eye = m_projection * v_clip
+
+        # change the vector so that only X and Y components are used and Z just
+        # points forward, W is of no use
+        v_eye.z = -1.0
+        v_eye.w = 0.0
+
+        # transform eye coordinates to world coordinates by multiplying by the
+        # inverse of modelview matrix
+        m_modelview = Mat(self.modelview)
+        m_modelview.invert()
+        v_world = m_modelview * v_eye
+        v_world.norm()
+
+        return v_world
+
     @property
     def modelview(self):
         """Camera modelview 4x4 matrix."""
