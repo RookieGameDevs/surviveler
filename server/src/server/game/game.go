@@ -40,12 +40,19 @@ type Game struct {
 /*
  * Setup initializes the different game subsystems
  */
-func (g *Game) Setup() bool {
-	// get configuration
-	g.cfg = ParseConfig()
+func (g *Game) Setup(cfg Config) bool {
+	// copy configuration
+	g.cfg = cfg
 
 	// setup logger
-	log.StandardLogger().Level = g.cfg.LogLevel
+	var err error
+	var lvl log.Level
+	if lvl, err = log.ParseLevel(g.cfg.LogLevel); err != nil {
+		log.WithFields(log.Fields{"level": g.cfg.LogLevel, "default": DefaultLogLevel}).Warn("unknown log level, using default")
+		g.cfg.LogLevel = DefaultLogLevel
+		lvl, _ = log.ParseLevel(DefaultLogLevel)
+	}
+	log.StandardLogger().Level = lvl
 
 	// dump config
 	log.WithField("cfg", g.cfg).Info("Game configuration")
