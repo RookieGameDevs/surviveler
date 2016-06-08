@@ -7,7 +7,7 @@ package game
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"server/game/messages"
+	msg "server/game/messages"
 	"time"
 )
 
@@ -43,26 +43,26 @@ func (g *Game) loop() error {
 	}
 	g.movementPlanner.setGameState(gs)
 
-	msgmgr := new(messages.MessageManager)
-	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(g.movementPlanner.onMovePlayer))
-	msgmgr.Listen(messages.JoinedId, messages.MsgHandlerFunc(gs.onPlayerJoined))
-	msgmgr.Listen(messages.LeaveId, messages.MsgHandlerFunc(gs.onPlayerLeft))
-	msgmgr.Listen(messages.MovementRequestResultId, messages.MsgHandlerFunc(gs.onMovementRequestResult))
+	msgmgr := new(msg.MessageManager)
+	msgmgr.Listen(msg.MoveId, msg.MsgHandlerFunc(g.movementPlanner.onMovePlayer))
+	msgmgr.Listen(msg.JoinedId, msg.MsgHandlerFunc(gs.onPlayerJoined))
+	msgmgr.Listen(msg.LeaveId, msg.MsgHandlerFunc(gs.onPlayerLeft))
+	msgmgr.Listen(msg.MovementRequestResultId, msg.MsgHandlerFunc(gs.onMovementRequestResult))
 
 	var last_time, cur_time time.Time
 	last_time = time.Now()
 	log.Info("Starting game loop")
 
+	g.wg.Add(1)
 	go func() {
-		g.waitGroup.Add(1)
 		defer func() {
-			g.waitGroup.Done()
+			g.wg.Done()
 		}()
 
 		for !quit {
 			select {
 
-			case <-g.gameQuitChan:
+			case <-g.gameQuit:
 				// stop game loop
 				log.Info("Stopping game loop")
 				quit = true
@@ -79,7 +79,7 @@ func (g *Game) loop() error {
 				// pack the gamestate into a message
 				if gsMsg := gs.pack(); gsMsg != nil {
 					// wrap the GameStateMsg into a generic Message
-					if msg := messages.NewMessage(messages.GameStateId, *gsMsg); msg != nil {
+					if msg := msg.NewMessage(msg.GameStateId, *gsMsg); msg != nil {
 						g.server.Broadcast(msg)
 					}
 				}
@@ -95,9 +95,9 @@ func (g *Game) loop() error {
 				}
 				last_time = cur_time
 
-			case tnr := <-g.telnetChan:
+			case tnr := <-g.telnetReq:
 				// received a telnet request
-				g.telnetDoneChan <- g.telnetHandler(tnr, gs)
+				g.telnetDone <- g.telnetHandler(tnr, gs)
 
 			default:
 				// let the rest of the world spin

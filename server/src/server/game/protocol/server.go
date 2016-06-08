@@ -25,26 +25,26 @@ type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
  * interface.
  */
 type Server struct {
-	port          string
-	server        network.Server    // tcp server instance
-	clients       ClientRegistry    // manage the connected clients
-	msgcb         MsgCallbackFunc   // incoming messages callback
-	telnet        *TelnetServer     // embedded telnet server
-	factory       *messages.Factory // the unique message factory
-	gameWaitGroup *sync.WaitGroup   // game wait group
+	port    string
+	server  network.Server    // tcp server instance
+	clients ClientRegistry    // manage the connected clients
+	msgcb   MsgCallbackFunc   // incoming messages callback
+	telnet  *TelnetServer     // embedded telnet server
+	factory *messages.Factory // the unique message factory
+	wg      *sync.WaitGroup   // game wait group
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, telnet *TelnetServer, waitGroup *sync.WaitGroup) *Server {
+func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, telnet *TelnetServer, wg *sync.WaitGroup) *Server {
 	return &Server{
-		clients:       *clients,
-		msgcb:         msgcb,
-		port:          port,
-		telnet:        telnet,
-		factory:       messages.GetFactory(),
-		gameWaitGroup: waitGroup,
+		clients: *clients,
+		msgcb:   msgcb,
+		port:    port,
+		telnet:  telnet,
+		factory: messages.GetFactory(),
+		wg:      wg,
 	}
 }
 
@@ -82,7 +82,7 @@ func (srv *Server) Start() {
 	}
 
 	// starts the server in a listening goroutine
-	srv.gameWaitGroup.Add(1)
+	srv.wg.Add(1)
 	go srv.server.Start(listener, time.Second)
 	log.WithField("addr", listener.Addr()).Info("Server ready, listening for incoming connections")
 
@@ -92,7 +92,7 @@ func (srv *Server) Start() {
 		if err != nil {
 			log.Fatal("can't start telnet server")
 		}
-		srv.telnet.Start(listener, srv.gameWaitGroup)
+		srv.telnet.Start(listener, srv.wg)
 		registerTelnetCommands(srv.telnet, &srv.clients)
 	}
 }
@@ -189,5 +189,5 @@ func (srv *Server) Broadcast(msg *messages.Message) error {
 func (srv *Server) Stop() {
 	log.Info("Stopping server")
 	srv.server.Stop()
-	srv.gameWaitGroup.Done()
+	srv.wg.Done()
 }

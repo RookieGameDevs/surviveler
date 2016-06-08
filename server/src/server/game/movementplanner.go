@@ -7,7 +7,7 @@ package game
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"server/game/messages"
+	msg "server/game/messages"
 	"server/math"
 	"sync"
 	"time"
@@ -25,15 +25,15 @@ type MovementRequest struct {
 }
 
 type MovementPlanner struct {
-	mvtReqInChan  chan *MovementRequest       // lock-free ring buffer entry point
-	mvtReqOutChan chan *MovementRequest       // lock free ring buffer exit point (buffered channel)
-	msgChan       chan messages.ClientMessage // to send messages to the game loop
-	gameQuitChan  chan struct{}               // used to signal game exit
-	waitGroup     *sync.WaitGroup             // synchronizaton at game exit
-	lastRequests  map[uint32]time.Time        // record the last movement request, by entity id
-	gameState     *GameState
-	pathfinder    *Pathfinder
-	world         *World
+	ringBufIn    chan *MovementRequest  // lock-free ring buffer entry point
+	ringBufOut   chan *MovementRequest  // lock free ring buffer exit point (buffered channel)
+	msgChan      chan msg.ClientMessage // to send messages to the game loop
+	gameQuit     chan struct{}          // used to signal game exit
+	wg           *sync.WaitGroup        // synchronizaton at game exit
+	lastRequests map[uint32]time.Time   // record the last movement request, by entity id
+	gameState    *GameState
+	pathfinder   *Pathfinder
+	world        *World
 }
 
 /*
@@ -46,12 +46,12 @@ type MovementPlanner struct {
  */
 func NewMovementPlanner(game *Game) *MovementPlanner {
 	mp := MovementPlanner{
-		mvtReqInChan:  make(chan *MovementRequest),
-		mvtReqOutChan: make(chan *MovementRequest, 10),
-		msgChan:       game.msgChan,
-		gameQuitChan:  game.gameQuitChan,
-		waitGroup:     &game.waitGroup,
-		lastRequests:  make(map[uint32]time.Time),
+		ringBufIn:    make(chan *MovementRequest),
+		ringBufOut:   make(chan *MovementRequest, 10),
+		msgChan:      game.msgChan,
+		gameQuit:     game.gameQuit,
+		wg:           &game.wg,
+		lastRequests: make(map[uint32]time.Time),
 	}
 	return &mp
 }
@@ -79,7 +79,7 @@ func (mp *MovementPlanner) PlanMovement(mvtReq *MovementRequest) {
 	}
 	if doIt {
 		// insert the movement request in the ringbuffer
-		mp.mvtReqInChan <- mvtReq
+		mp.ringBufIn <- mvtReq
 		mp.lastRequests[mvtReq.EntityId] = time.Now()
 		log.WithField("req", *mvtReq).Info("Movement Request added to the planner")
 	} else {
@@ -96,54 +96,54 @@ func (mp *MovementPlanner) PlanMovement(mvtReq *MovementRequest) {
 func (mp *MovementPlanner) Start() {
 	log.Info("Starting movement planner")
 
-	mp.waitGroup.Add(1)
+	mp.wg.Add(1)
 	// start the ring buffer goroutine
 	go func() {
 		defer func() {
-			mp.waitGroup.Done()
-			close(mp.mvtReqInChan)
-			close(mp.mvtReqOutChan)
+			mp.wg.Done()
+			close(mp.ringBufIn)
+			close(mp.ringBufOut)
 		}()
 		for {
 
 			select {
 
-			case <-mp.gameQuitChan:
+			case <-mp.gameQuit:
 				return
 
-			case req := <-mp.mvtReqInChan:
+			case req := <-mp.ringBufIn:
 
 				// we have a request
 				select {
 
-				case mp.mvtReqOutChan <- req:
+				case mp.ringBufOut <- req:
 					// it succeeded so nothing more to do
 
 				default:
 					// out channel is full so we discard the oldest one
-					oldMvtReq := <-mp.mvtReqOutChan
+					oldMvtReq := <-mp.ringBufOut
 					log.WithField("req", oldMvtReq).Warning("Discarded an old movement request")
-					mp.mvtReqOutChan <- req
+					mp.ringBufOut <- req
 				}
 			}
 		}
 	}()
 
 	// start the movent planner goroutine
-	mp.waitGroup.Add(1)
+	mp.wg.Add(1)
 	go func() {
 		defer func() {
 			log.Info("Stopping movement planner")
-			mp.waitGroup.Done()
+			mp.wg.Done()
 		}()
 
 		for {
 			select {
 
-			case <-mp.gameQuitChan:
+			case <-mp.gameQuit:
 				return
 
-			case mvtReq := <-mp.mvtReqOutChan:
+			case mvtReq := <-mp.ringBufOut:
 				// read from the ring buffer
 				if mvtReq == nil {
 					return
@@ -156,11 +156,11 @@ func (mp *MovementPlanner) Start() {
 						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
 						// fill and send a MovementRequestResultMsg to the game loop
-						mp.msgChan <- messages.ClientMessage{
+						mp.msgChan <- msg.ClientMessage{
 							ClientId: serverOnly,
-							Message: messages.NewMessage(
-								messages.MovementRequestResultId,
-								messages.MovementRequestResultMsg{
+							Message: msg.NewMessage(
+								msg.MovementRequestResultId,
+								msg.MovementRequestResultMsg{
 									EntityId: mvtReq.EntityId,
 									Path:     path,
 								}),
@@ -177,8 +177,8 @@ func (mp *MovementPlanner) Start() {
 /*
  * onMovePlayer handles the reception of a MoveMsg
  */
-func (mp *MovementPlanner) onMovePlayer(msg interface{}, clientId uint32) error {
-	move := msg.(messages.MoveMsg)
+func (mp *MovementPlanner) onMovePlayer(imsg interface{}, clientId uint32) error {
+	move := imsg.(msg.MoveMsg)
 	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("MovementPlanner.onMovePlayer")
 
 	if player, ok := mp.gameState.players[clientId]; ok {

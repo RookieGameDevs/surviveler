@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"server/game/messages"
+	msg "server/game/messages"
 	"server/game/protocol"
 	"server/game/resource"
 	"sync"
@@ -22,18 +22,18 @@ import (
  * Game is the main game structure, entry and exit points
  */
 type Game struct {
-	cfg             Config                      // configuration settings
-	server          protocol.Server             // server core
-	clients         *protocol.ClientRegistry    // the client registry
-	movementPlanner *MovementPlanner            // the movement planner
-	assets          resource.SurvivelerPackage  // game assets package
-	ticker          time.Ticker                 // the main tick source
-	telnet          *protocol.TelnetServer      // if enabled, the telnet server
-	telnetChan      chan TelnetRequest          // channel for game related telnet commands
-	telnetDoneChan  chan error                  // signals the end of a telnet request
-	msgChan         chan messages.ClientMessage // conducts ClientMessage to the game loop
-	gameQuitChan    chan struct{}               // to signal the game loop goroutine it must end
-	waitGroup       sync.WaitGroup              // wait for the different goroutine to finish
+	cfg             Config                     // configuration settings
+	server          protocol.Server            // server core
+	clients         *protocol.ClientRegistry   // the client registry
+	movementPlanner *MovementPlanner           // the movement planner
+	assets          resource.SurvivelerPackage // game assets package
+	ticker          time.Ticker                // the main tick source
+	telnet          *protocol.TelnetServer     // if enabled, the telnet server
+	telnetReq       chan TelnetRequest         // channel for game related telnet commands
+	telnetDone      chan error                 // signals the end of a telnet request
+	msgChan         chan msg.ClientMessage     // conducts ClientMessage to the game loop
+	gameQuit        chan struct{}              // to signal the game loop goroutine it must end
+	wg              sync.WaitGroup             // wait for the different goroutine to finish
 }
 
 /*
@@ -66,16 +66,16 @@ func (g *Game) Setup(cfg Config) bool {
 	}
 
 	// init channels
-	g.msgChan = make(chan messages.ClientMessage)
-	g.gameQuitChan = make(chan struct{})
+	g.msgChan = make(chan msg.ClientMessage)
+	g.gameQuit = make(chan struct{})
 
 	// creates the client registry
 	g.clients = protocol.NewClientRegistry()
 
 	// setup the telnet server
 	if len(g.cfg.TelnetPort) > 0 {
-		g.telnetChan = make(chan TelnetRequest)
-		g.telnetDoneChan = make(chan error)
+		g.telnetReq = make(chan TelnetRequest)
+		g.telnetDone = make(chan error)
 		g.telnet = protocol.NewTelnetServer(g.cfg.TelnetPort, g.clients)
 		g.registerTelnetHandlers()
 	}
@@ -84,12 +84,12 @@ func (g *Game) Setup(cfg Config) bool {
 	g.movementPlanner = NewMovementPlanner(g)
 
 	// setup TCP server
-	rootHandler := func(msg *messages.Message, clientId uint32) error {
+	rootHandler := func(imsg *msg.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
-		g.msgChan <- messages.ClientMessage{msg, clientId}
+		g.msgChan <- msg.ClientMessage{imsg, clientId}
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.waitGroup)
+	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg)
 
 	return true
 }
@@ -145,6 +145,6 @@ func (g *Game) stop() {
 		g.telnet.Stop()
 	}
 
-	close(g.gameQuitChan)
-	g.waitGroup.Wait()
+	close(g.gameQuit)
+	g.wg.Wait()
 }

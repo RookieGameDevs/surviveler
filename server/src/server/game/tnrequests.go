@@ -101,12 +101,12 @@ func (g *Game) registerTelnetHandlers() {
 				return nil
 			}
 			// send the request
-			g.telnetChan <- req
+			g.telnetReq <- req
 			// now wait that til' it has been executed
 			// by convention, the handler should return an error in case of failure
 			// and nil in case of success; it means that any success report should
 			// be done from the handler
-			if err := <-g.telnetDoneChan; err == nil {
+			if err := <-g.telnetDone; err == nil {
 				io.WriteString(c.App.Writer, "success!\n")
 			} else {
 				io.WriteString(c.App.Writer, fmt.Sprintf("error: %v\n", err))

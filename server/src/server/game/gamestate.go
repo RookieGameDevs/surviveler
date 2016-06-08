@@ -8,7 +8,7 @@ package game
 import (
 	log "github.com/Sirupsen/logrus"
 	"server/game/entity"
-	"server/game/messages"
+	msg "server/game/messages"
 	"server/game/resource"
 	"time"
 )
@@ -38,14 +38,14 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 /*
  * pack transforms the current game state into a GameStateMsg
  */
-func (gs GameState) pack() *messages.GameStateMsg {
+func (gs GameState) pack() *msg.GameStateMsg {
 	if len(gs.players) == 0 {
 		// nothing to do
 		return nil
 	}
 
 	// fill the GameStateMsg
-	gsMsg := new(messages.GameStateMsg)
+	gsMsg := new(msg.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Entities = make(map[uint32]interface{})
 	for id, ent := range gs.players {
@@ -57,7 +57,7 @@ func (gs GameState) pack() *messages.GameStateMsg {
 /*
  * onPlayerJoined handles a JoinedMsg by instanting a new player entity
  */
-func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
+func (gs *GameState) onPlayerJoined(imsg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("We have one more player")
 	gs.players[clientId] = entity.NewPlayer(1, 1, 3)
@@ -67,7 +67,7 @@ func (gs *GameState) onPlayerJoined(msg interface{}, clientId uint32) error {
 /*
  * onPlayerLeft handles a LeaveMsg by removing an entity
  */
-func (gs *GameState) onPlayerLeft(msg interface{}, clientId uint32) error {
+func (gs *GameState) onPlayerLeft(imsg interface{}, clientId uint32) error {
 	// one player less, remove him from the map
 	log.WithField("clientId", clientId).Info("We have one less player")
 	delete(gs.players, clientId)
@@ -77,8 +77,8 @@ func (gs *GameState) onPlayerLeft(msg interface{}, clientId uint32) error {
 /*
  * onMovementRequestResult handles a MovementRequestResultMsg
  */
-func (gs *GameState) onMovementRequestResult(msg interface{}, clientId uint32) error {
-	mvtReqRes := msg.(messages.MovementRequestResultMsg)
+func (gs *GameState) onMovementRequestResult(imsg interface{}, clientId uint32) error {
+	mvtReqRes := imsg.(msg.MovementRequestResultMsg)
 	log.WithField("res", mvtReqRes).Info("Received a MovementRequestResultMsg")
 
 	// check that the entity exists
