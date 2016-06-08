@@ -19,8 +19,7 @@ import (
 )
 
 /*
- * Game is the main game structure. It also implements the
- * network.ConnEvtHandler interface
+ * Game is the main game structure, entry and exit points
  */
 type Game struct {
 	cfg             Config                      // configuration settings

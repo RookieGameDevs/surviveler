@@ -40,10 +40,10 @@ func NewTelnetServer(port string, registry *ClientRegistry) *TelnetServer {
 /*
  * Start starts the telnet server.
  *
- * This call is not blocking and starts its own goroutine. When this goroutine
+ * This call is non blocking and starts its own goroutine. When this goroutine
  * is started, the TelnetServer increments the provided waitGroup parameter.
  */
-func (tns *TelnetServer) Start(waitGroup *sync.WaitGroup) {
+func (tns *TelnetServer) Start(wg *sync.WaitGroup) {
 	globalHandler := func(c *telgo.Client, args []string) bool {
 		tw := telnetWriter{c}
 		tns.CliApp.Writer = &tw
@@ -52,13 +52,13 @@ func (tns *TelnetServer) Start(waitGroup *sync.WaitGroup) {
 		return false
 	}
 
-	// start the server in a go routine
+	// start the server in a goroutine
 	tns.server = telgo.NewServer(":"+tns.port, "surviveler> ", globalHandler, "anonymous")
 	go func() {
-		waitGroup.Add(1)
+		wg.Add(1)
 		defer func() {
 			log.Info("Stopping admin telnet server")
-			waitGroup.Done()
+			wg.Done()
 		}()
 		log.Info("Starting admin telnet server")
 		if err := tns.server.Run(); err != nil {
@@ -76,7 +76,7 @@ func (tns *TelnetServer) RegisterCommand(cmd *cli.Command) {
 }
 
 /*
- * Stop requests the underlying telnet server to stop
+ * Stop asks the underlying telnet server to quit
  */
 func (tns *TelnetServer) Stop() {
 	tns.server.Quit()

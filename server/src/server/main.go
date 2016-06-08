@@ -15,16 +15,19 @@ import (
 /*
  * runCliApp reads configuration and run the server as a command line app
 
- * Configuration is read from various sources, merged if needed and passed onto
- * the game. Configuration settings are read and merged from, (by precedence):
- * - standard Go flags (command line flags)
+ * Configuration is read from various sources, merged if needed, and finally
+ * passed to the Game instance.
+ *
+ * By order of precedence, this is how the configuration fields are merged:
+ * - command line flags
  * - ini file values (if any)
  * - default values
  *
- * The special case of the -h or --help flags are handled by showing the cli
- * usage and exiting.
+ * `-h` or `--help` flags is a special case, directly handled by the cli library,
+ * it shows the app usage and exits
  */
 func runCliApp() error {
+	// get configuration, pre-filled with default values
 	cfg := game.NewConfig()
 
 	// command line interface setup
@@ -32,7 +35,6 @@ func runCliApp() error {
 	app.Name = "server"
 	app.Usage = "Surviveler server"
 	app.Flags = configFlags()
-
 	app.Action = func(c *cli.Context) error {
 		// read config file
 		if inifile := c.String("inifile"); inifile != "" {
@@ -42,8 +44,8 @@ func runCliApp() error {
 			}
 		}
 
-		// override current configuration with the values of the flags provided
-		// on the command line
+		// override current configuration with the values of
+		// the flags provided on the command line
 		if c.IsSet("port") {
 			cfg.Port = c.String("port")
 		}
@@ -74,6 +76,9 @@ func runCliApp() error {
 	return app.Run(os.Args)
 }
 
+/*
+ * configFlags populates and returns a slice with the command line flags
+ */
 func configFlags() []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{

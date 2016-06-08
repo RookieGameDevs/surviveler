@@ -21,8 +21,8 @@ const (
 type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
 
 /*
- * Server represents a TCP server. It implements the Broadcaster and
- * network.ConnEvtHandler interfaces.
+ * Server represents a TCP server. It implements the network.ConnEvtHandler
+ * interface.
  */
 type Server struct {
 	port          string
