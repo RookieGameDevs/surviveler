@@ -49,19 +49,26 @@ func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, teln
 }
 
 /*
- * Start creates the TCP server and starts the listening goroutine
+ * listenTo resolves and listens to a tcp address, returns the listener
  */
-func (srv *Server) Start() {
-	// creates a tcp listener
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", ":"+srv.port)
+func listenTo(addr string) (*net.TCPListener, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp4", addr)
 	if err != nil {
-		log.WithError(err).Fatal("Couldn't resolve address")
+		log.WithError(err).Warn("couldn't resolve address")
+		return nil, err
 	}
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	if err != nil {
-		log.WithError(err).Fatal("Couldn't initiate TCP listening")
+		log.WithError(err).Warn("couldn't initiate TCP listening")
+		return nil, err
 	}
+	return listener, nil
+}
 
+/*
+ * Start creates the TCP server and starts the listening goroutine
+ */
+func (srv *Server) Start() {
 	// creates a server
 	config := &network.ServerCfg{
 		MaxOutgoingChannels: MAX_OUT_CHANNELS,
@@ -69,17 +76,25 @@ func (srv *Server) Start() {
 	}
 	srv.server = *network.NewServer(config, srv, &packetReader{})
 
-	if srv.telnet != nil {
-		// start telnet server if present
-		srv.telnet.Start(srv.gameWaitGroup)
-		registerTelnetCommands(srv.telnet, &srv.clients)
+	listener, err := listenTo(":" + srv.port)
+	if err != nil {
+		log.Fatal("can't start server")
 	}
 
-	srv.gameWaitGroup.Add(1)
-
 	// starts the server in a listening goroutine
+	srv.gameWaitGroup.Add(1)
 	go srv.server.Start(listener, time.Second)
 	log.WithField("addr", listener.Addr()).Info("Server ready, listening for incoming connections")
+
+	if srv.telnet != nil {
+		// start telnet server if present
+		listener, err := listenTo(":" + srv.telnet.port)
+		if err != nil {
+			log.Fatal("can't start telnet server")
+		}
+		srv.telnet.Start(listener, srv.gameWaitGroup)
+		registerTelnetCommands(srv.telnet, &srv.clients)
+	}
 }
 
 /*
