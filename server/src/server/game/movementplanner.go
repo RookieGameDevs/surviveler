@@ -94,22 +94,28 @@ func (mp *MovementPlanner) PlanMovement(mvtReq *MovementRequest) {
  * goroutine
  */
 func (mp *MovementPlanner) Start() {
-	log.Info("Starting the movement planner")
+	log.Info("Starting movement planner")
 
+	mp.waitGroup.Add(1)
 	// start the ring buffer goroutine
 	go func() {
-		mp.waitGroup.Add(1)
-		quit := false
+		defer func() {
+			mp.waitGroup.Done()
+			close(mp.mvtReqInChan)
+			close(mp.mvtReqOutChan)
+		}()
+		for {
 
-		for !quit {
 			select {
 
 			case <-mp.gameQuitChan:
-				quit = true
+				return
 
 			case req := <-mp.mvtReqInChan:
+
 				// we have a request
 				select {
+
 				case mp.mvtReqOutChan <- req:
 					// it succeeded so nothing more to do
 
@@ -121,21 +127,21 @@ func (mp *MovementPlanner) Start() {
 				}
 			}
 		}
-		close(mp.mvtReqInChan)
-		close(mp.mvtReqOutChan)
-		mp.waitGroup.Done()
 	}()
 
 	// start the movent planner goroutine
+	mp.waitGroup.Add(1)
 	go func() {
-		mp.waitGroup.Add(1)
-		quit := false
+		defer func() {
+			log.Info("Stopping movement planner")
+			mp.waitGroup.Done()
+		}()
 
-		for !quit {
+		for {
 			select {
 
 			case <-mp.gameQuitChan:
-				quit = true
+				return
 
 			case mvtReq := <-mp.mvtReqOutChan:
 				// read from the ring buffer
@@ -159,33 +165,30 @@ func (mp *MovementPlanner) Start() {
 									Path:     path,
 								}),
 						}
-					} else {
-						//log.WithFields(log.Fields{"path": path, "req": mvtReq}).
-						//Panic("Path must have at least 1 segment!")
 					}
 				} else {
 					log.WithField("req", mvtReq).Warn("Pathfinder failed to find path")
 				}
 			}
 		}
-		mp.waitGroup.Done()
-		log.Debug("Movement planner main goroutine has ended")
 	}()
 }
 
 /*
- * onMovePlayer fills a MovementRequest and sends it to the MovementPlanner
+ * onMovePlayer handles the reception of a MoveMsg
  */
 func (mp *MovementPlanner) onMovePlayer(msg interface{}, clientId uint32) error {
 	move := msg.(messages.MoveMsg)
 	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("MovementPlanner.onMovePlayer")
 
 	if player, ok := mp.gameState.players[clientId]; ok {
+		// fills a MovementRequest
 		mvtReq := MovementRequest{}
 		mvtReq.Org = player.Pos
 		mvtReq.Dst = math.Vec2{move.Xpos, move.Ypos}
 		mvtReq.EntityId = clientId
 		if mp.world.PointInBound(mvtReq.Dst) {
+			// places it into the MovementPlanner
 			mp.PlanMovement(&mvtReq)
 		} else {
 			// do not forward a request with out-of-bounds destination
