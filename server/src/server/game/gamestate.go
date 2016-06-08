@@ -76,6 +76,9 @@ func (gs *GameState) onPlayerLeft(imsg interface{}, clientId uint32) error {
 
 /*
  * onMovementRequestResult handles a MovementRequestResultMsg
+ *
+ * MovementRequestResult are server-side messages only emitted by the movement
+ * planner to signal that the pathfinder has finished to compute a path
  */
 func (gs *GameState) onMovementRequestResult(imsg interface{}, clientId uint32) error {
 	mvtReqRes := imsg.(msg.MovementRequestResultMsg)

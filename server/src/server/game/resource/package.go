@@ -14,7 +14,8 @@ import (
 	"path"
 )
 
-const mapUri string = "map/map.bmp"
+// world grid bitmap URI
+const mapBmpURI string = "map/map.bmp"
 
 /*
  * SurvivelerPackage represents a package of data, resource files and assets for
@@ -73,13 +74,13 @@ func (sp SurvivelerPackage) loadJSON(uri string, i interface{}) error {
 }
 
 /*
- * LoadMap loads and decodes the world map contained in a package.
+ * LoadWorldGrid loads and decodes the world map contained in a package.
  *
  * As the world is an black and white heightmap, and is thus returned as an
  * image
  */
-func (sp SurvivelerPackage) LoadMap() (image.Image, error) {
-	r, err := sp.getReader(mapUri)
+func (sp SurvivelerPackage) LoadWorldGrid() (image.Image, error) {
+	r, err := sp.getReader(mapBmpURI)
 	if err != nil {
 		return nil, err
 	}

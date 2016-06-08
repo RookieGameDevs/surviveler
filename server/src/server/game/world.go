@@ -45,8 +45,8 @@ type Tile struct {
  * world representation from it.
  */
 func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
-	// read and parse the map in the package
-	if img, err := pkg.LoadMap(); err != nil {
+	// read the world grid from the package
+	if img, err := pkg.LoadWorldGrid(); err != nil {
 		return nil, err
 	} else {
 		bounds := img.Bounds()
