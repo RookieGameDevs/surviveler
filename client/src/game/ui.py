@@ -29,7 +29,7 @@ class UI:
         self.w = renderer.width
         self.h = renderer.height
         self.scene = Scene()
-        self.camera = OrthoCamera(0, self.w, 0, self.h, 1)
+        self.camera = OrthoCamera(0, self.w, 0, self.h, 0.5, 1.5)
 
         self.log_line_height = 18
         self.log_height = 0
@@ -71,7 +71,6 @@ class UI:
             self.log_color))
 
         txt.transform.identity()
-        txt.transform.translate(Vec(0, self.log_height, 0))
         self.log_height += self.log_line_height
 
     def render(self):

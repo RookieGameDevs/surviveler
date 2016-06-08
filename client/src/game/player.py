@@ -28,7 +28,7 @@ class Player(Character):
 
         # update camera position
         context = Context.get_instance()
-        context.camera.position = Vec(-x, -y)
+        context.camera.set_position(Vec(x, y))
 
 
 @subscriber(PlayerJoin)

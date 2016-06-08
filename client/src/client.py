@@ -102,10 +102,10 @@ class Client:
         root = context.scene.root
         # NOTE: we are using the map resources to get the appropriate walkable
         # matrix.
-        resource = context.res_mgr.get('/map')
-        terrain = Terrain(resource, root)
-        context.entities[terrain.e_id] = terrain
-        return terrain
+        # resource = context.res_mgr.get('/map')
+        # terrain = Terrain(resource, root)
+        # context.entities[terrain.e_id] = terrain
+        # return terrain
 
     def setup_map(self, context):
         """Sets up the map.
@@ -137,7 +137,7 @@ class Client:
             +fov / 2,            # right plane
             -fov / 2 * aspect,   # top plane
             +fov / 2 * aspect,   # bottom plane
-            1000)                 # view distance
+            500, 1500)           # view depth
 
         camera.look_at(eye=Vec(0, 7, 20), center=Vec(0, 0, 0))
         return camera

@@ -15,6 +15,13 @@ class Camera(ABC):
     def __init__(self):
         self.view_mat = Mat()
         self.position = Vec()
+        self.translate_mat = Mat()
+        self.modelview_mat = Mat()
+
+    def set_position(self, center):
+        """TODO: add documentation"""
+        self.translate_mat.identity()
+        self.translate_mat.translate(-center)
 
     def look_at(self, eye, center, up=None):
         """Sets up camera look transformation.
@@ -30,30 +37,24 @@ class Camera(ABC):
         """
         up = up or Vec(0, 1, 0)
 
-        # forward (Z axis)
-        zaxis = center - eye
-        dist = zaxis.mag()
-        zaxis.norm()
+        z = eye - center
+        z.norm()
 
-        # right (X axis)
-        xaxis = zaxis.cross(up)
-        xaxis.norm()
+        x = up.cross(z)
+        x.norm()
 
-        # up (Y axis)
-        yaxis = xaxis.cross(zaxis)
-        yaxis.norm()
+        y = z.cross(x)
+        y.norm()
 
-        # orientation + translation matrix
         self.view_mat = Mat([
-            Vec(xaxis.x, yaxis.x, -zaxis.x, 0),
-            Vec(xaxis.y, yaxis.y, -zaxis.y, 0),
-            Vec(xaxis.z, yaxis.z, -zaxis.z, dist),
-            Vec(0,       0,       0,        1),
+            Vec(x.x, y.x, z.x, 0),
+            Vec(x.y, y.y, z.y, 0),
+            Vec(x.z, y.z, z.z, 0),
+            Vec(0, 0, 0, 1),
         ])
 
-    def trace_ray(self, vx, vy, vw, vh):
-        """Computes the direction normal of the ray projected from
-        viewport-space coordinates.
+    def unproject(self, vx, vy, vw, vh):
+        """Computes the unprojected point from viewport coordinates.
 
         :param vx: Viewport X coordinate.
         :type vx: int
@@ -84,27 +85,24 @@ class Camera(ABC):
         m_projection.invert()
         v_eye = m_projection * v_clip
 
-        # change the vector so that only X and Y components are used and Z just
-        # points forward, W is of no use
-        v_eye.z = -1.0
+        # change the vector so that only X and Y components are used, Z and W is
+        # of no use
+        v_eye.z = 0.0
         v_eye.w = 0.0
 
-        # transform eye coordinates to world coordinates by multiplying by the
-        # inverse of modelview matrix
-        m_modelview = Mat(self.modelview)
-        m_modelview.invert()
-        v_world = m_modelview * v_eye
-        v_world.norm()
+        v_world = self.view_mat * v_eye
+        v_world -= Vec(
+            self.translate_mat[0, 3],
+            self.translate_mat[1, 3],
+            self.translate_mat[2, 3],
+        )
 
         return v_world
 
     @property
     def modelview(self):
         """Camera modelview 4x4 matrix."""
-        t = Mat()
-        t.translate(self.position)
-        t *= self.view_mat
-        return t
+        return self.view_mat * self.translate_mat
 
     @abstractproperty
     def projection(self):
@@ -115,27 +113,29 @@ class Camera(ABC):
 class OrthoCamera(Camera):
     """Orthographic camera."""
 
-    def __init__(self, left, right, top, bottom, distance):
+    def __init__(self, left, right, top, bottom, near, far):
         super(OrthoCamera, self).__init__()
         self.l = left
         self.r = right
         self.t = top
         self.b = bottom
-        self.n = distance / 2
-        self.f = self.n + distance
+        self.n = near
+        self.f = far
 
     @property
     def modelview(self):
-        t = Mat()
-        t.translate(Vec(0, 0, self.n))
-        t *= super(OrthoCamera, self).modelview
+        """Camera modelview 4x4 matrix."""
+        t = super().modelview
+        m = Mat(self.view_mat)
+        m.invert()
+        t.translate(m * Vec(0, 0, -(self.n + self.f) / 2))
         return t
 
     @property
     def projection(self):
         sx = 2.0 / (self.r - self.l)
         sy = 2.0 / (self.t - self.b)
-        sz = 2.0 / (self.f - self.n)
+        sz = -2.0 / (self.f - self.n)
         tx = -(self.r + self.l) / (self.r - self.l)
         ty = -(self.t + self.b) / (self.t - self.b)
         tz = -(self.f + self.n) / (self.f - self.n)
