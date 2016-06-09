@@ -5,7 +5,6 @@
 package game
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"time"
 )
 
