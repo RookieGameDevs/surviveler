@@ -29,11 +29,17 @@ type Grid map[int]map[int]*Tile
 
 /*
  * A Tile is a tile in a grid which implements Pather.
+ *
+ * It implements the fmt.GoStringer interface for commodity.
  */
 type Tile struct {
 	Kind TileKind // kind of tile, each kind has its own cost
 	X, Y int      // 2D coordinates
 	W    *World   // reference to the map this is tile is part of
+}
+
+func (t Tile) GoString() string {
+	return fmt.Sprintf("Tile{X: %d, Y: %d, Kind: %d}", t.X, t.Y, t.Kind)
 }
 
 /*
@@ -80,7 +86,10 @@ const (
 )
 
 /*
- * Tile gets the tile at the given coordinates in the grid
+ * Tile gets the tile at the given coordinates in the grid.
+ *
+ * (x, y) represent *grid* coordinates, i.e the map scale factor must be taken
+ * in consideration to convert from *world* coordinates into *grid* coordinates.
  */
 func (w World) Tile(x, y int) *Tile {
 	switch {
@@ -89,6 +98,27 @@ func (w World) Tile(x, y int) *Tile {
 	default:
 		return w.Grid[x][y]
 	}
+}
+
+/*
+ * TileFromVec gets the tile at given point in the grid
+ *
+ * pt represents *grid* coordinates, i.e the map scale factor must be taken in
+ * consideration to convert from *world* coordinates into *grid* coordinates.
+ */
+func (w World) TileFromVec(pt math.Vec2) *Tile {
+	return w.Tile(int(pt[0]), int(pt[1]))
+}
+
+/*
+ * TileFromWorldVec gets the tile at given point in the grid
+ *
+ * pt represents *world* coordinates, i.e TileFromWorldVec performs the
+ * conversion from world coordinates into grid coordinates.
+ */
+func (w World) TileFromWorldVec(pt math.Vec2) *Tile {
+	pt = pt.Mul(w.GridScale)
+	return w.TileFromVec(pt)
 }
 
 /*
@@ -103,9 +133,9 @@ func (w *World) SetTile(t *Tile) {
 }
 
 /*
- * PointInBound indicates if specific point lies in the world bounds
+ * PointInBounds indicates if specific point lies in the world boundaries
  */
-func (w World) PointInBound(pt math.Vec2) bool {
+func (w World) PointInBounds(pt math.Vec2) bool {
 	return pt[0] >= 0 && pt[0] <= w.Width &&
 		pt[1] >= 0 && pt[1] <= w.Height
 }
