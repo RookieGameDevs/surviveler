@@ -22,8 +22,8 @@ type ResourceList map[string]string
  * Spawn regroups the spawn points for different kinds of entities
  */
 type Spawn struct {
-	Player   math.Vec2   `json:"player"`   // player unique spawn point
-	Ennemies []math.Vec2 `json:"ennemies"` // list of spawn points for ennemies
+	Player  math.Vec2   `json:"player"`  // player unique spawn point
+	Enemies []math.Vec2 `json:"enemies"` // list of spawn points for enemies
 }
 
 /*

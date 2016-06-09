@@ -29,8 +29,9 @@ type AIDirector struct {
 
 func (ai *AIDirector) init(md *resource.MapData) {
 	// copy zombie spawn points
-	ai.zombiesSpawnPoints = md.Spawn.Ennemies
+	ai.zombiesSpawnPoints = md.Spawn.Enemies
 }
 
 func (ai *AIDirector) Update(dt time.Duration) {
+
 }
