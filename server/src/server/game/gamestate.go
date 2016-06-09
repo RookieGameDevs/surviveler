@@ -24,6 +24,7 @@ type GameState struct {
 	World      *World
 	Pathfinder Pathfinder
 	md         *resource.MapData
+	director   AIDirector
 }
 
 func newGameState() *GameState {
@@ -52,7 +53,9 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 			if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
 				if gs.World, err = NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
 					gs.Pathfinder.World = gs.World
-					err = gs.validateWorld()
+					if err = gs.validateWorld(); err == nil {
+						gs.director.init(gs.md)
+					}
 				}
 			}
 		}

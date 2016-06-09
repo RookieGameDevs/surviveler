@@ -84,7 +84,10 @@ func (g *Game) loop() error {
 				cur_time = time.Now()
 				dt := cur_time.Sub(last_time)
 
-				// tick game: update entities
+				// update AI
+				gs.director.Update(dt)
+
+				// update entities
 				for _, ent := range gs.players {
 					ent.Update(dt)
 				}
