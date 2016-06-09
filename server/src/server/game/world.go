@@ -25,7 +25,7 @@ type World struct {
 /*
  * Grid is a two dimensional grid of tiles
  */
-type Grid map[int]map[int]*Tile
+type Grid []Tile
 
 /*
  * A Tile is a tile in a grid which implements Pather.
@@ -61,9 +61,8 @@ func NewWorld(img image.Image, gridScale float32) (*World, error) {
 
 	// allocate tiles
 	var kind TileKind
-	w.Grid = make(map[int]map[int]*Tile)
+	w.Grid = make([]Tile, bounds.Max.X*bounds.Max.Y)
 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
-		w.Grid[x] = make(map[int]*Tile)
 		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 			r, _, _, _ := img.At(x, y).RGBA()
 			if r == 0 {
@@ -71,7 +70,7 @@ func NewWorld(img image.Image, gridScale float32) (*World, error) {
 			} else {
 				kind = KindWalkable
 			}
-			w.SetTile(&Tile{Kind: kind, W: &w, X: x, Y: y})
+			w.Grid[x+y*w.GridWidth] = Tile{Kind: kind, W: &w, X: x, Y: y}
 		}
 	}
 	return &w, nil
@@ -101,7 +100,7 @@ func (w World) Tile(x, y int) *Tile {
 	case x < 0, x >= w.GridWidth, y < 0, y >= w.GridHeight:
 		return nil
 	default:
-		return w.Grid[x][y]
+		return &w.Grid[x+y*w.GridWidth]
 	}
 }
 
@@ -124,17 +123,6 @@ func (w World) TileFromVec(pt math.Vec2) *Tile {
 func (w World) TileFromWorldVec(pt math.Vec2) *Tile {
 	pt = pt.Mul(w.GridScale)
 	return w.TileFromVec(pt)
-}
-
-/*
- * SetTile sets a tile at the given coordinates in the world
- */
-func (w *World) SetTile(t *Tile) {
-	if w.Grid[t.X] == nil {
-		w.Grid[t.X] = map[int]*Tile{}
-	}
-	w.Grid[t.X][t.Y] = t
-	t.W = w
 }
 
 /*
