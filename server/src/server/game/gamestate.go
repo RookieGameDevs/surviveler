@@ -70,22 +70,26 @@ func (gs GameState) validateWorld() error {
 	// validate player spawn point
 	pt := gs.World.TileFromWorldVec(gs.md.Spawn.Player)
 	if pt == nil {
-		return fmt.Errorf("Player spawn point is out of bounds (%#v)",
+		return fmt.Errorf(
+			"Player spawn point is out of bounds (%#v)",
 			gs.md.Spawn.Player)
 	}
 	if pt.Kind&KindWalkable == 0 {
-		return fmt.Errorf("Player spawn point is not located in a walkable area: (%#v)",
+		return fmt.Errorf(
+			"Player spawn point is not located in a walkable area: (%#v)",
 			*pt)
 	}
 	// validate enemies spawn points
 	for i := range gs.md.Spawn.Enemies {
 		zt := gs.World.TileFromWorldVec(gs.md.Spawn.Enemies[i])
 		if zt == nil {
-			return fmt.Errorf("a Zombie spawn point is out of bounds: (%#v)",
+			return fmt.Errorf(
+				"a Zombie spawn point is out of bounds: (%#v)",
 				gs.md.Spawn.Enemies[i])
 		}
 		if zt.Kind&KindWalkable == 0 {
-			return fmt.Errorf("a Zombie spawn point is not located in a walkable area: (%#v)",
+			return fmt.Errorf(
+				"a Zombie spawn point is not located in a walkable area: (%#v)",
 				*zt)
 		}
 	}
