@@ -1,13 +1,8 @@
 from game import Entity
 from game.components import Renderable
-from matlib import Vec
 from renderer import Rect
 from renderer import Texture
 from renderer import TextureParamFilter
-
-
-WALKABLE = Vec(0, 1, 0)
-NOT_WALKABLE = Vec(1, 0, 0)
 
 
 class Terrain(Entity):
@@ -39,20 +34,6 @@ class Terrain(Entity):
         renderable.node.params['tex'] = texture
 
         super().__init__(renderable)
-
-    def is_walkable(self, x, y):
-        """Returns if the selected cell is walkable.
-
-        :param x: The x in world coordinates
-        :type x: int
-
-        :param y: The y in world coordinates
-        :type y: int
-
-        :return: Wether the cell is walkable or not
-        :rtype: bool
-        """
-        return bool(self.matrix[y][x])
 
     def update(self, dt):
         # NOTE: nothing to do here
