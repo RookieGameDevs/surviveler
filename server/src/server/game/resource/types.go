@@ -4,45 +4,34 @@
  */
 package resource
 
-type Pos2D []int
+import (
+	"server/math"
+)
 
-/*
- * IsValid checks the semantic validity.
- *
- * In the case of a Pos2D, it checks that the slice is composed of exactly 2
- * values
- */
-func (p Pos2D) IsValid() bool {
-	// should be made of 2 coordinates
-	return len(p) == 2
-}
-
-type Rect2D []Pos2D
-
-/*
- * IsValid checks the semantic validity.
- *
- * In the case of a Rect2D, we check that the slice is composed of exactly 2
- * positions and that they are valid
- */
-func (r Rect2D) IsValid() bool {
-	// should be made of 2 positions
-	if len(r) == 2 {
-		return r[0].IsValid() && r[1].IsValid()
-	}
-	return false
-}
+type Rect2D [2]math.Vec2
 
 type MapObject struct {
-	Ref      string `json:"ref"`      // uri of the object inside the package
-	Pos      Pos2D  `json:"pos"`      // position of the object on the map
-	Rotation int    `json:"rotation"` // rotation of the object on the map
+	Ref      string    `json:"ref"`      // uri of the object inside the package
+	Pos      math.Vec2 `json:"pos"`      // position of the object on the map
+	Rotation int       `json:"rotation"` // rotation of the object on the map
 }
 
 type ResourceList map[string]string
 
+/*
+ * Spawn regroups the spawn points for different kinds of entities
+ */
+type Spawn struct {
+	Player   math.Vec2   `json:"player"`   // player unique spawn point
+	Ennemies []math.Vec2 `json:"ennemies"` // list of spawn points for ennemies
+}
+
+/*
+ * MapData regroups settings and information about the map
+ */
 type MapData struct {
 	Resources   ResourceList `json:"resources"`
 	ScaleFactor float32      `json:"scale_factor"`
 	Objects     []MapObject  `json:"objects"`
+	Spawn       Spawn        `json:"spawn"`
 }
