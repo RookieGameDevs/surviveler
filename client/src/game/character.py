@@ -6,13 +6,10 @@ from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import EntityIdle
 from game.events import EntityMove
-from loaders import load_obj
 from math import atan
 from math import copysign
 from math import pi
 from matlib import Vec
-from renderer import Mesh
-from renderer import Shader
 import logging
 
 
@@ -25,20 +22,21 @@ WHOLE_ANGLE = 2.0 * pi
 class Character(Entity):
     """Game entity which represents a character."""
 
-    def __init__(self, name, parent_node):
+    def __init__(self, resource, name, parent_node):
         """Constructor.
+
+        :param resource: The character resource
+        :type resource: :class:`loaders.Resource`
 
         :param name: Character's name.
         :type name: str
 
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
+
         """
-        vertices, normals, _, indices = load_obj('data/models/cube.obj')
-        mesh = Mesh(vertices, indices, normals=normals)
-        shader = Shader.from_glsl(
-            'data/shaders/default.vert',
-            'data/shaders/default.frag')
+        shader = resource['shader']
+        mesh = resource['model']
 
         # shader params
         params = {
@@ -54,6 +52,7 @@ class Character(Entity):
             shader,
             params,
             enable_light=True)
+
         movable = Movable((0.0, 0.0))
 
         # initialize entity
@@ -62,7 +61,7 @@ class Character(Entity):
         self.name = name
         self.heading = 0.0
         # rotation speed = 2π / fps / desired_2π_rotation_time
-        self.rot_speed = 2 * pi / 60 / 1.0
+        self.rot_speed = 2 * pi / 60 / 0.5
 
     def orientate(self):
         """Orientate the character towards the current destination.
@@ -72,7 +71,10 @@ class Character(Entity):
             x, y = self[Movable].position
             dx = dest[0] - x
             dy = dest[1] - y
-            target_heading = atan(dy / dx) + (pi / 2) * copysign(1, dx)
+            if dx:
+                target_heading = atan(dy / dx) + (pi / 2) * copysign(1, dx)
+            else:
+                target_heading = pi if dy > 0 else 0
 
             # Compute remaining rotation
             delta = target_heading - self.heading
@@ -115,7 +117,7 @@ class Character(Entity):
 
         t = self[Renderable].transform
         t.identity()
-        t.translate(Vec(x, y, 0))
+        t.translate(Vec(x + 0.5, y + 0.5))
         t.rotate(Vec(0, 0, 1), self.heading)
 
         self.orientate()
@@ -132,9 +134,10 @@ def add_character(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
+    resource = context.res_mgr.get('/characters/grunt')
     # Only instantiate the new character if it does not exist
     if not context.resolve_entity(evt.srv_id):
-        player = Character(evt.name, context.scene.root)
+        player = Character(resource, evt.name, context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
 

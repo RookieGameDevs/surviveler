@@ -7,6 +7,7 @@ package protocol
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 	"io"
 	"server/game/messages"
 	"server/network"
@@ -66,7 +67,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 		srv.clients.ForEach(func(cd ClientData) bool {
 			nameTaken = cd.Name == join.Name
 			stay.Players[cd.Id] = cd.Name
-			// stop iteratio if name is taken
+			// stop iteration if name is taken
 			return !nameTaken
 		})
 		if nameTaken {
@@ -132,34 +133,43 @@ func sendLeave(c *network.Conn, reason string) error {
  * registerTelnetCommands sets up the server-related command handlers
  */
 func registerTelnetCommands(tns *TelnetServer, registry *ClientRegistry) {
-	kick := NewTelnetCmd("kick")
-	kick.Descr = "politely ask a client to leave"
-	clientId := kick.Parms.Int("id", -1, "client id (integer)")
-	kick.Handler = func(w io.Writer) {
-
-		clientId := uint32(*clientId)
-		if connection, ok := registry.clients[clientId]; ok {
-			if err := sendLeave(connection, "telnet just kicked your ass out"); err != nil {
-				io.WriteString(w, fmt.Sprintf("couldn't kick client %v\n", err))
+	// 'kick' command
+	kick := cli.Command{
+		Name:  "kick",
+		Usage: "politely ask a client to leave, then kick him",
+		Flags: []cli.Flag{
+			cli.IntFlag{Name: "id", Usage: "client id"},
+		},
+		Action: func(c *cli.Context) error {
+			clientId := uint32(c.Int("id"))
+			if connection, ok := registry.clients[clientId]; ok {
+				if err := sendLeave(connection, "telnet just kicked your ass out"); err != nil {
+					io.WriteString(c.App.Writer,
+						fmt.Sprintf("couldn't kick client %v\n", err))
+				} else {
+					io.WriteString(c.App.Writer,
+						fmt.Sprintf("client %v has been kicked out\n", clientId))
+				}
 			} else {
-				io.WriteString(w, fmt.Sprintf("client %v has been kicked out\n", clientId))
+				io.WriteString(c.App.Writer, fmt.Sprintf("invalid client id\n"))
 			}
-		} else {
-			kick.Parms.SetOutput(w)
-			io.WriteString(w, fmt.Sprintf("invalid client id\n"))
-			kick.Parms.PrintDefaults()
-		}
+			return nil
+		},
 	}
-	tns.RegisterCommand(kick)
+	tns.RegisterCommand(&kick)
 
-	clients := NewTelnetCmd("clients")
-	clients.Descr = "show the list of connected clients"
-	clients.Handler = func(w io.Writer) {
-		io.WriteString(w, fmt.Sprintf("connected clients:"))
-		registry.ForEach(func(client ClientData) bool {
-			io.WriteString(w, fmt.Sprintf(" * %v - %v", client.Name, client.Id))
-			return true
-		})
+	// 'clients' command
+	clients := cli.Command{
+		Name:  "clients",
+		Usage: "shows the list of connected clients",
+		Action: func(c *cli.Context) error {
+			io.WriteString(c.App.Writer, fmt.Sprintf("connected clients:\n"))
+			registry.ForEach(func(client ClientData) bool {
+				io.WriteString(c.App.Writer, fmt.Sprintf(" * %v - %v\n", client.Name, client.Id))
+				return true
+			})
+			return nil
+		},
 	}
-	tns.RegisterCommand(clients)
+	tns.RegisterCommand(&clients)
 }

@@ -1,12 +1,22 @@
 from OpenGL.GL import GL_CLAMP_TO_EDGE
+from OpenGL.GL import GL_LINEAR
 from OpenGL.GL import GL_MIRRORED_REPEAT
+from OpenGL.GL import GL_NEAREST
+from OpenGL.GL import GL_R8
+from OpenGL.GL import GL_RED
 from OpenGL.GL import GL_REPEAT
 from OpenGL.GL import GL_RGB
 from OpenGL.GL import GL_RGB8
 from OpenGL.GL import GL_TEXTURE0
 from OpenGL.GL import GL_TEXTURE_2D
+from OpenGL.GL import GL_TEXTURE_MAG_FILTER
+from OpenGL.GL import GL_TEXTURE_MIN_FILTER
 from OpenGL.GL import GL_TEXTURE_WRAP_S
 from OpenGL.GL import GL_TEXTURE_WRAP_T
+from OpenGL.GL import GL_UNPACK_ALIGNMENT
+from OpenGL.GL import GL_UNPACK_ROW_LENGTH
+from OpenGL.GL import GL_UNPACK_SKIP_PIXELS
+from OpenGL.GL import GL_UNPACK_SKIP_ROWS
 from OpenGL.GL import GL_UNSIGNED_BYTE
 from OpenGL.GL import glActiveTexture
 from OpenGL.GL import glBindSampler
@@ -15,15 +25,17 @@ from OpenGL.GL import glDeleteSamplers
 from OpenGL.GL import glDeleteTextures
 from OpenGL.GL import glGenSamplers
 from OpenGL.GL import glGenTextures
+from OpenGL.GL import glGetInteger
+from OpenGL.GL import glPixelStorei
 from OpenGL.GL import glSamplerParameteri
 from OpenGL.GL import glTexStorage2D
 from OpenGL.GL import glTexSubImage2D
-from PIL import Image
 from abc import ABC
 from abc import abstractmethod
 from contextlib import contextmanager
 from enum import IntEnum
 from enum import unique
+from itertools import chain
 
 
 class TextureParam(ABC):
@@ -38,6 +50,7 @@ class TextureParam(ABC):
 
 
 class TextureParamWrap(TextureParam):
+    """Texture wrapping parameter."""
 
     @unique
     class Coord(IntEnum):
@@ -64,6 +77,36 @@ class TextureParamWrap(TextureParam):
 
     def apply(self, sampler):
         glSamplerParameteri(sampler, self.coord, self.wrap_type)
+
+
+class TextureParamFilter(TextureParam):
+    """Texture filtering parameter."""
+
+    @unique
+    class Type(IntEnum):
+        magnify = GL_TEXTURE_MAG_FILTER
+        minify = GL_TEXTURE_MIN_FILTER
+
+    @unique
+    class Mode(IntEnum):
+        nearest = GL_NEAREST
+        linear = GL_LINEAR
+
+    def __init__(self, ftype, fmode):
+        """Constructor.
+
+        :param ftype: Type of filtering for which the parameter is to be
+            applied.
+        :type ftype: :enum:`renderer.TextureParamFilter.Type`
+
+        :param fmode: Filtering mode.
+        :type fmode: :enum:`renderer.TextureParamFilter.Mode`
+        """
+        self.ftype = ftype
+        self.fmode = fmode
+
+    def apply(self, sampler):
+        glSamplerParameteri(sampler, self.ftype, self.fmode)
 
 
 class Texture:
@@ -121,26 +164,71 @@ class Texture:
         param.apply(self.sampler)
 
     @classmethod
-    def from_file(cls, filename):
+    def from_image(cls, image):
         """Creates a texture from given image file.
 
-        :param filename: Image file.
-        :type filename: str
+        :param image: Image.
+        :type image: :class:`PIL.Image`
 
         :returns: The texture instance.
         :rtype: :class:`renderer.Texture`
         """
-        img = Image.open(filename)
-        w, h = img.size
+        w, h = image.size
 
         tex = glGenTextures(1)
         glActiveTexture(GL_TEXTURE0)
         glBindTexture(GL_TEXTURE_2D, tex)
         glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGB8, w, h)
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, img.tobytes())
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, image.tobytes())
         glBindTexture(GL_TEXTURE_2D, 0)
 
         return Texture(tex, w, h)
+
+    @classmethod
+    def from_matrix(cls, matrix):
+        """Creates a texture from given matrix file.
+
+        :param matrix: The matrix.
+        :type matrix: list
+
+        :returns: The texture instance.
+        :rtype: :class:`renderer.Texture`
+        """
+        w, h = len(matrix[0]), len(matrix)
+
+        grid = bytes(chain.from_iterable(reversed(matrix)))
+
+        tex = glGenTextures(1)
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, tex)
+
+        # This code is necessary to handle non-power-of-two textures with small
+        # sizes.
+        # TODO: refactor this
+        param_ids = [
+            GL_UNPACK_ALIGNMENT,
+            GL_UNPACK_ROW_LENGTH,
+            GL_UNPACK_SKIP_ROWS,
+            GL_UNPACK_SKIP_PIXELS,
+        ]
+        old_params = {
+            p: glGetInteger(p)
+            for p in param_ids
+        }
+
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0)
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0)
+        glTexStorage2D(GL_TEXTURE_2D, 1, GL_R8, w, h)
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RED, GL_UNSIGNED_BYTE, grid)
+
+        for p, v in old_params.items():
+            glPixelStorei(p, v)
+
+        glBindTexture(GL_TEXTURE_2D, 0)
+
+        return Texture(tex, w, h, GL_TEXTURE_2D)
 
     @contextmanager
     def use(self, tex_unit):

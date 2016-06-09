@@ -1,48 +1,40 @@
 from game import Entity
 from game.components import Renderable
-from matlib import Vec
 from renderer import Rect
-from renderer import Shader
 from renderer import Texture
-from renderer import TextureParamWrap
+from renderer import TextureParamFilter
 
 
 class Terrain(Entity):
     """Terrain entity."""
 
-    def __init__(self, parent_node, width, height):
+    def __init__(self, resource, parent_node):
         """Constructor.
+
+        :param resource: The terrain resource
+        :type resource: :class:`loaders.Resource`
 
         :param parent_node: Parent node to attach the terrain entity to.
         :type param_node: subclass of :class:`renderer.SceneNode`
-
-        :param width: Width of the terrain in game units.
-        :type width: float
-
-        :param height: Height of the terrain in game units.
-        :type height: float
         """
-        mesh = Rect(1, 1)
+        scale_factor = resource.data['scale_factor']
+        matrix = resource['matrix']
+        shader = resource['terrain_shader']
 
-        shader = Shader.from_glsl(
-            'data/shaders/terrain.vert',
-            'data/shaders/terrain.frag')
+        w, h = len(matrix[0]), len(matrix)
+        rect = Rect(w * scale_factor, h * scale_factor)
+        #rect = Rect(w, h)
 
-        texture = Texture.from_file('data/textures/tiles.jpg')
-        texture.set_param(TextureParamWrap(
-            TextureParamWrap.Coord.s, TextureParamWrap.WrapType.repeat))
-        texture.set_param(TextureParamWrap(
-            TextureParamWrap.Coord.t, TextureParamWrap.WrapType.repeat))
+        texture = Texture.from_matrix(matrix)
+        texture.set_param(TextureParamFilter(
+            TextureParamFilter.Type.magnify,
+            TextureParamFilter.Mode.nearest))
 
-        renderable = Renderable(parent_node, mesh, shader, textures=[texture])
+        renderable = Renderable(parent_node, rect, shader, textures=[texture])
         renderable.node.params['tex'] = texture
 
-        t = renderable.transform
-        t.translate(Vec(-50, -50, 0.5))
-        t.scale(Vec(100, 100, 1))
-
-        super(Terrain, self).__init__(renderable)
+        super().__init__(renderable)
 
     def update(self, dt):
-        # NOTE: nothing to do
+        # NOTE: nothing to do here
         pass

@@ -303,7 +303,7 @@ def calculate_matrix(faces, precision, grid_cell):
 
         # Create a bytearray matrix
         m = bytearray()
-        for y in sorted(matrix.keys(), reverse=True):
+        for y in sorted(matrix.keys()):
             for x in sorted(matrix[y].keys()):
                 m.append(255 if matrix[y][x] else 0)
 

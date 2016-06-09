@@ -5,100 +5,82 @@
 package protocol
 
 import (
-	"flag"
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/telgo"
-	"io"
+	"github.com/urfave/cli"
+	"net"
+	"sync"
 )
 
 type TelnetServer struct {
-	port     string               // port on which listening
-	commands map[string]TelnetCmd // the registered telnet commands
-	registry *ClientRegistry      // the unique client registry
-}
-
-type TelnetHandlerFunc func(io.Writer)
-
-type TelnetCmd struct {
-	Name    string            // command name
-	Descr   string            // command description
-	Parms   flag.FlagSet      // command parameters, in an embedded flag set
-	Handler TelnetHandlerFunc // handler function
-}
-
-func NewTelnetCmd(name string) TelnetCmd {
-	return TelnetCmd{
-		Name:  name,
-		Descr: "",
-		Parms: *flag.NewFlagSet(name, flag.ContinueOnError),
-	}
+	port     string          // port on which listening
+	registry *ClientRegistry // the unique client registry
+	server   *telgo.Server
+	CliApp   *cli.App
 }
 
 /*
  * NewTelnetServer initializes a TelnetServer struct
  */
 func NewTelnetServer(port string, registry *ClientRegistry) *TelnetServer {
-	return &TelnetServer{
+	tns := TelnetServer{
 		port:     port,
-		commands: make(map[string]TelnetCmd),
 		registry: registry,
+		CliApp:   cli.NewApp(),
 	}
+	tns.CliApp.Name = "Surviveler admin console"
+	tns.CliApp.Usage = "Control a Surviveler game session from the comfort of your telnet console"
+	tns.CliApp.HideVersion = true
+	tns.CliApp.CommandNotFound = func(c *cli.Context, s string) {
+		cli.ShowAppHelp(c)
+	}
+	cli.OsExiter = func(int) {}
+	return &tns
 }
 
 /*
- * Start starts the telnet server. This call is not blocking
+ * Start starts the telnet server.
+ *
+ * This call is non blocking and starts its own goroutine. When this goroutine
+ * is started, the TelnetServer increments the provided waitGroup parameter.
  */
-func (tns *TelnetServer) Start() {
+func (tns *TelnetServer) Start(listener *net.TCPListener, wg *sync.WaitGroup) {
 	globalHandler := func(c *telgo.Client, args []string) bool {
-		tw := &telnetWriter{c}
-		if cmd, ok := tns.commands[args[0]]; ok {
-			// cmd handler
-			cmd.Parms.SetOutput(tw)
-			cmd.Parms.Parse(args[1:])
-			cmd.Handler(tw)
-		} else {
-			subcmd := ""
-			if len(args) > 1 {
-				subcmd = args[1]
-			}
-			if cmd, ok = tns.commands[subcmd]; ok && args[0] == "help" {
-				cmd.Parms.SetOutput(tw)
-				cmd.Parms.PrintDefaults()
-			} else {
-				c.Sayln(tns.usage())
-			}
-		}
+		tw := telnetWriter{c}
+		tns.CliApp.Writer = &tw
+		tns.CliApp.ErrWriter = &tw
+		tns.CliApp.Run(append([]string{""}, args...))
 		return false
 	}
 
-	// start the server in a go routine
-	s := telgo.NewServer(":"+tns.port, "surviveler> ", globalHandler, "anonymous")
+	wg.Add(1)
+	// start the server in a goroutine
+	tns.server = telgo.NewServer("surviveler> ", globalHandler, "anonymous")
 	go func() {
-		if err := s.Run(); err != nil {
+		defer func() {
+			log.Info("Stopping admin telnet server")
+			wg.Done()
+		}()
+		log.Info("Starting admin telnet server")
+		if err := tns.server.Run(listener); err != nil {
 			log.WithError(err).Error("Telnet server error")
 		}
 	}()
 }
 
 /*
- * RegisterCommand register a new telnet command, and its handler. flags is a configured
- * FlagSet describing the command and its arguments
+ * RegisterCommand registers a telnet command
  */
-func (tns *TelnetServer) RegisterCommand(cmd TelnetCmd) {
-	tns.commands[cmd.Name] = cmd
+func (tns *TelnetServer) RegisterCommand(cmd *cli.Command) {
+	cmd.OnUsageError = tns.CliApp.OnUsageError
+	tns.CliApp.Commands = append(tns.CliApp.Commands, *cmd)
 }
 
 /*
- * usage prints the list registered telnet commands and their description
+ * Stop asks the underlying telnet server to quit
  */
-func (tns *TelnetServer) usage() string {
-	h := "available commands:\n"
-	for cmdName, cmd := range tns.commands {
-		h = h + fmt.Sprintf("  %-18s%s\n", cmdName, cmd.Descr)
-	}
-	h = h + fmt.Sprintf("  %-18s%s\n", "help", "this help text")
-	return h
+func (tns *TelnetServer) Stop() {
+	tns.server.Quit()
 }
 
 /*
@@ -114,6 +96,6 @@ type telnetWriter struct {
  */
 func (w telnetWriter) Write(p []byte) (n int, err error) {
 	s := string(p)
-	w.c.Sayln(s)
+	w.c.Say(s)
 	return len(s), nil
 }

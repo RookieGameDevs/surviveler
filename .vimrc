@@ -1,4 +1,4 @@
-set wildignore+=bin,lib,local,include,,*pyc
+set wildignore+=bin,lib,local,include,vendor,*pyc
 let g:easytags_file = '.vimtags'
 let g:ctrlp_extensions = ['tag']
 let g:easytags_dynamic_files = 1

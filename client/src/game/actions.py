@@ -20,6 +20,11 @@ def handle_mouse_click(evt):
         w = int(renderer_conf['width'])
         h = int(renderer_conf['height'])
 
+        ray = evt.context.camera.trace_ray(evt.x, evt.y, w, h)
+        LOG.debug('Ray: {}'.format(ray))
+
+        # TODO: replace this with ray-plane intersection result
+
         # transform viewport coordinates in terms of game units
         fov = evt.context.conf['Game'].getint('fov')
         x = (evt.x - w / 2.0) / fov

@@ -5,7 +5,11 @@ from OpenGL.GL import GL_CULL_FACE
 from OpenGL.GL import GL_CW
 from OpenGL.GL import GL_DEPTH_BUFFER_BIT
 from OpenGL.GL import GL_DEPTH_TEST
+from OpenGL.GL import GL_FILL
+from OpenGL.GL import GL_FRONT_AND_BACK
+from OpenGL.GL import GL_LINE
 from OpenGL.GL import GL_ONE_MINUS_SRC_ALPHA
+from OpenGL.GL import GL_POINT
 from OpenGL.GL import GL_SHADING_LANGUAGE_VERSION
 from OpenGL.GL import GL_SRC_ALPHA
 from OpenGL.GL import GL_VERSION
@@ -17,7 +21,10 @@ from OpenGL.GL import glEnable
 from OpenGL.GL import glFlush
 from OpenGL.GL import glFrontFace
 from OpenGL.GL import glGetString
+from OpenGL.GL import glPolygonMode
 from contextlib import ExitStack
+from enum import IntEnum
+from enum import unique
 from exceptions import ConfigError
 from exceptions import OpenGLError
 from exceptions import SDLError
@@ -27,6 +34,20 @@ import sdl2 as sdl
 
 
 LOG = logging.getLogger(__name__)
+
+
+@unique
+class PolygonMode(IntEnum):
+    """Polygon rasterization mode."""
+
+    #: Render only vertices as points.
+    points = GL_POINT
+
+    #: Render only edges as lines.
+    lines = GL_LINE
+
+    #: Render entire triangles filled.
+    fill = GL_FILL
 
 
 class RenderOp:
@@ -39,7 +60,9 @@ class RenderOp:
     efficiency and less OpenGL context switches.
     """
 
-    def __init__(self, shader, shader_params, mesh, textures=None):
+    def __init__(
+            self, shader, shader_params, mesh, textures=None,
+            polygon_mode=PolygonMode.fill):
         """Constructor.
 
         :param shader: Shader to use for rendering.
@@ -54,11 +77,15 @@ class RenderOp:
         :param textures: List of textures to make active and use during
             rendering.
         :type textures: list of :class:`renderer.texture.Texture` or `None`
+
+        :param polygon_mode: Polygon rasterization mode to use during rendering.
+        :type polygon_mode: :enum:`renderer.renderer.PolygonMode`
         """
         self.mesh = mesh
         self.shader = shader
         self.shader_params = shader_params
         self.textures = textures or []
+        self.polygon_mode = polygon_mode
 
 
 class Renderer:
@@ -147,7 +174,7 @@ class Renderer:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # clear to black
-        glClearColor(1, 1, 1, 1)
+        glClearColor(0.3, 0.5, 0.7, 1)
 
     def clear(self):
         """Clear buffers."""
@@ -167,6 +194,8 @@ class Renderer:
         def sort_key(op):
             return (op.shader.prog, op.mesh.vao)
 
+        polygon_mode = PolygonMode.fill
+
         for op in sorted(self.render_queue, key=sort_key):
             # perform actual rendering
             with ExitStack() as stack:
@@ -177,6 +206,12 @@ class Renderer:
                     op.shader[p] = v
 
                 op.shader.use()
+
+                # change the polygon mode, if requested by render op
+                if polygon_mode != op.polygon_mode:
+                    glPolygonMode(GL_FRONT_AND_BACK, op.polygon_mode)
+                    polygon_mode = op.polygon_mode
+
                 op.mesh.render()
 
         self.render_queue.clear()

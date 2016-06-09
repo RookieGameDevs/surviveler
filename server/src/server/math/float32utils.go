@@ -71,12 +71,14 @@ func FloatEqualThreshold(a, b, epsilon float32) bool {
 	}
 
 	diff := Abs(a - b)
-	if a*b == 0 || diff < MinNormal { // If a or b are 0 or both are extremely close to it
-		return diff < epsilon*epsilon
-	}
 
-	// Else compare difference
-	return diff/(Abs(a)+Abs(b)) < epsilon
+	if a == 0 || b == 0 || diff < MinNormal { // If a or b are 0 or both are extremely close to it
+		return diff < epsilon*MinNormal
+	} else {
+		// Else compare difference
+		absA, absB := Abs(a), Abs(b)
+		return diff/Min32((absA+absB), MaxValue) < epsilon
+	}
 }
 
 // Clamp takes in a value and two thresholds. If the value is smaller than the low
@@ -115,17 +117,31 @@ func IsClamped(a, low, high float32) bool {
 	return a >= low && a <= high
 }
 
+func Min32(a, b float32) float32 {
+	if a <= b {
+		return a
+	}
+	return b
+}
+
+func Max32(a, b float32) float32 {
+	if a >= b {
+		return a
+	}
+	return b
+}
+
 // If a > b, then a will be set to the value of b.
-func SetMin(a, b *float32) {
-	if *b < *a {
-		*a = *b
+func SetMin(a *float32, b float32) {
+	if b < *a {
+		*a = b
 	}
 }
 
 // If a < b, then a will be set to the value of b.
-func SetMax(a, b *float32) {
-	if *a < *b {
-		*a = *b
+func SetMax(a *float32, b float32) {
+	if *a < b {
+		*a = b
 	}
 }
 

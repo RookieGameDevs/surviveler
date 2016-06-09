@@ -7,7 +7,6 @@ from renderer import Font
 from renderer import OrthoCamera
 from renderer import Scene
 from renderer import SceneNode
-from renderer import Shader
 from renderer import TextNode
 
 
@@ -17,8 +16,11 @@ class UI:
     This class encapsulates the user interface creation and management.
     """
 
-    def __init__(self, renderer):
+    def __init__(self, resource, renderer):
         """Constructor.
+
+        :param resource: The ui resource
+        :type resource: :class:`loaders.Resource`
 
         :param renderer: Renderer to use for UI rendering.
         :type renderer: :class:`renderer.Renderer`
@@ -32,10 +34,8 @@ class UI:
         self.log_line_height = 18
         self.log_height = 0
         self.log_color = Vec(0.4, 0.4, 0.4)
-        self.log_font = Font('data/fonts/Monaco-Linux.ttf', 14)
-        self.log_shader = Shader.from_glsl(
-            'data/shaders/text.vert',
-            'data/shaders/text.frag')
+        self.log_font = Font(resource['font'], 14)
+        self.log_shader = resource['shader']
         self.log_node = self.scene.root.add_child(SceneNode())
 
         self.fps_counter_node = self.scene.root.add_child(TextNode(

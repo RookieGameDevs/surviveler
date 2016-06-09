@@ -1,5 +1,6 @@
 from context import Context
 from events import send_event
+from game import Map
 from game import Terrain
 from game import UI
 from game import process_gamestate
@@ -28,7 +29,7 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, renderer, proxy, input_mgr, conf):
+    def __init__(self, player_name, renderer, proxy, input_mgr, res_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
@@ -45,6 +46,9 @@ class Client:
         :param input_mgr: The input manager
         :type input_mgr: :class:`core.InputManager`
 
+        :param res_mgr: The resource manager
+        :type res_mgr: :class:`loader.ResourceManager`
+
         :param conf: Configuration
         :type conf: mapping
         """
@@ -54,9 +58,13 @@ class Client:
 
         # Setup the context
         context = Context(conf)
+        context.res_mgr = res_mgr
         context.scene = self.setup_scene(context)
+        context.terrain = self.setup_terrain(context)
         context.camera = self.setup_camera(context)
-        context.ui = UI(self.renderer)
+        context.map = self.setup_map(context)
+        ui_res = context.res_mgr.get('/ui')
+        context.ui = UI(ui_res, self.renderer)
         context.player_name = player_name
         self.context = context
 
@@ -88,9 +96,24 @@ class Client:
         light_node = scene.root.add_child(LightNode(light))
         light_node.transform.translate(Vec(0, 10, 10))
 
-        terrain = Terrain(scene.root, 30, 30)
-        context.entities[terrain.e_id] = terrain
         return scene
+
+    def setup_terrain(self, context):
+        root = context.scene.root
+        # NOTE: we are using the map resources to get the appropriate walkable
+        # matrix.
+        resource = context.res_mgr.get('/map')
+        terrain = Terrain(resource, root)
+        context.entities[terrain.e_id] = terrain
+        return terrain
+
+    def setup_map(self, context):
+        """Sets up the map.
+
+        TODO: add proper documentation
+        """
+        resource = context.res_mgr.get('/map')
+        return Map(resource, context.scene.root)
 
     def setup_camera(self, context):
         """Sets up camera.
@@ -114,10 +137,9 @@ class Client:
             +fov / 2,            # right plane
             -fov / 2 * aspect,   # top plane
             +fov / 2 * aspect,   # bottom plane
-            100)                 # view distance
+            1000)                 # view distance
 
-        camera.look_at(eye=Vec(0, 2.5, 5), center=Vec(0, 0, 0))
-
+        camera.look_at(eye=Vec(0, 7, 20), center=Vec(0, 0, 0))
         return camera
 
     @property

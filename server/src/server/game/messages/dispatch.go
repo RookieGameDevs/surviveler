@@ -4,9 +4,7 @@
  */
 package messages
 
-import (
-//"server/game/messages"
-)
+import ()
 
 /*
  * MessageHandler is the interface implemented by an object that handles messages.

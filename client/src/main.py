@@ -5,6 +5,7 @@ from configparser import ConfigParser
 from contextlib import ContextDecorator
 from core import InputManager
 from functools import partial
+from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
 from renderer import Renderer
@@ -87,7 +88,8 @@ def main(name, config):
     conn = Connection(config['Network'])
     proxy = MessageProxy(conn)
     input_mgr = InputManager()
-    client = Client(name, renderer, proxy, input_mgr, config)
+    res_mgr = ResourceManager(config['Game'])
+    client = Client(name, renderer, proxy, input_mgr, res_mgr, config)
 
     client.start()
     renderer.shutdown()
@@ -98,7 +100,6 @@ def main(name, config):
 def bootstrap(name):
     config = ConfigParser()
     config.read(CONFIG_FILE)
-
     setup_logging(config['Logging'])
 
     LOG.debug('Loaded config file {}'.format(CONFIG_FILE))

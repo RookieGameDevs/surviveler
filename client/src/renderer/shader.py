@@ -5,7 +5,6 @@ from OpenGL.GL import GL_DYNAMIC_DRAW
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
 from OpenGL.GL import GL_FLOAT_VEC4
-from OpenGL.GL import GL_FRAGMENT_SHADER
 from OpenGL.GL import GL_INT
 from OpenGL.GL import GL_LINK_STATUS
 from OpenGL.GL import GL_SAMPLER_2D
@@ -16,7 +15,6 @@ from OpenGL.GL import GL_UNIFORM_BLOCK_DATA_SIZE
 from OpenGL.GL import GL_UNIFORM_BLOCK_NAME_LENGTH
 from OpenGL.GL import GL_UNIFORM_BUFFER
 from OpenGL.GL import GL_UNIFORM_OFFSET
-from OpenGL.GL import GL_VERTEX_SHADER
 from OpenGL.GL import glAttachShader
 from OpenGL.GL import glBindBuffer
 from OpenGL.GL import glBindBufferRange
@@ -159,6 +157,35 @@ class ShaderBlock:
             self.block_info['size'])
 
 
+class ShaderSource:
+    def __init__(self, shader_type, shader_obj):
+        """Constructor.
+
+        TODO: add documentation
+        """
+        self.shader_type = shader_type
+        self.shader_obj = shader_obj
+
+    def __del__(self):
+        """Destructor.
+
+        Destroys the shader source object associated with instance.
+        """
+        # TODO: add implementation
+        pass
+
+    @classmethod
+    def load_and_compile(cls, source, shader_type):
+        shader_obj = glCreateShader(shader_type)
+        glShaderSource(shader_obj, source)
+        glCompileShader(shader_obj)
+        if not glGetShaderiv(shader_obj, GL_COMPILE_STATUS):
+            raise ShaderError('Failed to compile shader:\n{}'.format(
+                as_utf8(glGetShaderInfoLog(shader_obj))))
+
+        return cls(shader_type, shader_obj)
+
+
 class Shader:
     """Shader program.
 
@@ -169,7 +196,7 @@ class Shader:
     convenient interface for passing data to the pipeline.
     """
 
-    def __init__(self, prog_id):
+    def __init__(self, prog_id, params=None):
         """Constructor.
 
         :param prog_id: OpenGL program object identifier. Must identify a valid
@@ -185,7 +212,7 @@ class Shader:
             u_loc = glGetUniformLocation(self.prog, u_name)
             if u_loc >= 0:
                 self.uniforms[as_ascii(u_name)] = {
-                    'value': UNIFORM_DEFAULTS[u_type](),
+                    'value': params.get(u_name, UNIFORM_DEFAULTS[u_type]()),
                     'loc': u_loc,
                     'type': u_type,
                     'size': u_size,
@@ -246,51 +273,28 @@ class Shader:
         glDeleteProgram(self.prog)
 
     @classmethod
-    def from_glsl(cls, vert_shader_file, frag_shader_file):
+    def from_glsl(cls, shaders, params=None):
         """Loads and compiles given shader files into a shader program.
 
-        :param vert_shader_file: File name of the vertex shader.
-        :type vert_shader_file: str
+        :param shaders: The shaders to be linked
+        :type shaders: :class:`Shader`
 
-        :param frag_shader_file: File name of the fragment shader.
-        :type frag_shader_file: str
-
-        :returns: Compiled and linked shader.
+        :returns: Linked shader.
         :rtype: :class:`renderer.Shader`
 
         :raises ShaderError: On I/O error, compile or linking failure or OpenGL
             error.
         """
-
-        def load_and_compile(filename, shader_type):
-            try:
-                with open(filename, 'r') as fp:
-                    source = fp.read()
-                    shader_obj = glCreateShader(shader_type)
-                    glShaderSource(shader_obj, source)
-                    glCompileShader(shader_obj)
-                    if not glGetShaderiv(shader_obj, GL_COMPILE_STATUS):
-                        raise ShaderError('Failed to compile shader "{}":\n{}'.format(
-                            filename,
-                            as_utf8(glGetShaderInfoLog(shader_obj))))
-
-                    return shader_obj
-
-            except IOError as err:
-                raise ShaderError('Failed to load shader "{}": {}'.format(err))
-
-        vert_shader = load_and_compile(vert_shader_file, GL_VERTEX_SHADER)
-        frag_shader = load_and_compile(frag_shader_file, GL_FRAGMENT_SHADER)
-
         prog = glCreateProgram()
-        glAttachShader(prog, vert_shader)
-        glAttachShader(prog, frag_shader)
+        for sh in shaders:
+            glAttachShader(prog, sh.shader_obj)
+
         glLinkProgram(prog)
         if not glGetProgramiv(prog, GL_LINK_STATUS):
             raise ShaderError('Failed to link shader program: {}'.format(
                 glGetProgramInfoLog(prog)))
 
-        return Shader(prog)
+        return Shader(prog, params)
 
     def __getitem__(self, k):
         # check if there's a uniform with given name first
@@ -304,7 +308,7 @@ class Shader:
             block = self.uniform_blocks.get(block_name)
             if block:
                 return block[param_name]
-        except (TypeError, KeyError):
+        except (TypeError, KeyError, ValueError):
             raise ShaderError('Unknown shader parameter "{}"'.format(k))
 
     def __setitem__(self, k, v):
@@ -313,11 +317,11 @@ class Shader:
         if uniform:
             uniform['value'] = v
         else:
-            block_name, param_name = k.split('.', 1)
             try:
+                block_name, param_name = k.split('.', 1)
                 block = self.uniform_blocks.get(block_name)
                 block[param_name] = v
-            except (TypeError, KeyError):
+            except (TypeError, KeyError, ValueError):
                 raise ShaderError('Unknown shader parameter "{}"'.format(k))
 
     def use(self):

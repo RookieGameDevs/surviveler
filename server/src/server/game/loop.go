@@ -7,7 +7,7 @@ package game
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"server/game/messages"
+	msg "server/game/messages"
 	"time"
 )
 
@@ -21,7 +21,9 @@ import (
  * - gamestate tick -> pack and broadcast the current game state
  * - telnet request -> perform a game state related telnet request
  */
-func (g *Game) loop() {
+func (g *Game) loop() error {
+	// loop local stop condition
+	quit := false
 
 	// will tick when it's time to send the gamestate to the clients
 	sendTickChan := time.NewTicker(
@@ -33,29 +35,43 @@ func (g *Game) loop() {
 
 	// encapsulate the game state here, as it should not be accessed nor modified
 	// from outside the game loop
-	gs := NewGameState()
+	gs := newGameState()
+	var err error
+	if err = gs.init(g.assets); err != nil {
+		quit = true
+		return err
+	}
+	g.movementPlanner.setGameState(gs)
 
-	msgmgr := new(messages.MessageManager)
-	msgmgr.Listen(messages.MoveId, messages.MsgHandlerFunc(gs.onMovePlayer))
-	msgmgr.Listen(messages.JoinedId, messages.MsgHandlerFunc(gs.onPlayerJoined))
-	msgmgr.Listen(messages.LeaveId, messages.MsgHandlerFunc(gs.onPlayerLeft))
-
-	// loop local stop condition
-	quit := false
+	msgmgr := new(msg.MessageManager)
+	msgmgr.Listen(msg.MoveId, msg.MsgHandlerFunc(g.movementPlanner.onMovePlayer))
+	msgmgr.Listen(msg.JoinedId, msg.MsgHandlerFunc(gs.onPlayerJoined))
+	msgmgr.Listen(msg.LeaveId, msg.MsgHandlerFunc(gs.onPlayerLeft))
+	msgmgr.Listen(msg.MovementRequestResultId, msg.MsgHandlerFunc(gs.onMovementRequestResult))
 
 	var last_time, cur_time time.Time
 	last_time = time.Now()
+	log.Info("Starting game loop")
 
+	g.wg.Add(1)
 	go func() {
+		defer func() {
+			g.wg.Done()
+		}()
+
 		for !quit {
 			select {
 
-			case <-g.loopCloseChan:
+			case <-g.gameQuit:
+				// stop game loop
+				log.Info("Stopping game loop")
 				quit = true
 
 			case msg := <-g.msgChan:
 				// dispatch msg to listeners
 				if err := msgmgr.Dispatch(msg.Message, msg.ClientId); err != nil {
+					// a listener can return an error, we log it but it should not
+					// perturb the rest of the game
 					log.WithField("err", err).Error("Dispatch returned an error")
 				}
 
@@ -63,7 +79,7 @@ func (g *Game) loop() {
 				// pack the gamestate into a message
 				if gsMsg := gs.pack(); gsMsg != nil {
 					// wrap the GameStateMsg into a generic Message
-					if msg := messages.NewMessage(messages.GameStateId, *gsMsg); msg != nil {
+					if msg := msg.NewMessage(msg.GameStateId, *gsMsg); msg != nil {
 						g.server.Broadcast(msg)
 					}
 				}
@@ -79,15 +95,15 @@ func (g *Game) loop() {
 				}
 				last_time = cur_time
 
-			case tnr := <-g.telnetChan:
+			case tnr := <-g.telnetReq:
 				// received a telnet request
-				g.telnetHandler(tnr, &gs)
+				g.telnetDone <- g.telnetHandler(tnr, gs)
 
 			default:
 				// let the rest of the world spin
 				time.Sleep(1 * time.Millisecond)
 			}
 		}
-		log.Info("Game just stopped ticking")
 	}()
+	return nil
 }

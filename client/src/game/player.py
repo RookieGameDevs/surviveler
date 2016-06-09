@@ -40,9 +40,10 @@ def add_player(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
+    resource = context.res_mgr.get('/characters/grunt')
     # Only instantiate the player if it does not exist
     if not context.resolve_entity(evt.srv_id):
-        player = Player(evt.name, context.scene.root)
+        player = Player(resource, evt.name, context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
         return player.e_id
