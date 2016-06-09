@@ -7,6 +7,7 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"image"
 	"server/game/entity"
@@ -22,6 +23,7 @@ type GameState struct {
 	players    map[uint32]*entity.Player
 	World      *World
 	Pathfinder Pathfinder
+	md         *resource.MapData
 }
 
 func newGameState() *GameState {
@@ -30,23 +32,27 @@ func newGameState() *GameState {
 	}
 }
 
+/*
+ * init loads configuration from an assets package and initializes various game
+ * state sub-structures
+ */
 func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 	var err error
-	var md *resource.MapData
-	if md, err = pkg.LoadMapData(); err != nil {
+	if gs.md, err = pkg.LoadMapData(); err != nil {
 		return err
 	}
-	if md.ScaleFactor == 0 {
+	if gs.md.ScaleFactor == 0 {
 		err = errors.New("'scale_factor' can't be 0")
 	} else {
 		// package must contain the path to world matrix bitmap
-		if fname, ok := md.Resources["matrix"]; !ok {
+		if fname, ok := gs.md.Resources["matrix"]; !ok {
 			err = errors.New("'matrix' field not found in the map asset")
 		} else {
 			var worldBmp image.Image
 			if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-				if gs.World, err = NewWorld(worldBmp, md.ScaleFactor); err == nil {
+				if gs.World, err = NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
 					gs.Pathfinder.World = gs.World
+					err = gs.validateWorld()
 				}
 			}
 		}
@@ -55,7 +61,36 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 }
 
 /*
- * pack transforms the current game state into a GameStateMsg
+ * validateWorld performs some logical and semantic checks on the loaded world
+ */
+func (gs GameState) validateWorld() error {
+	// validate player spawn point
+	pt := gs.World.TileFromWorldVec(gs.md.Spawn.Player)
+	if pt == nil {
+		return fmt.Errorf("Player spawn point is out of bounds (%#v)",
+			gs.md.Spawn.Player)
+	}
+	if pt.Kind&KindWalkable == 0 {
+		return fmt.Errorf("Player spawn point is not located in a walkable area: (%#v)",
+			*pt)
+	}
+	// validate ennemies spawn points
+	for i := range gs.md.Spawn.Ennemies {
+		zt := gs.World.TileFromWorldVec(gs.md.Spawn.Ennemies[i])
+		if zt == nil {
+			return fmt.Errorf("a Zombie spawn point is out of bounds: (%#v)",
+				gs.md.Spawn.Ennemies[i])
+		}
+		if zt.Kind&KindWalkable == 0 {
+			return fmt.Errorf("a Zombie spawn point is not located in a walkable area: (%#v)",
+				*zt)
+		}
+	}
+	return nil
+}
+
+/*
+ * pack converts the current game state into a GameStateMsg
  */
 func (gs GameState) pack() *msg.GameStateMsg {
 	if len(gs.players) == 0 {
@@ -79,7 +114,7 @@ func (gs GameState) pack() *msg.GameStateMsg {
 func (gs *GameState) onPlayerJoined(imsg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("We have one more player")
-	gs.players[clientId] = entity.NewPlayer(1, 1, 3)
+	gs.players[clientId] = entity.NewPlayer(gs.md.Spawn.Player, 3)
 	return nil
 }
 
