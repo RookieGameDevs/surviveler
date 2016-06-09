@@ -12,8 +12,6 @@ import (
 	"server/math"
 )
 
-const WorldScale float32 = 2.0
-
 /*
  * World is the spatial reference on which game entities are located
  */
@@ -44,17 +42,16 @@ type Tile struct {
  * It loads the map from the provided Surviveler Package and initializes the
  * world representation from it.
  */
-func NewWorld(img image.Image) (*World, error) {
+func NewWorld(img image.Image, gridScale float32) (*World, error) {
 	bounds := img.Bounds()
 	w := World{
 		GridWidth:  bounds.Max.X,
 		GridHeight: bounds.Max.Y,
-		Width:      float32(bounds.Max.X) / WorldScale,
-		Height:     float32(bounds.Max.Y) / WorldScale,
-		GridScale:  WorldScale,
+		Width:      float32(bounds.Max.X) / gridScale,
+		Height:     float32(bounds.Max.Y) / gridScale,
+		GridScale:  gridScale,
 	}
-	log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
-		Info("Building world")
+	log.WithField("world", w).Info("Building world")
 
 	// allocate tiles
 	var kind TileKind

@@ -36,14 +36,18 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 	if md, err = pkg.LoadMapData(); err != nil {
 		return err
 	}
-	// package must contain the path to world matrix bitmap
-	if fname, ok := md.Resources["matrix"]; !ok {
-		err = errors.New("'matrix' field not found in the map asset")
+	if md.ScaleFactor == 0 {
+		err = errors.New("'scale_factor' can't be 0")
 	} else {
-		var worldBmp image.Image
-		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-			if gs.World, err = NewWorld(worldBmp); err == nil {
-				gs.Pathfinder.World = gs.World
+		// package must contain the path to world matrix bitmap
+		if fname, ok := md.Resources["matrix"]; !ok {
+			err = errors.New("'matrix' field not found in the map asset")
+		} else {
+			var worldBmp image.Image
+			if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
+				if gs.World, err = NewWorld(worldBmp, md.ScaleFactor); err == nil {
+					gs.Pathfinder.World = gs.World
+				}
 			}
 		}
 	}

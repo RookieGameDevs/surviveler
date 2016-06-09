@@ -42,7 +42,7 @@ type MapObject struct {
 type ResourceList map[string]string
 
 type MapData struct {
-	Resources   ResourceList
-	ScaleFactor float32
-	Objects     []MapObject
+	Resources   ResourceList `json:"resources"`
+	ScaleFactor float32      `json:"scale_factor"`
+	Objects     []MapObject  `json:"objects"`
 }
