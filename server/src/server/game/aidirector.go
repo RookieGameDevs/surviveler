@@ -5,10 +5,13 @@
 package game
 
 import (
-	"server/game/resource"
-	"server/math"
+	log "github.com/Sirupsen/logrus"
 	"time"
 )
+
+// This number represents the ration between the number of logic ticks for one
+// AI director tick
+const AIDirectorTickUpdate int = 20
 
 /*
  * AIDirector is the system that manages the ingredients a game session
@@ -20,18 +23,23 @@ import (
  * - modulates the players emotional intensity (affect each player an emotional
  *   intensity and updates it). Emotional intensity decays towards zero over
  *   time if no zombies are around
- *
- * It implements the entity.Updater interface
  */
 type AIDirector struct {
-	zombiesSpawnPoints []math.Vec2
+	gs      *GameState
+	curTick int
 }
 
-func (ai *AIDirector) init(md *resource.MapData) {
-	// copy zombie spawn points
-	ai.zombiesSpawnPoints = md.Spawn.Enemies
+func newAIDirector(gs *GameState) *AIDirector {
+	return &AIDirector{
+		gs:      gs,
+		curTick: 0,
+	}
 }
 
-func (ai *AIDirector) Update(dt time.Duration) {
-
+func (ai *AIDirector) Update(cur_time time.Time) {
+	// limit the update frequency
+	ai.curTick++
+	if ai.curTick%AIDirectorTickUpdate != 0 {
+		return
+	}
 }

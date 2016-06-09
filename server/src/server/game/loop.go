@@ -85,7 +85,7 @@ func (g *Game) loop() error {
 				dt := cur_time.Sub(last_time)
 
 				// update AI
-				gs.director.Update(dt)
+				gs.director.Update(cur_time)
 
 				// update entities
 				for _, ent := range gs.players {
