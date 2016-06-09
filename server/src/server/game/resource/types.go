@@ -33,8 +33,16 @@ func (r Rect2D) IsValid() bool {
 	return false
 }
 
-type Object struct {
+type MapObject struct {
 	Ref      string `json:"ref"`      // uri of the object inside the package
 	Pos      Pos2D  `json:"pos"`      // position of the object on the map
 	Rotation int    `json:"rotation"` // rotation of the object on the map
+}
+
+type ResourceList map[string]string
+
+type MapData struct {
+	Resources   ResourceList
+	ScaleFactor float32
+	Objects     []MapObject
 }

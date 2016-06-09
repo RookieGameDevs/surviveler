@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"server/game/resource"
+	"image"
 	"server/math"
 )
 
@@ -44,39 +44,34 @@ type Tile struct {
  * It loads the map from the provided Surviveler Package and initializes the
  * world representation from it.
  */
-func NewWorld(pkg resource.SurvivelerPackage) (*World, error) {
-	// read the world grid from the package
-	if img, err := pkg.LoadWorldGrid(); err != nil {
-		return nil, err
-	} else {
-		bounds := img.Bounds()
-		w := World{
-			GridWidth:  bounds.Max.X,
-			GridHeight: bounds.Max.Y,
-			Width:      float32(bounds.Max.X) / WorldScale,
-			Height:     float32(bounds.Max.Y) / WorldScale,
-			GridScale:  WorldScale,
-		}
-		log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
-			Info("Building world")
-
-		// allocate tiles
-		var kind TileKind
-		w.Grid = make(map[int]map[int]*Tile)
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			w.Grid[x] = make(map[int]*Tile)
-			for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-				r, _, _, _ := img.At(x, y).RGBA()
-				if r == 0 {
-					kind = KindNotWalkable
-				} else {
-					kind = KindWalkable
-				}
-				w.SetTile(&Tile{Kind: kind, W: &w, X: x, Y: y})
-			}
-		}
-		return &w, nil
+func NewWorld(img image.Image) (*World, error) {
+	bounds := img.Bounds()
+	w := World{
+		GridWidth:  bounds.Max.X,
+		GridHeight: bounds.Max.Y,
+		Width:      float32(bounds.Max.X) / WorldScale,
+		Height:     float32(bounds.Max.Y) / WorldScale,
+		GridScale:  WorldScale,
 	}
+	log.WithFields(log.Fields{"width": w.Width, "height": w.Height}).
+		Info("Building world")
+
+	// allocate tiles
+	var kind TileKind
+	w.Grid = make(map[int]map[int]*Tile)
+	for x := bounds.Min.X; x < bounds.Max.X; x++ {
+		w.Grid[x] = make(map[int]*Tile)
+		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+			r, _, _, _ := img.At(x, y).RGBA()
+			if r == 0 {
+				kind = KindNotWalkable
+			} else {
+				kind = KindWalkable
+			}
+			w.SetTile(&Tile{Kind: kind, W: &w, X: x, Y: y})
+		}
+	}
+	return &w, nil
 }
 
 type TileKind int
@@ -119,11 +114,11 @@ func (w World) PointInBound(pt math.Vec2) bool {
 }
 
 /*
- * Dump logs a string representation of the world
+ * Dump logs a string representation of the world grid
  */
-func (w World) Dump() {
+func (w World) DumpGrid() {
 	var buffer bytes.Buffer
-	buffer.WriteString("World matrix dump:\n")
+	buffer.WriteString("World grid dump:\n")
 	for y := 0; y < w.GridHeight; y++ {
 		for x := 0; x < w.GridWidth; x++ {
 			t := w.Tile(x, y)

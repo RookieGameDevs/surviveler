@@ -6,7 +6,9 @@
 package game
 
 import (
+	"errors"
 	log "github.com/Sirupsen/logrus"
+	"image"
 	"server/game/entity"
 	msg "server/game/messages"
 	"server/game/resource"
@@ -30,8 +32,21 @@ func newGameState() *GameState {
 
 func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 	var err error
-	gs.World, err = NewWorld(pkg)
-	gs.Pathfinder.World = gs.World
+	var md *resource.MapData
+	if md, err = pkg.LoadMapData(); err != nil {
+		return err
+	}
+	// package must contain the path to world matrix bitmap
+	if fname, ok := md.Resources["matrix"]; !ok {
+		err = errors.New("'matrix' field not found in the map asset")
+	} else {
+		var worldBmp image.Image
+		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
+			if gs.World, err = NewWorld(worldBmp); err == nil {
+				gs.Pathfinder.World = gs.World
+			}
+		}
+	}
 	return err
 }
 
