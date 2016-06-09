@@ -79,10 +79,15 @@ func NewWorld(img image.Image, gridScale float32) (*World, error) {
 
 type TileKind int
 
+// walkability bit
 const (
-	KindNotWalkable TileKind = 0
-	KindWalkable             = 1
-	KindTurret
+	KindNotWalkable TileKind = 0 // non-walkability
+	KindWalkable             = 1 // walkability
+)
+
+// actual tile kinds (bit 0 is set with walkability mask)
+const (
+	KindTurret TileKind = 0x10 | KindNotWalkable
 )
 
 /*
