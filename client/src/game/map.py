@@ -9,7 +9,11 @@ class Map(Entity):
     def __init__(self, resource, parent_node):
         """Constructor.
 
-        TODO: add documentation.
+        :param resource: Resource containing map data.
+        :type resource: :class:`resource_manager.Resource`
+
+        :param parent_node: Node to attach the map to.
+        :type parent_node: :class:`renderer.scene.SceneNode`
         """
         mesh = resource['mesh']
         shader = resource['walls_shader']
