@@ -1,4 +1,5 @@
 from OpenGL.GL import GL_BACK
+from OpenGL.GL import glDepthRange
 from OpenGL.GL import GL_BLEND
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
 from OpenGL.GL import GL_CULL_FACE
@@ -172,6 +173,8 @@ class Renderer:
         # enable alpha-blending
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
+        glDepthRange(1, 0)
 
         # clear to black
         glClearColor(0.3, 0.5, 0.7, 1)

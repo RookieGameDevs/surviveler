@@ -1,6 +1,5 @@
 from core.events import MouseClickEvent
 from events import subscriber
-from game.components import Movable
 from matlib import Vec
 from network import Message
 from network import MessageField
@@ -20,29 +19,26 @@ def handle_mouse_click(evt):
         w = int(renderer_conf['width'])
         h = int(renderer_conf['height'])
 
-        ray = evt.context.camera.trace_ray(evt.x, evt.y, w, h)
-        LOG.debug('Ray: {}'.format(ray))
+        # Position on near clipping plane
+        pos = evt.context.camera.unproject(evt.x, evt.y, w, h)
+        camera = evt.context.camera
+        # Find the direction applying the modelview matrix to the facing
+        # direction of the camera
+        d = camera.modelview * Vec(0, 0, -1)
+        # Calculate the normal vector of the z=0 plane
+        norm = Vec(0, 0, -1)
+        d.norm()
 
-        # TODO: replace this with ray-plane intersection result
-
-        # transform viewport coordinates in terms of game units
-        fov = evt.context.conf['Game'].getint('fov')
-        x = (evt.x - w / 2.0) / fov
-        y = (evt.y - h / 2.0) / fov
-        LOG.debug('Normalized pos: {},{}'.format(x, y))
-
-        # transform normalized coordinates to world coordinates by adding
-        # the offset in game units to player's current position (no need to
-        # transform using matrices, since player's position is the actual offset
-        # from world origin)
-        player = evt.context.player
-        player_pos = Vec(*player[Movable].position)
-        pos = evt.context.scene.root.to_world(Vec(x, y) + player_pos)
-        LOG.debug('World pos: {},{},{}'.format(pos.x, pos.y, pos.z))
+        # And here finally we have the target of the click in world coordinates
+        # More reference about the used math here:
+        #  * http://antongerdelan.net/opengl/raycasting.html
+        t = - (pos.dot(norm)) / d.dot(norm)
+        target = pos + (d * t)
+        LOG.debug('World pos: {},{},{}'.format(target.x, target.y, target.z))
 
         msg = Message(MessageType.move, {
-            MessageField.x_pos: float(pos.x),
-            MessageField.y_pos: float(pos.y),
+            MessageField.x_pos: float(target.x),
+            MessageField.y_pos: float(target.y),
         })
 
         evt.context.msg_queue.append(msg)

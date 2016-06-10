@@ -99,6 +99,14 @@ class Client:
         return scene
 
     def setup_terrain(self, context):
+        """Sets up the debug terrain.
+
+        :param context: The client context
+        :type context: :class:`context.Context`
+
+        :return: The terrain entity
+        :rtype: :class:`game.terrain.Terrain`
+        """
         root = context.scene.root
         # NOTE: we are using the map resources to get the appropriate walkable
         # matrix.
@@ -110,7 +118,11 @@ class Client:
     def setup_map(self, context):
         """Sets up the map.
 
-        TODO: add proper documentation
+        :param context: The client context
+        :type context: :class:`context.Context`
+
+        :return: The map entity
+        :rtype: :class:`game.map.Map
         """
         resource = context.res_mgr.get('/map')
         return Map(resource, context.scene.root)
@@ -137,7 +149,7 @@ class Client:
             +fov / 2,            # right plane
             -fov / 2 * aspect,   # top plane
             +fov / 2 * aspect,   # bottom plane
-            1000)                 # view distance
+            500, 1500)           # view depth
 
         camera.look_at(eye=Vec(0, 7, 20), center=Vec(0, 0, 0))
         return camera
