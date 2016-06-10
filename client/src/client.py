@@ -99,18 +99,30 @@ class Client:
         return scene
 
     def setup_terrain(self, context):
+        """Sets up the debug terrain.
+
+        :param context: The client context
+        :type context: :class:`context.Context`
+
+        :return: The terrain entity
+        :rtype: :class:`game.terrain.Terrain`
+        """
         root = context.scene.root
         # NOTE: we are using the map resources to get the appropriate walkable
         # matrix.
-        # resource = context.res_mgr.get('/map')
-        # terrain = Terrain(resource, root)
-        # context.entities[terrain.e_id] = terrain
-        # return terrain
+        resource = context.res_mgr.get('/map')
+        terrain = Terrain(resource, root)
+        context.entities[terrain.e_id] = terrain
+        return terrain
 
     def setup_map(self, context):
         """Sets up the map.
 
-        TODO: add proper documentation
+        :param context: The client context
+        :type context: :class:`context.Context`
+
+        :return: The map entity
+        :rtype: :class:`game.map.Map
         """
         resource = context.res_mgr.get('/map')
         return Map(resource, context.scene.root)
