@@ -19,7 +19,11 @@ class Camera(ABC):
         self.modelview_mat = Mat()
 
     def set_position(self, center):
-        """TODO: add documentation"""
+        """Sets the position of the center of the scene.
+
+        :param center: The new center of the scene
+        :type center: :class:`matlib.Vec`
+        """
         self.translate_mat.identity()
         self.translate_mat.translate(-center)
 
@@ -114,6 +118,26 @@ class OrthoCamera(Camera):
     """Orthographic camera."""
 
     def __init__(self, left, right, top, bottom, near, far):
+        """Creates the orthocamera with the various parameters needed.
+
+        :param left: The left boundary
+        :type left: float
+
+        :param right: The right boundary
+        :type right: float
+
+        :param top: The top boundary
+        :type top: float
+
+        :param bottom: The bottom boundary
+        :type bottom: float
+
+        :param near: The near clipping plane
+        :type near: float
+
+        :param far: The far clipping plane
+        :type far: float
+        """
         super(OrthoCamera, self).__init__()
         self.l = left
         self.r = right
@@ -133,6 +157,7 @@ class OrthoCamera(Camera):
 
     @property
     def projection(self):
+        """Camera projection 4x4 matrix."""
         sx = 2.0 / (self.r - self.l)
         sy = 2.0 / (self.t - self.b)
         sz = -2.0 / (self.f - self.n)
