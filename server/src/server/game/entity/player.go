@@ -14,10 +14,8 @@ import (
  * implements the Entity interface.
  */
 type Player struct {
+	curAction ActionType // current action
 	MovableEntity
-	curAction  ActionType  // current action
-	curPath    []math.Vec2 // player path
-	curPathIdx int         // index in the path
 }
 
 /*

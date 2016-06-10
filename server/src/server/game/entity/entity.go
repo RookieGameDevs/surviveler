@@ -25,6 +25,8 @@ type Entity interface {
 }
 
 type MovableEntity struct {
-	Pos   math.Vec2 // current position
-	Speed float32   // speed
+	Pos        math.Vec2   // current position
+	Speed      float32     // speed
+	curPath    []math.Vec2 // player path
+	curPathIdx int         // index in the path
 }
