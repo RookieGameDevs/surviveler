@@ -5,6 +5,7 @@
 package entity
 
 import (
+	gomath "math"
 	"server/math"
 	"time"
 )
@@ -44,8 +45,8 @@ func (p *Player) Update(dt time.Duration) {
 			moveVec := subDst.Sub(p.Pos).Normalize()
 			p.Pos = p.Pos.Add(moveVec.Mul(p.Speed * dt.Seconds()))
 
-			if math.Abs(subDst[0]-p.Pos[0]) <= 0.01 &&
-				math.Abs(subDst[1]-p.Pos[1]) <= 0.01 {
+			if gomath.Abs(subDst[0]-p.Pos[0]) <= 0.01 &&
+				gomath.Abs(subDst[1]-p.Pos[1]) <= 0.01 {
 				// reached current sub-destination
 				p.curPathIdx--
 				p.Pos = subDst
