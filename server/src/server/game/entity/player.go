@@ -46,15 +46,8 @@ func (p *Player) Update(dt time.Duration) {
 			moveVec := subDst.Sub(p.Pos).Normalize()
 			p.Pos = p.Pos.Add(moveVec.Mul(float32(p.Speed * float32(dt.Seconds()))))
 
-			// bind the resulting position to positive coords if ever the fp
-			// operations were trying to place him in the negative zone
-			if p.Pos[0] < 0 {
-				p.Pos[0] = 0
-			}
-			if p.Pos[1] < 0 {
-				p.Pos[1] = 0
-			}
-			if p.Pos.ApproxEqualThreshold(subDst, 0.001) {
+			if math.Abs(subDst[0]-p.Pos[0]) <= 0.01 &&
+				math.Abs(subDst[1]-p.Pos[1]) <= 0.01 {
 				// reached current sub-destination
 				p.curPathIdx--
 				p.Pos = subDst
