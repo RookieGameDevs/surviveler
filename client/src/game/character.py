@@ -10,6 +10,7 @@ from math import atan
 from math import copysign
 from math import pi
 from matlib import Vec
+from renderer import Texture
 import logging
 
 
@@ -37,12 +38,12 @@ class Character(Entity):
         """
         shader = resource['shader']
         mesh = resource['model']
+        texture = Texture.from_image(resource['texture'])
 
         # shader params
         params = {
-            'color_ambient': Vec(0, 0.3, 0.5, 1),
-            'color_diffuse': Vec(0.04, 0.67, 0.87, 1),
-            'color_specular': Vec(1, 1, 1, 1),
+            'color_diffuse': Vec(0.2, 0.2, 0.2, 1),
+            'tex': texture,
         }
 
         # create components
@@ -51,6 +52,7 @@ class Character(Entity):
             mesh,
             shader,
             params,
+            textures=[texture],
             enable_light=True)
 
         movable = Movable((0.0, 0.0))
