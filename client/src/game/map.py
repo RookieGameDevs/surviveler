@@ -32,6 +32,8 @@ class Map(Entity):
 
         super().__init__(renderable)
 
+        self[Renderable].transform.translate(Vec(0.0, 1))
+
     def update(self, dt):
         # NOTE: nothing to do
         pass
