@@ -23,7 +23,6 @@ class Terrain(Entity):
 
         w, h = len(matrix[0]), len(matrix)
         rect = Rect(w * scale_factor, h * scale_factor)
-        #rect = Rect(w, h)
 
         texture = Texture.from_matrix(matrix)
         texture.set_param(TextureParamFilter(

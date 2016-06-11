@@ -72,7 +72,7 @@ class Camera(ABC):
         :param vh: Viewport height.
         :type vh: int
 
-        :returns: The resulting direction normal.
+        :returns: The point on the viewport in world coordinates.
         :rtype: :class:`matlib.Vec`
         """
         # transform viewport coordinates to NDC space

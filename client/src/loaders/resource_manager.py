@@ -224,7 +224,7 @@ def load_vertex(manager, fp, cwd):
     :type cwd: str
 
     :return: The resulting vert object
-    :rtype: TBD
+    :rtype: :class:`renderer.shader.ShaderSource`
     """
     from renderer import ShaderSource
     from OpenGL.GL import GL_VERTEX_SHADER
@@ -247,7 +247,7 @@ def load_fragment(manager, fp, cwd):
     :type cwd: str
 
     :return: The resulting frag object
-    :rtype: TBD
+    :rtype: :class:`renderer.shader.ShaderSource`
     """
     from renderer import ShaderSource
     from OpenGL.GL import GL_FRAGMENT_SHADER

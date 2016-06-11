@@ -110,8 +110,8 @@ class Movable(Component):
         :type dt: float
         """
         if self._destination:
-            # We have both destination and target timestamp, we can calculate
-            # the amount of movement in the given dt.
+            # We have both destination and speed, so we can calculate the amount
+            # of movement in the given dt.
             dv = self.direction * dt * self._speed
             self._position = self._position[0] + dv.x, self.position[1] + dv.y
 
