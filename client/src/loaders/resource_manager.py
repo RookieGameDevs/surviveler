@@ -204,8 +204,8 @@ def load_mesh(manager, fp, cwd):
     :rtype: :class:`renderer.Mesh`
     """
     from renderer import Mesh
-    v, n, _, i = load_obj(as_utf8(fp.read()))
-    return Mesh(v, i, n)
+    v, n, u, i = load_obj(as_utf8(fp.read()))
+    return Mesh(v, i, n, u)
 
 
 @ResourceManager.resource_handler('.vert')
