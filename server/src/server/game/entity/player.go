@@ -5,7 +5,6 @@
 package entity
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"server/math"
 	"time"
 )
