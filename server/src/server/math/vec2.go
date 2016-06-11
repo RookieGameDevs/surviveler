@@ -23,6 +23,11 @@ func (v Vec2) Elem() (x, y float32) {
 	return v[0], v[1]
 }
 
+// Vec2FromInts creates a Vec2 from a pair of integer numbers
+func Vec2FromInts(x, y int) Vec2 {
+	return Vec2{float32(x), float32(y)}
+}
+
 // Add performs element-wise addition between two vectors. It is equivalent to
 // iterating over every element of v1 and adding the corresponding element of v2
 // to it.
