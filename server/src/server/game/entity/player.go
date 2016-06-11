@@ -5,6 +5,7 @@
 package entity
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"server/math"
 	"time"
 )
@@ -45,6 +46,7 @@ func (p *Player) Update(dt time.Duration) {
 			// compute translation vector
 			moveVec := subDst.Sub(p.Pos).Normalize()
 			p.Pos = p.Pos.Add(moveVec.Mul(float32(p.Speed * float32(dt.Seconds()))))
+
 			// bind the resulting position to positive coords if ever the fp
 			// operations were trying to place him in the negative zone
 			if p.Pos[0] < 0 {
@@ -53,10 +55,11 @@ func (p *Player) Update(dt time.Duration) {
 			if p.Pos[1] < 0 {
 				p.Pos[1] = 0
 			}
-			if p.Pos.ApproxEqualThreshold(subDst, 0.01) {
+			if p.Pos.ApproxEqualThreshold(subDst, 0.001) {
 				// reached current sub-destination
 				p.curPathIdx--
 				p.Pos = subDst
+
 				switch {
 				case p.curPathIdx < 0:
 					// this was the last path segment
