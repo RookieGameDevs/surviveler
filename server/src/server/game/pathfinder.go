@@ -47,8 +47,9 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 
 	// generate a cleaner path, in one pass:
 	// - basic path smoothing (remove consecutive equal segments)
-	// - clip destination to cell center
+	// - clip path segment ends to cell center
 	invScale := 1.0 / pf.World.GridScale
+	txCenter := math.Vec2{0.5, 0.5} // tx vector to the cell center
 	path = make([]math.Vec2, 0, len(rawPath))
 	var last math.Vec2
 	for pidx := range rawPath {
@@ -56,7 +57,7 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 		pt := math.Vec2{float32(tile.X), float32(tile.Y)}
 		if pidx == 0 {
 			// clip destination
-			path = append(path, math.Vec2{0.5 + float32(tile.X), 0.5 + float32(tile.Y)}.Mul(invScale))
+			path = append(path, math.Vec2{float32(tile.X), float32(tile.Y)}.Add(txCenter).Mul(invScale))
 		} else if pidx == len(path)-1 {
 			path = append(path, org)
 		} else {
@@ -73,7 +74,7 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 				}
 			}
 			// re-scale coords when adding point to the path
-			path = append(path, pt.Mul(invScale))
+			path = append(path, pt.Add(txCenter).Mul(invScale))
 		}
 		last = pt
 	}

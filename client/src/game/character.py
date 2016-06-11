@@ -119,7 +119,7 @@ class Character(Entity):
 
         t = self[Renderable].transform
         t.identity()
-        t.translate(Vec(x + 0.5, y + 0.5))
+        t.translate(Vec(x, y))
         t.rotate(Vec(0, 0, 1), self.heading)
 
         self.orientate()
