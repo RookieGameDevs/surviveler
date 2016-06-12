@@ -22,7 +22,7 @@ import (
 type GameState struct {
 	players    map[uint32]*entity.Player
 	World      *World
-	Pathfinder Pathfinder
+	pathfinder Pathfinder
 	md         *resource.MapData
 	director   *AIDirector
 }
@@ -52,7 +52,7 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 			var worldBmp image.Image
 			if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
 				if gs.World, err = NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
-					gs.Pathfinder.World = gs.World
+					gs.pathfinder.World = gs.World
 					if err = gs.validateWorld(); err == nil {
 						gs.director = newAIDirector(gs)
 					}
