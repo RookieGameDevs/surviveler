@@ -298,6 +298,26 @@ mat_lookatv(Mat *m, const Vec *eye, const Vec *center, const Vec *up)
 	memcpy(m, &tmp, sizeof(Mat));
 }
 
+void
+mat_ortho(Mat *m, float l, float r, float t, float b, float n, float f)
+{
+	float x = 2.0f / (r - l);
+	float y = 2.0f / (t - b);
+	float z = -2.0f / (f - n);
+
+	float tx = -(r + l) / (r - l);
+	float ty = -(t + b) / (t - b);
+	float tz = -(f + n) / (f - n);
+
+	Mat ortho = {{
+		x, 0, 0, tx,
+		0, y, 0, ty,
+		0, 0, 0, tz,
+		0, 0, 0, 1
+	}};
+	memcpy(m, &ortho, sizeof(Mat));
+}
+
 Vec
 vec(float x, float y, float z, float w)
 {

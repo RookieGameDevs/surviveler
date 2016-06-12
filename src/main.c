@@ -11,6 +11,9 @@
 #define FRAG_SHADER "data/default.frag"
 
 // modelview matrix
+static Mat projection;
+
+// modelview matrix
 static Mat modelview;
 
 // object transform matrix
@@ -83,6 +86,15 @@ all_ui(const unsigned int *array, size_t len)
 static int
 setup()
 {
+	float aspect = VIEWPORT_HEIGHT / (float)VIEWPORT_WIDTH;
+	float fov = 5.0;
+	mat_ortho(
+		&projection,
+		-fov, +fov,
+		+fov * aspect, -fov * aspect,
+		0, fov * 2
+	);
+
 	glClearColor(0.3, 0.3, 0.3, 1.0);
 
 	glEnable(GL_DEPTH_TEST);
@@ -91,6 +103,7 @@ setup()
 	glCullFace(GL_FRONT);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
 
 	return 1;
 }
@@ -287,6 +300,9 @@ render()
 
 	// set uniforms
 	int loc;
+
+	loc = glGetUniformLocation(shader, "projection");
+	glUniformMatrix4fv(loc, 1, GL_TRUE, projection.data);
 
 	loc = glGetUniformLocation(shader, "modelview");
 	glUniformMatrix4fv(loc, 1, GL_TRUE, modelview.data);

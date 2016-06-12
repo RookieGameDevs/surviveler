@@ -54,6 +54,9 @@ void
 mat_lookatv(Mat *m, const Vec *eye, const Vec *center, const Vec *up);
 
 void
+mat_ortho(Mat *m, float l, float r, float t, float b, float n, float f);
+
+void
 mat_ident(Mat *m);
 
 int
