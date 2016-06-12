@@ -299,6 +299,7 @@ update(float dt)
 	Vec axis = vec(0, 1, 0, 0);
 	mat_ident(&transform);
 	mat_rotate(&transform, &axis, angle);
+	mat_scale(&transform, 2, 2, 2);
 
 	return 1;
 }
