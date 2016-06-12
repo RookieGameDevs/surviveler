@@ -91,6 +91,11 @@ func (g *Game) loop() error {
 				for _, ent := range gs.players {
 					ent.Update(dt)
 				}
+
+				// update zombies
+				for _, zom := range gs.zombies {
+					zom.Update(dt)
+				}
 				last_time = cur_time
 
 			case tnr := <-g.telnetReq:
