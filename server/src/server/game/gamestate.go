@@ -77,23 +77,45 @@ func (gs GameState) validateWorld() error {
 	}
 	if pt.Kind&KindWalkable == 0 {
 		return fmt.Errorf(
-			"Player spawn point is not located in a walkable area: (%#v)",
+			"Player spawn point is located on a non-walkable point: (%#v)",
 			*pt)
 	}
 	// validate enemies spawn points
+	if len(spawnPoints.Enemies) == 0 {
+		return errors.New("At least one enemy spawn point must be defined")
+	}
 	for i := range spawnPoints.Enemies {
 		zt := gs.World.TileFromWorldVec(spawnPoints.Enemies[i])
 		if zt == nil {
 			return fmt.Errorf(
-				"a Zombie spawn point is out of bounds: (%#v)",
+				"A Zombie spawn point is out of bounds: (%#v)",
 				spawnPoints.Enemies[i])
 		}
 		if zt.Kind&KindWalkable == 0 {
 			return fmt.Errorf(
-				"a Zombie spawn point is not located in a walkable area: (%#v)",
+				"A Zombie spawn point is located on a non-walkable tile: (%#v)",
 				*zt)
 		}
 	}
+	// validate wanderers destination points
+	wanderDest := gs.md.AIKeypoints.WanderingDest
+	if len(wanderDest) == 0 {
+		return errors.New("At least one wandering destination must be defined")
+	}
+	for i := range wanderDest {
+		wt := gs.World.TileFromWorldVec(wanderDest[i])
+		if wt == nil {
+			return fmt.Errorf(
+				"A wandering destination is out of bounds: (%#v)",
+				wanderDest[i])
+		}
+		if wt.Kind&KindWalkable == 0 {
+			return fmt.Errorf(
+				"A wandering destination is located on a non-walkable tile: (%#v)",
+				*wt)
+		}
+	}
+
 	return nil
 }
 

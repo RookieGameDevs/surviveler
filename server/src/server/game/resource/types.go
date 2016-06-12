@@ -31,8 +31,8 @@ type Spawn struct {
  * AIKeypoints regroups the various AI-related key points on the map
  */
 type AIKeypoints struct {
-	Spawn         Spawn   // entity spawn points
-	WanderingDest VecList // list of destination chosen randomly for wanderers
+	Spawn         Spawn   `json:"spawn"`                  // entity spawn points
+	WanderingDest VecList `json:"wandering_destinations"` // splice  of wandering destinations
 }
 
 /*
