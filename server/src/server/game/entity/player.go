@@ -35,7 +35,7 @@ func NewPlayer(spawn math.Vec2, speed float64) *Player {
 func (p *Player) Update(dt time.Duration) {
 	if p.curAction == MovingAction {
 		p.MovableEntity.Update(dt)
-		if p.MovableEntity.hasReachedDestiation {
+		if p.MovableEntity.hasReachedDestination {
 			// come back to Idle if nothing better to do...
 			p.curAction = IdleAction
 		}

@@ -34,11 +34,11 @@ type Entity interface {
  * alongside it. It implements the Entity and Updater interfaces
  */
 type MovableEntity struct {
-	Pos                  math.Vec2   // current position
-	Speed                float64     // speed
-	curPath              []math.Vec2 // player path
-	curPathIdx           int         // index in the path
-	hasReachedDestiation bool
+	Pos                   math.Vec2   // current position
+	Speed                 float64     // speed
+	curPath               []math.Vec2 // player path
+	curPathIdx            int         // index in the path
+	hasReachedDestination bool
 }
 
 func (me *MovableEntity) Update(dt time.Duration) {
@@ -61,20 +61,20 @@ func (me *MovableEntity) Update(dt time.Duration) {
 			switch {
 			case me.curPathIdx < 0:
 				// this was the last path segment
-				me.hasReachedDestiation = true
+				me.hasReachedDestination = true
 			}
 		}
 	}
 }
 
 /*
- * SetPath defines the path that the movable entity should follow
+ * SetPath defines the path that the movable entity should follow along
  */
 func (me *MovableEntity) SetPath(path []math.Vec2) {
-	me.hasReachedDestiation = false
+	me.hasReachedDestination = false
 	me.curPath = path
 	// the tail element of the path represents the starting point, it's also
-	// the position the player is already located, so we don't want to send
+	// the position the entity is already located, so we don't want to send
 	// this position to the client
 	me.curPathIdx = len(path) - 2
 }
