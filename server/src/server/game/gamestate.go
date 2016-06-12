@@ -24,7 +24,7 @@ type GameState struct {
 	World      *World
 	pathfinder Pathfinder
 	md         *resource.MapData
-	director   *AIDirector
+	director   AIDirector
 }
 
 func newGameState() *GameState {
