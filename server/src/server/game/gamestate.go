@@ -67,12 +67,13 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
  * validateWorld performs some logical and semantic checks on the loaded world
  */
 func (gs GameState) validateWorld() error {
+	spawnPoints := gs.md.AIKeypoints.Spawn
 	// validate player spawn point
-	pt := gs.World.TileFromWorldVec(gs.md.Spawn.Player)
+	pt := gs.World.TileFromWorldVec(spawnPoints.Player)
 	if pt == nil {
 		return fmt.Errorf(
 			"Player spawn point is out of bounds (%#v)",
-			gs.md.Spawn.Player)
+			spawnPoints.Player)
 	}
 	if pt.Kind&KindWalkable == 0 {
 		return fmt.Errorf(
@@ -80,12 +81,12 @@ func (gs GameState) validateWorld() error {
 			*pt)
 	}
 	// validate enemies spawn points
-	for i := range gs.md.Spawn.Enemies {
-		zt := gs.World.TileFromWorldVec(gs.md.Spawn.Enemies[i])
+	for i := range spawnPoints.Enemies {
+		zt := gs.World.TileFromWorldVec(spawnPoints.Enemies[i])
 		if zt == nil {
 			return fmt.Errorf(
 				"a Zombie spawn point is out of bounds: (%#v)",
-				gs.md.Spawn.Enemies[i])
+				spawnPoints.Enemies[i])
 		}
 		if zt.Kind&KindWalkable == 0 {
 			return fmt.Errorf(
@@ -121,7 +122,7 @@ func (gs GameState) pack() *msg.GameStateMsg {
 func (gs *GameState) onPlayerJoined(imsg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("We have one more player")
-	gs.players[clientId] = entity.NewPlayer(gs.md.Spawn.Player, 3)
+	gs.players[clientId] = entity.NewPlayer(gs.md.AIKeypoints.Spawn.Player, 3)
 	return nil
 }
 

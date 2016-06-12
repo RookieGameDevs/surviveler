@@ -9,6 +9,7 @@ import (
 )
 
 type Rect2D [2]math.Vec2
+type VecList []math.Vec2
 
 type MapObject struct {
 	Ref      string    `json:"ref"`      // uri of the object inside the package
@@ -22,8 +23,16 @@ type ResourceList map[string]string
  * Spawn regroups the spawn points for different kinds of entities
  */
 type Spawn struct {
-	Player  math.Vec2   `json:"player"`  // player unique spawn point
-	Enemies []math.Vec2 `json:"enemies"` // list of spawn points for enemies
+	Player  math.Vec2 `json:"player"`  // player unique spawn point
+	Enemies VecList   `json:"enemies"` // list of spawn points for enemies
+}
+
+/*
+ * AIKeypoints regroups the various AI-related key points on the map
+ */
+type AIKeypoints struct {
+	Spawn         Spawn   // entity spawn points
+	WanderingDest VecList // list of destination chosen randomly for wanderers
 }
 
 /*
@@ -33,5 +42,5 @@ type MapData struct {
 	Resources   ResourceList `json:"resources"`
 	ScaleFactor float64      `json:"scale_factor"`
 	Objects     []MapObject  `json:"objects"`
-	Spawn       Spawn        `json:"spawn"`
+	AIKeypoints AIKeypoints  `json:"ai_keypoints"`
 }
