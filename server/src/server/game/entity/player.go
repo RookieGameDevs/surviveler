@@ -5,7 +5,6 @@
 package entity
 
 import (
-	gomath "math"
 	"server/math"
 	"time"
 )
@@ -34,46 +33,18 @@ func NewPlayer(spawn math.Vec2, speed float64) *Player {
  * Update updates the local state of the player
  */
 func (p *Player) Update(dt time.Duration) {
-	if p.curAction != IdleAction {
-		// update position on the player path
-		pathLength := len(p.curPath)
-		if pathLength > 0 {
-			// get sub-destination (current path segment)
-			subDst := p.curPath[p.curPathIdx]
-
-			// compute translation vector
-			moveVec := subDst.Sub(p.Pos).Normalize()
-			p.Pos = p.Pos.Add(moveVec.Mul(p.Speed * dt.Seconds()))
-
-			if gomath.Abs(subDst[0]-p.Pos[0]) <= 0.01 &&
-				gomath.Abs(subDst[1]-p.Pos[1]) <= 0.01 {
-				// reached current sub-destination
-				p.curPathIdx--
-				p.Pos = subDst
-
-				switch {
-				case p.curPathIdx < 0:
-					// this was the last path segment
-					if p.curAction == MovingAction {
-						// come back to Idle if nothing better to do...
-						p.curAction = IdleAction
-					}
-				}
-			}
+	if p.curAction == MovingAction {
+		p.MovableEntity.Update(dt)
+		if p.MovableEntity.hasReachedDestiation {
+			// come back to Idle if nothing better to do...
+			p.curAction = IdleAction
 		}
 	}
 }
 
-/*
- * SetPath defines the path that the player should follow
- */
 func (p *Player) SetPath(path []math.Vec2) {
-	p.curPath = path
 	p.curAction = MovingAction
-	// the tail element of that path slice represents the starting point
-	// it's also the position the player is already located, so we don't
-	// want to send this position to the client
-	p.curPathIdx = len(path) - 2
+	p.MovableEntity.SetPath(path)
 }
 
 func (p *Player) GetState() EntityState {
