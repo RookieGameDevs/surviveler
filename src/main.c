@@ -13,6 +13,9 @@
 // modelview matrix
 static Mat modelview;
 
+// object transform matrix
+static Mat transform;
+
 // model
 static GLfloat vertices[] = {
 	+0.5, +0.5, +0.5,
@@ -255,10 +258,17 @@ update(float dt)
 	if (angle >= 2 * M_PI)
 		angle -= 2 * M_PI;
 
-	Vec axis = vec(0, 1, 0, 0);
 	mat_ident(&modelview);
-	mat_translate(&modelview, 0.0, 0.0, -5.0);
-	mat_rotate(&modelview, &axis, angle);
+	mat_lookat(
+		&modelview,
+		5, -5, 5,
+		0, 0, 0,
+		0, 1, 0
+	);
+
+	Vec axis = vec(0, 1, 0, 0);
+	mat_ident(&transform);
+	mat_rotate(&transform, &axis, angle);
 
 	return 1;
 }
@@ -276,8 +286,13 @@ render()
 	}
 
 	// set uniforms
-	int loc = glGetUniformLocation(shader, "modelview");
+	int loc;
+
+	loc = glGetUniformLocation(shader, "modelview");
 	glUniformMatrix4fv(loc, 1, GL_TRUE, modelview.data);
+
+	loc = glGetUniformLocation(shader, "transform");
+	glUniformMatrix4fv(loc, 1, GL_TRUE, transform.data);
 
 	// draw the model
 	glBindVertexArray(vao);

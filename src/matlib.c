@@ -253,6 +253,51 @@ mat_invert(Mat *m, Mat *out_m)
 	return 1;
 }
 
+void
+mat_lookat(
+	Mat *m,
+	float eye_x, float eye_y, float eye_z,
+	float center_x, float center_y, float center_z,
+	float up_x, float up_y, float up_z
+) {
+	Vec eye = vec(eye_x, eye_y, eye_z, 0);
+	Vec center = vec(center_x, center_y, center_z, 0);
+	Vec up = vec(up_x, up_y, up_z, 0);
+	mat_lookatv(m, &eye, &center, &up);
+}
+
+void
+mat_lookatv(Mat *m, const Vec *eye, const Vec *center, const Vec *up)
+{
+	Vec z;
+	vec_subv(center, eye, &z);
+	vec_norm(&z);
+
+	Vec up_norm;
+	memcpy(&up_norm, up, sizeof(Vec));
+	vec_norm(&up_norm);
+
+	Vec x;
+	vec_cross(&z, &up_norm, &x);
+	vec_norm(&x);
+
+	Vec y;
+	vec_cross(&x, &z, &y);
+	vec_norm(&y);
+
+	Mat lookat = {{
+		 x.data[0],  x.data[1],  x.data[2], 0.0,
+		 y.data[0],  y.data[1],  y.data[2], 0.0,
+		-z.data[0], -z.data[1], -z.data[2], 0.0,
+		0,          0,          0,          1
+	}};
+	mat_translate(&lookat, -eye->data[0], -eye->data[1], -eye->data[2]);
+
+	Mat tmp;
+	mat_mul(m, &lookat, &tmp);
+	memcpy(m, &tmp, sizeof(Mat));
+}
+
 Vec
 vec(float x, float y, float z, float w)
 {

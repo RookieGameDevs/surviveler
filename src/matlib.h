@@ -43,6 +43,17 @@ void
 mat_translatev(Mat *m, const Vec *tv);
 
 void
+mat_lookat(
+	Mat *m,
+	float eye_x, float eye_y, float eye_z,
+	float center_x, float center_y, float center_z,
+	float up_x, float up_y, float up_z
+);
+
+void
+mat_lookatv(Mat *m, const Vec *eye, const Vec *center, const Vec *up);
+
+void
 mat_ident(Mat *m);
 
 int
