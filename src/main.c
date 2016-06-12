@@ -10,6 +10,13 @@
 #define VERT_SHADER "data/default.vert"
 #define FRAG_SHADER "data/default.frag"
 
+enum {
+	PERSPECTIVE,
+	ORTHOGRAPHIC
+};
+
+static int projection_mode = ORTHOGRAPHIC;
+
 // modelview matrix
 static Mat projection;
 
@@ -80,31 +87,6 @@ all_ui(const unsigned int *array, size_t len)
 	for (size_t i = 0; i < len; i++)
 		if (!array[i])
 			return 0;
-	return 1;
-}
-
-static int
-setup()
-{
-	float aspect = VIEWPORT_HEIGHT / (float)VIEWPORT_WIDTH;
-	float fov = 5.0;
-	mat_ortho(
-		&projection,
-		-fov, +fov,
-		+fov * aspect, -fov * aspect,
-		0, fov * 2
-	);
-
-	glClearColor(0.3, 0.3, 0.3, 1.0);
-
-	glEnable(GL_DEPTH_TEST);
-
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-
 	return 1;
 }
 
@@ -263,6 +245,41 @@ error:
 }
 
 static int
+setup()
+{
+	float aspect = VIEWPORT_HEIGHT / (float)VIEWPORT_WIDTH;
+	float fov = 5.0;
+	if (projection_mode == PERSPECTIVE) {
+		mat_persp(
+			&projection,
+			fov * 10,
+			1.0 / aspect,
+			1,
+			fov * 2
+		);
+	} else {
+		mat_ortho(
+			&projection,
+			-fov,
+			+fov,
+			+fov * aspect,
+			-fov * aspect,
+			0,
+			fov * 2
+		);
+	}
+
+	glClearColor(0.3, 0.3, 0.3, 1.0);
+
+	glEnable(GL_DEPTH_TEST);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
+	return 1;
+}
+
+static int
 update(float dt)
 {
 	static float angle = 0;
@@ -274,7 +291,7 @@ update(float dt)
 	mat_ident(&modelview);
 	mat_lookat(
 		&modelview,
-		5, -5, 5,
+		5, 5, 5,
 		0, 0, 0,
 		0, 1, 0
 	);
@@ -402,7 +419,16 @@ main(int argc, char *argv[])
 				case SDLK_ESCAPE:
 					run = false;
 					break;
+
+				case SDLK_p:
+					if (projection_mode == ORTHOGRAPHIC)
+						projection_mode = PERSPECTIVE;
+					else
+						projection_mode = ORTHOGRAPHIC;
+					run &= setup();
+					break;
 				}
+
 			}
 		}
 

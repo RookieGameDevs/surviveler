@@ -57,6 +57,9 @@ void
 mat_ortho(Mat *m, float l, float r, float t, float b, float n, float f);
 
 void
+mat_persp(Mat *m, float fovy, float aspect, float n, float f);
+
+void
 mat_ident(Mat *m);
 
 int

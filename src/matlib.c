@@ -309,10 +309,27 @@ mat_ortho(Mat *m, float l, float r, float t, float b, float n, float f)
 	Mat ortho = {{
 		x, 0, 0, tx,
 		0, y, 0, ty,
-		0, 0, 0, tz,
+		0, 0, z, tz,
 		0, 0, 0, 1
 	}};
 	memcpy(m, &ortho, sizeof(Mat));
+}
+
+void
+mat_persp(Mat *m, float fovy, float aspect, float n, float f)
+{
+	fovy = M_PI / 180.0 * fovy;
+	float y = 1.0 / (fovy / 2.0);
+	float x = y / aspect;
+	float z = (f + n) / (n - f);
+	float tz = (2 * f * n) / (n - f);
+	Mat persp = {{
+		x, 0, 0, 0,
+		0, y, 0, 0,
+		0, 0, z, tz,
+		0, 0, -1, 0
+	}};
+	memcpy(m, &persp, sizeof(Mat));
 }
 
 Vec
