@@ -1,4 +1,6 @@
-#include <Python.h>  // must be first
+#ifdef WITH_PYTHON
+# include <Python.h>  // must be first
+#endif
 
 #include "matlib.h"
 #include <stdarg.h>
@@ -336,6 +338,11 @@ vec_cross(const Vec *a, const Vec *b, Vec *r_v)
 }
 
 /******************************************************************************
+ * Python3 wrappers.
+ *****************************************************************************/
+#ifdef WITH_PYTHON
+
+/******************************************************************************
  *  Utility functions
  *****************************************************************************/
 char*
@@ -358,9 +365,6 @@ strfmt(const char *fmt, ...)
 	return msg;
 }
 
-/******************************************************************************
- * Python3 wrappers.
- *****************************************************************************/
 
 /**
  * Module definition.
@@ -1112,3 +1116,4 @@ PyInit_matlib(void)
 
 	return m;
 }
+#endif
