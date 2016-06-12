@@ -7,6 +7,7 @@ package game
 import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
+	"math/rand"
 	"server/game/entity"
 	"server/game/resource"
 	"server/math"
@@ -16,6 +17,9 @@ import (
 // This number represents the ration between the number of logic ticks for one
 // AI director tick
 const AIDirectorTickUpdate int = 20
+
+// TEMPORARY: add a ZombieWanderer every N seconds
+const FrequencyAddZombieWanderer time.Duration = 5 * time.Second
 
 /*
  * AIDirector is the system that manages the ingredients a game session
@@ -33,6 +37,8 @@ type AIDirector struct {
 	curTick       int
 	wandererPaths PathCache // zombie wanderer preprocessed paths
 	keypoints     resource.AIKeypoints
+
+	lastWandererTime time.Time
 }
 
 func (ai *AIDirector) init(gs *GameState) error {
@@ -41,6 +47,7 @@ func (ai *AIDirector) init(gs *GameState) error {
 	ai.curTick = 0
 	ai.keypoints = gs.md.AIKeypoints
 	ai.wandererPaths.init(len(ai.keypoints.Spawn.Enemies), len(ai.keypoints.WanderingDest))
+	ai.lastWandererTime = time.Now()
 
 	// preprocess zombie wanderers paths
 	// from zombie spawn points to wandering destinations
@@ -67,12 +74,31 @@ func (ai *AIDirector) init(gs *GameState) error {
 
 func (ai *AIDirector) summonZombieWanderer() {
 
+	// pick a random spawn point
+	spawnIdx := rand.Intn(len(ai.keypoints.Spawn.Enemies))
+	org := ai.keypoints.Spawn.Enemies[rand.Intn(len(ai.keypoints.Spawn.Enemies))]
+
+	// pick a random wandering destination
+	dstIdx := rand.Intn(len(ai.keypoints.WanderingDest))
+	dst := ai.keypoints.WanderingDest[dstIdx]
+
+	// retrieve cached path
+	path := ai.wandererPaths.path(spawnIdx, dstIdx)
+
+	log.WithFields(log.Fields{
+		"spawn": org,
+		"dst":   dst,
+		"path":  path}).
+		Info("summoning wanderer zombie")
+
+	zId := uint32(len(ai.gs.zombies))
+	ai.gs.zombies[zId] = entity.NewZombieWanderer(org, *path, 1)
 }
 
 /*
  * summonZombieMob creates a group of zombies
  */
-func (ai *AIDirector) summonZombieMob(qty int, zu entity.ZombieUpdater, org math.Vec2, dst math.Vec2) {
+func (ai *AIDirector) summonZombieMob(qty int) {
 	// TODO: to be implemented!
 	for i := 0; i < qty; i++ {
 		//zombie
@@ -86,8 +112,13 @@ func (ai *AIDirector) Update(cur_time time.Time) {
 		return
 	}
 
-	// for now we stupidly summon a wanderer zombie every 2 seconds
-	ai.summonZombieWanderer()
+	// TODO: improve with emotional intensity!
+
+	// but for now we stupidly summon a wanderer zombie every N seconds
+	if time.Since(ai.lastWandererTime) > FrequencyAddZombieWanderer {
+		ai.summonZombieWanderer()
+		ai.lastWandererTime = time.Now()
+	}
 }
 
 type PathCache struct {

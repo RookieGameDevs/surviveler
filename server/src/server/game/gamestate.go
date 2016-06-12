@@ -56,7 +56,7 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 				if gs.World, err = NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
 					gs.pathfinder.World = gs.World
 					if err = gs.validateWorld(); err == nil {
-						gs.director = newAIDirector(gs)
+						gs.director.init(gs)
 					}
 				}
 			}
