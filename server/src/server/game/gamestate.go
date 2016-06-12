@@ -21,6 +21,7 @@ import (
  */
 type GameState struct {
 	players    map[uint32]*entity.Player
+	zombies    map[uint32]*entity.Zombie
 	World      *World
 	pathfinder Pathfinder
 	md         *resource.MapData
@@ -30,6 +31,7 @@ type GameState struct {
 func newGameState() *GameState {
 	return &GameState{
 		players: make(map[uint32]*entity.Player),
+		zombies: make(map[uint32]*entity.Zombie),
 	}
 }
 
@@ -123,17 +125,16 @@ func (gs GameState) validateWorld() error {
  * pack converts the current game state into a GameStateMsg
  */
 func (gs GameState) pack() *msg.GameStateMsg {
-	if len(gs.players) == 0 {
-		// nothing to do
-		return nil
-	}
-
 	// fill the GameStateMsg
 	gsMsg := new(msg.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Entities = make(map[uint32]interface{})
+	gsMsg.Zombies = make(map[uint32]interface{})
 	for id, ent := range gs.players {
 		gsMsg.Entities[id] = ent.GetState()
+	}
+	for id, zom := range gs.zombies {
+		gsMsg.Zombies[id] = zom.GetState()
 	}
 	return gsMsg
 }
