@@ -16,14 +16,13 @@ type Pathfinder struct {
 }
 
 /*
- * FindPlayerPath searches for the best path for a player to reach a
- * destination.
+ * FindPath searches for the best path to reach a destination.
  *
  * The search is performed with the A* algorithm, running on a matrix-shaped
  * graph representing the world. The grid is scaled to achieve a better
  * resolution
  */
-func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path math.Path, dist float64, found bool) {
+func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64, found bool) {
 	// scale org and dst coordinates
 	scaledOrg, scaledDst := org.Mul(pf.World.GridScale), dst.Mul(pf.World.GridScale)
 
