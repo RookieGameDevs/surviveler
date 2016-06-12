@@ -1,5 +1,4 @@
 from abc import ABC
-from abc import abstractproperty
 from matlib import Mat
 from matlib import Vec
 
@@ -13,10 +12,10 @@ class Camera(ABC):
     """
 
     def __init__(self):
-        self.view_mat = Mat()
         self.position = Vec()
         self.translate_mat = Mat()
         self.modelview_mat = Mat()
+        self.projection_mat = Mat()
 
     def set_position(self, center):
         """Sets the position of the center of the scene.
@@ -40,22 +39,8 @@ class Camera(ABC):
         :type up: :class:`matlib.Vec`
         """
         up = up or Vec(0, 1, 0)
-
-        z = eye - center
-        z.norm()
-
-        x = up.cross(z)
-        x.norm()
-
-        y = z.cross(x)
-        y.norm()
-
-        self.view_mat = Mat([
-            Vec(x.x, y.x, z.x, 0),
-            Vec(x.y, y.y, z.y, 0),
-            Vec(x.z, y.z, z.z, 0),
-            Vec(0, 0, 0, 1),
-        ])
+        self.modelview_mat.identity()
+        self.modelview_mat.lookat(eye, center, up)
 
     def unproject(self, vx, vy, vw, vh):
         """Computes the unprojected point from viewport coordinates.
@@ -94,7 +79,7 @@ class Camera(ABC):
         v_eye.z = 0.0
         v_eye.w = 0.0
 
-        v_world = self.view_mat * v_eye
+        v_world = self.modelview_mat * v_eye
         v_world -= Vec(
             self.translate_mat[0, 3],
             self.translate_mat[1, 3],
@@ -106,19 +91,19 @@ class Camera(ABC):
     @property
     def modelview(self):
         """Camera modelview 4x4 matrix."""
-        return self.view_mat * self.translate_mat
+        return self.modelview_mat * self.translate_mat
 
-    @abstractproperty
+    @property
     def projection(self):
         """Camera projection 4x4 matrix."""
-        pass
+        return self.projection_mat
 
 
 class OrthoCamera(Camera):
     """Orthographic camera."""
 
     def __init__(self, left, right, top, bottom, near, far):
-        """Creates the orthocamera with the various parameters needed.
+        """Constructor. Initializes an orthographic projection camera.
 
         :param left: The left boundary
         :type left: float
@@ -139,36 +124,4 @@ class OrthoCamera(Camera):
         :type far: float
         """
         super(OrthoCamera, self).__init__()
-        self.l = left
-        self.r = right
-        self.t = top
-        self.b = bottom
-        self.n = near
-        self.f = far
-
-    @property
-    def modelview(self):
-        """Camera modelview 4x4 matrix."""
-        t = super().modelview
-        m = Mat(self.view_mat)
-        m.invert()
-        t.translate(m * Vec(0, 0, -(self.n + self.f) / 2))
-        return t
-
-    @property
-    def projection(self):
-        """Camera projection 4x4 matrix."""
-        sx = 2.0 / (self.r - self.l)
-        sy = 2.0 / (self.t - self.b)
-        sz = -2.0 / (self.f - self.n)
-        tx = -(self.r + self.l) / (self.r - self.l)
-        ty = -(self.t + self.b) / (self.t - self.b)
-        tz = -(self.f + self.n) / (self.f - self.n)
-        proj_mat = Mat([
-            Vec(sx, 0,  0,  tx),
-            Vec(0,  sy, 0,  ty),
-            Vec(0,  0,  sz, tz),
-            Vec(0,  0,  0,  1),
-        ])
-
-        return proj_mat
+        self.projection_mat.ortho(left, right, top, bottom, near, far)

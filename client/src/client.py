@@ -149,9 +149,9 @@ class Client:
             +fov / 2,            # right plane
             -fov / 2 * aspect,   # top plane
             +fov / 2 * aspect,   # bottom plane
-            500, 1500)           # view depth
+            0, 500)              # view depth
 
-        camera.look_at(eye=Vec(0, 12, 20), center=Vec(0, 0, 0))
+        camera.look_at(eye=Vec(0, -20, 20), center=Vec(0, 0, 0))
         return camera
 
     @property
