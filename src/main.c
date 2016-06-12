@@ -1,3 +1,4 @@
+#include "matlib.h"
 #include <GL/glew.h>
 #include <SDL.h>
 #include <stdbool.h>
@@ -8,6 +9,9 @@
 
 #define VERT_SHADER "data/default.vert"
 #define FRAG_SHADER "data/default.frag"
+
+// modelview matrix
+static Mat modelview;
 
 // model
 static GLfloat vertices[] = {
@@ -79,7 +83,11 @@ setup()
 	glClearColor(0.3, 0.3, 0.3, 1.0);
 
 	glEnable(GL_DEPTH_TEST);
+
+	glEnable(GL_CULL_FACE);
 	glCullFace(GL_FRONT);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	return 1;
 }
@@ -239,6 +247,23 @@ error:
 }
 
 static int
+update(float dt)
+{
+	static float angle = 0;
+
+	angle += dt * M_PI / 4.0f;
+	if (angle >= 2 * M_PI)
+		angle -= 2 * M_PI;
+
+	Vec axis = vec(0, 1, 0, 0);
+	mat_ident(&modelview);
+	mat_translate(&modelview, 0.0, 0.0, -5.0);
+	mat_rotate(&modelview, &axis, angle);
+
+	return 1;
+}
+
+static int
 render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -249,6 +274,10 @@ render()
 		fprintf(stderr, "failed to activate shader\n");
 		return 0;
 	}
+
+	// set uniforms
+	int loc = glGetUniformLocation(shader, "modelview");
+	glUniformMatrix4fv(loc, 1, GL_TRUE, modelview.data);
 
 	// draw the model
 	glBindVertexArray(vao);
@@ -333,6 +362,7 @@ main(int argc, char *argv[])
 	SDL_Event evt;
 
 	bool run = true;
+	Uint32 last_update = 0;
 	while (run) {
 		while (SDL_PollEvent(&evt)) {
 			if (evt.type == SDL_KEYUP) {
@@ -344,6 +374,15 @@ main(int argc, char *argv[])
 				}
 			}
 		}
+
+		Uint32 now = SDL_GetTicks();
+		if (last_update == 0)
+			last_update = now;
+		float dt = (now - last_update) / 1000.0f;
+		last_update = now;
+
+		run &= update(dt);
+
 		run &= render();
 		SDL_GL_SwapWindow(window);
 	}
