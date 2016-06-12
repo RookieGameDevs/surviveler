@@ -23,7 +23,7 @@ type Updater interface {
  */
 type Entity interface {
 	GetState() EntityState
-	SetPath(path []math.Vec2)
+	SetPath(path math.Path)
 }
 
 /*
@@ -34,10 +34,10 @@ type Entity interface {
  * alongside it. It implements the Entity and Updater interfaces
  */
 type MovableEntity struct {
-	Pos                   math.Vec2   // current position
-	Speed                 float64     // speed
-	curPath               []math.Vec2 // player path
-	curPathIdx            int         // index in the path
+	Pos                   math.Vec2 // current position
+	Speed                 float64   // speed
+	curPath               math.Path // player path
+	curPathIdx            int       // index in the path
 	hasReachedDestination bool
 }
 
@@ -70,7 +70,7 @@ func (me *MovableEntity) Update(dt time.Duration) {
 /*
  * SetPath defines the path that the movable entity should follow along
  */
-func (me *MovableEntity) SetPath(path []math.Vec2) {
+func (me *MovableEntity) SetPath(path math.Path) {
 	me.hasReachedDestination = false
 	me.curPath = path
 	// the tail element of the path represents the starting point, it's also

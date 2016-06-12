@@ -97,6 +97,6 @@ const (
  * The result of a successfull movement request computation
  */
 type MovementRequestResultMsg struct {
-	EntityId uint32      // Id of the entity for which pathfinding was computed
-	Path     []math.Vec2 // the path found
+	EntityId uint32    // Id of the entity for which pathfinding was computed
+	Path     math.Path // the path found
 }

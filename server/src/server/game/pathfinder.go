@@ -15,8 +15,6 @@ type Pathfinder struct {
 	World *World
 }
 
-type Path []math.Vec2
-
 /*
  * FindPlayerPath searches for the best path for a player to reach a
  * destination.
@@ -25,7 +23,7 @@ type Path []math.Vec2
  * graph representing the world. The grid is scaled to achieve a better
  * resolution
  */
-func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64, found bool) {
+func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path math.Path, dist float64, found bool) {
 	// scale org and dst coordinates
 	scaledOrg, scaledDst := org.Mul(pf.World.GridScale), dst.Mul(pf.World.GridScale)
 
@@ -50,7 +48,7 @@ func (pf Pathfinder) FindPlayerPath(org, dst math.Vec2) (path Path, dist float64
 	// - clip path segment ends to cell center
 	invScale := 1.0 / pf.World.GridScale
 	txCenter := math.Vec2{0.5, 0.5} // tx vector to the cell center
-	path = make([]math.Vec2, 0, len(rawPath))
+	path = make(math.Path, 0, len(rawPath))
 	var last math.Vec2
 	for pidx := range rawPath {
 		tile := rawPath[pidx].(*Tile)

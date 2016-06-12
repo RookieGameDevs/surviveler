@@ -42,7 +42,7 @@ func (p *Player) Update(dt time.Duration) {
 	}
 }
 
-func (p *Player) SetPath(path []math.Vec2) {
+func (p *Player) SetPath(path math.Path) {
 	p.curAction = MovingAction
 	p.MovableEntity.SetPath(path)
 }
