@@ -23,7 +23,7 @@ type Updater interface {
  */
 type Entity interface {
 	GetState() EntityState
-	SetPath(path math.Path)
+	Updater
 }
 
 /*
