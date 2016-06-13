@@ -16,7 +16,7 @@ from network import get_message_handlers
 from network import message_handler
 from renderer import Light
 from renderer import LightNode
-from renderer import OrthoCamera
+from renderer import PerspCamera
 from renderer import Scene
 from utils import as_utf8
 from utils import tstamp
@@ -60,8 +60,8 @@ class Client:
         context = Context(conf)
         context.res_mgr = res_mgr
         context.scene = self.setup_scene(context)
-        context.terrain = self.setup_terrain(context)
         context.camera = self.setup_camera(context)
+        context.terrain = self.setup_terrain(context)
         context.map = self.setup_map(context)
         ui_res = context.res_mgr.get('/ui')
         context.ui = UI(ui_res, self.renderer)
@@ -136,22 +136,16 @@ class Client:
         :return: The camera
         :rtype: :class:`renderer.camera.Camera`
         """
-        # Field of view in game units
-        fov = context.conf['Game'].getint('fov')
-
         # Aspect ratio
         aspect = self.renderer.height / float(self.renderer.width)
 
-        # Setup an orthographic camera with given field of view and flipped Y
-        # coordinate (Y+ points down)
-        camera = OrthoCamera(
-            -fov / 2,            # left plane
-            +fov / 2,            # right plane
-            -fov / 2 * aspect,   # top plane
-            +fov / 2 * aspect,   # bottom plane
-            0, 500)              # view depth
+        camera = PerspCamera(
+            45,
+            1.0 / aspect,
+            1,
+            500)
 
-        camera.look_at(eye=Vec(0, -20, 20), center=Vec(0, 0, 0))
+        camera.look_at(eye=Vec(0, 20, 10), center=Vec(0, 0, 0))
         return camera
 
     @property

@@ -1,9 +1,7 @@
 from OpenGL.GL import GL_BACK
-from OpenGL.GL import glDepthRange
 from OpenGL.GL import GL_BLEND
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
 from OpenGL.GL import GL_CULL_FACE
-from OpenGL.GL import GL_CW
 from OpenGL.GL import GL_DEPTH_BUFFER_BIT
 from OpenGL.GL import GL_DEPTH_TEST
 from OpenGL.GL import GL_FILL
@@ -20,7 +18,6 @@ from OpenGL.GL import glClearColor
 from OpenGL.GL import glCullFace
 from OpenGL.GL import glEnable
 from OpenGL.GL import glFlush
-from OpenGL.GL import glFrontFace
 from OpenGL.GL import glGetString
 from OpenGL.GL import glPolygonMode
 from contextlib import ExitStack
@@ -165,7 +162,7 @@ class Renderer:
         glCullFace(GL_BACK)
 
         # flip the winding order
-        glFrontFace(GL_CW)
+        # glFrontFace(GL_CW)
 
         # enable depth buffer
         glEnable(GL_DEPTH_TEST)
@@ -173,8 +170,6 @@ class Renderer:
         # enable alpha-blending
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-
-        glDepthRange(1, 0)
 
         # clear to black
         glClearColor(0.3, 0.5, 0.7, 1)

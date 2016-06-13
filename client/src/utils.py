@@ -1,4 +1,5 @@
 from datetime import datetime
+from matlib import Vec
 import math
 
 
@@ -63,3 +64,13 @@ def angle(p1, p2):
     :rtype: float
     """
     return math.atan2(p2[1] - p1[1], p2[0] - p1[0])
+
+
+def to_scene(x, y):
+    """Convert world coordinates to scene coordinates."""
+    return Vec(x, 0, y)
+
+
+def to_world(x, y, z):
+    """Convert scene coordinates to world coordinates."""
+    return Vec(x, z, 0)

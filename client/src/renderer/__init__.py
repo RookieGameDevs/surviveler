@@ -1,4 +1,5 @@
 from renderer.camera import OrthoCamera  # noqa
+from renderer.camera import PerspCamera  # noqa
 from renderer.font import Font  # noqa
 from renderer.geometry import GeometryNode  # noqa
 from renderer.light import Light  # noqa

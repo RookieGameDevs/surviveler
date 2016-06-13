@@ -42,51 +42,51 @@ class Camera(ABC):
         self.modelview_mat.identity()
         self.modelview_mat.lookat(eye, center, up)
 
-    def unproject(self, vx, vy, vw, vh):
-        """Computes the unprojected point from viewport coordinates.
+    def unproject(self, vx, vy, vz, vw, vh):
+        """Unprojects a point in viewport coordinates into world coordinates.
 
         :param vx: Viewport X coordinate.
-        :type vx: int
+        :type vx: float
 
         :param vy: Viewport Y coordinate.
-        :type vy: int
+        :type vy: float
+
+        :param vz: Viewport Z coordinate in range [0, 1].
+        :type vz: float
 
         :param vw: Viewport width.
-        :type vw: int
+        :type vw: float
 
         :param vh: Viewport height.
-        :type vh: int
+        :type vh: float
 
-        :returns: The point on the viewport in world coordinates.
+        :returns: Unprojected point in world coordinates.
         :rtype: :class:`matlib.Vec`
         """
-        # transform viewport coordinates to NDC space
         x_ndc = 2.0 * vx / vw - 1.0
-        y_ndc = 1.0 - 2 * vy / vh
+        y_ndc = 1.0 - (2.0 * vy) / vh
+        z_ndc = 2 * vz - 1
+        w_ndc = 1.0
+        v_clip = Vec(x_ndc, y_ndc, z_ndc, w_ndc)
 
-        # transform NDC coordinates to homogeneous clip coordinates by making a
-        # 4D vector pointing to negative Z and having W set to 1.0
-        v_clip = Vec(x_ndc, y_ndc, -1, 1.0)
+        # m = self.projection * self.modelview
+        m = self.projection * self.modelview
+        m.invert()
 
-        # transform clip coordinates to eye space by unprojecting them using
-        # camera's projection matrix's inverse
-        m_projection = Mat(self.projection)
-        m_projection.invert()
-        v_eye = m_projection * v_clip
+        out = m * v_clip
+        out.w = 1.0 / out.w
+        out.x *= out.w
+        out.y *= out.w
+        out.z *= out.w
+        return out
 
-        # change the vector so that only X and Y components are used, Z and W is
-        # of no use
-        v_eye.z = 0.0
-        v_eye.w = 0.0
-
-        v_world = self.modelview_mat * v_eye
-        v_world -= Vec(
-            self.translate_mat[0, 3],
-            self.translate_mat[1, 3],
-            self.translate_mat[2, 3],
-        )
-
-        return v_world
+    def trace_ray(self, vx, vy, vw, vh):
+        """Traces a ray using viewport coordinates."""
+        p1 = self.unproject(vx, vy, 0, vw, vh)
+        p2 = self.unproject(vx, vy, 1, vw, vh)
+        ray = p2 - p1
+        ray.norm()
+        return p1, ray
 
     @property
     def modelview(self):
@@ -125,3 +125,25 @@ class OrthoCamera(Camera):
         """
         super(OrthoCamera, self).__init__()
         self.projection_mat.ortho(left, right, top, bottom, near, far)
+
+
+class PerspCamera(Camera):
+    """Orthographic camera."""
+
+    def __init__(self, fovy, aspect, near, far):
+        """Constructor. Initializes a perspective projection camera.
+
+        :param fovy: Vertical FOV.
+        :type fovy: float
+
+        :param aspect: Aspect ratio (w / h)
+        :type aspect: float
+
+        :param near: The near clipping plane
+        :type near: float
+
+        :param far: The far clipping plane
+        :type far: float
+        """
+        super(PerspCamera, self).__init__()
+        self.projection_mat.persp(fovy, aspect, near, far)
