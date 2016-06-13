@@ -37,7 +37,7 @@ class UI:
 
         self.log_line_height = 18
         self.log_height = 0
-        self.log_color = Vec(0.4, 0.4, 0.4)
+        self.log_color = Vec(0.7, 0.7, 0.7)
         self.log_font = Font(resource['font'], 14)
         self.log_shader = resource['shader']
         self.log_node = self.scene.root.add_child(SceneNode())
