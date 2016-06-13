@@ -6,6 +6,7 @@ cflags = [
     '-std=c99',
     '-Wall',
     '-O3',
+    '-DWITH_PYTHON',
 ]
 
 libs = [

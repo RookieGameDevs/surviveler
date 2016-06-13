@@ -2,6 +2,10 @@
 
 #include <math.h>
 
+#ifndef M_PI
+# define M_PI 3.14159265358979323846
+#endif
+
 typedef struct Vec Vec;
 typedef struct Mat Mat;
 
@@ -37,6 +41,23 @@ mat_translate(Mat *m, float tx, float ty, float tz);
 
 void
 mat_translatev(Mat *m, const Vec *tv);
+
+void
+mat_lookat(
+	Mat *m,
+	float eye_x, float eye_y, float eye_z,
+	float center_x, float center_y, float center_z,
+	float up_x, float up_y, float up_z
+);
+
+void
+mat_lookatv(Mat *m, const Vec *eye, const Vec *center, const Vec *up);
+
+void
+mat_ortho(Mat *m, float l, float r, float t, float b, float n, float f);
+
+void
+mat_persp(Mat *m, float fovy, float aspect, float n, float f);
 
 void
 mat_ident(Mat *m);

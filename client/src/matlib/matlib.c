@@ -1,4 +1,6 @@
-#include <Python.h>  // must be first
+#ifdef WITH_PYTHON
+# include <Python.h>  // must be first
+#endif
 
 #include "matlib.h"
 #include <stdarg.h>
@@ -7,10 +9,6 @@
 # include <Accelerate/Accelerate.h>
 #else
 # include <cblas.h>
-#endif
-
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
 #endif
 
 void
@@ -255,6 +253,85 @@ mat_invert(Mat *m, Mat *out_m)
 	return 1;
 }
 
+void
+mat_lookat(
+	Mat *m,
+	float eye_x, float eye_y, float eye_z,
+	float center_x, float center_y, float center_z,
+	float up_x, float up_y, float up_z
+) {
+	Vec eye = vec(eye_x, eye_y, eye_z, 0);
+	Vec center = vec(center_x, center_y, center_z, 0);
+	Vec up = vec(up_x, up_y, up_z, 0);
+	mat_lookatv(m, &eye, &center, &up);
+}
+
+void
+mat_lookatv(Mat *m, const Vec *eye, const Vec *center, const Vec *up)
+{
+	Vec z;
+	vec_subv(center, eye, &z);
+	vec_norm(&z);
+
+	Vec up_norm;
+	memcpy(&up_norm, up, sizeof(Vec));
+	vec_norm(&up_norm);
+
+	Vec x;
+	vec_cross(&z, &up_norm, &x);
+	vec_norm(&x);
+
+	Vec y;
+	vec_cross(&x, &z, &y);
+	vec_norm(&y);
+
+	Mat lookat = {{
+		 x.data[0],  x.data[1],  x.data[2], 0.0,
+		 y.data[0],  y.data[1],  y.data[2], 0.0,
+		-z.data[0], -z.data[1], -z.data[2], 0.0,
+		0,          0,          0,          1
+	}};
+	mat_translate(&lookat, -eye->data[0], -eye->data[1], -eye->data[2]);
+	memcpy(m, &lookat, sizeof(Mat));
+}
+
+void
+mat_ortho(Mat *m, float l, float r, float t, float b, float n, float f)
+{
+	float x = 2.0f / (r - l);
+	float y = 2.0f / (t - b);
+	float z = -2.0f / (f - n);
+
+	float tx = -(r + l) / (r - l);
+	float ty = -(t + b) / (t - b);
+	float tz = -(f + n) / (f - n);
+
+	Mat ortho = {{
+		x, 0, 0, tx,
+		0, y, 0, ty,
+		0, 0, z, tz,
+		0, 0, 0, 1
+	}};
+	memcpy(m, &ortho, sizeof(Mat));
+}
+
+void
+mat_persp(Mat *m, float fovy, float aspect, float n, float f)
+{
+	fovy = M_PI / 180.0 * fovy;
+	float y = 1.0 / (fovy / 2.0);
+	float x = y / aspect;
+	float z = (f + n) / (n - f);
+	float tz = (2 * f * n) / (n - f);
+	Mat persp = {{
+		x, 0, 0, 0,
+		0, y, 0, 0,
+		0, 0, z, tz,
+		0, 0, -1, 0
+	}};
+	memcpy(m, &persp, sizeof(Mat));
+}
+
 Vec
 vec(float x, float y, float z, float w)
 {
@@ -336,6 +413,11 @@ vec_cross(const Vec *a, const Vec *b, Vec *r_v)
 }
 
 /******************************************************************************
+ * Python3 wrappers.
+ *****************************************************************************/
+#ifdef WITH_PYTHON
+
+/******************************************************************************
  *  Utility functions
  *****************************************************************************/
 char*
@@ -358,9 +440,6 @@ strfmt(const char *fmt, ...)
 	return msg;
 }
 
-/******************************************************************************
- * Python3 wrappers.
- *****************************************************************************/
 
 /**
  * Module definition.
@@ -726,6 +805,15 @@ static PyObject*
 py_mat_identity(PyObject *self);
 
 static PyObject*
+py_mat_lookat(PyObject *self, PyObject *args);
+
+static PyObject*
+py_mat_ortho(PyObject *self, PyObject *args);
+
+static PyObject*
+py_mat_persp(PyObject *self, PyObject *args);
+
+static PyObject*
 py_mat_repr(PyObject *self);
 
 static PyObject*
@@ -764,6 +852,12 @@ py_mat_cmp(PyObject *self, PyObject *other, int op);
 static PyMethodDef mat_methods[] = {
 	{ "identity", (PyCFunction)py_mat_identity, METH_NOARGS,
 	  "Initialize to identity matrix." },
+	{ "lookat", (PyCFunction)py_mat_lookat, METH_VARARGS,
+	  "Initialize to \"look at\" orientation matrix." },
+	{ "ortho", (PyCFunction)py_mat_ortho, METH_VARARGS,
+	  "Initialize to orthographic projection matrix." },
+	{ "persp", (PyCFunction)py_mat_persp, METH_VARARGS,
+	  "Initialize to perspective projection matrix." },
 	{ "rotate", (PyCFunction)py_mat_rotate, METH_VARARGS,
 	  "Apply a rotation defined by an axis and angle." },
 	{ "scale", (PyCFunction)py_mat_scale, METH_O,
@@ -885,6 +979,60 @@ py_mat_identity(PyObject *self)
 {
 	Mat *m = to_mat_ptr(self);
 	mat_ident(m);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_mat_lookat(PyObject *self, PyObject *args)
+{
+	PyObject *eye = NULL, *center = NULL, *up = NULL;
+	if (!PyArg_ParseTuple(args, "OOO", &eye, &center, &up) ||
+	    !PyObject_TypeCheck(eye, &py_vec_type) ||
+	    !PyObject_TypeCheck(center, &py_vec_type) ||
+	    !PyObject_TypeCheck(up, &py_vec_type)) {
+			PyErr_SetString(
+				PyExc_RuntimeError,
+				"expected eye, center and up vectors as Vec instances"
+			);
+			return NULL;
+	}
+	Mat *m_self = to_mat_ptr(self);
+	Vec *v_eye = to_vec_ptr(eye);
+	Vec *v_center = to_vec_ptr(center);
+	Vec *v_up = to_vec_ptr(up);
+	mat_lookatv(m_self, v_eye, v_center, v_up);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_mat_ortho(PyObject *self, PyObject *args)
+{
+	float l, r, t, b, n, f;
+	if (!PyArg_ParseTuple(args, "ffffff", &l, &r, &t, &b, &n, &f)) {
+			PyErr_SetString(
+				PyExc_RuntimeError,
+				"expected left, right, top, bottom, near, far as floats"
+			);
+			return NULL;
+	}
+	Mat *m_self = to_mat_ptr(self);
+	mat_ortho(m_self, l, r, t, b, n, f);
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_mat_persp(PyObject *self, PyObject *args)
+{
+	float fovy, aspect, near, far;
+	if (!PyArg_ParseTuple(args, "ffff", &fovy, &aspect, &near, &far)) {
+			PyErr_SetString(
+				PyExc_RuntimeError,
+				"expected fovy, aspect, near, far as floats"
+			);
+			return NULL;
+	}
+	Mat *m_self = to_mat_ptr(self);
+	mat_persp(m_self, fovy, aspect, near, far);
 	Py_RETURN_NONE;
 }
 
@@ -1112,3 +1260,4 @@ PyInit_matlib(void)
 
 	return m;
 }
+#endif

@@ -11,6 +11,7 @@ from math import copysign
 from math import pi
 from matlib import Vec
 from renderer import Texture
+from utils import to_scene
 import logging
 
 
@@ -119,8 +120,8 @@ class Character(Entity):
 
         t = self[Renderable].transform
         t.identity()
-        t.translate(Vec(x, y))
-        t.rotate(Vec(0, 0, 1), self.heading)
+        t.translate(to_scene(x, y))
+        t.rotate(Vec(0, 1, 0), -self.heading)
 
         self.orientate()
 

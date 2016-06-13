@@ -4,6 +4,7 @@ from matlib import Vec
 from network import Message
 from network import MessageField
 from network import MessageType
+from utils import to_world
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -19,26 +20,25 @@ def handle_mouse_click(evt):
         w = int(renderer_conf['width'])
         h = int(renderer_conf['height'])
 
-        # Position on near clipping plane
-        pos = evt.context.camera.unproject(evt.x, evt.y, w, h)
-        camera = evt.context.camera
         # Find the direction applying the modelview matrix to the facing
         # direction of the camera
-        d = camera.modelview * Vec(0, 0, -1)
-        # Calculate the normal vector of the z=0 plane
-        norm = Vec(0, 0, -1)
-        d.norm()
+        camera = evt.context.camera
+        pos, ray = camera.trace_ray(evt.x, evt.y, w, h)
+
+        # The normal vector for the y=0 plane
+        norm = Vec(0, 1, 0)
 
         # And here finally we have the target of the click in world coordinates
         # More reference about the used math here:
         #  * http://antongerdelan.net/opengl/raycasting.html
-        t = - (pos.dot(norm)) / d.dot(norm)
-        target = pos + (d * t)
-        LOG.debug('World pos: {},{},{}'.format(target.x, target.y, target.z))
+        t = - (pos.dot(norm)) / ray.dot(norm)
+        target = pos + (ray * t)
+        world_pos = to_world(target.x, target.y, target.z)
+        LOG.debug('World pos: {}'.format(world_pos))
 
         msg = Message(MessageType.move, {
-            MessageField.x_pos: float(target.x),
-            MessageField.y_pos: float(target.y),
+            MessageField.x_pos: world_pos.x,
+            MessageField.y_pos: world_pos.y,
         })
 
         evt.context.msg_queue.append(msg)

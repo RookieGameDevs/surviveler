@@ -169,14 +169,14 @@ class Rect(Mesh):
         right = width
         bottom = 0
         vertices = [
-            left, top, 0.0,
-            left, bottom, 0.0,
-            right, bottom, 0.0,
-            right, top, 0.0,
+            left, 0, top,
+            left, 0, bottom,
+            right, 0, bottom,
+            right, 0, top
         ]
         indices = [
-            0, 1, 2,
-            0, 2, 3,
+            2, 1, 0,
+            3, 2, 0,
         ]
         u = 1.0 if normalize_uvs else width
         v = 1.0 if normalize_uvs else height

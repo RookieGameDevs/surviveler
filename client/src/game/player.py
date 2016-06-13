@@ -3,7 +3,7 @@ from events import subscriber
 from game import Character
 from game.components import Movable
 from game.events import PlayerJoin
-from matlib import Vec
+from utils import to_scene
 import logging
 
 
@@ -28,7 +28,7 @@ class Player(Character):
 
         # update camera position
         context = Context.get_instance()
-        context.camera.set_position(Vec(x, y))
+        context.camera.set_position(to_scene(x, y))
 
 
 @subscriber(PlayerJoin)

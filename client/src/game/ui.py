@@ -2,6 +2,7 @@ from datetime import datetime
 from events import subscriber
 from game.events import CharacterJoin
 from game.events import CharacterLeave
+from math import pi
 from matlib import Vec
 from renderer import Font
 from renderer import OrthoCamera
@@ -29,11 +30,14 @@ class UI:
         self.w = renderer.width
         self.h = renderer.height
         self.scene = Scene()
-        self.camera = OrthoCamera(0, self.w, 0, self.h, 0.5, 1.5)
+        self.camera = OrthoCamera(
+            -self.w / 2, +self.w / 2,
+            +self.h / 2, -self.h / 2,
+            0, 1)
 
         self.log_line_height = 18
         self.log_height = 0
-        self.log_color = Vec(0.4, 0.4, 0.4)
+        self.log_color = Vec(0.7, 0.7, 0.7)
         self.log_font = Font(resource['font'], 14)
         self.log_shader = resource['shader']
         self.log_node = self.scene.root.add_child(SceneNode())
@@ -44,8 +48,25 @@ class UI:
             'FPS',
             self.log_color))
 
-        self.fps_counter_node.transform.translate(
-            Vec(self.w - self.w * 0.1, 0, 0))
+        self.transform(self.fps_counter_node, self.w * 0.90, 0)
+
+    def transform(self, node, x, y):
+        """Transform the UI scene node from screen space to scene space.
+
+        :param node: Scene node to transform.
+        :type node: :class:`renderer.scene.SceneNode`
+
+        :param x: Screen X coordinate.
+        :type x: float
+
+        :param y: Screen Y coordinate.
+        :type y: float
+        """
+        tx = x - self.w / 2
+        ty = self.h / 2 - y
+        node.transform.identity()
+        node.transform.translate(Vec(tx, ty, -0.5))
+        node.transform.rotate(Vec(1, 0, 0), pi / 2)
 
     def set_fps(self, number):
         """Set the current frame rate in FPS widget.
@@ -69,8 +90,8 @@ class UI:
             self.log_shader,
             msg,
             self.log_color))
+        self.transform(txt, 0, self.log_height)
 
-        txt.transform.identity()
         self.log_height += self.log_line_height
 
     def render(self):
