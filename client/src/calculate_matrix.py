@@ -132,7 +132,7 @@ def s_width(faces):
 
 def s_height(faces):
     """Calculate the minimum and maximum of the given list of faces on the
-    y-axis. Rounded up (or down for negatives).
+    z-axis. Rounded up (or down for negatives).
 
     :param faces: The list of faces to be considered
     :type faces: int, int
@@ -140,7 +140,7 @@ def s_height(faces):
     :return: The minimum and maximum
     :rtype: tuple
     """
-    return mag(1, faces)
+    return mag(2, faces)
 
 
 def is_walkable(p, d, face, step=0):
@@ -161,7 +161,7 @@ def is_walkable(p, d, face, step=0):
     :return: Boolean representing the walkability of the cell
     :rtype: bool
     """
-    walkable = not in_triangle([p[0] + d, p[1] + d], face)
+    walkable = not in_triangle([p[0] + d, 0, p[1] + d], face)
 
     if not step:
         return walkable
@@ -265,13 +265,23 @@ def calculate_matrix(faces, precision, grid_cell):
     :return: The generated level walkable matrix
     :rtype: dict
     """
+
+    def norm_face(face):
+        return list(
+            map(
+                lambda x: [
+                    x[0],
+                    0 if abs(x[1]) <= EPSILON else x[1],
+                    x[2]],
+                face))
+
     # Filter out non-relevant faces.
     # NOTE: relevant faces are the ones completely on the xy plane where
     # (z <= EPSILON).
     def f_func(face):
         """Filter function for relevant faces.
         """
-        on_floor = all(map(lambda x: abs(x[2]) <= EPSILON, face))
+        on_floor = all(map(lambda x: abs(x[1]) <= EPSILON, face))
         return on_floor and not is_degenerate(face)
 
     relevant = list(
