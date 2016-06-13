@@ -51,6 +51,17 @@ class UI:
         self.transform(self.fps_counter_node, self.w * 0.90, 0)
 
     def transform(self, node, x, y):
+        """Transform the UI scene node from screen space to scene space.
+
+        :param node: Scene node to transform.
+        :type node: :class:`renderer.scene.SceneNode`
+
+        :param x: Screen X coordinate.
+        :type x: float
+
+        :param y: Screen Y coordinate.
+        :type y: float
+        """
         tx = x - self.w / 2
         ty = self.h / 2 - y
         node.transform.identity()
