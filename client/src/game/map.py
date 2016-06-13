@@ -34,7 +34,7 @@ class Map(Entity):
 
         # FIXME: this offset here is due to the calculation of the walkable
         # matrix that adds one more walkable line on top of the scenario.
-        self[Renderable].transform.translate(Vec(0.0, 1))
+        self[Renderable].transform.translate(Vec(0.0, 0.0, 1.0))
 
     def update(self, dt):
         # NOTE: nothing to do
