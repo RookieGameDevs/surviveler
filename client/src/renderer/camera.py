@@ -81,7 +81,25 @@ class Camera(ABC):
         return out
 
     def trace_ray(self, vx, vy, vw, vh):
-        """Traces a ray using viewport coordinates."""
+        """Traces a ray from viewport point "into the screen" and returns the
+        ray origin and direction vector.
+
+        :param vx: Viewport X coordinate.
+        :type vx: float
+
+        :param vy: Viewport Y coordinate.
+        :type vy: float
+
+        :param vw: Viewport width.
+        :type vw: float
+
+        :param vh: Viewport height.
+        :type vh: float
+
+        :returns: A tuple with the origin being first element and normalized
+            direction vector the second.
+        :rtype: (:class:`matlib.Vec`, :class:`matlib.Vec`)
+        """
         p1 = self.unproject(vx, vy, 0, vw, vh)
         p2 = self.unproject(vx, vy, 1, vw, vh)
         ray = p2 - p1
