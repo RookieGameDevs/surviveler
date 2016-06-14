@@ -141,7 +141,7 @@ def handle_entity_disappear(gs_mgr):
 
 @processor
 def handle_entity_idle(gs_mgr):
-    """Creates and triggers the PlayerPositionUpdated event.
+    """Creates and triggers the EntityIdle event.
 
     :param gs_mgr: the gs_mgr
     :type gs_mgr: dict
