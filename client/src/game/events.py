@@ -26,6 +26,24 @@ class EntityDisappear(Event):
         return '<EntityDisappear({})>'.format(self.srv_id)
 
 
+class TimeUpdate(Event):
+    """Game time updated.
+
+    Event emitted on game time change.
+    """
+    def __init__(self, hour, minute):
+        """Constructor.
+
+        :param hour: Hour.
+        :type hour: int
+
+        :param minute: Minute.
+        :type minute: int
+        """
+        self.hour = hour
+        self.minute = minute
+
+
 class EntityIdle(Event):
     """Entity is idle.
 

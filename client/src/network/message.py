@@ -34,6 +34,7 @@ class MessageField(bytes, Enum):
     name = b'Name'
     players = b'Players'
     reason = b'Reason'
+    time = b'Time'
 
 
 class Message:
