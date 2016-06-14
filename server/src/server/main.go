@@ -5,11 +5,13 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
-	"gopkg.in/ini.v2"
 	"os"
 	"server/game"
+
+	"gopkg.in/ini.v2"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 /*
@@ -55,6 +57,9 @@ func runCliApp() error {
 		if c.IsSet("logic-tick-period") {
 			cfg.LogicTickPeriod = c.Int("logic-tick-period")
 		}
+		if c.IsSet("time-factor") {
+			cfg.TimeFactor = c.Int("time-factor")
+		}
 		if c.IsSet("telnet-port") {
 			cfg.TelnetPort = c.String("telnet-port")
 		}
@@ -96,6 +101,10 @@ func configFlags() []cli.Flag {
 		cli.IntFlag{
 			Name:  "send-tick-period",
 			Usage: "Period in millisecond of the ticker that sends the gamestate to clients",
+		},
+		cli.IntFlag{
+			Name:  "time-factor",
+			Usage: "Game time speed multiplier",
 		},
 		cli.StringFlag{
 			Name:  "telnet-port",

@@ -31,6 +31,10 @@ func (g *Game) loop() error {
 	tickChan := time.NewTicker(
 		time.Millisecond * time.Duration(g.cfg.LogicTickPeriod)).C
 
+	// will tick when a minute in game time elapses
+	timeChan := time.NewTicker(
+		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
+
 	// encapsulate the game state here, as it should not be
 	// accessed nor modified from outside the game loop
 	gs := newGameState(g)
@@ -98,6 +102,15 @@ func (g *Game) loop() error {
 					zom.Update(dt)
 				}
 				last_time = cur_time
+
+			case <-timeChan:
+				// increment game time by 1 minute
+				gs.gameTime++
+
+				// clamp the game time to 24h
+				if gs.gameTime >= 1440 {
+					gs.gameTime -= 1440
+				}
 
 			case tnr := <-g.telnetReq:
 				// received a telnet request

@@ -14,6 +14,7 @@ type Config struct {
 	LogLevel        string
 	SendTickPeriod  int
 	LogicTickPeriod int
+	TimeFactor      int
 	TelnetPort      string
 	AssetsPath      string
 }
@@ -27,6 +28,7 @@ func NewConfig() Config {
 		LogLevel:        "Info",
 		SendTickPeriod:  100,
 		LogicTickPeriod: 10,
+		TimeFactor:      60,
 		TelnetPort:      "1235",
 		AssetsPath:      "../data",
 	}

@@ -22,6 +22,7 @@ import (
  */
 type GameState struct {
 	game       *Game
+	gameTime   int16
 	players    map[uint32]*entity.Player
 	zombies    map[uint32]*entity.Zombie
 	World      *World
@@ -131,6 +132,7 @@ func (gs GameState) pack() *msg.GameStateMsg {
 	// fill the GameStateMsg
 	gsMsg := new(msg.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
+	gsMsg.Time = gs.gameTime
 	gsMsg.Entities = make(map[uint32]interface{})
 	for id, plr := range gs.players {
 		gsMsg.Entities[id] = plr.GetState()

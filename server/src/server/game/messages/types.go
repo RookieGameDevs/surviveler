@@ -40,6 +40,7 @@ type PongMsg PingMsg
  */
 type GameStateMsg struct {
 	Tstamp   int64
+	Time     int16
 	Entities map[uint32]interface{}
 }
 
