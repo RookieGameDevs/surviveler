@@ -8,18 +8,20 @@ package game
 import (
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"image"
 	"server/game/entity"
 	msg "server/game/messages"
 	"server/game/resource"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
  * GameState is the structure that contains all the complete game state
  */
 type GameState struct {
+	game       *Game
 	players    map[uint32]*entity.Player
 	zombies    map[uint32]*entity.Zombie
 	World      *World
@@ -28,8 +30,9 @@ type GameState struct {
 	director   AIDirector
 }
 
-func newGameState() *GameState {
+func newGameState(g *Game) *GameState {
 	return &GameState{
+		game:    g,
 		players: make(map[uint32]*entity.Player),
 		zombies: make(map[uint32]*entity.Zombie),
 	}
@@ -129,12 +132,11 @@ func (gs GameState) pack() *msg.GameStateMsg {
 	gsMsg := new(msg.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Entities = make(map[uint32]interface{})
-	gsMsg.Zombies = make(map[uint32]interface{})
-	for id, ent := range gs.players {
-		gsMsg.Entities[id] = ent.GetState()
+	for id, plr := range gs.players {
+		gsMsg.Entities[id] = plr.GetState()
 	}
 	for id, zom := range gs.zombies {
-		gsMsg.Zombies[id] = zom.GetState()
+		gsMsg.Entities[id] = zom.GetState()
 	}
 	return gsMsg
 }

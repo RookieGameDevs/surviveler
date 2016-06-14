@@ -41,7 +41,6 @@ type PongMsg PingMsg
 type GameStateMsg struct {
 	Tstamp   int64
 	Entities map[uint32]interface{}
-	Zombies  map[uint32]interface{}
 }
 
 /*

@@ -6,9 +6,10 @@
 package game
 
 import (
-	log "github.com/Sirupsen/logrus"
 	msg "server/game/messages"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -32,7 +33,7 @@ func (g *Game) loop() error {
 
 	// encapsulate the game state here, as it should not be
 	// accessed nor modified from outside the game loop
-	gs := newGameState()
+	gs := newGameState(g)
 	var err error
 	if err = gs.init(g.assets); err != nil {
 		return err

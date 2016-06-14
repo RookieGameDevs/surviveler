@@ -6,7 +6,6 @@ package game
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
 	"runtime"
@@ -16,6 +15,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -34,6 +35,7 @@ type Game struct {
 	msgChan         chan msg.ClientMessage     // conducts ClientMessage to the game loop
 	gameQuit        chan struct{}              // to signal the game loop goroutine it must end
 	wg              sync.WaitGroup             // wait for the different goroutine to finish
+	numEntities     uint32                     // number of entities currently present in the game
 }
 
 /*
@@ -70,7 +72,10 @@ func (g *Game) Setup(cfg Config) bool {
 	g.gameQuit = make(chan struct{})
 
 	// creates the client registry
-	g.clients = protocol.NewClientRegistry()
+	allocId := func() uint32 {
+		return g.AllocEntityId()
+	}
+	g.clients = protocol.NewClientRegistry(allocId)
 
 	// setup the telnet server
 	if len(g.cfg.TelnetPort) > 0 {
@@ -147,4 +152,12 @@ func (g *Game) stop() {
 
 	close(g.gameQuit)
 	g.wg.Wait()
+}
+
+/*
+ * Allocates a new entity identifier.
+ */
+func (g *Game) AllocEntityId() uint32 {
+	g.numEntities++
+	return g.numEntities
 }

@@ -6,12 +6,13 @@ package game
 
 import (
 	"errors"
-	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game/entity"
 	"server/game/resource"
 	"server/math"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // This number represents the ration between the number of logic ticks for one
@@ -91,7 +92,7 @@ func (ai *AIDirector) summonZombieWanderer() {
 		"path":  path}).
 		Info("summoning wanderer zombie")
 
-	zId := uint32(len(ai.gs.zombies))
+	zId := ai.gs.game.AllocEntityId()
 	ai.gs.zombies[zId] = entity.NewZombieWanderer(org, *path, 1)
 }
 
