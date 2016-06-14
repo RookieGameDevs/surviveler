@@ -78,9 +78,14 @@ func (z *ZombieWandererEntity) GetState() EntityState {
 		}
 	}
 	return EntityState{
+		Type:       z.GetType(),
 		Xpos:       float32(z.Pos[0]),
 		Ypos:       float32(z.Pos[1]),
 		ActionType: z.curAction,
 		Action:     actionData,
 	}
+}
+
+func (z *ZombieWandererEntity) GetType() EntityType {
+	return TypeZombie
 }

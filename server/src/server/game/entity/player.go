@@ -14,7 +14,8 @@ import (
  * implements the Entity interface.
  */
 type Player struct {
-	curAction ActionType // current action
+	entityType EntityType // player type
+	curAction  ActionType // current action
 	MovableEntity
 }
 
@@ -23,6 +24,7 @@ type Player struct {
  */
 func NewPlayer(spawn math.Vec2, speed float64) *Player {
 	p := new(Player)
+	p.entityType = TypeTank
 	p.Speed = speed
 	p.Pos = spawn
 	p.curAction = IdleAction
@@ -64,9 +66,14 @@ func (p *Player) GetState() EntityState {
 		}
 	}
 	return EntityState{
+		Type:       p.GetType(),
 		Xpos:       float32(p.Pos[0]),
 		Ypos:       float32(p.Pos[1]),
 		ActionType: p.curAction,
 		Action:     actionData,
 	}
+}
+
+func (p *Player) GetType() EntityType {
+	return p.entityType
 }

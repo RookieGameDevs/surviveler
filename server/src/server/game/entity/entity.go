@@ -11,6 +11,19 @@ import (
 )
 
 /*
+ * Enumeration of possible entity types.
+ */
+type EntityType uint8
+
+/*
+ * Entity type identifiers.
+ */
+const (
+	TypeTank EntityType = 0 + iota
+	TypeZombie
+)
+
+/*
  * Updater is the interface implemented by objects that have an Update method,
  * called at every tick
  */
@@ -23,6 +36,7 @@ type Updater interface {
  */
 type Entity interface {
 	GetState() EntityState
+	GetType() EntityType
 	Updater
 }
 

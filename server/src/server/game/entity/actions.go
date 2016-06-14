@@ -15,6 +15,7 @@ const (
  * EntityState represents a snapshot of an entity
  */
 type EntityState struct {
+	Type       EntityType
 	Xpos       float32
 	Ypos       float32
 	ActionType ActionType
