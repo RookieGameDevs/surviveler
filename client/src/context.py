@@ -29,6 +29,7 @@ class Context:
         # Local player entity information
         self.player_name = None
         self.player_id = None
+        self.players_name_map = {}
 
         self.msg_queue = []
 

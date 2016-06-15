@@ -285,7 +285,9 @@ class Client:
         :param msg: the message to be processed
         :type msg: :class:`message.Message`
         """
-        self.context.player_id = msg.data[MF.id]
+        srv_id = msg.data[MF.id]
+        self.context.player_id = srv_id
+        self.context.players_name_map[srv_id] = msg.data[MF.id]
         LOG.info('Joined the party with name "{}" and  ID {}'.format(
             self.context.player_name, self.context.player_id))
 
@@ -293,7 +295,9 @@ class Client:
         send_event(PlayerJoin(self.context.player_id, self.context.player_name))
 
         for srv_id, name in msg.data[MF.players].items():
-            send_event(CharacterJoin(srv_id, as_utf8(name)))
+            if srv_id != self.context.player_id:
+                self.context.players_name_map[srv_id] = name
+                send_event(CharacterJoin(srv_id, as_utf8(name)))
 
     @message_handler(MT.joined)
     def handle_joined(self, msg):
@@ -306,7 +310,9 @@ class Client:
         """
         player_name = as_utf8(msg.data[MF.name])
         srv_id = msg.data[MF.id]
-        send_event(CharacterJoin(srv_id, player_name))
+        if srv_id != self.context.player_id:
+            self.context.players_name_map[srv_id] = player_name
+            send_event(CharacterJoin(srv_id, player_name))
 
     @message_handler(MT.leave)
     def handle_leave(self, msg):
@@ -323,6 +329,8 @@ class Client:
         else:
             LOG.info('Player "{}" disconnected'.format(srv_id))
             char = self.context.resolve_entity(srv_id)
+            # Remove the name from the player names map map
+            del self.context.players_name_map[srv_id]
             send_event(CharacterLeave(srv_id, char.name, reason))
 
     @message_handler(MT.gamestate)
