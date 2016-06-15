@@ -1,6 +1,19 @@
 from events import Event
 
 
+class EntitySpawn(Event):
+    """Handles entity spawning on the scene.
+
+    Event emitted when a new entity is discovered in the gamestate.
+    """
+    def __init__(self, srv_id, entity_data):
+        self.srv_id = srv_id
+        self.entity_data = entity_data
+
+    def __str__(self):
+        return '<EntitySpawn({})>'.format(self.srv_id)
+
+
 class EntityIdle(Event):
     """Player position updated.
 
@@ -68,16 +81,6 @@ class CharacterJoin(Event):
         return '<CharacterJoin({}, {})>'.format(self.srv_id, self.name)
 
 
-class PlayerJoin(CharacterJoin):
-    """Handles local player joining.
-
-    Event emitted when the local player actually joined the game.
-    """
-
-    def __str__(self):
-        return '<PlayerJoin({}, {})>'.format(self.srv_id, self.name)
-
-
 class CharacterLeave(Event):
     """Handles character leaving.
 
@@ -91,3 +94,13 @@ class CharacterLeave(Event):
     def __str__(self):
         return '<CharacterLeave({}, {}, {})>'.format(
             self.srv_id, self.name, self.reason)
+
+
+class PlayerJoin(CharacterJoin):
+    """Handles local player joining.
+
+    Event emitted when the local player actually joined the game.
+    """
+
+    def __str__(self):
+        return '<PlayerJoin({}, {})>'.format(self.srv_id, self.name)
