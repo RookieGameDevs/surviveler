@@ -20,6 +20,8 @@ type EntityType uint8
  */
 const (
 	TypeTank EntityType = 0 + iota
+	TypeProgrammer
+	TypeEngineer
 	TypeZombie
 )
 
