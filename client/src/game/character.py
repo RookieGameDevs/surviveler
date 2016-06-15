@@ -2,10 +2,10 @@ from events import subscriber
 from game import Entity
 from game.components import Movable
 from game.components import Renderable
-from game.events import CharacterJoin
-from game.events import CharacterLeave
+from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
+from game.events import EntitySpawn
 from math import atan
 from math import copysign
 from math import pi
@@ -126,33 +126,38 @@ class Character(Entity):
         self.orientate()
 
 
-@subscriber(CharacterJoin)
-def add_character(evt):
+@subscriber(EntitySpawn)
+def character_spawn(evt):
     """Add a character in the game.
 
     Gets all the relevant data from the event.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.CharacterJoin`
+    :type evt: :class:`game.events.EntitySpawn`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
-    resource = context.res_mgr.get('/characters/grunt')
     # Only instantiate the new character if it does not exist
-    if not context.resolve_entity(evt.srv_id):
-        player = Character(resource, evt.name, context.scene.root)
+    entity_exists = context.resolve_entity(evt.srv_id)
+    # NOTE: check if the srv_id is exactly the player id received from the
+    # server during the handshake. And avoid spawing the character.
+    is_player = evt.srv_id == evt.context.player_id
+    if not entity_exists and not is_player:
+        resource = context.res_mgr.get('/characters/grunt')
+        name = context.players_name_map[evt.srv_id]
+        player = Character(resource, name, context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
 
 
-@subscriber(CharacterLeave)
-def remove_character(evt):
+@subscriber(EntityDisappear)
+def character_disappear(evt):
     """Remove a character from the game.
 
     Gets all the relevant data from the event.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.CharacterLeave`
+    :type evt: :class:`game.events.EntityDisappear`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context

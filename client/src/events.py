@@ -1,6 +1,9 @@
 from abc import ABC
 from context import Context
 from collections import defaultdict
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 __SUBSCRIBED = defaultdict(list)
@@ -26,6 +29,7 @@ def send_event(event):
     :param event: The event to be emitted.
     :type event: :class:`game.events.Event`
     """
+    LOG.debug('Sending event {}'.format(event))
     for subscriber in __SUBSCRIBED[type(event)]:
         subscriber(event)
 

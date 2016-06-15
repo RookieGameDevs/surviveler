@@ -14,10 +14,22 @@ class EntitySpawn(Event):
         return '<EntitySpawn({})>'.format(self.srv_id)
 
 
-class EntityIdle(Event):
-    """Player position updated.
+class EntityDisappear(Event):
+    """Handles entity disappearing from the scene.
 
-    Event emitted when the position of the Player changed.
+    Event emitted when a previously existing entity does not exist anymore.
+    """
+    def __init__(self, srv_id):
+        self.srv_id = srv_id
+
+    def __str__(self):
+        return '<EntityDisappear({})>'.format(self.srv_id)
+
+
+class EntityIdle(Event):
+    """Entity is idle.
+
+    Event emitted when the entity is in idle state.
     """
     def __init__(self, srv_id, x, y):
         """Constructor.
