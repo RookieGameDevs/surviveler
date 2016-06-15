@@ -4,6 +4,8 @@
  */
 package entity
 
+import "server/math"
+
 type ActionType uint16
 
 const (
@@ -33,6 +35,5 @@ type IdleActionData struct {
  */
 type MoveActionData struct {
 	Speed float32
-	Xpos  float32
-	Ypos  float32
+	Waypoints []math.Vec2
 }

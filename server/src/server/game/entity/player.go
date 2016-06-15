@@ -10,6 +10,11 @@ import (
 )
 
 /*
+ * Number of waypoints to send in movement action payloads.
+ */
+const playerWaypointsToSend = 3
+
+/*
  * Player represents an entity that is controlled by a physical player. It
  * implements the Entity interface.
  */
@@ -58,12 +63,14 @@ func (p *Player) GetState() EntityState {
 		actionData = IdleActionData{}
 
 	case MovingAction:
-		dst := p.curPath[p.curPathIdx]
-		actionData = MoveActionData{
-			Speed: float32(p.Speed),
-			Xpos:  float32(dst[0]),
-			Ypos:  float32(dst[1]),
+		from := p.curPathIdx
+		to := math.IMin(from + waypointsToSend, len(p.curPath))
+		moveActionData := MoveActionData{
+			Speed: p.Speed,
+			Waypoints: make([]math.Vec2, to - from),
 		}
+		copy(moveActionData.Waypoints, p.curPath[from:to])
+		actionData = moveActionData
 	}
 	return EntityState{
 		Type:       p.GetType(),

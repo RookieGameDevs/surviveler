@@ -166,12 +166,17 @@ def handle_entity_move(gs_mgr):
     for srv_id, entity in gamestate_entities(gs_mgr):
         if entity.get(MF.action_type, None) == ActionType.move:
             action = entity[MF.action]
+            position = entity[MF.x_pos], entity[MF.y_pos]
+            try:
+                destination = action[MF.waypoints][0]
+            except IndexError:
+                LOG.warn('Not enough waypoints for movement')
+                return
+
             send_event(EntityMove(
                 srv_id,
-                position=(
-                    entity[MF.x_pos], entity[MF.y_pos]),
-                destination=(
-                    action[MF.x_pos], action[MF.y_pos]),
+                position=position,
+                destination=destination,
                 speed=action[MF.speed]))
 
 
