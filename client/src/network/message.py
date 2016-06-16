@@ -35,6 +35,7 @@ class MessageField(bytes, Enum):
     players = b'Players'
     reason = b'Reason'
     time = b'Time'
+    entity_type = b'Type'
 
 
 class Message:

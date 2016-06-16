@@ -41,6 +41,10 @@ class Resource(dict):
 
         self.resources = {}
 
+    def __bool__(self):
+        """Boolean operator for Resources"""
+        return bool(self.data or super().__bool__(self))
+
     def __repr__(self):
         """Print the proper representation of the resource."""
         return '<Resource({})>'.format(self.r_path)
