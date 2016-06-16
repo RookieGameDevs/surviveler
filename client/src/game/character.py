@@ -16,6 +16,7 @@ from renderer import Texture
 from utils import to_scene
 import logging
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -31,6 +32,7 @@ class EntityType(IntEnum):
     zombie = 3
 
 
+#: Map of entity names based  int ids -> names
 ENTITY_MAP = {em.value: em.name for em in EntityType}
 
 
@@ -172,9 +174,9 @@ def character_spawn(evt):
         # Search for the entity name
         name = context.players_name_map.get(evt.srv_id, '')
         # Create the entity
-        player = Character(resource, name, context.scene.root)
-        context.entities[player.e_id] = player
-        context.server_entities_map[evt.srv_id] = player.e_id
+        character = Character(resource, name, context.scene.root)
+        context.entities[character.e_id] = character
+        context.server_entities_map[evt.srv_id] = character.e_id
 
 
 @subscriber(EntityDisappear)
