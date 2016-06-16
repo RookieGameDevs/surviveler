@@ -2,6 +2,7 @@ from datetime import datetime
 from events import subscriber
 from game.events import CharacterJoin
 from game.events import CharacterLeave
+from game.events import TimeUpdate
 from math import pi
 from matlib import Vec
 from renderer import Font
@@ -35,6 +36,7 @@ class UI:
             +self.h / 2, -self.h / 2,
             0, 1)
 
+        # log
         self.log_line_height = 18
         self.log_height = 0
         self.log_color = Vec(0.7, 0.7, 0.7)
@@ -42,13 +44,21 @@ class UI:
         self.log_shader = resource['shader']
         self.log_node = self.scene.root.add_child(SceneNode())
 
+        # FPS counter
         self.fps_counter_node = self.scene.root.add_child(TextNode(
             self.log_font,
             self.log_shader,
             'FPS',
             self.log_color))
-
         self.transform(self.fps_counter_node, self.w * 0.90, 0)
+
+        # clock
+        self.clock = self.scene.root.add_child(TextNode(
+            self.log_font,
+            self.log_shader,
+            '--:--',
+            self.log_color))
+        self.transform(self.clock, self.w * 0.5, 0)
 
     def transform(self, node, x, y):
         """Transform the UI scene node from screen space to scene space.
@@ -75,6 +85,17 @@ class UI:
         :type number: int
         """
         self.fps_counter_node.text = 'FPS: {}'.format(number)
+
+    def set_clock(self, hour, minute):
+        """Set the time in clock widget.
+
+        :param hour: Hour.
+        :type hour: int
+
+        :param minute: Minute.
+        :type minute: int
+        """
+        self.clock.text = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
 
     def log(self, msg):
         """Log a message on screen console.
@@ -116,3 +137,9 @@ def log_leave(evt):
         datetime.now().time().replace(microsecond=0).isoformat(),
         evt.name,
         evt.reason or 'disconnected'))
+
+
+@subscriber(TimeUpdate)
+def update_time(evt):
+    """Updates the UI clock."""
+    evt.context.ui.set_clock(evt.hour, evt.minute)

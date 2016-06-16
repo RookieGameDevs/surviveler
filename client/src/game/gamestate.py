@@ -1,10 +1,11 @@
 from enum import IntEnum
 from enum import unique
 from events import send_event
+from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
 from game.events import EntitySpawn
-from game.events import EntityDisappear
+from game.events import TimeUpdate
 from network import MessageField as MF
 import logging
 
@@ -135,13 +136,13 @@ def handle_entity_disappear(gs_mgr):
     new, old = n[MF.entities], o.get(MF.entities, {})
     old_entities = set(old) - set(new)
     for ent in old_entities:
-        evt = EntityDisappear(ent, old[ent])
+        evt = EntityDisappear(ent)
         send_event(evt)
 
 
 @processor
 def handle_entity_idle(gs_mgr):
-    """Creates and triggers the PlayerPositionUpdated event.
+    """Creates and triggers the EntityIdle event.
 
     :param gs_mgr: the gs_mgr
     :type gs_mgr: dict
@@ -172,3 +173,15 @@ def handle_entity_move(gs_mgr):
                 destination=(
                     action[MF.x_pos], action[MF.y_pos]),
                 speed=action[MF.speed]))
+
+
+@processor
+def handle_time(gs_mgr):
+    """Handles time change and sends time update event.
+
+    :param gs_mgr: The gamestate manager.
+    :type gs_mgr: :class:`game.gamestate.GameStateManager`
+    """
+    total_minutes = gs_mgr.get()[0].get(MF.time, 0)
+    h, m = int(total_minutes / 60), total_minutes % 60
+    send_event(TimeUpdate(h, m))

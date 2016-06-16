@@ -61,8 +61,8 @@ func NewMovementPlanner(game *Game) *MovementPlanner {
  */
 func (mp *MovementPlanner) setGameState(gs *GameState) {
 	mp.gameState = gs
-	mp.pathfinder = &(gs.Pathfinder)
-	mp.world = gs.Pathfinder.World
+	mp.pathfinder = &(gs.pathfinder)
+	mp.world = gs.pathfinder.World
 }
 
 /*
@@ -151,7 +151,7 @@ func (mp *MovementPlanner) Start() {
 				log.WithField("req", mvtReq).Info("Processing an movement request")
 
 				// compute pathfinding
-				if path, _, found := mp.pathfinder.FindPlayerPath(mvtReq.Org, mvtReq.Dst); found {
+				if path, _, found := mp.pathfinder.FindPath(mvtReq.Org, mvtReq.Dst); found {
 					if len(path) > 1 {
 						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
@@ -185,9 +185,9 @@ func (mp *MovementPlanner) onMovePlayer(imsg interface{}, clientId uint32) error
 		// fills a MovementRequest
 		mvtReq := MovementRequest{}
 		mvtReq.Org = player.Pos
-		mvtReq.Dst = math.Vec2{move.Xpos, move.Ypos}
+		mvtReq.Dst = math.FromFloat32(move.Xpos, move.Ypos)
 		mvtReq.EntityId = clientId
-		if mp.world.PointInBound(mvtReq.Dst) {
+		if mp.world.PointInBounds(mvtReq.Dst) {
 			// places it into the MovementPlanner
 			mp.PlanMovement(&mvtReq)
 		} else {

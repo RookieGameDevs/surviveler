@@ -14,8 +14,8 @@ import (
 	"path"
 )
 
-// world grid bitmap URI
-const mapBmpURI string = "map/map.bmp"
+// URI of the map element contained in a package
+const mapURI string = "map/data.json"
 
 /*
  * SurvivelerPackage represents a package of data, resource files and assets for
@@ -60,10 +60,10 @@ func (sp SurvivelerPackage) getReader(uri string) (io.ReadCloser, error) {
 }
 
 /*
- * loadJSON decodes a JSON resource, which location is specified by uri, into
+ * LoadJSON decodes a JSON resource, which location is specified by uri, into
  * an interface
  */
-func (sp SurvivelerPackage) loadJSON(uri string, i interface{}) error {
+func (sp SurvivelerPackage) LoadJSON(uri string, i interface{}) error {
 	r, err := sp.getReader(uri)
 	if err != nil {
 		return err
@@ -74,16 +74,23 @@ func (sp SurvivelerPackage) loadJSON(uri string, i interface{}) error {
 }
 
 /*
- * LoadWorldGrid loads and decodes the world map contained in a package.
- *
- * As the world is an black and white heightmap, and is thus returned as an
- * image
+ * LoadBitmap loads and a bitmap image contained in a package.
  */
-func (sp SurvivelerPackage) LoadWorldGrid() (image.Image, error) {
-	r, err := sp.getReader(mapBmpURI)
+func (sp SurvivelerPackage) LoadBitmap(uri string) (image.Image, error) {
+	r, err := sp.getReader(uri)
 	if err != nil {
 		return nil, err
 	}
 	defer r.Close()
 	return bmp.Decode(r)
+}
+
+/*
+ * LoadMapData loads the map from the package and decodes it in a MapData
+ * struct
+ */
+func (sp SurvivelerPackage) LoadMapData() (*MapData, error) {
+	md := new(MapData)
+	err := sp.LoadJSON(mapURI, &md)
+	return md, err
 }

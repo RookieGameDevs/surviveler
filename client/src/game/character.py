@@ -144,7 +144,7 @@ def character_spawn(evt):
     is_player = evt.srv_id == evt.context.player_id
     if not entity_exists and not is_player:
         resource = context.res_mgr.get('/characters/grunt')
-        name = context.players_name_map[evt.srv_id]
+        name = context.players_name_map.get(evt.srv_id, '')
         player = Character(resource, name, context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id

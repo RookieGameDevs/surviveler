@@ -5,11 +5,12 @@
 package protocol
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"server/game/messages"
 	"server/network"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -17,8 +18,8 @@ import (
  */
 type ClientRegistry struct {
 	clients map[uint32]*network.Conn // one for each client connection
-	nextId  uint32                   // next available client id (1 based)
 	mutex   sync.RWMutex             // protect map from concurrent accesses
+	allocId func() uint32
 }
 
 /*
@@ -33,10 +34,10 @@ type ClientData struct {
 /*
  * NewClientRegistry initializes and returns a ClientRegistry
  */
-func NewClientRegistry() *ClientRegistry {
+func NewClientRegistry(idAllocator func() uint32) *ClientRegistry {
 	return &ClientRegistry{
 		clients: make(map[uint32]*network.Conn, 0),
-		nextId:  0,
+		allocId: idAllocator,
 	}
 }
 
@@ -52,8 +53,7 @@ func (reg *ClientRegistry) register(client *network.Conn) uint32 {
 	reg.mutex.Lock()
 
 	// we have a new client, assign him an id.
-	clientId = reg.nextId
-	reg.nextId++
+	clientId = reg.allocId()
 	reg.clients[clientId] = client
 
 	// record the client id inside the connection, this is needed for later

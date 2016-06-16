@@ -6,9 +6,10 @@
 package game
 
 import (
-	log "github.com/Sirupsen/logrus"
 	msg "server/game/messages"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -22,9 +23,6 @@ import (
  * - telnet request -> perform a game state related telnet request
  */
 func (g *Game) loop() error {
-	// loop local stop condition
-	quit := false
-
 	// will tick when it's time to send the gamestate to the clients
 	sendTickChan := time.NewTicker(
 		time.Millisecond * time.Duration(g.cfg.SendTickPeriod)).C
@@ -33,12 +31,15 @@ func (g *Game) loop() error {
 	tickChan := time.NewTicker(
 		time.Millisecond * time.Duration(g.cfg.LogicTickPeriod)).C
 
-	// encapsulate the game state here, as it should not be accessed nor modified
-	// from outside the game loop
-	gs := newGameState()
+	// will tick when a minute in game time elapses
+	timeChan := time.NewTicker(
+		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
+
+	// encapsulate the game state here, as it should not be
+	// accessed nor modified from outside the game loop
+	gs := newGameState(g)
 	var err error
 	if err = gs.init(g.assets); err != nil {
-		quit = true
 		return err
 	}
 	g.movementPlanner.setGameState(gs)
@@ -52,20 +53,19 @@ func (g *Game) loop() error {
 	var last_time, cur_time time.Time
 	last_time = time.Now()
 	log.Info("Starting game loop")
-
 	g.wg.Add(1)
+
 	go func() {
 		defer func() {
 			g.wg.Done()
+			log.Info("Stopping game loop")
 		}()
 
-		for !quit {
+		for {
 			select {
 
 			case <-g.gameQuit:
-				// stop game loop
-				log.Info("Stopping game loop")
-				quit = true
+				return
 
 			case msg := <-g.msgChan:
 				// dispatch msg to listeners
@@ -89,11 +89,28 @@ func (g *Game) loop() error {
 				cur_time = time.Now()
 				dt := cur_time.Sub(last_time)
 
-				// tick game: update entities
+				// update AI
+				gs.director.Update(cur_time)
+
+				// update entities
 				for _, ent := range gs.players {
 					ent.Update(dt)
 				}
+
+				// update zombies
+				for _, zom := range gs.zombies {
+					zom.Update(dt)
+				}
 				last_time = cur_time
+
+			case <-timeChan:
+				// increment game time by 1 minute
+				gs.gameTime++
+
+				// clamp the game time to 24h
+				if gs.gameTime >= 1440 {
+					gs.gameTime -= 1440
+				}
 
 			case tnr := <-g.telnetReq:
 				// received a telnet request
