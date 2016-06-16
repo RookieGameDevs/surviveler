@@ -197,10 +197,7 @@ class Renderer:
                 for tex_unit, tex in enumerate(op.textures):
                     stack.enter_context(tex.use(tex_unit))
 
-                for p, v in op.shader_params.items():
-                    op.shader[p] = v
-
-                op.shader.use()
+                stack.enter_context(op.shader.use(op.shader_params))
 
                 # change the polygon mode, if requested by render op
                 if polygon_mode != op.polygon_mode:

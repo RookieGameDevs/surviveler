@@ -42,6 +42,7 @@ from OpenGL.GL import glUniform4fv
 from OpenGL.GL import glUniformBlockBinding
 from OpenGL.GL import glUniformMatrix4fv
 from OpenGL.GL import glUseProgram
+from contextlib import contextmanager
 from exceptions import ShaderError
 from functools import partial
 from itertools import count
@@ -324,8 +325,18 @@ class Shader:
             except (TypeError, KeyError, ValueError):
                 raise ShaderError('Unknown shader parameter "{}"'.format(k))
 
-    def use(self):
-        """Makes the shader active and sets up its parameters (uniforms)."""
+    @contextmanager
+    def use(self, shader_params):
+        """Makes the shader active and sets up its parameters (uniforms).
+
+        :param shader_params: The params to be bound to the shader
+        :type shader_params: dict
+        """
+        previous = {}
+        for p, v in shader_params.items():
+            previous[p] = self[p]
+            self[p] = v
+
         glUseProgram(self.prog)
 
         # setup uniforms
@@ -339,3 +350,6 @@ class Shader:
         # setup uniform blocks
         for block in self.uniform_blocks.values():
             block.bind()
+        yield
+        for p, v in previous.items():
+            self[p] = v
