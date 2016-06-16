@@ -136,7 +136,7 @@ def handle_entity_disappear(gs_mgr):
     new, old = n[MF.entities], o.get(MF.entities, {})
     old_entities = set(old) - set(new)
     for ent in old_entities:
-        evt = EntityDisappear(ent, old[ent])
+        evt = EntityDisappear(ent)
         send_event(evt)
 
 
