@@ -73,7 +73,7 @@ class EntityMove(Event):
 
     Event emitted whenever the player is subject to a move action.
     """
-    def __init__(self, srv_id, position, destination, speed):
+    def __init__(self, srv_id, position, path, speed):
         """Constructor.
 
         :param srv_id: The server id of the entity.
@@ -82,20 +82,21 @@ class EntityMove(Event):
         :param position: The current position.
         :type position: tuple
 
-        :param destination: The destination position
-        :type destination: tuple
+        :param path: List of coordinates which make up the current movement
+            path.
+        :type path: list
 
         :param speed: The player speed in game unit / seconds
         :type speed: float
         """
         self.srv_id = srv_id
         self.position = position
-        self.destination = destination
+        self.path = path
         self.speed = speed
 
     def __str__(self):
         return '<EntityMove({}, {}, {}, {})>'.format(
-            self.srv_id, self.position, self.destination, self.speed)
+            self.srv_id, self.position, self.path, self.speed)
 
 
 class CharacterJoin(Event):

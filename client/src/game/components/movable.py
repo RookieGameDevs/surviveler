@@ -1,6 +1,5 @@
 from game.components import Component
 from matlib import Vec
-from utils import distance
 import logging
 
 
@@ -29,10 +28,16 @@ class Movable(Component):
         self._position = position
 
         # Destination
-        self._destination = None
+        self.next_position = None
+
+        # Path
+        self.path = None
 
         # Speed
-        self._speed = 0
+        self.speed = 0
+
+        # Direction vector
+        self.direction = None
 
     @property
     def position(self):
@@ -52,52 +57,82 @@ class Movable(Component):
         """
         LOG.debug('Manually setting position {} -> {}'.format(
             self._position, value))
-        self._destination, self.direction = None, None
-        self._speed = 0
+        self.next_position = None
+        self.direction = None
+        self.path = []
+        self.speed = 0
         self._position = value
 
     @property
     def destination(self):
-        """Destination getter.
+        return self.next_position
 
-        :return: The destination of the movable.
-        :rtype: tuple or None
-        """
-        return self._destination
-
-    @property
-    def speed(self):
-        """Speed getter.
-
-        :return: The movable speed.
-        :rtype: float
-        """
-        return self._speed
-
-    def move(self, position, destination, speed):
+    def move(self, position, path, speed):
         """Initial setup of a movable.
 
-        Set the initial position, the destination and the speed. And compute the
-        direction vector.
+        Sets the initial position, the movement path and the speed. And computes
+        the direction vector.
 
         :param position: The starting position of the movable.
         :type position: :class:`tuple`
 
-        :param destination: The target destination of the movable.
-        :type destination: :class:`tuple`
+        :param path: The path to move by.
+        :type path: list
 
         :param speed: The movement speed.
         :type target_tstamp: :class:`float`
         """
-        LOG.debug('Moving movable from {} to {} at speed {}'.format(
-            position, destination, speed))
-        self.direction = (
-            Vec(destination[0], destination[1], 0.0) -
-            Vec(position[0], position[1], 0.0))
-        self.direction.norm()
+        # compute new direction
+        self.speed = speed
+        self.next_position, self.path = path[0], path[1:]
         self._position = position
-        self._destination = destination
-        self._speed = speed
+
+    def partial_movement(self, distance, position, next_position, path):
+        """Recursive function to calculate parial movements (to consider cases
+        in which during the given dt we are actually going over a the
+        destination point.
+
+        :param distance: The magnitude of the movement vector.
+        :type distance: float
+
+        :param position: The current position of the movable.
+        :type position: tuple
+
+        :param next_position: The next position in the path.
+        :type next_position: tuple
+
+        :param path: The other points of the path.
+        :type path: list
+        """
+        # Actual distance from destination
+        np = Vec(next_position[0], next_position[1], 0.0)
+        p = Vec(position[0], position[1], 0.0)
+        dst = (np - p).mag()
+
+        # We did not reach the next_position yet.
+        if distance < dst:
+            self.direction = np - p
+            self.direction.norm()
+            cur = p + self.direction * distance
+            self._position = cur.x, cur.y
+
+        # We arrived in next_position, continue toward the next waypoint of the
+        # path recursively calling partial_movement.
+        elif path:
+            position, next_position, path = next_position, path[0], path[1:]
+            LOG.debug('Switched destination to {}'.format(next_position))
+            self.partial_movement(
+                distance - dst, position, next_position, path)
+
+        # We reached or surpassed next_position and there are no more path
+        # steps: we arrived!
+        else:
+            LOG.debug('Movable arrived at destination {}'.format(self._position))
+            self.next_position = None
+            self.direction = None
+            self.path = []
+            self.speed = 0
+            self._position = next_position
 
     def update(self, dt):
         """Movable update function.
@@ -109,16 +144,7 @@ class Movable(Component):
         :param dt: The time spent since the last update call (in seconds).
         :type dt: float
         """
-        if self._destination:
-            # We have both destination and speed, so we can calculate the amount
-            # of movement in the given dt.
-            dv = self.direction * dt * self._speed
-            self._position = self._position[0] + dv.x, self.position[1] + dv.y
-
-            if distance(self._destination, self._position) < self.EPSILON:
-                # Reset the movable internal data because we arrived at the
-                # destination (distance < EPSILON). Force the destination as
-                # current position and reset the internal data.
-                self.position = self._destination
-                LOG.debug('Movable arrived at destination {}'.format(
-                    self._position))
+        if self.next_position and self.speed:
+            distance = self.speed * dt
+            self.partial_movement(
+                distance, self._position, self.next_position, self.path)

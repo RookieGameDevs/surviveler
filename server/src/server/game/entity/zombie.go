@@ -70,12 +70,14 @@ func (z *ZombieWandererEntity) GetState() EntityState {
 		actionData = IdleActionData{}
 
 	case MovingAction:
-		dst := z.curPath[z.curPathIdx]
-		actionData = MoveActionData{
-			Speed: float32(z.Speed),
-			Xpos:  float32(dst[0]),
-			Ypos:  float32(dst[1]),
+		from := z.curPathIdx
+		to := math.IMin(from+maxWaypointsToSend, len(z.curPath))
+		moveActionData := MoveActionData{
+			Speed: z.Speed,
+			Path:  make([]math.Vec2, to-from),
 		}
+		copy(moveActionData.Path, z.curPath[from:to])
+		actionData = moveActionData
 	}
 	return EntityState{
 		Type:       z.GetType(),

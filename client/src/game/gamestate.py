@@ -142,7 +142,7 @@ def handle_entity_disappear(gs_mgr):
 
 @processor
 def handle_entity_idle(gs_mgr):
-    """Creates and triggers the EntityIdle event.
+    """Handles entities in idle state and fires EntityIdle event for them.
 
     :param gs_mgr: the gs_mgr
     :type gs_mgr: dict
@@ -157,8 +157,7 @@ def handle_entity_idle(gs_mgr):
 
 @processor
 def handle_entity_move(gs_mgr):
-    """Checks if the player is actually doing any move action and send the
-    proper event.
+    """Handles moving entities and fires EntityMove event for them.
 
     :param gs_mgr: the gs_mgr
     :type gs_mgr: dict
@@ -166,12 +165,13 @@ def handle_entity_move(gs_mgr):
     for srv_id, entity in gamestate_entities(gs_mgr):
         if entity.get(MF.action_type, None) == ActionType.move:
             action = entity[MF.action]
+            position = entity[MF.x_pos], entity[MF.y_pos]
+            path = action[MF.path]
+
             send_event(EntityMove(
                 srv_id,
-                position=(
-                    entity[MF.x_pos], entity[MF.y_pos]),
-                destination=(
-                    action[MF.x_pos], action[MF.y_pos]),
+                position=position,
+                path=path,
                 speed=action[MF.speed]))
 
 
