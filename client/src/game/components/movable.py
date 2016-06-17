@@ -29,10 +29,16 @@ class Movable(Component):
         self._position = position
 
         # Destination
-        self._destination = None
+        self._next_position = None
+
+        # Path
+        self._path = None
 
         # Speed
         self._speed = 0
+
+        # Direction vector
+        self._direction = None
 
     @property
     def position(self):
@@ -52,7 +58,9 @@ class Movable(Component):
         """
         LOG.debug('Manually setting position {} -> {}'.format(
             self._position, value))
-        self._destination, self.direction = None, None
+        self._next_position = None
+        self._direction = None
+        self._path = None
         self._speed = 0
         self._position = value
 
@@ -63,7 +71,12 @@ class Movable(Component):
         :return: The destination of the movable.
         :rtype: tuple or None
         """
-        return self._destination
+        return self._next_position
+
+    @destination.setter
+    def destination(self, dest):
+        """Destination setter."""
+        self._next_position = dest
 
     @property
     def speed(self):
@@ -74,30 +87,26 @@ class Movable(Component):
         """
         return self._speed
 
-    def move(self, position, destination, speed):
+    def move(self, position, path, speed):
         """Initial setup of a movable.
 
-        Set the initial position, the destination and the speed. And compute the
-        direction vector.
+        Sets the initial position, the movement path and the speed. And computes
+        the direction vector.
 
         :param position: The starting position of the movable.
         :type position: :class:`tuple`
 
-        :param destination: The target destination of the movable.
-        :type destination: :class:`tuple`
+        :param path: The path to move by.
+        :type path: list
 
         :param speed: The movement speed.
         :type target_tstamp: :class:`float`
         """
-        LOG.debug('Moving movable from {} to {} at speed {}'.format(
-            position, destination, speed))
-        self.direction = (
-            Vec(destination[0], destination[1], 0.0) -
-            Vec(position[0], position[1], 0.0))
-        self.direction.norm()
-        self._position = position
-        self._destination = destination
+        # compute new direction
         self._speed = speed
+        self._path = path
+        self._position = position
+        self.destination = path.pop(0)
 
     def update(self, dt):
         """Movable update function.
@@ -109,16 +118,22 @@ class Movable(Component):
         :param dt: The time spent since the last update call (in seconds).
         :type dt: float
         """
-        if self._destination:
+        if self._next_position:
             # We have both destination and speed, so we can calculate the amount
             # of movement in the given dt.
-            dv = self.direction * dt * self._speed
+            self._direction = (
+                Vec(self._next_position[0], self._next_position[1], 0.0) -
+                Vec(self._position[0], self._position[1], 0.0))
+            self._direction.norm()
+            dv = self._direction * dt * self._speed
             self._position = self._position[0] + dv.x, self.position[1] + dv.y
 
-            if distance(self._destination, self._position) < self.EPSILON:
-                # Reset the movable internal data because we arrived at the
-                # destination (distance < EPSILON). Force the destination as
-                # current position and reset the internal data.
-                self.position = self._destination
-                LOG.debug('Movable arrived at destination {}'.format(
-                    self._position))
+            if distance(self._next_position, self._position) < self.EPSILON:
+                self._position = self._next_position
+                # Try to pick the next waypoint as new position
+                try:
+                    self.destination = self._path.pop(0)
+                    LOG.debug('Switched destination to {}'.format(self.destination))
+                except IndexError:
+                    LOG.debug('Movable arrived at destination {}'.format(
+                        self._position))

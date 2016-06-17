@@ -223,5 +223,5 @@ def character_set_movement(evt):
     if entity:
         entity[Movable].move(
             position=evt.position,
-            destination=evt.destination,
+            path=evt.path,
             speed=evt.speed)
