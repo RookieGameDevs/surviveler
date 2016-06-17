@@ -34,6 +34,6 @@ type IdleActionData struct {
  * Movement action data.
  */
 type MoveActionData struct {
-	Speed float32
+	Speed float64
 	Path []math.Vec2
 }

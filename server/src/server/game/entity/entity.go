@@ -5,7 +5,6 @@
 package entity
 
 import (
-	gomath "math"
 	"server/math"
 	"time"
 )
@@ -59,25 +58,36 @@ type MovableEntity struct {
 
 func (me *MovableEntity) Update(dt time.Duration) {
 	// update position on the player path
-	pathLength := len(me.curPath)
-	if pathLength > 0 {
+	// update position on the player path
+	if len(me.curPath) > 0 {
 		// get sub-destination (current path segment)
-		subDst := me.curPath[me.curPathIdx]
+		dst := me.curPath[me.curPathIdx]
 
-		// compute translation vector
-		moveVec := subDst.Sub(me.Pos).Normalize()
-		me.Pos = me.Pos.Add(moveVec.Mul(me.Speed * dt.Seconds()))
+		// compute distance to be covered as time * speed
+		distance := dt.Seconds() * me.Speed
 
-		if gomath.Abs(subDst[0]-me.Pos[0]) <= 0.01 &&
-			gomath.Abs(subDst[1]-me.Pos[1]) <= 0.01 {
-			// reached current sub-destination
-			me.curPathIdx--
-			me.Pos = subDst
+		for {
+			// compute translation and direction vectors
+			t := dst.Sub(me.Pos)
+			dir := t.Normalize()
 
-			switch {
-			case me.curPathIdx < 0:
-				// this was the last path segment
-				me.hasReachedDestination = true
+			// compute new position
+			pos := me.Pos.Add(dir.Mul(distance))
+			a := pos.Sub(me.Pos).Len()
+			b := t.Len()
+
+			if a > b {
+				me.Pos = dst
+				me.curPathIdx--
+				if me.curPathIdx < 0 {
+					me.hasReachedDestination = true
+					break
+				}
+				dst = me.curPath[me.curPathIdx]
+				distance = a - b
+			} else {
+				me.Pos = pos
+				break
 			}
 		}
 	}

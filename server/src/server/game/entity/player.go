@@ -64,10 +64,10 @@ func (p *Player) GetState() EntityState {
 
 	case MovingAction:
 		from := p.curPathIdx
-		to := math.IMin(from + maxWaypointsToSend, len(p.curPath))
+		to := math.IMin(from+maxWaypointsToSend, len(p.curPath))
 		moveActionData := MoveActionData{
 			Speed: p.Speed,
-			Path: make([]math.Vec2, to - from),
+			Path:  make([]math.Vec2, to-from),
 		}
 		copy(moveActionData.Path, p.curPath[from:to])
 		actionData = moveActionData
