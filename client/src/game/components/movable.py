@@ -1,6 +1,5 @@
 from game.components import Component
 from matlib import Vec
-from utils import distance
 import logging
 
 
@@ -60,23 +59,17 @@ class Movable(Component):
             self._position, value))
         self._next_position = None
         self._direction = None
-        self._path = None
+        self._path = []
         self._speed = 0
         self._position = value
 
     @property
     def destination(self):
-        """Destination getter.
-
-        :return: The destination of the movable.
-        :rtype: tuple or None
-        """
         return self._next_position
 
-    @destination.setter
-    def destination(self, dest):
-        """Destination setter."""
-        self._next_position = dest
+    @property
+    def path(self):
+        return self._path
 
     @property
     def speed(self):
@@ -104,9 +97,55 @@ class Movable(Component):
         """
         # compute new direction
         self._speed = speed
-        self._path = path
+        self._next_position, self._path = path[0], path[1:]
         self._position = position
-        self.destination = path.pop(0)
+
+    def partial_movement(self, distance, position, next_position, path):
+        """Recursive function to calculate parial movements (to consider cases
+        in which during the given dt we are actually going over a the
+        destination point.
+
+        :param distance: The magnitude of the movement vector.
+        :type distance: float
+
+        :param position: The current position of the movable.
+        :type position: tuple
+
+        :param next_position: The next position in the path.
+        :type next_position: tuple
+
+        :param path: The other points of the path.
+        :type path: list
+        """
+        # Actual distance from destination
+        np = Vec(next_position[0], next_position[1], 0.0)
+        p = Vec(position[0], position[1], 0.0)
+        dst = (np - p).mag()
+
+        # We did not reach the next_position yet.
+        if distance < dst:
+            self._direction = np - p
+            self._direction.norm()
+            cur = p + self._direction * distance
+            self._position = cur.x, cur.y
+
+        # We arrived in next_position, continue toward the next waypoint of the
+        # path recursively calling partial_movement.
+        elif path:
+            position, next_position, path = next_position, path[0], path[1:]
+            LOG.debug('Switched destination to {}'.format(next_position))
+            self.partial_movement(
+                distance - dst, position, next_position, path)
+
+        # We reached or surpassed next_position and there are no more path
+        # steps: we arrived!
+        else:
+            LOG.debug('Movable arrived at destination {}'.format(self._position))
+            self._next_position = None
+            self._direction = None
+            self._path = []
+            self._speed = 0
+            self._position = next_position
 
     def update(self, dt):
         """Movable update function.
@@ -118,22 +157,7 @@ class Movable(Component):
         :param dt: The time spent since the last update call (in seconds).
         :type dt: float
         """
-        if self._next_position:
-            # We have both destination and speed, so we can calculate the amount
-            # of movement in the given dt.
-            self._direction = (
-                Vec(self._next_position[0], self._next_position[1], 0.0) -
-                Vec(self._position[0], self._position[1], 0.0))
-            self._direction.norm()
-            dv = self._direction * dt * self._speed
-            self._position = self._position[0] + dv.x, self.position[1] + dv.y
-
-            if distance(self._next_position, self._position) < self.EPSILON:
-                self._position = self._next_position
-                # Try to pick the next waypoint as new position
-                try:
-                    self.destination = self._path.pop(0)
-                    LOG.debug('Switched destination to {}'.format(self.destination))
-                except IndexError:
-                    LOG.debug('Movable arrived at destination {}'.format(
-                        self._position))
+        if self._next_position and self._speed:
+            distance = self._speed * dt
+            self.partial_movement(
+                distance, self._position, self._next_position, self._path)
