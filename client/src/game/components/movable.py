@@ -28,16 +28,16 @@ class Movable(Component):
         self._position = position
 
         # Destination
-        self._next_position = None
+        self.next_position = None
 
         # Path
-        self._path = None
+        self.path = None
 
         # Speed
-        self._speed = 0
+        self.speed = 0
 
         # Direction vector
-        self._direction = None
+        self.direction = None
 
     @property
     def position(self):
@@ -57,28 +57,15 @@ class Movable(Component):
         """
         LOG.debug('Manually setting position {} -> {}'.format(
             self._position, value))
-        self._next_position = None
-        self._direction = None
-        self._path = []
-        self._speed = 0
+        self.next_position = None
+        self.direction = None
+        self.path = []
+        self.speed = 0
         self._position = value
 
     @property
     def destination(self):
-        return self._next_position
-
-    @property
-    def path(self):
-        return self._path
-
-    @property
-    def speed(self):
-        """Speed getter.
-
-        :return: The movable speed.
-        :rtype: float
-        """
-        return self._speed
+        return self.next_position
 
     def move(self, position, path, speed):
         """Initial setup of a movable.
@@ -96,8 +83,8 @@ class Movable(Component):
         :type target_tstamp: :class:`float`
         """
         # compute new direction
-        self._speed = speed
-        self._next_position, self._path = path[0], path[1:]
+        self.speed = speed
+        self.next_position, self.path = path[0], path[1:]
         self._position = position
 
     def partial_movement(self, distance, position, next_position, path):
@@ -124,9 +111,9 @@ class Movable(Component):
 
         # We did not reach the next_position yet.
         if distance < dst:
-            self._direction = np - p
-            self._direction.norm()
-            cur = p + self._direction * distance
+            self.direction = np - p
+            self.direction.norm()
+            cur = p + self.direction * distance
             self._position = cur.x, cur.y
 
         # We arrived in next_position, continue toward the next waypoint of the
@@ -141,10 +128,10 @@ class Movable(Component):
         # steps: we arrived!
         else:
             LOG.debug('Movable arrived at destination {}'.format(self._position))
-            self._next_position = None
-            self._direction = None
-            self._path = []
-            self._speed = 0
+            self.next_position = None
+            self.direction = None
+            self.path = []
+            self.speed = 0
             self._position = next_position
 
     def update(self, dt):
@@ -157,7 +144,7 @@ class Movable(Component):
         :param dt: The time spent since the last update call (in seconds).
         :type dt: float
         """
-        if self._next_position and self._speed:
-            distance = self._speed * dt
+        if self.next_position and self.speed:
+            distance = self.speed * dt
             self.partial_movement(
-                distance, self._position, self._next_position, self._path)
+                distance, self._position, self.next_position, self.path)
