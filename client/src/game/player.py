@@ -1,6 +1,7 @@
 from context import Context
 from events import subscriber
 from game import Character
+from game.character import ENTITY_MAP
 from game.components import Movable
 from game.events import EntitySpawn
 from utils import to_scene
@@ -40,15 +41,28 @@ def player_spawn(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
+
     # Only instantiate the player if it does not exist
     entity_exists = context.resolve_entity(evt.srv_id)
+
     # NOTE: check if the srv_id is exactly the player id received from the
     # server during the handshake.
     is_player = evt.srv_id == evt.context.player_id
+
     if not entity_exists and is_player:
-        resource = context.res_mgr.get('/characters/grunt')
+        # Search for the proper resource to use basing on the entity_type.
+        # FIXME: right now it defaults on grunts.
+        entities = context.res_mgr.get('/entities')
+        resource = context.res_mgr.get(
+            entities.data['entities_map'].get(
+                ENTITY_MAP[evt.entity_type],
+                '/characters/grunt'
+            )
+        )
+
+        # Search for the player name
         name = context.players_name_map[evt.srv_id]
+        # Create the player
         player = Player(resource, name, context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
-        return player.e_id

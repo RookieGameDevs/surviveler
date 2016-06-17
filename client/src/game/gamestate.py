@@ -118,7 +118,7 @@ def handle_entity_spawn(gs_mgr):
     new, old = n[MF.entities], o.get(MF.entities, {})
     new_entities = set(new) - set(old)
     for ent in new_entities:
-        evt = EntitySpawn(ent, new[ent])
+        evt = EntitySpawn(ent, new[ent][MF.entity_type])
         send_event(evt)
 
 

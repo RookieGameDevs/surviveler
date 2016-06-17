@@ -1,3 +1,5 @@
+from enum import IntEnum
+from enum import unique
 from events import subscriber
 from game import Entity
 from game.components import Movable
@@ -19,6 +21,19 @@ LOG = logging.getLogger(__name__)
 
 
 WHOLE_ANGLE = 2.0 * pi
+
+
+@unique
+class EntityType(IntEnum):
+    """Enumeration of the possible entities"""
+    grunt = 0
+    programmer = 1
+    engineer = 2
+    zombie = 3
+
+
+#: Map of entity names based  int ids -> names
+ENTITY_MAP = {em.value: em.name for em in EntityType}
 
 
 class Character(Entity):
@@ -137,17 +152,31 @@ def character_spawn(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
+
     # Only instantiate the new character if it does not exist
     entity_exists = context.resolve_entity(evt.srv_id)
+
     # NOTE: check if the srv_id is exactly the player id received from the
     # server during the handshake. And avoid spawing the character.
     is_player = evt.srv_id == evt.context.player_id
+
     if not entity_exists and not is_player:
-        resource = context.res_mgr.get('/characters/grunt')
+        # Search for the proper resource to use basing on the entity_type.
+        # FIXME: right now it defaults on zombies.
+        entities = context.res_mgr.get('/entities')
+        resource = context.res_mgr.get(
+            entities.data['entities_map'].get(
+                ENTITY_MAP[evt.entity_type],
+                '/enemies/zombie'
+            )
+        )
+
+        # Search for the entity name
         name = context.players_name_map.get(evt.srv_id, '')
-        player = Character(resource, name, context.scene.root)
-        context.entities[player.e_id] = player
-        context.server_entities_map[evt.srv_id] = player.e_id
+        # Create the entity
+        character = Character(resource, name, context.scene.root)
+        context.entities[character.e_id] = character
+        context.server_entities_map[evt.srv_id] = character.e_id
 
 
 @subscriber(EntityDisappear)

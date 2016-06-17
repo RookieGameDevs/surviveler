@@ -6,12 +6,12 @@ class EntitySpawn(Event):
 
     Event emitted when a new entity is discovered in the gamestate.
     """
-    def __init__(self, srv_id, entity_data):
+    def __init__(self, srv_id, entity_type):
         self.srv_id = srv_id
-        self.entity_data = entity_data
+        self.entity_type = entity_type
 
     def __str__(self):
-        return '<EntitySpawn({})>'.format(self.srv_id)
+        return '<EntitySpawn({}, {})>'.format(self.srv_id, self.entity_type)
 
 
 class EntityDisappear(Event):
