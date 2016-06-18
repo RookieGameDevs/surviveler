@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"math/rand"
 	"server/game/entity"
 	msg "server/game/messages"
 	"server/game/resource"
@@ -75,16 +76,18 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 func (gs GameState) validateWorld() error {
 	spawnPoints := gs.md.AIKeypoints.Spawn
 	// validate player spawn point
-	pt := gs.World.TileFromWorldVec(spawnPoints.Player)
-	if pt == nil {
-		return fmt.Errorf(
-			"Player spawn point is out of bounds (%#v)",
-			spawnPoints.Player)
-	}
-	if pt.Kind&KindWalkable == 0 {
-		return fmt.Errorf(
-			"Player spawn point is located on a non-walkable point: (%#v)",
-			*pt)
+	for i := range spawnPoints.Players {
+		pt := gs.World.TileFromWorldVec(spawnPoints.Players[i])
+		if pt == nil {
+			return fmt.Errorf(
+				"Player spawn point is out of bounds (%#v)",
+				spawnPoints.Players[i])
+		}
+		if pt.Kind&KindWalkable == 0 {
+			return fmt.Errorf(
+				"Player spawn point is located on a non-walkable point: (%#v)",
+				*pt)
+		}
 	}
 	// validate enemies spawn points
 	if len(spawnPoints.Enemies) == 0 {
@@ -131,7 +134,9 @@ func (gs GameState) pack() *msg.GameStateMsg {
 func (gs *GameState) onPlayerJoined(imsg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("We have one more player")
-	gs.players[clientId] = entity.NewPlayer(gs.md.AIKeypoints.Spawn.Player, 3)
+	// pick a random spawn point
+	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
+	gs.players[clientId] = entity.NewPlayer(org, 3)
 	return nil
 }
 
