@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	watchingState = iota
-	roamingState
-	chasingState
+	lookingState = iota
+	walkingState
+	runningState
+	attackingState
 )
 
 const (
@@ -26,7 +27,7 @@ type Zombie struct {
 
 func NewZombie(pos math.Vec2) *Zombie {
 	return &Zombie{
-		curState: watchingState,
+		curState: lookingState,
 		Movable: Movable{
 			Speed: zombieSpeed,
 			Pos:   pos,
@@ -35,7 +36,16 @@ func NewZombie(pos math.Vec2) *Zombie {
 }
 
 func (z *Zombie) Update(dt time.Duration) {
-	// TODO
+	switch z.curState {
+	case lookingState:
+		// TODO
+	case walkingState:
+		// TODO
+	case runningState:
+		// TODO
+	case attackingState:
+		// TODO
+	}
 }
 
 func (z *Zombie) GetState() EntityState {
@@ -44,12 +54,13 @@ func (z *Zombie) GetState() EntityState {
 	var actionType ActionType
 
 	switch z.curState {
-	case watchingState:
+	case lookingState:
+	case attackingState:
 		actionData = IdleActionData{}
 		actionType = IdleAction
 
-	case roamingState:
-	case chasingState:
+	case walkingState:
+	case runningState:
 		from := z.curPathIdx
 		to := math.IMin(from+maxWaypointsToSend, len(z.curPath))
 		moveActionData := MoveActionData{
