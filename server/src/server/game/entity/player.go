@@ -21,7 +21,7 @@ const maxWaypointsToSend = 3
 type Player struct {
 	entityType EntityType // player type
 	curAction  ActionType // current action
-	MovableEntity
+	Movable
 }
 
 /*
@@ -29,7 +29,7 @@ type Player struct {
  */
 func NewPlayer(spawn math.Vec2, speed float64) *Player {
 	p := new(Player)
-	p.entityType = TypeTank
+	p.entityType = TankEntity
 	p.Speed = speed
 	p.Pos = spawn
 	p.curAction = IdleAction
@@ -41,8 +41,8 @@ func NewPlayer(spawn math.Vec2, speed float64) *Player {
  */
 func (p *Player) Update(dt time.Duration) {
 	if p.curAction == MovingAction {
-		p.MovableEntity.Update(dt)
-		if p.MovableEntity.hasReachedDestination {
+		p.Movable.Update(dt)
+		if p.Movable.hasReachedDestination {
 			// come back to Idle if nothing better to do...
 			p.curAction = IdleAction
 		}
@@ -51,7 +51,7 @@ func (p *Player) Update(dt time.Duration) {
 
 func (p *Player) SetPath(path math.Path) {
 	p.curAction = MovingAction
-	p.MovableEntity.SetPath(path)
+	p.Movable.SetPath(path)
 }
 
 func (p *Player) GetState() EntityState {
@@ -73,14 +73,10 @@ func (p *Player) GetState() EntityState {
 		actionData = moveActionData
 	}
 	return EntityState{
-		Type:       p.GetType(),
+		Type:       p.entityType,
 		Xpos:       float32(p.Pos[0]),
 		Ypos:       float32(p.Pos[1]),
 		ActionType: p.curAction,
 		Action:     actionData,
 	}
-}
-
-func (p *Player) GetType() EntityType {
-	return p.entityType
 }

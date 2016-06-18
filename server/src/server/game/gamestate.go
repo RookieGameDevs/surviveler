@@ -103,24 +103,6 @@ func (gs GameState) validateWorld() error {
 				*zt)
 		}
 	}
-	// validate wanderers destination points
-	wanderDest := gs.md.AIKeypoints.WanderingDest
-	if len(wanderDest) == 0 {
-		return errors.New("At least one wandering destination must be defined")
-	}
-	for i := range wanderDest {
-		wt := gs.World.TileFromWorldVec(wanderDest[i])
-		if wt == nil {
-			return fmt.Errorf(
-				"A wandering destination is out of bounds: (%#v)",
-				wanderDest[i])
-		}
-		if wt.Kind&KindWalkable == 0 {
-			return fmt.Errorf(
-				"A wandering destination is located on a non-walkable tile: (%#v)",
-				*wt)
-		}
-	}
 
 	return nil
 }

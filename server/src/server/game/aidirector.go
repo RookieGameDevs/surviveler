@@ -5,11 +5,9 @@
 package game
 
 import (
-	"errors"
 	"math/rand"
 	"server/game/entity"
 	"server/game/resource"
-	"server/math"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -19,8 +17,8 @@ import (
 // AI director tick
 const AIDirectorTickUpdate int = 20
 
-// TEMPORARY: add a ZombieWanderer every N seconds
-const FrequencyAddZombieWanderer time.Duration = 5 * time.Second
+// TEMPORARY: add a Zombie every N seconds
+const FrequencyAddZombie time.Duration = 5 * time.Second
 
 /*
  * AIDirector is the system that manages the ingredients a game session
@@ -34,12 +32,11 @@ const FrequencyAddZombieWanderer time.Duration = 5 * time.Second
  *   time if no zombies are around
  */
 type AIDirector struct {
-	gs            *GameState
-	curTick       int
-	wandererPaths PathCache // zombie wanderer preprocessed paths
-	keypoints     resource.AIKeypoints
+	gs        *GameState
+	curTick   int
+	keypoints resource.AIKeypoints
 
-	lastWandererTime time.Time
+	lastTime time.Time
 }
 
 func (ai *AIDirector) init(gs *GameState) error {
@@ -47,53 +44,21 @@ func (ai *AIDirector) init(gs *GameState) error {
 	ai.gs = gs
 	ai.curTick = 0
 	ai.keypoints = gs.md.AIKeypoints
-	ai.wandererPaths.init(len(ai.keypoints.Spawn.Enemies), len(ai.keypoints.WanderingDest))
-	ai.lastWandererTime = time.Now()
-
-	// preprocess zombie wanderers paths
-	// from zombie spawn points to wandering destinations
-	for i := range ai.keypoints.Spawn.Enemies {
-		org := ai.keypoints.Spawn.Enemies[i]
-		for j := range gs.md.AIKeypoints.WanderingDest {
-			dst := ai.keypoints.WanderingDest[j]
-
-			// run pathfinding
-			if path, _, found := ai.gs.pathfinder.FindPath(org, dst); !found {
-				log.WithFields(log.Fields{
-					"org": org,
-					"dst": dst}).
-					Error("Failed to find zombie wanderer path")
-				return errors.New("Couldn't precompute a zombie wanderer path")
-			} else {
-				// cache the preprocessed path
-				ai.wandererPaths.cachePath(i, j, &path)
-			}
-		}
-	}
+	ai.lastTime = time.Now()
 	return nil
 }
 
-func (ai *AIDirector) summonZombieWanderer() {
+func (ai *AIDirector) summonZombie() {
 
 	// pick a random spawn point
-	spawnIdx := rand.Intn(len(ai.keypoints.Spawn.Enemies))
 	org := ai.keypoints.Spawn.Enemies[rand.Intn(len(ai.keypoints.Spawn.Enemies))]
-
-	// pick a random wandering destination
-	dstIdx := rand.Intn(len(ai.keypoints.WanderingDest))
-	dst := ai.keypoints.WanderingDest[dstIdx]
-
-	// retrieve cached path
-	path := ai.wandererPaths.path(spawnIdx, dstIdx)
 
 	log.WithFields(log.Fields{
 		"spawn": org,
-		"dst":   dst,
-		"path":  path}).
-		Info("summoning wanderer zombie")
+	}).Info("summoning zombie")
 
 	zId := ai.gs.game.AllocEntityId()
-	ai.gs.zombies[zId] = entity.NewZombieWanderer(org, *path, 1)
+	ai.gs.zombies[zId] = entity.NewZombie(org)
 }
 
 /*
@@ -115,27 +80,9 @@ func (ai *AIDirector) Update(cur_time time.Time) {
 
 	// TODO: improve with emotional intensity!
 
-	// but for now we stupidly summon a wanderer zombie every N seconds
-	if time.Since(ai.lastWandererTime) > FrequencyAddZombieWanderer {
-		ai.summonZombieWanderer()
-		ai.lastWandererTime = time.Now()
+	// but for now we stupidly summon a zombie every N seconds
+	if time.Since(ai.lastTime) > FrequencyAddZombie {
+		ai.summonZombie()
+		ai.lastTime = time.Now()
 	}
-}
-
-type PathCache struct {
-	paths  []*math.Path // the slice of cached paths
-	numOrg int          // number of destination paths (used to retrieve the index)
-}
-
-func (c *PathCache) init(numOrg, numDst int) {
-	c.paths = make([]*math.Path, numOrg*numDst)
-	c.numOrg = numOrg
-}
-
-func (c *PathCache) cachePath(orgIdx, dstIdx int, path *math.Path) {
-	c.paths[orgIdx+dstIdx*c.numOrg] = path
-}
-
-func (c *PathCache) path(orgIdx, dstIdx int) *math.Path {
-	return c.paths[orgIdx+dstIdx*c.numOrg]
 }

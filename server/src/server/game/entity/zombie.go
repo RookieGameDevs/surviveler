@@ -9,67 +9,47 @@ import (
 	"time"
 )
 
-const ZombieWandererType uint32 = 1
+const (
+	watchingState = iota
+	roamingState
+	chasingState
+)
 
-type ZombieType int
-
-type ZombieEntity interface {
-	Updater
-}
+const (
+	zombieSpeed = 5.0
+)
 
 type Zombie struct {
-	ZombieEntity Entity
-	Type         uint32
+	curState int // current state
+	Movable
+}
+
+func NewZombie(pos math.Vec2) *Zombie {
+	return &Zombie{
+		curState: watchingState,
+		Movable: Movable{
+			Speed: zombieSpeed,
+			Pos:   pos,
+		},
+	}
 }
 
 func (z *Zombie) Update(dt time.Duration) {
-	z.ZombieEntity.Update(dt)
+	// TODO
 }
 
 func (z *Zombie) GetState() EntityState {
-	return z.ZombieEntity.GetState()
-}
-
-type ZombieWandererEntity struct {
-	curAction ActionType // current action
-	MovableEntity
-}
-
-func NewZombieWanderer(spawn math.Vec2, path math.Path, speed float64) *Zombie {
-	return &Zombie{
-		ZombieEntity: NewZombieWandererEntity(spawn, path, speed),
-		Type:         ZombieWandererType,
-	}
-}
-
-func NewZombieWandererEntity(spawn math.Vec2, path math.Path, speed float64) *ZombieWandererEntity {
-	z := new(ZombieWandererEntity)
-	z.Speed = speed
-	z.Pos = spawn
-	z.curAction = MovingAction
-	z.MovableEntity.SetPath(path)
-	return z
-}
-
-func (z *ZombieWandererEntity) Update(dt time.Duration) {
-	if z.curAction == MovingAction {
-		z.MovableEntity.Update(dt)
-		if z.MovableEntity.hasReachedDestination {
-			// come back to Idle if nothing better to do...
-			z.curAction = IdleAction
-		}
-	}
-}
-
-func (z *ZombieWandererEntity) GetState() EntityState {
 	// first, compile the data depending on current action
 	var actionData interface{}
+	var actionType ActionType
 
-	switch z.curAction {
-	case IdleAction:
+	switch z.curState {
+	case watchingState:
 		actionData = IdleActionData{}
+		actionType = IdleAction
 
-	case MovingAction:
+	case roamingState:
+	case chasingState:
 		from := z.curPathIdx
 		to := math.IMin(from+maxWaypointsToSend, len(z.curPath))
 		moveActionData := MoveActionData{
@@ -78,16 +58,14 @@ func (z *ZombieWandererEntity) GetState() EntityState {
 		}
 		copy(moveActionData.Path, z.curPath[from:to])
 		actionData = moveActionData
+		actionType = MovingAction
 	}
+
 	return EntityState{
-		Type:       z.GetType(),
+		Type:       ZombieEntity,
 		Xpos:       float32(z.Pos[0]),
 		Ypos:       float32(z.Pos[1]),
-		ActionType: z.curAction,
+		ActionType: actionType,
 		Action:     actionData,
 	}
-}
-
-func (z *ZombieWandererEntity) GetType() EntityType {
-	return TypeZombie
 }
