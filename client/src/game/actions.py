@@ -1,11 +1,15 @@
+from core.events import KeyPressEvent
 from core.events import MouseClickEvent
+from events import send_event
 from events import subscriber
+from game.events import GameModeChange
 from matlib import Vec
 from network import Message
 from network import MessageField
 from network import MessageType
 from utils import to_world
 import logging
+import sdl2 as sdl
 
 LOG = logging.getLogger(__name__)
 
@@ -42,3 +46,18 @@ def handle_mouse_click(evt):
         })
 
         evt.context.msg_queue.append(msg)
+
+
+@subscriber(KeyPressEvent)
+def handle_key_press(evt):
+    """Handle the B key pressed event.
+
+    Toggles the building game mode.
+
+    :param evt: The key press event.
+    :type evt: :class:`core.events.KeyPressEvent`
+    """
+    context = evt.context
+    if evt.key == sdl.SDLK_b:
+        prev, cur = context.toggle_game_mode(context.GameMode.building)
+        send_event(GameModeChange(prev, cur))

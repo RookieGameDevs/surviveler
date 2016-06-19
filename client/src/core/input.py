@@ -1,4 +1,6 @@
+from core.events import KeyPressEvent
 from core.events import MouseClickEvent
+from core.events import MouseMoveEvent
 from events import send_event
 import sdl2 as sdl
 import sdl2.ext as sdl_ext
@@ -16,7 +18,15 @@ class InputManager:
         """Process buffered input and dispatch resulting events."""
         events = sdl_ext.get_events()
         for evt in events:
-            if evt.type in {sdl.SDL_MOUSEBUTTONDOWN, sdl.SDL_MOUSEBUTTONUP}:
+            if evt.type in {sdl.SDL_KEYUP}:
+                key_event = evt.key
+                send_event(KeyPressEvent(key_event.keysym.sym))
+
+            elif evt.type in {sdl.SDL_MOUSEMOTION}:
+                mouse_motion = evt.motion
+                send_event(MouseMoveEvent(mouse_motion.x, mouse_motion.y))
+
+            elif evt.type in {sdl.SDL_MOUSEBUTTONDOWN, sdl.SDL_MOUSEBUTTONUP}:
                 mouse_event = evt.button
 
                 if mouse_event.button == sdl.SDL_BUTTON_LEFT:

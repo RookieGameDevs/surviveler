@@ -135,3 +135,26 @@ class PlayerJoin(CharacterJoin):
 
     def __str__(self):
         return '<PlayerJoin({}, {})>'.format(self.srv_id, self.name)
+
+
+class GameModeChange(Event):
+    """Game mode changed.
+
+    Event emitted when the game mode changed.
+    """
+
+    def __init__(self, prev, cur):
+        """Constructor.
+
+        :param prev: The previous game mode.
+        :type prev: :enum:`context.Context.GameMode`
+
+        :param cur: The current game mode.
+        :type cur: :enum:`context.Context.GameMode`
+        """
+        self.prev = prev
+        self.cur = cur
+
+    def __str__(self):
+        return '<GameModeChange({})>'.format(
+            self.prev, self.cur)

@@ -1,3 +1,7 @@
+from enum import Enum
+from enum import unique
+
+
 class Context:
     """Game context.
 
@@ -7,6 +11,12 @@ class Context:
 
     #: The context instance
     __INSTANCE = None
+
+    @unique
+    class GameMode(Enum):
+        """Enumerations of the game modes"""
+        default = 'Default Mode'
+        building = 'Building Mode'
 
     def __init__(self, conf):
         """Constructor.
@@ -33,6 +43,9 @@ class Context:
         self.players_name_map = {}
 
         self.msg_queue = []
+
+        # Game mode
+        self.game_mode = Context.GameMode.default
 
     @classmethod
     def get_instance(cls):
@@ -62,3 +75,19 @@ class Context:
         :type e_id: int
         """
         return self.entities.get(e_id)
+
+    def toggle_game_mode(self, mode=None):
+        """Handle the game mode.
+
+        In case the game mode is default: enter into the new game mode. In case
+        the game mode is exactly the specified one, return to default mode.
+
+        :param mode: The game mode to be toggled.
+        :type mode: :enum:`context.GameMode`
+        """
+        mode = mode or Context.GameMode.default
+        if self.game_mode == mode:
+            prev, self.game_mode = self.game_mode, Context.GameMode.default
+        else:
+            prev, self.game_mode = self.game_mode, mode
+        return prev, self.game_mode
