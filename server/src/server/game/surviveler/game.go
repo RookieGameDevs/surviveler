@@ -2,13 +2,15 @@
  * Surviveler game package
  * game entry & exit points
  */
-package game
+package surviveler
 
 import (
 	"fmt"
 	"os"
 	"os/signal"
 	"runtime"
+	"server/game"
+	"server/game/ai"
 	msg "server/game/messages"
 	"server/game/protocol"
 	"server/game/resource"
@@ -20,28 +22,32 @@ import (
 )
 
 /*
- * Game is the main game structure, entry and exit points
+ * survivelerGame is the main game structure, entry and exit points
  */
-type Game struct {
-	cfg             Config                     // configuration settings
+type survivelerGame struct {
+	cfg             game.Config                // configuration settings
 	server          protocol.Server            // server core
 	clients         *protocol.ClientRegistry   // the client registry
-	movementPlanner *MovementPlanner           // the movement planner
 	assets          resource.SurvivelerPackage // game assets package
 	ticker          time.Ticker                // the main tick source
 	telnet          *protocol.TelnetServer     // if enabled, the telnet server
 	telnetReq       chan TelnetRequest         // channel for game related telnet commands
 	telnetDone      chan error                 // signals the end of a telnet request
 	msgChan         chan msg.ClientMessage     // conducts ClientMessage to the game loop
-	gameQuit        chan struct{}              // to signal the game loop goroutine it must end
+	quitChan        chan struct{}              // to signal the game loop goroutine it must end
 	wg              sync.WaitGroup             // wait for the different goroutine to finish
-	numEntities     uint32                     // number of entities currently present in the game
+	state           *gamestate                 // the game state
+	movementPlanner *game.MovementPlanner      // the movement planner
+	pathfinder      *game.Pathfinder           // pathfinder
+	ai              *ai.AIDirector             // AI director
 }
 
 /*
  * Setup initializes the different game subsystems
  */
-func (g *Game) Setup(cfg Config) bool {
+func NewGame(cfg game.Config) game.Game {
+	g := new(survivelerGame)
+
 	// copy configuration
 	g.cfg = cfg
 
@@ -49,9 +55,12 @@ func (g *Game) Setup(cfg Config) bool {
 	var err error
 	var lvl log.Level
 	if lvl, err = log.ParseLevel(g.cfg.LogLevel); err != nil {
-		log.WithFields(log.Fields{"level": g.cfg.LogLevel, "default": DefaultLogLevel}).Warn("unknown log level, using default")
-		g.cfg.LogLevel = DefaultLogLevel
-		lvl, _ = log.ParseLevel(DefaultLogLevel)
+		log.WithFields(log.Fields{
+			"level":   g.cfg.LogLevel,
+			"default": game.DefaultLogLevel,
+		}).Warn("unknown log level, using default")
+		g.cfg.LogLevel = game.DefaultLogLevel
+		lvl, _ = log.ParseLevel(game.DefaultLogLevel)
 	}
 	log.StandardLogger().Level = lvl
 
@@ -64,16 +73,23 @@ func (g *Game) Setup(cfg Config) bool {
 	// load assets
 	if err := g.loadAssets(g.cfg.AssetsPath); err != nil {
 		log.WithError(err).Error("Couldn't load assets")
-		return false
+		return nil
+	}
+
+	// initialize the gamestate
+	g.state = newGameState()
+	if err := g.state.init(g.assets); err != nil {
+		log.WithError(err).Error("Couldn't initialize gamestate")
+		return nil
 	}
 
 	// init channels
 	g.msgChan = make(chan msg.ClientMessage)
-	g.gameQuit = make(chan struct{})
+	g.quitChan = make(chan struct{})
 
 	// creates the client registry
 	allocId := func() uint32 {
-		return g.AllocEntityId()
+		return g.state.allocEntityId()
 	}
 	g.clients = protocol.NewClientRegistry(allocId)
 
@@ -85,8 +101,14 @@ func (g *Game) Setup(cfg Config) bool {
 		g.registerTelnetHandlers()
 	}
 
+	// initialize the pathfinder module
+	g.pathfinder = game.NewPathfinder(g)
+
 	// init the movement planner
-	g.movementPlanner = NewMovementPlanner(g)
+	g.movementPlanner = game.NewMovementPlanner(g)
+
+	// init the AI director
+	g.ai = ai.NewAIDirector(g)
 
 	// setup TCP server
 	rootHandler := func(imsg *msg.Message, clientId uint32) error {
@@ -96,13 +118,13 @@ func (g *Game) Setup(cfg Config) bool {
 	}
 	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg)
 
-	return true
+	return g
 }
 
 /*
  * loadAssets load the assets package
  */
-func (g *Game) loadAssets(path string) error {
+func (g *survivelerGame) loadAssets(path string) error {
 	if len(path) == 0 {
 		return fmt.Errorf("Can't start without a specified assets path")
 	}
@@ -114,7 +136,7 @@ func (g *Game) loadAssets(path string) error {
 /*
  * Start starts the server and game loops
  */
-func (g *Game) Start() {
+func (g *survivelerGame) Start() {
 	// start everything
 	g.server.Start()
 
@@ -137,6 +159,26 @@ func (g *Game) Start() {
 	g.stop()
 }
 
+func (g *survivelerGame) GetState() game.GameState {
+	return g.state
+}
+
+func (g *survivelerGame) GetQuitChan() chan struct{} {
+	return g.quitChan
+}
+
+func (g *survivelerGame) GetMessageChan() chan msg.ClientMessage {
+	return g.msgChan
+}
+
+func (g *survivelerGame) GetPathfinder() *game.Pathfinder {
+	return g.pathfinder
+}
+
+func (g *survivelerGame) GetWaitGroup() *sync.WaitGroup {
+	return &g.wg
+}
+
 /*
  * stop cleanups the servers and exits the various loops
  *
@@ -144,20 +186,12 @@ func (g *Game) Start() {
  * blocking call to Stop that let them cleanups the various goroutines and
  * connections still opened.
  */
-func (g *Game) stop() {
+func (g *survivelerGame) stop() {
 	g.server.Stop()
 	if g.telnet != nil {
 		g.telnet.Stop()
 	}
 
-	close(g.gameQuit)
+	close(g.quitChan)
 	g.wg.Wait()
-}
-
-/*
- * Allocates a new entity identifier.
- */
-func (g *Game) AllocEntityId() uint32 {
-	g.numEntities++
-	return g.numEntities
 }

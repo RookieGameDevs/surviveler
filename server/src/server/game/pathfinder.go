@@ -5,14 +5,21 @@
 package game
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/beefsack/go-astar"
 	gomath "math"
 	"server/math"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/beefsack/go-astar"
 )
 
 type Pathfinder struct {
-	World *World
+	game Game
+}
+
+func NewPathfinder(game Game) *Pathfinder {
+	return &Pathfinder{
+		game: game,
+	}
 }
 
 /*
@@ -23,12 +30,13 @@ type Pathfinder struct {
  * resolution
  */
 func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64, found bool) {
+	world := pf.game.GetState().GetWorld()
 	// scale org and dst coordinates
-	scaledOrg, scaledDst := org.Mul(pf.World.GridScale), dst.Mul(pf.World.GridScale)
+	scaledOrg, scaledDst := org.Mul(world.GridScale), dst.Mul(world.GridScale)
 
 	// retrieve origin and destination tiles by rounding the scaled org/dst points down
-	porg := pf.World.Tile(int(scaledOrg[0]), int(scaledOrg[1]))
-	pdst := pf.World.Tile(int(scaledDst[0]), int(scaledDst[1]))
+	porg := world.Tile(int(scaledOrg[0]), int(scaledOrg[1]))
+	pdst := world.Tile(int(scaledDst[0]), int(scaledDst[1]))
 	switch {
 	case porg == nil, pdst == nil:
 		log.WithFields(log.Fields{"org": org, "dst": dst}).Error("Couldn't find origin or destination Tile")
@@ -45,7 +53,7 @@ func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64,
 	// generate a cleaner path, in one pass:
 	// - basic path smoothing (remove consecutive equal segments)
 	// - clip path segment ends to cell center
-	invScale := 1.0 / pf.World.GridScale
+	invScale := 1.0 / world.GridScale
 	txCenter := math.Vec2{0.5, 0.5} // tx vector to the cell center
 	path = make(math.Path, 0, len(rawPath))
 	var last math.Vec2

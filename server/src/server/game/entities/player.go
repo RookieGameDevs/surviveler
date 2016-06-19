@@ -2,9 +2,11 @@
  * Surviveler entity package
  * player
  */
-package entity
+package entities
 
 import (
+	"server/game"
+	"server/game/components"
 	"server/math"
 	"time"
 )
@@ -19,9 +21,9 @@ const maxWaypointsToSend = 3
  * implements the Entity interface.
  */
 type Player struct {
-	entityType EntityType // player type
-	curAction  ActionType // current action
-	Movable
+	entityType game.EntityType // player type
+	curAction  game.ActionType // current action
+	components.Movable
 }
 
 /*
@@ -29,10 +31,10 @@ type Player struct {
  */
 func NewPlayer(spawn math.Vec2, speed float64) *Player {
 	p := new(Player)
-	p.entityType = TankEntity
+	p.entityType = game.TankEntity
 	p.Speed = speed
 	p.Pos = spawn
-	p.curAction = IdleAction
+	p.curAction = game.IdleAction
 	return p
 }
 
@@ -40,39 +42,40 @@ func NewPlayer(spawn math.Vec2, speed float64) *Player {
  * Update updates the local state of the player
  */
 func (p *Player) Update(dt time.Duration) {
-	if p.curAction == MovingAction {
+	if p.curAction == game.MovingAction {
 		p.Movable.Update(dt)
-		if p.Movable.hasReachedDestination {
+		if p.Movable.HasReachedDestination() {
 			// come back to Idle if nothing better to do...
-			p.curAction = IdleAction
+			p.curAction = game.IdleAction
 		}
 	}
 }
 
 func (p *Player) SetPath(path math.Path) {
-	p.curAction = MovingAction
+	p.curAction = game.MovingAction
 	p.Movable.SetPath(path)
 }
 
-func (p *Player) GetState() EntityState {
+func (p *Player) GetPosition() math.Vec2 {
+	return p.Movable.Pos
+}
+
+func (p *Player) GetState() game.EntityState {
 	// first, compile the data depending on current action
 	var actionData interface{}
 
 	switch p.curAction {
-	case IdleAction:
-		actionData = IdleActionData{}
+	case game.IdleAction:
+		actionData = game.IdleActionData{}
 
-	case MovingAction:
-		from := p.curPathIdx
-		to := math.IMin(from+maxWaypointsToSend, len(p.curPath))
-		moveActionData := MoveActionData{
+	case game.MovingAction:
+		moveActionData := game.MoveActionData{
 			Speed: p.Speed,
-			Path:  make([]math.Vec2, to-from),
+			Path:  p.Movable.GetPath(maxWaypointsToSend),
 		}
-		copy(moveActionData.Path, p.curPath[from:to])
 		actionData = moveActionData
 	}
-	return EntityState{
+	return game.EntityState{
 		Type:       p.entityType,
 		Xpos:       float32(p.Pos[0]),
 		Ypos:       float32(p.Pos[1]),

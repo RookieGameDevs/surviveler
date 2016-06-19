@@ -7,6 +7,7 @@ package main
 import (
 	"os"
 	"server/game"
+	"server/game/surviveler"
 
 	"gopkg.in/ini.v2"
 
@@ -71,10 +72,13 @@ func runCliApp() error {
 		}
 
 		// game setup
-		var surviveler game.Game
-		if surviveler.Setup(cfg) {
+		inst := surviveler.NewGame(cfg)
+		if inst != nil {
 			// start the game
-			surviveler.Start()
+			log.Info("Starting game...")
+			inst.Start()
+		} else {
+			log.Fatal("Game startup failed")
 		}
 		return nil
 	}

@@ -2,12 +2,12 @@
  * Surviveler game package
  * AI director
  */
-package game
+package ai
 
 import (
 	"math/rand"
-	"server/game/entity"
-	"server/game/resource"
+	"server/game"
+	"server/game/entities"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -32,33 +32,30 @@ const FrequencyAddZombie time.Duration = 5 * time.Second
  *   time if no zombies are around
  */
 type AIDirector struct {
-	gs        *GameState
-	curTick   int
-	keypoints resource.AIKeypoints
-
+	game     game.Game
+	curTick  int
 	lastTime time.Time
 }
 
-func (ai *AIDirector) init(gs *GameState) error {
+func NewAIDirector(game game.Game) *AIDirector {
 	log.Info("Initializing AI Director")
-	ai.gs = gs
+	ai := new(AIDirector)
+	ai.game = game
 	ai.curTick = 0
-	ai.keypoints = gs.md.AIKeypoints
 	ai.lastTime = time.Now()
-	return nil
+	return ai
 }
 
 func (ai *AIDirector) summonZombie() {
-
+	keypoints := ai.game.GetState().GetMapData().AIKeypoints
 	// pick a random spawn point
-	org := ai.keypoints.Spawn.Enemies[rand.Intn(len(ai.keypoints.Spawn.Enemies))]
+	org := keypoints.Spawn.Enemies[rand.Intn(len(keypoints.Spawn.Enemies))]
 
 	log.WithFields(log.Fields{
 		"spawn": org,
 	}).Info("summoning zombie")
 
-	zId := ai.gs.game.AllocEntityId()
-	ai.gs.zombies[zId] = entity.NewZombie(org)
+	ai.game.GetState().AddEntity(entities.NewZombie(org))
 }
 
 /*
@@ -71,7 +68,7 @@ func (ai *AIDirector) summonZombieMob(qty int) {
 	}
 }
 
-func (ai *AIDirector) Update(cur_time time.Time) {
+func (ai *AIDirector) Update(curTime time.Time) {
 	// limit the update frequency
 	ai.curTick++
 	if ai.curTick%AIDirectorTickUpdate != 0 {

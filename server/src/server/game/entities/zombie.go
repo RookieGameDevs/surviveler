@@ -2,9 +2,11 @@
  * Surviveler entity package
  * zombie
  */
-package entity
+package entities
 
 import (
+	"server/game"
+	"server/game/components"
 	"server/math"
 	"time"
 )
@@ -22,13 +24,13 @@ const (
 
 type Zombie struct {
 	curState int // current state
-	Movable
+	components.Movable
 }
 
-func NewZombie(pos math.Vec2) *Zombie {
+func NewZombie(pos math.Vec2) game.Entity {
 	return &Zombie{
 		curState: lookingState,
-		Movable: Movable{
+		Movable: components.Movable{
 			Speed: zombieSpeed,
 			Pos:   pos,
 		},
@@ -48,32 +50,32 @@ func (z *Zombie) Update(dt time.Duration) {
 	}
 }
 
-func (z *Zombie) GetState() EntityState {
+func (z *Zombie) GetPosition() math.Vec2 {
+	return z.Movable.Pos
+}
+
+func (z *Zombie) GetState() game.EntityState {
 	// first, compile the data depending on current action
 	var actionData interface{}
-	var actionType ActionType
+	var actionType game.ActionType
 
 	switch z.curState {
 	case lookingState:
 	case attackingState:
-		actionData = IdleActionData{}
-		actionType = IdleAction
+		actionData = game.IdleActionData{}
+		actionType = game.IdleAction
 
 	case walkingState:
 	case runningState:
-		from := z.curPathIdx
-		to := math.IMin(from+maxWaypointsToSend, len(z.curPath))
-		moveActionData := MoveActionData{
+		moveActionData := game.MoveActionData{
 			Speed: z.Speed,
-			Path:  make([]math.Vec2, to-from),
+			Path:  z.Movable.GetPath(maxWaypointsToSend),
 		}
-		copy(moveActionData.Path, z.curPath[from:to])
 		actionData = moveActionData
-		actionType = MovingAction
 	}
 
-	return EntityState{
-		Type:       ZombieEntity,
+	return game.EntityState{
+		Type:       game.ZombieEntity,
 		Xpos:       float32(z.Pos[0]),
 		Ypos:       float32(z.Pos[1]),
 		ActionType: actionType,

@@ -3,14 +3,15 @@
  * game state structure
  */
 
-package game
+package surviveler
 
 import (
 	"errors"
 	"fmt"
 	"image"
 	"math/rand"
-	"server/game/entity"
+	"server/game"
+	"server/game/entities"
 	msg "server/game/messages"
 	"server/game/resource"
 	"time"
@@ -19,32 +20,27 @@ import (
 )
 
 /*
- * GameState is the structure that contains all the complete game state
+ * gamestate is the structure that contains all the complete game state
  */
-type GameState struct {
-	game       *Game
-	gameTime   int16
-	players    map[uint32]*entity.Player
-	zombies    map[uint32]*entity.Zombie
-	World      *World
-	pathfinder Pathfinder
-	md         *resource.MapData
-	director   AIDirector
+type gamestate struct {
+	gameTime    int16
+	entities    map[uint32]game.Entity
+	world       *game.World
+	md          *resource.MapData
+	numEntities uint32 // number of entities currently present in the game
 }
 
-func newGameState(g *Game) *GameState {
-	return &GameState{
-		game:    g,
-		players: make(map[uint32]*entity.Player),
-		zombies: make(map[uint32]*entity.Zombie),
-	}
+func newGameState() *gamestate {
+	gs := new(gamestate)
+	gs.entities = make(map[uint32]game.Entity)
+	return gs
 }
 
 /*
  * init loads configuration from an assets package and initializes various game
  * state sub-structures
  */
-func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
+func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	var err error
 	if gs.md, err = pkg.LoadMapData(); err != nil {
 		return err
@@ -58,11 +54,8 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 		} else {
 			var worldBmp image.Image
 			if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-				if gs.World, err = NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
-					gs.pathfinder.World = gs.World
-					if err = gs.validateWorld(); err == nil {
-						gs.director.init(gs)
-					}
+				if gs.world, err = game.NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
+					err = gs.validateWorld()
 				}
 			}
 		}
@@ -73,17 +66,17 @@ func (gs *GameState) init(pkg resource.SurvivelerPackage) error {
 /*
  * validateWorld performs some logical and semantic checks on the loaded world
  */
-func (gs GameState) validateWorld() error {
+func (gs *gamestate) validateWorld() error {
 	spawnPoints := gs.md.AIKeypoints.Spawn
 	// validate player spawn point
 	for i := range spawnPoints.Players {
-		pt := gs.World.TileFromWorldVec(spawnPoints.Players[i])
+		pt := gs.world.TileFromWorldVec(spawnPoints.Players[i])
 		if pt == nil {
 			return fmt.Errorf(
 				"Player spawn point is out of bounds (%#v)",
 				spawnPoints.Players[i])
 		}
-		if pt.Kind&KindWalkable == 0 {
+		if pt.Kind&game.KindWalkable == 0 {
 			return fmt.Errorf(
 				"Player spawn point is located on a non-walkable point: (%#v)",
 				*pt)
@@ -94,13 +87,13 @@ func (gs GameState) validateWorld() error {
 		return errors.New("At least one enemy spawn point must be defined")
 	}
 	for i := range spawnPoints.Enemies {
-		zt := gs.World.TileFromWorldVec(spawnPoints.Enemies[i])
+		zt := gs.world.TileFromWorldVec(spawnPoints.Enemies[i])
 		if zt == nil {
 			return fmt.Errorf(
 				"A Zombie spawn point is out of bounds: (%#v)",
 				spawnPoints.Enemies[i])
 		}
-		if zt.Kind&KindWalkable == 0 {
+		if zt.Kind&game.KindWalkable == 0 {
 			return fmt.Errorf(
 				"A Zombie spawn point is located on a non-walkable tile: (%#v)",
 				*zt)
@@ -113,17 +106,14 @@ func (gs GameState) validateWorld() error {
 /*
  * pack converts the current game state into a GameStateMsg
  */
-func (gs GameState) pack() *msg.GameStateMsg {
+func (gs *gamestate) pack() *msg.GameStateMsg {
 	// fill the GameStateMsg
 	gsMsg := new(msg.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Time = gs.gameTime
 	gsMsg.Entities = make(map[uint32]interface{})
-	for id, plr := range gs.players {
-		gsMsg.Entities[id] = plr.GetState()
-	}
-	for id, zom := range gs.zombies {
-		gsMsg.Entities[id] = zom.GetState()
+	for id, ent := range gs.entities {
+		gsMsg.Entities[id] = ent.GetState()
 	}
 	return gsMsg
 }
@@ -131,22 +121,22 @@ func (gs GameState) pack() *msg.GameStateMsg {
 /*
  * onPlayerJoined handles a JoinedMsg by instanting a new player entity
  */
-func (gs *GameState) onPlayerJoined(imsg interface{}, clientId uint32) error {
+func (gs *gamestate) onPlayerJoined(imsg interface{}, clientId uint32) error {
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", clientId).Info("We have one more player")
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
-	gs.players[clientId] = entity.NewPlayer(org, 3)
+	gs.entities[clientId] = entities.NewPlayer(org, 3)
 	return nil
 }
 
 /*
  * onPlayerLeft handles a LeaveMsg by removing an entity
  */
-func (gs *GameState) onPlayerLeft(imsg interface{}, clientId uint32) error {
+func (gs *gamestate) onPlayerLeft(imsg interface{}, clientId uint32) error {
 	// one player less, remove him from the map
 	log.WithField("clientId", clientId).Info("We have one less player")
-	delete(gs.players, clientId)
+	delete(gs.entities, clientId)
 	return nil
 }
 
@@ -156,13 +146,42 @@ func (gs *GameState) onPlayerLeft(imsg interface{}, clientId uint32) error {
  * MovementRequestResult are server-side messages only emitted by the movement
  * planner to signal that the pathfinder has finished to compute a path
  */
-func (gs *GameState) onMovementRequestResult(imsg interface{}, clientId uint32) error {
+func (gs *gamestate) onMovementRequestResult(imsg interface{}, clientId uint32) error {
 	mvtReqRes := imsg.(msg.MovementRequestResultMsg)
 	log.WithField("res", mvtReqRes).Info("Received a MovementRequestResultMsg")
 
 	// check that the entity exists
-	if player, ok := gs.players[mvtReqRes.EntityId]; ok {
+	if player, ok := gs.entities[mvtReqRes.EntityId]; ok {
 		player.SetPath(mvtReqRes.Path)
 	}
 	return nil
+}
+
+/*
+ * allocates a new entity identifier.
+ */
+func (gs *gamestate) allocEntityId() uint32 {
+	gs.numEntities++
+	return gs.numEntities
+}
+
+func (gs *gamestate) GetWorld() *game.World {
+	return gs.world
+}
+
+func (gs *gamestate) GetEntity(id uint32) game.Entity {
+	if ent, ok := gs.entities[id]; ok == true {
+		return ent
+	}
+	return nil
+}
+
+func (gs *gamestate) AddEntity(ent game.Entity) uint32 {
+	id := gs.allocEntityId()
+	gs.entities[id] = ent
+	return id
+}
+
+func (gs *gamestate) GetMapData() *resource.MapData {
+	return gs.md
 }

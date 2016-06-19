@@ -6,11 +6,11 @@ package game
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	msg "server/game/messages"
 	"server/math"
-	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // min duration between 2 pathfinding request for the same player
@@ -25,15 +25,10 @@ type MovementRequest struct {
 }
 
 type MovementPlanner struct {
-	ringBufIn    chan *MovementRequest  // lock-free ring buffer entry point
-	ringBufOut   chan *MovementRequest  // lock free ring buffer exit point (buffered channel)
-	msgChan      chan msg.ClientMessage // to send messages to the game loop
-	gameQuit     chan struct{}          // used to signal game exit
-	wg           *sync.WaitGroup        // synchronizaton at game exit
-	lastRequests map[uint32]time.Time   // record the last movement request, by entity id
-	gameState    *GameState
-	pathfinder   *Pathfinder
-	world        *World
+	ringBufIn    chan *MovementRequest // lock-free ring buffer entry point
+	ringBufOut   chan *MovementRequest // lock free ring buffer exit point (buffered channel)
+	lastRequests map[uint32]time.Time  // record the last movement request, by entity id
+	game         Game
 }
 
 /*
@@ -44,25 +39,13 @@ type MovementPlanner struct {
  * ring buffer. Pathfinding is then performed on the Movement Request, if the
  * request makes it up to this point.
  */
-func NewMovementPlanner(game *Game) *MovementPlanner {
-	mp := MovementPlanner{
+func NewMovementPlanner(game Game) *MovementPlanner {
+	return &MovementPlanner{
 		ringBufIn:    make(chan *MovementRequest),
 		ringBufOut:   make(chan *MovementRequest, 10),
-		msgChan:      game.msgChan,
-		gameQuit:     game.gameQuit,
-		wg:           &game.wg,
 		lastRequests: make(map[uint32]time.Time),
+		game:         game,
 	}
-	return &mp
-}
-
-/*
- * setGameState provides external instance to the movement planner
- */
-func (mp *MovementPlanner) setGameState(gs *GameState) {
-	mp.gameState = gs
-	mp.pathfinder = &(gs.pathfinder)
-	mp.world = gs.pathfinder.World
 }
 
 /*
@@ -96,11 +79,11 @@ func (mp *MovementPlanner) PlanMovement(mvtReq *MovementRequest) {
 func (mp *MovementPlanner) Start() {
 	log.Info("Starting movement planner")
 
-	mp.wg.Add(1)
+	mp.game.GetWaitGroup().Add(1)
 	// start the ring buffer goroutine
 	go func() {
 		defer func() {
-			mp.wg.Done()
+			mp.game.GetWaitGroup().Done()
 			close(mp.ringBufIn)
 			close(mp.ringBufOut)
 		}()
@@ -108,7 +91,7 @@ func (mp *MovementPlanner) Start() {
 
 			select {
 
-			case <-mp.gameQuit:
+			case <-mp.game.GetQuitChan():
 				return
 
 			case req := <-mp.ringBufIn:
@@ -130,17 +113,17 @@ func (mp *MovementPlanner) Start() {
 	}()
 
 	// start the movent planner goroutine
-	mp.wg.Add(1)
+	mp.game.GetWaitGroup().Add(1)
 	go func() {
 		defer func() {
 			log.Info("Stopping movement planner")
-			mp.wg.Done()
+			mp.game.GetWaitGroup().Done()
 		}()
 
 		for {
 			select {
 
-			case <-mp.gameQuit:
+			case <-mp.game.GetQuitChan():
 				return
 
 			case mvtReq := <-mp.ringBufOut:
@@ -151,12 +134,12 @@ func (mp *MovementPlanner) Start() {
 				log.WithField("req", mvtReq).Info("Processing an movement request")
 
 				// compute pathfinding
-				if path, _, found := mp.pathfinder.FindPath(mvtReq.Org, mvtReq.Dst); found {
+				if path, _, found := mp.game.GetPathfinder().FindPath(mvtReq.Org, mvtReq.Dst); found {
 					if len(path) > 1 {
 						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
 						// fill and send a MovementRequestResultMsg to the game loop
-						mp.msgChan <- msg.ClientMessage{
+						mp.game.GetMessageChan() <- msg.ClientMessage{
 							ClientId: serverOnly,
 							Message: msg.NewMessage(
 								msg.MovementRequestResultId,
@@ -175,19 +158,19 @@ func (mp *MovementPlanner) Start() {
 }
 
 /*
- * onMovePlayer handles the reception of a MoveMsg
+ * OnMovePlayer handles the reception of a MoveMsg
  */
-func (mp *MovementPlanner) onMovePlayer(imsg interface{}, clientId uint32) error {
+func (mp *MovementPlanner) OnMovePlayer(imsg interface{}, clientId uint32) error {
 	move := imsg.(msg.MoveMsg)
-	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("MovementPlanner.onMovePlayer")
+	log.WithFields(log.Fields{"clientId": clientId, "msg": move}).Info("MovementPlanner.OnMovePlayer")
 
-	if player, ok := mp.gameState.players[clientId]; ok {
+	if player := mp.game.GetState().GetEntity(clientId); player != nil {
 		// fills a MovementRequest
 		mvtReq := MovementRequest{}
-		mvtReq.Org = player.Pos
+		mvtReq.Org = player.GetPosition()
 		mvtReq.Dst = math.FromFloat32(move.Xpos, move.Ypos)
 		mvtReq.EntityId = clientId
-		if mp.world.PointInBounds(mvtReq.Dst) {
+		if mp.game.GetState().GetWorld().PointInBounds(mvtReq.Dst) {
 			// places it into the MovementPlanner
 			mp.PlanMovement(&mvtReq)
 		} else {
