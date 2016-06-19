@@ -47,7 +47,6 @@ class Character(Entity):
 
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
-
         """
         shader = resource['shader']
         mesh = resource['model']
