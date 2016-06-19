@@ -23,12 +23,14 @@ const (
 )
 
 type Zombie struct {
+	game     game.Game
 	curState int // current state
 	components.Movable
 }
 
-func NewZombie(pos math.Vec2) game.Entity {
+func NewZombie(game game.Game, pos math.Vec2) game.Entity {
 	return &Zombie{
+		game:     game,
 		curState: lookingState,
 		Movable: components.Movable{
 			Speed: zombieSpeed,
@@ -81,4 +83,8 @@ func (z *Zombie) GetState() game.EntityState {
 		ActionType: actionType,
 		Action:     actionData,
 	}
+}
+
+func (z *Zombie) findTarget() (uint32, game.Entity) {
+	return 0, nil
 }

@@ -55,7 +55,7 @@ func (ai *AIDirector) summonZombie() {
 		"spawn": org,
 	}).Info("summoning zombie")
 
-	ai.game.GetState().AddEntity(entities.NewZombie(org))
+	ai.game.GetState().AddEntity(entities.NewZombie(ai.game, org))
 }
 
 /*
