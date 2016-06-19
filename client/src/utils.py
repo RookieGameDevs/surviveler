@@ -98,3 +98,24 @@ def clamp_to_grid(x, y, scale_factor):
         math.floor(y * scale_factor) / scale_factor + 1 / (scale_factor * 2), y)
 
     return c_x, c_y
+
+
+def to_matrix(g_x, g_y, scale_factor):
+    """Convert the grid x and y to matrix indices using the matrix scale factor.
+
+    :param g_x: The x coordinate in world coordinates.
+    :type g_x: float
+
+    :param g_y: The y coordinate in world coordinates.
+    :type g_y: float
+
+    :param scale_factor: The scale factor of the grid.
+    :type scale_factor: int
+
+    :return: The clamped coordinates.
+    :rtype: tuple
+    """
+    x = (g_x - 1 / (scale_factor * 2)) * scale_factor
+    y = (g_y - 1 / (scale_factor * 2)) * scale_factor
+
+    return int(x), int(y)

@@ -4,6 +4,7 @@ from game.components import Movable
 from game.components import Renderable
 from game.events import GameModeChange
 from matlib import Vec
+from utils import to_matrix
 from utils import to_scene
 import logging
 
@@ -13,15 +14,24 @@ LOG = logging.getLogger(__name__)
 class Building(Entity):
     """Game entity which represents a building or a building template."""
 
-    def __init__(self, resource, parent_node):
+    def __init__(self, resource, matrix, scale_factor, parent_node):
         """Constructor.
 
         :param resource: The character resource
         :type resource: :class:`loaders.Resource`
 
+        :param matrix: The walkable matrix
+        :type matrix: :class:`loaders.Resource`
+
+        :param scale_factor: The scale factor of the grid.
+        :type scale_factor: int
+
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        self.matrix = matrix
+        self.scale_factor = scale_factor
+
         shader = resource['shader']
         mesh = resource['model']
 
@@ -64,6 +74,21 @@ class Building(Entity):
         self[Movable].update(dt)
         x, y = self[Movable].position
 
+        m_x, m_y = to_matrix(x, y, self.scale_factor)
+        if not self.matrix[m_y][m_x]:
+            params = {
+                'color_ambient': Vec(0.8, 0.0, 0.1, 1),
+                'color_diffuse': Vec(1, 0.0, 0.2, 1),
+                'color_specular': Vec(1, 1, 1, 1),
+            }
+        else:
+            params = {
+                'color_ambient': Vec(0.0, 0.6, 0.2, 1),
+                'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
+                'color_specular': Vec(1, 1, 1, 1),
+            }
+
+        self[Renderable].node.params = params
         t = self[Renderable].transform
         t.identity()
         t.translate(to_scene(x, y))
@@ -77,7 +102,9 @@ def show_building_template(evt):
     context = evt.context
     if evt.cur == context.GameMode.building:
         resource = context.res_mgr.get('/prefabs/buildings/turret')
-        building = Building(resource, context.scene.root)
+        map_res = context.res_mgr.get('/map')
+        matrix, scale_factor = map_res['matrix'], map_res.data['scale_factor']
+        building = Building(resource, matrix, scale_factor, context.scene.root)
 
         context.building_template = building
         context.entities[building.e_id] = building
