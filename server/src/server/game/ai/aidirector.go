@@ -17,8 +17,17 @@ import (
 // AI director tick
 const AIDirectorTickUpdate int = 20
 
-// TEMPORARY: add a Zombie every N seconds
+// FIXME: add a Zombie every N seconds
 const FrequencyAddZombie time.Duration = 5 * time.Second
+
+/*
+ * check if the given current time is in the night time defined by nightStart
+ * and nightEnd
+ */
+func isNight(nightStart, nightEnd, currentTime int16) bool {
+	// Actually checks if currentTime is in daytime and return the opposite
+	return !(currentTime > nightEnd && currentTime < nightStart)
+}
 
 /*
  * AIDirector is the system that manages the ingredients a game session
@@ -32,17 +41,21 @@ const FrequencyAddZombie time.Duration = 5 * time.Second
  *   time if no zombies are around
  */
 type AIDirector struct {
-	game     game.Game
-	curTick  int
-	lastTime time.Time
+	game       game.Game
+	curTick    int
+	nightStart int16
+	nightEnd   int16
+	lastTime   time.Time
 }
 
-func NewAIDirector(game game.Game) *AIDirector {
+func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
 	log.Info("Initializing AI Director")
 	ai := new(AIDirector)
 	ai.game = game
 	ai.curTick = 0
 	ai.lastTime = time.Now()
+	ai.nightStart = nightStart
+	ai.nightEnd = nightEnd
 	return ai
 }
 
@@ -77,8 +90,11 @@ func (ai *AIDirector) Update(curTime time.Time) {
 
 	// TODO: improve with emotional intensity!
 
-	// but for now we stupidly summon a zombie every N seconds
-	if time.Since(ai.lastTime) > FrequencyAddZombie {
+	// but for now we stupidly summon a zombie every N seconds (during night
+	// time)
+	freq := FrequencyAddZombie
+	cur := ai.game.GetState().GetGameTime()
+	if time.Since(ai.lastTime) > freq && isNight(ai.nightStart, ai.nightEnd, cur) {
 		ai.summonZombie()
 		ai.lastTime = time.Now()
 	}

@@ -11,6 +11,7 @@ type GameState interface {
 	GetEntity(id uint32) Entity
 	AddEntity(ent Entity) uint32
 	GetMapData() *resource.MapData
+	GetGameTime() int16
 }
 
 type Game interface {

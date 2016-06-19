@@ -61,6 +61,15 @@ func runCliApp() error {
 		if c.IsSet("time-factor") {
 			cfg.TimeFactor = c.Int("time-factor")
 		}
+		if c.IsSet("night-starting-time") {
+			cfg.NightStartingTime = c.Int("night-starting-time")
+		}
+		if c.IsSet("night-ending-time") {
+			cfg.NightEndingTime = c.Int("night-ending-time")
+		}
+		if c.IsSet("game-starting-time") {
+			cfg.GameStartingTime = c.Int("game-starting-time")
+		}
 		if c.IsSet("telnet-port") {
 			cfg.TelnetPort = c.String("telnet-port")
 		}
@@ -109,6 +118,18 @@ func configFlags() []cli.Flag {
 		cli.IntFlag{
 			Name:  "time-factor",
 			Usage: "Game time speed multiplier",
+		},
+		cli.IntFlag{
+			Name:  "night-starting-time",
+			Usage: "The night starting time in minutes from midnight",
+		},
+		cli.IntFlag{
+			Name:  "night-ending-time",
+			Usage: "The night ending time in minutes from midnight",
+		},
+		cli.IntFlag{
+			Name:  "game-starting-time",
+			Usage: "The games tarting time in minutes from midnight",
 		},
 		cli.StringFlag{
 			Name:  "telnet-port",

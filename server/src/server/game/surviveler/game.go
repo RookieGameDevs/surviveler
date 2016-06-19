@@ -77,7 +77,7 @@ func NewGame(cfg game.Config) game.Game {
 	}
 
 	// initialize the gamestate
-	g.state = newGameState()
+	g.state = newGameState(int16(cfg.GameStartingTime))
 	if err := g.state.init(g.assets); err != nil {
 		log.WithError(err).Error("Couldn't initialize gamestate")
 		return nil
@@ -108,7 +108,7 @@ func NewGame(cfg game.Config) game.Game {
 	g.movementPlanner = game.NewMovementPlanner(g)
 
 	// init the AI director
-	g.ai = ai.NewAIDirector(g)
+	g.ai = ai.NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
 
 	// setup TCP server
 	rootHandler := func(imsg *msg.Message, clientId uint32) error {

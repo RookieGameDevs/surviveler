@@ -30,9 +30,10 @@ type gamestate struct {
 	numEntities uint32 // number of entities currently present in the game
 }
 
-func newGameState() *gamestate {
+func newGameState(gameStart int16) *gamestate {
 	gs := new(gamestate)
 	gs.entities = make(map[uint32]game.Entity)
+	gs.gameTime = gameStart
 	return gs
 }
 
@@ -184,4 +185,8 @@ func (gs *gamestate) AddEntity(ent game.Entity) uint32 {
 
 func (gs *gamestate) GetMapData() *resource.MapData {
 	return gs.md
+}
+
+func (gs *gamestate) GetGameTime() int16 {
+	return gs.gameTime
 }
