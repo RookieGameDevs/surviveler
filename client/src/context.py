@@ -47,6 +47,9 @@ class Context:
         # Game mode
         self.game_mode = Context.GameMode.default
 
+        # Building template
+        self.building_template = None
+
     @classmethod
     def get_instance(cls):
         """Gets the instance (if exists) of the context.

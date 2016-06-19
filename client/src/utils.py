@@ -74,3 +74,27 @@ def to_scene(x, y):
 def to_world(x, y, z):
     """Convert scene coordinates to world coordinates."""
     return Vec(x, z, 0)
+
+
+def clamp_to_grid(x, y, scale_factor):
+    """Clamp x and y to the grid with scale factor scale_factor.
+
+    :param x: The x coordinate in world coordinates.
+    :type x: float
+
+    :param y: The y coordinate in world coordinates.
+    :type y: float
+
+    :param scale_factor: The scale factor of the grid.
+    :type scale_factor: int
+
+    :return: The clamped coordinates.
+    :rtype: tuple
+    """
+    c_x = math.copysign(
+        math.floor(x * scale_factor) / scale_factor + 1 / (scale_factor * 2), x)
+
+    c_y = math.copysign(
+        math.floor(y * scale_factor) / scale_factor + 1 / (scale_factor * 2), y)
+
+    return c_x, c_y
