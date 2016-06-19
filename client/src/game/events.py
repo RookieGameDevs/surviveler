@@ -100,7 +100,7 @@ class EntityMove(Event):
 
 
 class CharacterJoin(Event):
-    """Handles character joining.
+    """Character joined.
 
     Event emitted when a character joins the game.
     """
@@ -113,7 +113,7 @@ class CharacterJoin(Event):
 
 
 class CharacterLeave(Event):
-    """Handles character leaving.
+    """Character left.
 
     Event emitted when a character leaves the game.
     """
@@ -128,7 +128,7 @@ class CharacterLeave(Event):
 
 
 class PlayerJoin(CharacterJoin):
-    """Handles local player joining.
+    """Local player joined.
 
     Event emitted when the local player actually joined the game.
     """
