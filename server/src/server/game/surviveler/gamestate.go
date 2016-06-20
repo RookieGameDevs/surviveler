@@ -14,6 +14,8 @@ import (
 	"server/game/entities"
 	msg "server/game/messages"
 	"server/game/resource"
+	"server/math"
+	"sort"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -189,4 +191,40 @@ func (gs *gamestate) GetMapData() *resource.MapData {
 
 func (gs *gamestate) GetGameTime() int16 {
 	return gs.gameTime
+}
+
+type entityDist struct {
+	e game.Entity
+	d float32
+}
+
+type entityDistCollection []entityDist
+
+func (c entityDistCollection) Len() int {
+	return len(c)
+}
+
+func (c entityDistCollection) Less(i, j int) bool {
+	return c[i].d < c[j].d
+}
+
+func (c entityDistCollection) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
+}
+
+func (gs *gamestate) GetNearestEntity(pos math.Vec2, f game.EntityFilter) (game.Entity, float32) {
+	result := make(entityDistCollection, 0)
+	for _, ent := range gs.entities {
+		if f(ent) {
+			result = append(result, entityDist{
+				d: float32(ent.GetPosition().Sub(pos).Len()),
+				e: ent,
+			})
+		}
+	}
+	if len(result) > 0 {
+		sort.Sort(result)
+		return result[0].e, result[0].d
+	}
+	return nil, 0
 }

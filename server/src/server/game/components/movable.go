@@ -26,8 +26,7 @@ type Movable struct {
 
 func (me *Movable) Update(dt time.Duration) {
 	// update position on the player path
-	// update position on the player path
-	if len(me.curPath) > 0 {
+	if me.curPathIdx >= 0 && me.curPathIdx < len(me.curPath) {
 		// get sub-destination (current path segment)
 		dst := me.curPath[me.curPathIdx]
 
@@ -58,6 +57,9 @@ func (me *Movable) Update(dt time.Duration) {
 				break
 			}
 		}
+	} else {
+		me.hasReachedDestination = true
+		me.curPathIdx = 0
 	}
 }
 

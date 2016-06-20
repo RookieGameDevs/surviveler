@@ -27,6 +27,7 @@ const (
  * Entity is the interface that represents stateful game objects
  */
 type Entity interface {
+	GetType() EntityType
 	GetState() EntityState
 	GetPosition() math.Vec2
 	SetPath(path math.Path)

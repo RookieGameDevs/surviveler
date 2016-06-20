@@ -60,6 +60,10 @@ func (p *Player) GetPosition() math.Vec2 {
 	return p.Movable.Pos
 }
 
+func (p *Player) GetType() game.EntityType {
+	return p.entityType
+}
+
 func (p *Player) GetState() game.EntityState {
 	// first, compile the data depending on current action
 	var actionData interface{}

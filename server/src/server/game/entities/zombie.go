@@ -11,6 +11,9 @@ import (
 	"time"
 )
 
+/*
+ * Possible zombie AI states.
+ */
 const (
 	lookingState = iota
 	walkingState
@@ -19,12 +22,20 @@ const (
 )
 
 const (
-	zombieSpeed = 5.0
+	zombieLookingInterval    = 1 * time.Second
+	zombieRunLookingInterval = 200 * time.Millisecond
+	zombieDamageInterval     = 500 * time.Millisecond
+	zombieWalkSpeed          = 1.0
+	zombieRunSpeed           = 3.0
+	rageDistance             = 4.0
+	attackDistance           = 1.0
 )
 
 type Zombie struct {
 	game     game.Game
 	curState int // current state
+	timeAcc  time.Duration
+	target   game.Entity
 	components.Movable
 }
 
@@ -33,27 +44,122 @@ func NewZombie(game game.Game, pos math.Vec2) game.Entity {
 		game:     game,
 		curState: lookingState,
 		Movable: components.Movable{
-			Speed: zombieSpeed,
+			Speed: zombieWalkSpeed,
 			Pos:   pos,
 		},
 	}
 }
 
+func (z *Zombie) look(dt time.Duration) (state int) {
+	state = z.curState
+
+	ent, dist := z.findTarget()
+	if ent != nil {
+		// update the target
+		z.target = ent
+
+		// TODO: compute the path with patfhinder
+		z.Movable.SetPath(math.Path{
+			z.target.GetPosition(),
+			z.Movable.Pos,
+		})
+
+		// update the state
+		if dist < rageDistance {
+			state = runningState
+		} else {
+			state = walkingState
+		}
+	}
+	return
+}
+
+func (z *Zombie) walk(dt time.Duration) (state int) {
+	state = z.curState
+
+	dist := z.target.GetPosition().Sub(z.Movable.Pos).Len()
+	if dist < rageDistance {
+		state = runningState
+		return
+	}
+
+	if z.timeAcc >= zombieLookingInterval {
+		z.timeAcc -= zombieLookingInterval
+		state = lookingState
+		return
+	}
+
+	z.Movable.Speed = zombieWalkSpeed
+	z.Movable.Update(dt)
+
+	return
+}
+
+func (z *Zombie) run(dt time.Duration) (state int) {
+	state = z.curState
+
+	if z.timeAcc >= zombieRunLookingInterval {
+		z.timeAcc -= zombieRunLookingInterval
+
+		// TODO: compute the path with patfhinder
+		z.Movable.SetPath(math.Path{
+			z.target.GetPosition(),
+			z.Movable.Pos,
+		})
+	}
+
+	z.Movable.Speed = zombieRunSpeed
+	z.Movable.Update(dt)
+
+	if z.target.GetPosition().Sub(z.Movable.Pos).Len() <= attackDistance {
+		state = attackingState
+	}
+
+	return
+}
+
+func (z *Zombie) attack(dt time.Duration) (state int) {
+	state = z.curState
+
+	if z.target.GetPosition().Sub(z.Movable.Pos).Len() > attackDistance {
+		state = runningState
+		return
+	}
+
+	if z.timeAcc >= zombieDamageInterval {
+		z.timeAcc -= zombieDamageInterval
+		// TODO: emit attacking events
+	}
+
+	return
+}
+
 func (z *Zombie) Update(dt time.Duration) {
-	switch z.curState {
-	case lookingState:
-		// TODO
-	case walkingState:
-		// TODO
-	case runningState:
-		// TODO
-	case attackingState:
-		// TODO
+	z.timeAcc += dt
+
+	// TODO: check target entity existance; fallback to lookingState in case it
+	// doesn't
+
+	stateMap := map[int]func(time.Duration) int{
+		lookingState:   z.look,
+		walkingState:   z.walk,
+		runningState:   z.run,
+		attackingState: z.attack,
+	}
+
+	nextState := stateMap[z.curState](dt)
+	if nextState != z.curState {
+		z.timeAcc = 0
+		z.curState = nextState
 	}
 }
 
 func (z *Zombie) GetPosition() math.Vec2 {
 	return z.Movable.Pos
+}
+
+func (z *Zombie) GetType() game.EntityType {
+	return game.ZombieEntity
 }
 
 func (z *Zombie) GetState() game.EntityState {
@@ -63,16 +169,19 @@ func (z *Zombie) GetState() game.EntityState {
 
 	switch z.curState {
 	case lookingState:
+		fallthrough
 	case attackingState:
 		actionData = game.IdleActionData{}
 		actionType = game.IdleAction
 
 	case walkingState:
+		fallthrough
 	case runningState:
 		moveActionData := game.MoveActionData{
 			Speed: z.Speed,
 			Path:  z.Movable.GetPath(maxWaypointsToSend),
 		}
+		actionType = game.MovingAction
 		actionData = moveActionData
 	}
 
@@ -85,6 +194,12 @@ func (z *Zombie) GetState() game.EntityState {
 	}
 }
 
-func (z *Zombie) findTarget() (uint32, game.Entity) {
-	return 0, nil
+func (z *Zombie) findTarget() (game.Entity, float32) {
+	ent, dist := z.game.GetState().GetNearestEntity(
+		z.Movable.Pos,
+		func(e game.Entity) bool {
+			return e.GetType() != game.ZombieEntity
+		},
+	)
+	return ent, dist
 }
