@@ -5,6 +5,7 @@
 package components
 
 import (
+	gomath "math"
 	"server/math"
 	"time"
 )
@@ -36,14 +37,17 @@ func (me *Movable) Update(dt time.Duration) {
 		for {
 			// compute translation and direction vectors
 			t := dst.Sub(me.Pos)
+			b := t.Len()
 			dir := t.Normalize()
 
 			// compute new position
 			pos := me.Pos.Add(dir.Mul(distance))
 			a := pos.Sub(me.Pos).Len()
-			b := t.Len()
 
-			if a > b {
+			// check against edge-cases
+			isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
+
+			if a > b || isNan {
 				me.Pos = dst
 				me.curPathIdx--
 				if me.curPathIdx < 0 {
@@ -51,6 +55,11 @@ func (me *Movable) Update(dt time.Duration) {
 					break
 				}
 				dst = me.curPath[me.curPathIdx]
+
+				if isNan {
+					break
+				}
+
 				distance = a - b
 			} else {
 				me.Pos = pos
