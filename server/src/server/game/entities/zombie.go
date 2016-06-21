@@ -50,6 +50,11 @@ func NewZombie(game game.Game, pos math.Vec2) game.Entity {
 	}
 }
 
+func (z *Zombie) findPathToTarget() (math.Path, bool) {
+	path, _, found := z.game.GetPathfinder().FindPath(z.Movable.Pos, z.target.GetPosition())
+	return path, found
+}
+
 func (z *Zombie) look(dt time.Duration) (state int) {
 	state = z.curState
 
@@ -58,11 +63,11 @@ func (z *Zombie) look(dt time.Duration) (state int) {
 		// update the target
 		z.target = ent
 
-		// TODO: compute the path with patfhinder
-		z.Movable.SetPath(math.Path{
-			z.target.GetPosition(),
-			z.Movable.Pos,
-		})
+		path, found := z.findPathToTarget()
+		if found == false {
+			return
+		}
+		z.Movable.SetPath(path)
 
 		// update the state
 		if dist < rageDistance {
@@ -101,11 +106,12 @@ func (z *Zombie) run(dt time.Duration) (state int) {
 	if z.timeAcc >= zombieRunLookingInterval {
 		z.timeAcc -= zombieRunLookingInterval
 
-		// TODO: compute the path with patfhinder
-		z.Movable.SetPath(math.Path{
-			z.target.GetPosition(),
-			z.Movable.Pos,
-		})
+		path, found := z.findPathToTarget()
+		if found == false {
+			state = lookingState
+			return
+		}
+		z.Movable.SetPath(path)
 	}
 
 	z.Movable.Speed = zombieRunSpeed
