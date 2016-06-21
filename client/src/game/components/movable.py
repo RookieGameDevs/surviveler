@@ -37,7 +37,7 @@ class Movable(Component):
         self.speed = 0
 
         # Direction vector
-        self.direction = None
+        self._direction = None
 
     @property
     def position(self):
@@ -47,6 +47,10 @@ class Movable(Component):
         :rtype: tuple
         """
         return self._position
+
+    @property
+    def direction(self):
+        return self._direction
 
     @position.setter
     def position(self, value):
@@ -58,7 +62,7 @@ class Movable(Component):
         LOG.debug('Manually setting position {} -> {}'.format(
             self._position, value))
         self.next_position = None
-        self.direction = None
+        self._direction = None
         self.path = []
         self.speed = 0
         self._position = value
@@ -111,9 +115,9 @@ class Movable(Component):
 
         # We did not reach the next_position yet.
         if distance < dst:
-            self.direction = np - p
-            self.direction.norm()
-            cur = p + self.direction * distance
+            self._direction = np - p
+            self._direction.norm()
+            cur = p + self._direction * distance
             self._position = cur.x, cur.y
 
         # We arrived in next_position, continue toward the next waypoint of the
@@ -129,7 +133,7 @@ class Movable(Component):
         else:
             LOG.debug('Movable arrived at destination {}'.format(self._position))
             self.next_position = None
-            self.direction = None
+            self._direction = None
             self.path = []
             self.speed = 0
             self._position = next_position

@@ -84,11 +84,10 @@ class Character(Entity):
     def orientate(self):
         """Orientate the character towards the current destination.
         """
-        dest = self[Movable].destination
-        if dest:
-            x, y = self[Movable].position
-            dx = dest[0] - x
-            dy = dest[1] - y
+        direction = self[Movable].direction
+        if direction:
+            dx = direction.x
+            dy = direction.y
             if dx:
                 target_heading = atan(dy / dx) + (pi / 2) * copysign(1, dx)
             else:
