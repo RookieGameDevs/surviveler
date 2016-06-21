@@ -170,25 +170,25 @@ func (z *Zombie) GetType() game.EntityType {
 
 func (z *Zombie) GetState() game.EntityState {
 	// first, compile the data depending on current action
-	var actionData interface{}
-	var actionType game.ActionType
+	var actionData interface{} = game.IdleActionData{}
+	var actionType game.ActionType = game.IdleAction
 
 	switch z.curState {
 	case lookingState:
 		fallthrough
 	case attackingState:
-		actionData = game.IdleActionData{}
-		actionType = game.IdleAction
-
+		// TODO: we are doing nothing here.
 	case walkingState:
 		fallthrough
 	case runningState:
-		moveActionData := game.MoveActionData{
-			Speed: z.Speed,
-			Path:  z.Movable.GetPath(maxWaypointsToSend),
+		if !z.Movable.HasReachedDestination() {
+			moveActionData := game.MoveActionData{
+				Speed: z.Speed,
+				Path:  z.Movable.GetPath(maxWaypointsToSend),
+			}
+			actionType = game.MovingAction
+			actionData = moveActionData
 		}
-		actionType = game.MovingAction
-		actionData = moveActionData
 	}
 
 	return game.EntityState{
