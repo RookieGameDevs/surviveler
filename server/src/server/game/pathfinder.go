@@ -61,9 +61,8 @@ func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64,
 		tile := rawPath[pidx].(*Tile)
 		pt := math.FromInts(tile.X, tile.Y)
 		if pidx == 0 {
-			// clip destination
-			path = append(path, math.Vec2FromInts(tile.X, tile.Y).Add(txCenter).Mul(invScale))
-		} else if pidx == len(path)-1 {
+			path = append(path, dst)
+		} else if pidx == len(rawPath)-1 {
 			path = append(path, org)
 		} else {
 			// basic path smoothing
