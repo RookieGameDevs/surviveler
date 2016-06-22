@@ -1,5 +1,6 @@
 from game.entity import Entity  # noqa
 from game.character import Character  # noqa
+from game.character import EntityType  # noqa
 from game.gamestate import process_gamestate  # noqa
 from game.gamestate import processor  # noqa
 from game.map import Map  # noqa
