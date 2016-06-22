@@ -51,7 +51,7 @@ func NewZombie(game game.Game, pos math.Vec2) game.Entity {
 }
 
 func (z *Zombie) findPathToTarget() (math.Path, bool) {
-	path, _, found := z.game.GetPathfinder().FindPath(z.Movable.Pos, z.target.GetPosition())
+	path, _, found := z.game.GetPathfinder().FindPath(z.Pos, z.target.GetPosition())
 	return path, found
 }
 
@@ -67,7 +67,7 @@ func (z *Zombie) look(dt time.Duration) (state int) {
 		if found == false {
 			return
 		}
-		z.Movable.SetPath(path)
+		z.SetPath(path)
 
 		// update the state
 		if dist < rageDistance {
@@ -82,7 +82,7 @@ func (z *Zombie) look(dt time.Duration) (state int) {
 func (z *Zombie) walk(dt time.Duration) (state int) {
 	state = z.curState
 
-	dist := z.target.GetPosition().Sub(z.Movable.Pos).Len()
+	dist := z.target.GetPosition().Sub(z.Pos).Len()
 	if dist < rageDistance {
 		state = runningState
 		return
@@ -94,7 +94,7 @@ func (z *Zombie) walk(dt time.Duration) (state int) {
 		return
 	}
 
-	z.Movable.Speed = zombieWalkSpeed
+	z.Speed = zombieWalkSpeed
 	z.Movable.Update(dt)
 
 	return
@@ -111,13 +111,13 @@ func (z *Zombie) run(dt time.Duration) (state int) {
 			state = lookingState
 			return
 		}
-		z.Movable.SetPath(path)
+		z.SetPath(path)
 	}
 
-	z.Movable.Speed = zombieRunSpeed
+	z.Speed = zombieRunSpeed
 	z.Movable.Update(dt)
 
-	if z.target.GetPosition().Sub(z.Movable.Pos).Len() <= attackDistance {
+	if z.target.GetPosition().Sub(z.Pos).Len() <= attackDistance {
 		state = attackingState
 	}
 
@@ -127,7 +127,7 @@ func (z *Zombie) run(dt time.Duration) (state int) {
 func (z *Zombie) attack(dt time.Duration) (state int) {
 	state = z.curState
 
-	if z.target.GetPosition().Sub(z.Movable.Pos).Len() > attackDistance {
+	if z.target.GetPosition().Sub(z.Pos).Len() > attackDistance {
 		state = runningState
 		return
 	}
@@ -161,7 +161,7 @@ func (z *Zombie) Update(dt time.Duration) {
 }
 
 func (z *Zombie) GetPosition() math.Vec2 {
-	return z.Movable.Pos
+	return z.Pos
 }
 
 func (z *Zombie) GetType() game.EntityType {
@@ -202,7 +202,7 @@ func (z *Zombie) GetState() game.EntityState {
 
 func (z *Zombie) findTarget() (game.Entity, float32) {
 	ent, dist := z.game.GetState().GetNearestEntity(
-		z.Movable.Pos,
+		z.Pos,
 		func(e game.Entity) bool {
 			return e.GetType() != game.ZombieEntity
 		},
