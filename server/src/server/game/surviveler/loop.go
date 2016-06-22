@@ -3,7 +3,7 @@
  * game loop
  */
 
-package game
+package surviveler
 
 import (
 	msg "server/game/messages"
@@ -22,7 +22,7 @@ import (
  * - gamestate tick -> pack and broadcast the current game state
  * - telnet request -> perform a game state related telnet request
  */
-func (g *Game) loop() error {
+func (g *survivelerGame) loop() error {
 	// will tick when it's time to send the gamestate to the clients
 	sendTickChan := time.NewTicker(
 		time.Millisecond * time.Duration(g.cfg.SendTickPeriod)).C
@@ -35,23 +35,14 @@ func (g *Game) loop() error {
 	timeChan := time.NewTicker(
 		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
 
-	// encapsulate the game state here, as it should not be
-	// accessed nor modified from outside the game loop
-	gs := newGameState(g)
-	var err error
-	if err = gs.init(g.assets); err != nil {
-		return err
-	}
-	g.movementPlanner.setGameState(gs)
-
 	msgmgr := new(msg.MessageManager)
-	msgmgr.Listen(msg.MoveId, msg.MsgHandlerFunc(g.movementPlanner.onMovePlayer))
-	msgmgr.Listen(msg.JoinedId, msg.MsgHandlerFunc(gs.onPlayerJoined))
-	msgmgr.Listen(msg.LeaveId, msg.MsgHandlerFunc(gs.onPlayerLeft))
-	msgmgr.Listen(msg.MovementRequestResultId, msg.MsgHandlerFunc(gs.onMovementRequestResult))
+	msgmgr.Listen(msg.MoveId, msg.MsgHandlerFunc(g.movementPlanner.OnMovePlayer))
+	msgmgr.Listen(msg.JoinedId, msg.MsgHandlerFunc(g.state.onPlayerJoined))
+	msgmgr.Listen(msg.LeaveId, msg.MsgHandlerFunc(g.state.onPlayerLeft))
+	msgmgr.Listen(msg.MovementRequestResultId, msg.MsgHandlerFunc(g.state.onMovementRequestResult))
 
-	var last_time, cur_time time.Time
-	last_time = time.Now()
+	var lastTime, curTime time.Time
+	lastTime = time.Now()
 	log.Info("Starting game loop")
 	g.wg.Add(1)
 
@@ -64,7 +55,7 @@ func (g *Game) loop() error {
 		for {
 			select {
 
-			case <-g.gameQuit:
+			case <-g.quitChan:
 				return
 
 			case msg := <-g.msgChan:
@@ -77,8 +68,8 @@ func (g *Game) loop() error {
 
 			case <-sendTickChan:
 				// pack the gamestate into a message
-				if gsMsg := gs.pack(); gsMsg != nil {
-					// wrap the GameStateMsg into a generic Message
+				if gsMsg := g.state.pack(); gsMsg != nil {
+					// wrap the gameStateMsg into a generic Message
 					if msg := msg.NewMessage(msg.GameStateId, *gsMsg); msg != nil {
 						g.server.Broadcast(msg)
 					}
@@ -86,35 +77,31 @@ func (g *Game) loop() error {
 
 			case <-tickChan:
 				// compute delta time
-				cur_time = time.Now()
-				dt := cur_time.Sub(last_time)
+				curTime = time.Now()
+				dt := curTime.Sub(lastTime)
 
 				// update AI
-				gs.director.Update(cur_time)
+				g.ai.Update(curTime)
 
 				// update entities
-				for _, ent := range gs.players {
+				for _, ent := range g.state.entities {
 					ent.Update(dt)
 				}
 
-				// update zombies
-				for _, zom := range gs.zombies {
-					zom.Update(dt)
-				}
-				last_time = cur_time
+				lastTime = curTime
 
 			case <-timeChan:
 				// increment game time by 1 minute
-				gs.gameTime++
+				g.state.gameTime++
 
 				// clamp the game time to 24h
-				if gs.gameTime >= 1440 {
-					gs.gameTime -= 1440
+				if g.state.gameTime >= 1440 {
+					g.state.gameTime -= 1440
 				}
 
 			case tnr := <-g.telnetReq:
 				// received a telnet request
-				g.telnetDone <- g.telnetHandler(tnr, gs)
+				g.telnetDone <- g.telnetHandler(tnr)
 
 			default:
 				// let the rest of the world spin

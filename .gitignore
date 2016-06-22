@@ -3,3 +3,4 @@
 .vimtags
 *.sw*
 .DS_Store
+.vimrc

@@ -2,16 +2,17 @@
  * Surviveler game package
  * game related telnet commands
  */
-package game
+package surviveler
 
 import (
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
 	"io"
 	"server/game/messages"
 	"server/math"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 /*
@@ -89,7 +90,7 @@ func (req *TnTeleportEntity) FromContext(c *cli.Context) error {
  * game loop, that will trigger the final handler (i.e the actual handler of the
  * request)
  */
-func (g *Game) registerTelnetHandlers() {
+func (g *survivelerGame) registerTelnetHandlers() {
 	// function that creates and returns telnet handlers on the fly
 	createHandler := func(req TelnetRequest) cli.ActionFunc {
 		return func(c *cli.Context) error {
@@ -165,11 +166,11 @@ func (g *Game) registerTelnetHandlers() {
  * perform non-blocking only operations, as the game logic is **not** updated
  * as long as the handler is in execution.
  */
-func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) error {
+func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	log.WithField("msg", msg).Info("Handling a telnet game message")
 	switch msg.Type {
 	case TnGameStateId:
-		if gsMsg := gs.pack(); gsMsg != nil {
+		if gsMsg := g.state.pack(); gsMsg != nil {
 			io.WriteString(msg.Context.App.Writer, fmt.Sprintf("%v\n", *gsMsg))
 			return nil
 		} else {
@@ -177,10 +178,10 @@ func (g *Game) telnetHandler(msg TelnetRequest, gs *GameState) error {
 		}
 	case TnMoveEntityId:
 		move := msg.Content.(*TnMoveEntity)
-		if _, ok := gs.players[move.Id]; ok {
+		if _, ok := g.state.entities[move.Id]; ok {
 
 			// convert into MoveMsg
-			if err := g.movementPlanner.onMovePlayer(
+			if err := g.movementPlanner.OnMovePlayer(
 				messages.MoveMsg{
 					Xpos: float32(move.Dest[0]),
 					Ypos: float32(move.Dest[1])},

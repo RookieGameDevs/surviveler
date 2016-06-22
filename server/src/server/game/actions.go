@@ -2,7 +2,7 @@
  * Surviveler entity package
  * action types and definitions
  */
-package entity
+package game
 
 import "server/math"
 
@@ -12,17 +12,6 @@ const (
 	IdleAction ActionType = 0 + iota
 	MovingAction
 )
-
-/*
- * EntityState represents a snapshot of an entity
- */
-type EntityState struct {
-	Type       EntityType
-	Xpos       float32
-	Ypos       float32
-	ActionType ActionType
-	Action     interface{}
-}
 
 /*
  * Idle action
@@ -35,5 +24,5 @@ type IdleActionData struct {
  */
 type MoveActionData struct {
 	Speed float64
-	Path []math.Vec2
+	Path  []math.Vec2
 }

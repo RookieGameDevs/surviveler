@@ -23,16 +23,15 @@ type ResourceList map[string]string
  * Spawn regroups the spawn points for different kinds of entities
  */
 type Spawn struct {
-	Player  math.Vec2 `json:"player"`  // player unique spawn point
-	Enemies VecList   `json:"enemies"` // list of spawn points for enemies
+	Players  VecList  `json:"players"`  // player unique spawn point
+	Enemies  VecList  `json:"enemies"` // list of spawn points for enemies
 }
 
 /*
  * AIKeypoints regroups the various AI-related key points on the map
  */
 type AIKeypoints struct {
-	Spawn         Spawn   `json:"spawn"`                  // entity spawn points
-	WanderingDest VecList `json:"wandering_destinations"` // splice  of wandering destinations
+	Spawn Spawn `json:"spawn"` // entity spawn points
 }
 
 /*
