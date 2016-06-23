@@ -21,6 +21,7 @@ const (
 	attackingState
 )
 
+// TODO: all of those values should be taken from the zombie resource
 const (
 	zombieLookingInterval    = 1 * time.Second
 	zombieRunLookingInterval = 200 * time.Millisecond

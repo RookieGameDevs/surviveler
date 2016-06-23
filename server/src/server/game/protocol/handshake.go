@@ -14,9 +14,6 @@ import (
 	"time"
 )
 
-// represent the server id for server only messages
-const serverOnly uint32 = 1<<32 - 1
-
 /*
  * handlePing processes a PingMsg and immediately replies with a PongMsg
  */
