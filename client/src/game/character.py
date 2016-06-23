@@ -29,7 +29,7 @@ class EntityType(IntEnum):
     grunt = 0
     # TODO: enable these entity types when they will be available
     # programmer = 1
-    # engineer = 2
+    engineer = 2
     zombie = 3
 
 
