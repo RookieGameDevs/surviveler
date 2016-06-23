@@ -1,7 +1,7 @@
 from context import Context
 from events import subscriber
 from game import Character
-from game.character import ENTITY_MAP
+from game.character import EntityType
 from game.components import Movable
 from game.events import EntitySpawn
 from utils import to_scene
@@ -55,7 +55,7 @@ def player_spawn(evt):
         entities = context.res_mgr.get('/entities')
         resource = context.res_mgr.get(
             entities.data['entities_map'].get(
-                ENTITY_MAP[evt.entity_type],
+                EntityType(evt.entity_type).name,
                 '/characters/grunt'
             )
         )

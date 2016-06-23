@@ -27,13 +27,10 @@ WHOLE_ANGLE = 2.0 * pi
 class EntityType(IntEnum):
     """Enumeration of the possible entities"""
     grunt = 0
-    programmer = 1
+    # TODO: enable these entity types when they will be available
+    # programmer = 1
     engineer = 2
     zombie = 3
-
-
-#: Map of entity names based  int ids -> names
-ENTITY_MAP = {em.value: em.name for em in EntityType}
 
 
 class Character(Entity):
@@ -165,7 +162,7 @@ def character_spawn(evt):
         entities = context.res_mgr.get('/entities')
         resource = context.res_mgr.get(
             entities.data['entities_map'].get(
-                ENTITY_MAP[evt.entity_type],
+                EntityType(evt.entity_type).name,
                 '/enemies/zombie'
             )
         )

@@ -5,6 +5,7 @@ from configparser import ConfigParser
 from contextlib import ContextDecorator
 from core import InputManager
 from functools import partial
+from game.character import EntityType
 from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
@@ -83,13 +84,15 @@ class sdl2context(ContextDecorator):
 
 
 @sdl2context()
-def main(name, config):
+def main(name, character, config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])
     proxy = MessageProxy(conn)
     input_mgr = InputManager()
     res_mgr = ResourceManager(config['Game'])
-    client = Client(name, renderer, proxy, input_mgr, res_mgr, config)
+
+    client = Client(
+        name, character, renderer, proxy, input_mgr, res_mgr, config)
 
     client.start()
     renderer.shutdown()
@@ -97,14 +100,15 @@ def main(name, config):
 
 @click.command()
 @click.option('--name', help='The player username', default='John Doe')
-def bootstrap(name):
+@click.option('--character', help='The player class', default=EntityType.grunt)
+def bootstrap(name, character):
     config = ConfigParser()
     config.read(CONFIG_FILE)
     setup_logging(config['Logging'])
 
     LOG.debug('Loaded config file {}'.format(CONFIG_FILE))
 
-    main(name, config)
+    main(name, character, config)
 
 
 if __name__ == '__main__':

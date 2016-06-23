@@ -43,7 +43,7 @@ func (srv *Server) handlePing(c *network.Conn, msg *messages.Message) error {
 func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 	// decode payload into a join message
 	join := srv.factory.DecodePayload(messages.JoinId, msg.Payload).(messages.JoinMsg)
-	log.WithField("name", join.Name).Info("A client would like to join")
+	log.WithFields(log.Fields{"name": join.Name, "type": join.Type}).Info("A client would like to join")
 
 	clientData := c.GetUserData().(ClientData)
 
@@ -86,12 +86,13 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 		joined := messages.NewMessage(messages.JoinedId, messages.JoinedMsg{
 			Id:   clientData.Id,
 			Name: join.Name,
+			Type: join.Type,
 		})
 		log.WithField("joined", joined).Info("Tell to the world this client has joined")
 		srv.Broadcast(joined)
 
 		// informs the game loop that we have a new player
-		srv.msgcb(messages.NewMessage(messages.JoinedId, joined), clientData.Id)
+		srv.msgcb(joined, clientData.Id)
 
 		// consider the client as accepted
 		clientData.Joined = true

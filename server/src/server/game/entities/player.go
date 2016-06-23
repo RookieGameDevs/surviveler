@@ -29,9 +29,9 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(spawn math.Vec2, speed float64) *Player {
+func NewPlayer(spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
 	p := new(Player)
-	p.entityType = game.TankEntity
+	p.entityType = entityType
 	p.Speed = speed
 	p.Pos = spawn
 	p.curAction = game.IdleAction

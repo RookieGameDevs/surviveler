@@ -1,6 +1,7 @@
 from enum import IntEnum
 from enum import unique
 from events import send_event
+from game import EntityType
 from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
@@ -118,7 +119,8 @@ def handle_entity_spawn(gs_mgr):
     new, old = n[MF.entities], o.get(MF.entities, {})
     new_entities = set(new) - set(old)
     for ent in new_entities:
-        evt = EntitySpawn(ent, new[ent][MF.entity_type])
+        entity_type = EntityType(new[ent][MF.entity_type])
+        evt = EntitySpawn(ent, entity_type)
         send_event(evt)
 
 

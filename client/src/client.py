@@ -7,6 +7,7 @@ from game import process_gamestate
 from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import PlayerJoin
+from game import EntityType
 from itertools import count
 from matlib import Vec
 from network import Message
@@ -29,13 +30,16 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, renderer, proxy, input_mgr, res_mgr, conf):
+    def __init__(self, player_name, entity_type, renderer, proxy, input_mgr, res_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
 
         :param player_name: The player name
         :type player_name: str
+
+        :param entity_type: The player type
+        :type entity_type: int
 
         :param renderer: The rederer
         :type renderer: :class:`renderer.Renderer`
@@ -66,6 +70,7 @@ class Client:
         ui_res = context.res_mgr.get('/ui')
         context.ui = UI(ui_res, self.renderer)
         context.player_name = player_name
+        context.player_type = EntityType(entity_type)
         self.context = context
 
         # Client status variable
@@ -213,15 +218,23 @@ class Client:
 
         self.proxy.enqueue(msg, callback)
 
-    def join(self, name):
+    def join(self, name, entity_type):
         """Sends the join request to the server.
 
         :param name: Player name to join with.
         :type name: str
+
+        :param entity_type: Player type
+        :type entity_type: :enum:`game.player.PlayerType`
         """
         LOG.info('Trying to join server')
 
-        msg = Message(MT.join, {MF.name: name})
+        msg = Message(
+            MT.join,
+            {
+                MF.name: name,
+                MF.entity_type: entity_type
+            })
         self.proxy.enqueue(msg)
 
     def start(self):
@@ -229,7 +242,7 @@ class Client:
         """
 
         self.ping()
-        self.join(self.context.player_name)
+        self.join(self.context.player_name, self.context.player_type)
 
         while not self.exit:
             # Compute time delta
