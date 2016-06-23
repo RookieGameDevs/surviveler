@@ -4,6 +4,7 @@ from game.components import Movable
 from game.components import Renderable
 from game.events import GameModeChange
 from matlib import Vec
+from utils import in_matrix
 from utils import to_matrix
 from utils import to_scene
 import logging
@@ -75,7 +76,7 @@ class Building(Entity):
         x, y = self[Movable].position
 
         m_x, m_y = to_matrix(x, y, self.scale_factor)
-        if not self.matrix[m_y][m_x]:
+        if not in_matrix(self.matrix, m_x, m_y) or not self.matrix[m_y][m_x]:
             params = {
                 'color_ambient': Vec(0.8, 0.0, 0.1, 1),
                 'color_diffuse': Vec(1, 0.0, 0.2, 1),

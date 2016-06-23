@@ -119,3 +119,21 @@ def to_matrix(g_x, g_y, scale_factor):
     y = (g_y - 1 / (scale_factor * 2)) * scale_factor
 
     return int(x), int(y)
+
+
+def in_matrix(matrix, x, y):
+    """Check if the specified coordinates are inside the matrix.
+
+    :param matrix: The matrix.
+    :type matrix: list
+
+    :param x: The x coordinate.
+    :type x: int
+
+    :param y: The y coordinate.
+    :type y: int
+
+    :returns: True if the point is inside the matrix, otherwise False
+    :rtype: bool
+    """
+    return len(matrix) > y and len(matrix[y]) > x
