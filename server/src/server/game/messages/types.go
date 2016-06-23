@@ -68,6 +68,7 @@ type JoinMsg struct {
 type JoinedMsg struct {
 	Id   uint32
 	Name string
+	Type uint8
 }
 
 /*

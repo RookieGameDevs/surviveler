@@ -95,7 +95,7 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 		srv.Broadcast(joined)
 
 		// informs the game loop that we have a new player
-		srv.msgcb(messages.NewMessage(messages.JoinedId, joined), clientData.Id)
+		srv.msgcb(joined, clientData.Id)
 
 		// consider the client as accepted
 		clientData.Joined = true
