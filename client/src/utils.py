@@ -88,7 +88,7 @@ def clamp_to_grid(x, y, scale_factor):
     :param scale_factor: The scale factor of the grid.
     :type scale_factor: int
 
-    :return: The clamped coordinates.
+    :returns: The clamped coordinates.
     :rtype: tuple
     """
     c_x = math.copysign(
@@ -112,7 +112,7 @@ def to_matrix(g_x, g_y, scale_factor):
     :param scale_factor: The scale factor of the grid.
     :type scale_factor: int
 
-    :return: The clamped coordinates.
+    :returns: The clamped coordinates.
     :rtype: tuple
     """
     x = (g_x - 1 / (scale_factor * 2)) * scale_factor

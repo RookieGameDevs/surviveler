@@ -35,7 +35,7 @@ def ray_cast(x, y, w, h, camera):
     :param camera: The camera we are using to trace the ray.
     :type camera: :class:`renderer.Camera`
 
-    :return: The point in world coordinates.
+    :returns: The point in world coordinates.
     :type: :class:`mat.Vec`
     """
     # Find the direction applying the modelview matrix to the facing direction
