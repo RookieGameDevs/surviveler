@@ -58,6 +58,7 @@ type MoveMsg struct {
  */
 type JoinMsg struct {
 	Name string
+	Type uint8
 }
 
 /*
