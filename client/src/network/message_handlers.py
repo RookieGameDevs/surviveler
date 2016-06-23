@@ -26,7 +26,7 @@ def get_message_handlers(msgtype):
     :param msgtype: the type of the message
     :type msgtype: :enum:`message.MessageType`
 
-    :return: handlers for the given message
+    :returns: handlers for the given message
     :rtype: list
     """
     return __MESSAGE_HANDLERS[msgtype]

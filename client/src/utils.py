@@ -27,7 +27,7 @@ def tstamp(dt=None):
     :param dt: the compared datetime object
     :type dt: :class:`datetime.datetime` or None
 
-    :return: number of milliseconds since epoch
+    :returns: number of milliseconds since epoch
     :rtype: int
     """
     dt = dt or datetime.utcnow()
@@ -43,7 +43,7 @@ def distance(p1, p2):
     :param p2: the second point
     :type p2: tuple
 
-    :return: the distance
+    :returns: the distance
     :rtype: float
     """
     return math.sqrt(
@@ -60,7 +60,7 @@ def angle(p1, p2):
     :param p2: the second point
     :type p2: tuple
 
-    :return: the angle
+    :returns: the angle
     :rtype: float
     """
     return math.atan2(p2[1] - p1[1], p2[0] - p1[0])

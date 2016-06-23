@@ -63,7 +63,7 @@ class Message:
         Returns the tuple (msgtype), encoded_message to be used by the
         underneath connection level.
 
-        :return: the message type and the encoded payload
+        :returns: the message type and the encoded payload
         :rtype: tuple(:enum:`message.MessageType`, bytes)
         """
         return self.msgtype, msgpack.packb(self.data)
@@ -78,7 +78,7 @@ class Message:
         :param payload: the encoded payload
         :type payload: bytes
 
-        :return: the Message object
+        :returns: the Message object
         :rtype: :class:`message.Message`
         """
         obj = cls(msgtype, msgpack.unpackb(payload))
@@ -132,7 +132,7 @@ class MessageProxy:
         :param msgtype: The message type we are waiting for
         :type msgtype: :class:`network.message.MessageType`
 
-        :return: The message.
+        :returns: The message.
         :rtype: :class:`network.message.Message`
         """
         with self.conn.blocking():
@@ -143,7 +143,7 @@ class MessageProxy:
     def poll(self, msgtype=None):
         """Polls the underneath connection and yields all the messages readed.
 
-        :return: the Message object to be pushed
+        :returns: the Message object to be pushed
         :rtype: :class:`message.Message`
         """
         while True:

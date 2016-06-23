@@ -72,7 +72,7 @@ class ResourceManager:
         :param path: The path to be normalized
         :type path: str
 
-        :return: The normalized path (real fs path)
+        :returns: The normalized path (real fs path)
         :rtype: str
         """
         if os.path.isabs(path):
@@ -86,7 +86,7 @@ class ResourceManager:
         :param path: The resource relative path
         :type path: str
 
-        :return: The required resource
+        :returns: The required resource
         :rtype: :class:`Resource`
         """
         res = self.cache.get(path)
@@ -106,7 +106,7 @@ class ResourceManager:
         :param package: The package to be loaded
         :type package: str
 
-        :return: The loaded resource
+        :returns: The loaded resource
         :rtype: :class:`Resource`
         """
         LOG.info('Loading package {}'.format(package))
@@ -129,7 +129,7 @@ class ResourceManager:
         :param resource: The resource to be loaded
         :type resource: str
 
-        :return: The loaded resource
+        :returns: The loaded resource
         :rtype: :class:`Resource`
         """
         LOG.info('Loading resource {}'.format(resource))
@@ -150,7 +150,7 @@ class ResourceManager:
         :param ext: The file extension
         :type ext: str
 
-        :return: The loader function
+        :returns: The loader function
         :rtype: function
         """
         return partial(ResourceManager.__RESOURCE_HANDLERS[ext], manager=self)
@@ -185,7 +185,7 @@ def load_data(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: A dictionary containing the loaded data
+    :returns: A dictionary containing the loaded data
     :rtype: dict
     """
     return json.loads(as_utf8(fp.read()))
@@ -204,7 +204,7 @@ def load_mesh(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: The resulting mesh object
+    :returns: The resulting mesh object
     :rtype: :class:`renderer.Mesh`
     """
     from renderer import Mesh
@@ -227,7 +227,7 @@ def load_vertex(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: The resulting vert object
+    :returns: The resulting vert object
     :rtype: :class:`renderer.shader.ShaderSource`
     """
     from renderer import ShaderSource
@@ -250,7 +250,7 @@ def load_fragment(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: The resulting frag object
+    :returns: The resulting frag object
     :rtype: :class:`renderer.shader.ShaderSource`
     """
     from renderer import ShaderSource
@@ -273,7 +273,7 @@ def load_shader(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: The resulting shader program object
+    :returns: The resulting shader program object
     :rtype: :class:`renderer.Shader`
     """
     from renderer import Shader
@@ -300,7 +300,7 @@ def load_image(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: The opened image
+    :returns: The opened image
     :rtype: :class:`PIL.Image`
     """
     from PIL import Image
@@ -321,7 +321,7 @@ def load_font(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: Simply the bytes read from file
+    :returns: Simply the bytes read from file
     :rtype: :class:`sdl2.SDL_RWops.`
     """
     from io import BytesIO
@@ -343,7 +343,7 @@ def load_bitmap(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :return: Simply the bytes read from file
+    :returns: Simply the bytes read from file
     :rtype: :class:`sdl2.SDL_RWops.`
     """
     from PIL import Image

@@ -87,7 +87,7 @@ class Client:
         :param context: Game context.
         :type context: :class:`context.Context`
 
-        :return: The configured scene
+        :returns: The configured scene
         :rtype: :class:`renderer.scene.Scene`
         """
         scene = Scene()
@@ -104,7 +104,7 @@ class Client:
         :param context: The client context
         :type context: :class:`context.Context`
 
-        :return: The terrain entity
+        :returns: The terrain entity
         :rtype: :class:`game.terrain.Terrain`
         """
         root = context.scene.root
@@ -121,7 +121,7 @@ class Client:
         :param context: The client context
         :type context: :class:`context.Context`
 
-        :return: The map entity
+        :returns: The map entity
         :rtype: :class:`game.map.Map
         """
         resource = context.res_mgr.get('/map')
@@ -133,7 +133,7 @@ class Client:
         :param context: Game context.
         :type context: :class:`context.Context`
 
-        :return: The camera
+        :returns: The camera
         :rtype: :class:`renderer.camera.Camera`
         """
         # Aspect ratio
@@ -159,7 +159,7 @@ class Client:
 
         NOTE: this method updates the internal status of the client.
 
-        :return: The dt from the last update in seconds
+        :returns: The dt from the last update in seconds
         :rtype: float
         """
         now = tstamp()

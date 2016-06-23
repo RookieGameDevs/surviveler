@@ -15,7 +15,7 @@ def parse_header(header):
     :param header: the packed header
     :type header: bytes
 
-    :return: tuple (msgtype, size)
+    :returns: tuple (msgtype, size)
     :rtype: tuple
     """
     return HEADER.unpack(header)
@@ -30,7 +30,7 @@ def create_packet(msgtype, payload):
     :param payload: the encoded payload
     :type payload: bytes
 
-    :return: the packet
+    :returns: the packet
     :rtype: bytes
     """
     header = HEADER.pack(msgtype, len(payload))
@@ -87,7 +87,7 @@ class Connection:
     def recv(self):
         """Receives a single packet via TCP from the server.
 
-        :return: tuple (msgtype, encoded_payload) if available
+        :returns: tuple (msgtype, encoded_payload) if available
         :rtype: tuple or None
         """
         def read(size):

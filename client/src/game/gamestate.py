@@ -46,7 +46,7 @@ class GameStateManager:
         :param n: The number of gamestates to be returned
         :type n: int
 
-        :return: The list of gamestates
+        :returns: The list of gamestates
         :rtype: list
         """
         if n > self.size:
@@ -89,7 +89,7 @@ def gamestate_entities(gs_mgr):
     :param gs_mgr: the gamestate manager.
     :type gs_mgr: :class:`game.gamestate.GameStateManager`
 
-    :return: server id, entity
+    :returns: server id, entity
     :rtype: tuple
     """
     gamestate = gs_mgr.get()[0]

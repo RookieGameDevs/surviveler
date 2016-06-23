@@ -43,7 +43,7 @@ class Movable(Component):
     def position(self):
         """Current position getter.
 
-        :return: The current position of the movable.
+        :returns: The current position of the movable.
         :rtype: tuple
         """
         return self._position

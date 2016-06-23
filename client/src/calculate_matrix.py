@@ -25,7 +25,7 @@ def is_degenerate(triangle):
     :param triangle: The triangle to be checked.
     :type triangle: list
 
-    :return: Wether the triangle is degenerate or not
+    :returns: Wether the triangle is degenerate or not
     :rtype: bool
     """
     A, B, C = map(lambda t: Vec(*t), triangle)
@@ -45,7 +45,7 @@ def in_triangle(point, triangle):
     :param triangle: The triangle
     :type triangle: list
 
-    :return: True if the point is inside the triangle.
+    :returns: True if the point is inside the triangle.
     :rtype: bool
     """
     A, B, C = map(lambda t: Vec(*t), triangle)
@@ -81,7 +81,7 @@ def excess(n):
     :param n: The number to be rounded
     :type n: float
 
-    :return: The signed rounded items
+    :returns: The signed rounded items
     :rtype: int
     """
     return int(math.copysign(math.ceil(abs(n)), n))
@@ -93,7 +93,7 @@ def defect(n):
     :param n: The number to be rounded
     :type n: float
 
-    :return: The signed rounded items
+    :returns: The signed rounded items
     :rtype: int
     """
     return int(math.copysign(math.floor(abs(n)), n))
@@ -109,7 +109,7 @@ def mag(axis, faces):
     :param faces: The list of faces to be considered
     :type faces: int, int
 
-    :return: The minimum and maximum
+    :returns: The minimum and maximum
     :rtype: tuple
     """
     minimum = min(map(lambda v: v[axis], chain.from_iterable(faces)))
@@ -124,7 +124,7 @@ def s_width(faces):
     :param faces: The list of faces to be considered
     :type faces: int, int
 
-    :return: The minimum and maximum
+    :returns: The minimum and maximum
     :rtype: tuple
     """
     return mag(0, faces)
@@ -137,7 +137,7 @@ def s_height(faces):
     :param faces: The list of faces to be considered
     :type faces: int, int
 
-    :return: The minimum and maximum
+    :returns: The minimum and maximum
     :rtype: tuple
     """
     return mag(2, faces)
@@ -158,7 +158,7 @@ def is_walkable(p, d, face, step=0):
     :param step: Recursion helper variable
     :type step: int
 
-    :return: Boolean representing the walkability of the cell
+    :returns: Boolean representing the walkability of the cell
     :rtype: bool
     """
     walkable = not in_triangle([p[0] + d, 0, p[1] + d], face)
@@ -262,7 +262,7 @@ def calculate_matrix(faces, precision, grid_cell):
     :param grid_cell: The size of the grid cell edge
     :type grid_cell: float
 
-    :return: The generated level walkable matrix
+    :returns: The generated level walkable matrix
     :rtype: dict
     """
 
@@ -326,7 +326,7 @@ def parse_faces(objfile):
     :param objfile: The objfile to be parsed
     :type objfile: :class:`File`
 
-    :return: The list of parsed faces
+    :returns: The list of parsed faces
     :rtype: list
     """
     vertices = []

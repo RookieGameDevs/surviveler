@@ -49,7 +49,7 @@ class Context:
         :param srv_id: The server id
         :type srv_id: int
 
-        :return: The entity object
+        :returns: The entity object
         :rtype: :class:`game.entity.Entity`
         """
         return self.entities.get(self.server_entities_map.get(srv_id))
