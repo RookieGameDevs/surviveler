@@ -7,6 +7,7 @@ package protocol
 import (
 	log "github.com/Sirupsen/logrus"
 	"net"
+	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"sync"
@@ -25,26 +26,32 @@ type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
  * interface.
  */
 type Server struct {
-	port    string
-	server  network.Server    // tcp server instance
-	clients ClientRegistry    // manage the connected clients
-	msgcb   MsgCallbackFunc   // incoming messages callback
-	telnet  *TelnetServer     // embedded telnet server
-	factory *messages.Factory // the unique message factory
-	wg      *sync.WaitGroup   // game wait group
+	port      string
+	server    network.Server     // tcp server instance
+	clients   ClientRegistry     // manage the connected clients
+	msgcb     MsgCallbackFunc    // incoming messages callback
+	telnet    *TelnetServer      // embedded telnet server
+	factory   *messages.Factory  // the unique message factory
+	wg        *sync.WaitGroup    // game wait group
+	eventChan chan *events.Event // wait for all goroutines
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, telnet *TelnetServer, wg *sync.WaitGroup) *Server {
+func NewServer(
+	port string, msgcb MsgCallbackFunc, clients *ClientRegistry,
+	telnet *TelnetServer, wg *sync.WaitGroup,
+	eventChan chan *events.Event) *Server {
+
 	return &Server{
-		clients: *clients,
-		msgcb:   msgcb,
-		port:    port,
-		telnet:  telnet,
-		factory: messages.GetFactory(),
-		wg:      wg,
+		clients:   *clients,
+		msgcb:     msgcb,
+		port:      port,
+		telnet:    telnet,
+		factory:   messages.GetFactory(),
+		wg:        wg,
+		eventChan: eventChan,
 	}
 }
 

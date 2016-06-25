@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"server/game"
 	"server/game/entities"
+	"server/game/events"
 	msg "server/game/messages"
 	"server/game/resource"
 	"server/math"
@@ -124,16 +125,15 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 /*
  * onPlayerJoined handles a JoinedMsg by instanting a new player entity
  */
-func (gs *gamestate) onPlayerJoined(imsg interface{}, clientId uint32) error {
-	playerJoinedReq := imsg.(msg.JoinedMsg)
+func (gs *gamestate) onPlayerJoined(event *events.Event) {
+	playerJoinEvent := event.Payload.(events.PlayerJoinEvent)
 	// we have a new player, his id will be its unique connection id
-	log.WithField("clientId", clientId).Info("We have one more player")
+	log.WithField("clientId", playerJoinEvent.Id).Info("We have one more player")
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
 	// TODO: speed from resource
-	gs.entities[clientId] = entities.NewPlayer(
-		org, 3, game.EntityType(playerJoinedReq.Type))
-	return nil
+	gs.entities[playerJoinEvent.Id] = entities.NewPlayer(
+		org, 3, game.EntityType(playerJoinEvent.Type))
 }
 
 /*

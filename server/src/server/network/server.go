@@ -26,7 +26,9 @@ type Server struct {
 /*
  * NewServer creates a server
  */
-func NewServer(cfg *ServerCfg, callback ConnEvtHandler, msgReader PacketReader) *Server {
+func NewServer(
+	cfg *ServerCfg, callback ConnEvtHandler, msgReader PacketReader) *Server {
+
 	return &Server{
 		config:    cfg,
 		callback:  callback,

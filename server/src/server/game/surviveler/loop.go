@@ -6,6 +6,7 @@
 package surviveler
 
 import (
+	"server/game/events"
 	msg "server/game/messages"
 	"time"
 
@@ -35,17 +36,21 @@ func (g *survivelerGame) loop() error {
 	timeChan := time.NewTicker(
 		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
 
+	// message listeners
 	msgmgr := new(msg.MessageManager)
 	msgmgr.Listen(msg.MoveId, msg.MsgHandlerFunc(g.movementPlanner.OnMovePlayer))
-	msgmgr.Listen(msg.JoinedId, msg.MsgHandlerFunc(g.state.onPlayerJoined))
 	msgmgr.Listen(msg.LeaveId, msg.MsgHandlerFunc(g.state.onPlayerLeft))
 	msgmgr.Listen(msg.MovementRequestResultId, msg.MsgHandlerFunc(g.state.onMovementRequestResult))
+
+	// event listeners
+	g.eventManager.On(events.PlayerJoin, g.state.onPlayerJoined)
 
 	var lastTime, curTime time.Time
 	lastTime = time.Now()
 	log.Info("Starting game loop")
 	g.wg.Add(1)
 
+	go g.eventManager.Process()
 	go func() {
 		defer func() {
 			g.wg.Done()
