@@ -75,27 +75,49 @@ def handle_mouse_click(evt):
         evt.context.msg_queue.append(msg)
 
 
+def place_building_template(context, x, y):
+    """Places the template building on the world.
+
+    :param context: The game context.
+    :type context: :class:`context.Context`
+
+    :param x: The non-clamped x-axis coordinate.
+    :type x: int
+
+    :param y: The non-clamped y-ayis coordinate.
+    :type y: int
+    """
+    map_res = context.res_mgr.get('/map')
+
+    renderer_conf = context.conf['Renderer']
+    w = int(renderer_conf['width'])
+    h = int(renderer_conf['height'])
+    camera = context.camera
+
+    target = ray_cast(x, y, w, h, camera)
+    world_pos = to_world(target.x, target.y, target.z)
+    pos = clamp_to_grid(
+            world_pos.x, world_pos.y, map_res.data['scale_factor'])
+    context.building_template[Movable].position = pos
+
+
 @subscriber(MouseMoveEvent)
 def handle_mouse_move(evt):
+    """Handles the mouse move event.
+
+    Places the building template on the world under the mouse cursor.
+
+    :prarm evt: The mouse move event.
+    :type evt: :class:`core.events.MouseMoveEvent`
+    """
     context = evt.context
     if context.game_mode == context.GameMode.building:
-        map_res = context.res_mgr.get('/map')
-
-        renderer_conf = context.conf['Renderer']
-        w = int(renderer_conf['width'])
-        h = int(renderer_conf['height'])
-        camera = context.camera
-
-        target = ray_cast(evt.x, evt.y, w, h, camera)
-        world_pos = to_world(target.x, target.y, target.z)
-        pos = clamp_to_grid(
-                world_pos.x, world_pos.y, map_res.data['scale_factor'])
-        context.building_template[Movable].position = pos
+        place_building_template(context, evt.x, evt.y)
 
 
 @subscriber(KeyPressEvent)
 def handle_key_press(evt):
-    """Handle the B key pressed event.
+    """Handles the B key pressed event.
 
     Toggles the building game mode.
 

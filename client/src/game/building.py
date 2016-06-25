@@ -1,5 +1,6 @@
 from events import send_event
 from events import subscriber
+from game.actions import place_building_template
 from game.character import EntityType
 from game.components import Movable
 from game.components import Renderable
@@ -119,6 +120,8 @@ def show_building_template(evt):
 
         context.building_template = building
         context.entities[building.e_id] = building
+        x, y = context.input_mgr.mouse_position
+        place_building_template(context, x, y)
 
     elif context.building_template is not None:
         bt, context.building_template = context.building_template, None

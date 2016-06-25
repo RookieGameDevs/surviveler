@@ -2,6 +2,7 @@ from core.events import KeyPressEvent
 from core.events import MouseClickEvent
 from core.events import MouseMoveEvent
 from events import send_event
+import ctypes
 import sdl2 as sdl
 import sdl2.ext as sdl_ext
 
@@ -46,3 +47,14 @@ class InputManager:
                     mouse_event.y,
                     button,
                     state))
+
+    @property
+    def mouse_position(self):
+        """Current mouse position in screen coordinates.
+
+        :returns: Current mouse position in screen coordinates.
+        :rtype: tuple
+        """
+        x, y = ctypes.c_int(0), ctypes.c_int(0)
+        sdl.SDL_GetMouseState(ctypes.byref(x), ctypes.byref(y))
+        return (x.value, y.value)
