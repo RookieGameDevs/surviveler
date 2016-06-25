@@ -175,8 +175,13 @@ func (srv *Server) OnClose(c *network.Conn) {
 		// the client was not marked as JOINED, so nobody knows about him
 		// and we have nothing more to do
 	}
-	// send a LEAVE to the game loop (server-only msg)
-	srv.msgcb(messages.NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.Id)
+
+	// inform the game loop that the player left
+	evt := events.NewEvent(events.PlayerLeave, events.PlayerLeaveEvent{
+		Id: clientData.Id,
+	})
+	srv.eventChan <- evt
+
 }
 
 /*

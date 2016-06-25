@@ -139,11 +139,11 @@ func (gs *gamestate) onPlayerJoined(event *events.Event) {
 /*
  * onPlayerLeft handles a LeaveMsg by removing an entity
  */
-func (gs *gamestate) onPlayerLeft(imsg interface{}, clientId uint32) error {
+func (gs *gamestate) onPlayerLeft(event *events.Event) {
+	playerLeaveEvent := event.Payload.(events.PlayerLeaveEvent)
 	// one player less, remove him from the map
-	log.WithField("clientId", clientId).Info("We have one less player")
-	delete(gs.entities, clientId)
-	return nil
+	log.WithField("clientId", playerLeaveEvent.Id).Info("We have one less player")
+	delete(gs.entities, playerLeaveEvent.Id)
 }
 
 /*
