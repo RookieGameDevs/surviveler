@@ -28,6 +28,8 @@ class Context:
         Context.__INSTANCE = self
 
         self.conf = conf
+        self.input_mgr = None
+        self.res_mgr = None
         self.scene = None
         self.camera = None
         self.ui = None

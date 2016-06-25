@@ -58,10 +58,10 @@ class Client:
         """
         self.renderer = renderer
         self.proxy = proxy
-        self.input_mgr = input_mgr
 
         # Setup the context
         context = Context(conf)
+        context.input_mgr = input_mgr
         context.res_mgr = res_mgr
         context.scene = self.setup_scene(context)
         context.camera = self.setup_camera(context)
@@ -255,7 +255,7 @@ class Client:
             self.poll_network()
 
             # Process user input
-            self.input_mgr.process_input()
+            self.context.input_mgr.process_input()
 
             # Update entities
             for ent in self.context.entities.values():
