@@ -74,3 +74,66 @@ def to_scene(x, y):
 def to_world(x, y, z):
     """Convert scene coordinates to world coordinates."""
     return Vec(x, z, 0)
+
+
+def clamp_to_grid(x, y, scale_factor):
+    """Clamp x and y to the grid with scale factor scale_factor.
+
+    :param x: The x coordinate in world coordinates.
+    :type x: float
+
+    :param y: The y coordinate in world coordinates.
+    :type y: float
+
+    :param scale_factor: The scale factor of the grid.
+    :type scale_factor: int
+
+    :returns: The clamped coordinates.
+    :rtype: tuple
+    """
+    c_x = math.copysign(
+        math.floor(x * scale_factor) / scale_factor + 1 / (scale_factor * 2), x)
+
+    c_y = math.copysign(
+        math.floor(y * scale_factor) / scale_factor + 1 / (scale_factor * 2), y)
+
+    return c_x, c_y
+
+
+def to_matrix(g_x, g_y, scale_factor):
+    """Convert the grid x and y to matrix indices using the matrix scale factor.
+
+    :param g_x: The x coordinate in world coordinates.
+    :type g_x: float
+
+    :param g_y: The y coordinate in world coordinates.
+    :type g_y: float
+
+    :param scale_factor: The scale factor of the grid.
+    :type scale_factor: int
+
+    :returns: The clamped coordinates.
+    :rtype: tuple
+    """
+    x = (g_x - 1 / (scale_factor * 2)) * scale_factor
+    y = (g_y - 1 / (scale_factor * 2)) * scale_factor
+
+    return int(x), int(y)
+
+
+def in_matrix(matrix, x, y):
+    """Check if the specified coordinates are inside the matrix.
+
+    :param matrix: The matrix.
+    :type matrix: list
+
+    :param x: The x coordinate.
+    :type x: int
+
+    :param y: The y coordinate.
+    :type y: int
+
+    :returns: True if the point is inside the matrix, otherwise False
+    :rtype: bool
+    """
+    return len(matrix) > y and len(matrix[y]) > x

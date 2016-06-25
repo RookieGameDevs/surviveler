@@ -14,12 +14,12 @@ import (
 const (
 	PingId uint16 = 0 + iota
 	PongId
-	GameStateId
-	MoveId
 	JoinId
 	JoinedId
 	StayId
 	LeaveId
+	GameStateId
+	MoveId
 )
 
 /*

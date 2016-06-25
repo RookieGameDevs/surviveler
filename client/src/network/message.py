@@ -12,12 +12,12 @@ class MessageType(IntEnum):
     """Enum of possible message types."""
     ping = 0
     pong = 1
-    gamestate = 2
-    move = 3
-    join = 4
-    joined = 5
-    stay = 6
-    leave = 7
+    join = 2
+    joined = 3
+    stay = 4
+    leave = 5
+    gamestate = 6
+    move = 7
 
 
 @unique

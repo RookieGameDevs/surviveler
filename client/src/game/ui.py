@@ -1,7 +1,9 @@
+from context import Context
 from datetime import datetime
 from events import subscriber
 from game.events import CharacterJoin
 from game.events import CharacterLeave
+from game.events import GameModeChange
 from game.events import TimeUpdate
 from math import pi
 from matlib import Vec
@@ -44,13 +46,21 @@ class UI:
         self.log_shader = resource['shader']
         self.log_node = self.scene.root.add_child(SceneNode())
 
+        # Mode node
+        self.game_mode_node = self.scene.root.add_child(TextNode(
+            self.log_font,
+            self.log_shader,
+            Context.GameMode.default.value,
+            self.log_color))
+        self.transform(self.game_mode_node, self.w * 0.85, 20)
+
         # FPS counter
         self.fps_counter_node = self.scene.root.add_child(TextNode(
             self.log_font,
             self.log_shader,
             'FPS',
             self.log_color))
-        self.transform(self.fps_counter_node, self.w * 0.90, 0)
+        self.transform(self.fps_counter_node, self.w * 0.85, 0)
 
         # clock
         self.clock = self.scene.root.add_child(TextNode(
@@ -85,6 +95,14 @@ class UI:
         :type number: int
         """
         self.fps_counter_node.text = 'FPS: {}'.format(number)
+
+    def set_mode(self, mode=None):
+        """Set the current game mode on the game mode widget.
+
+        :param number: The game mode: None in case of default
+        :type number: :enum:`context.Context.GameMode`
+        """
+        self.game_mode_node.text = '{}'.format(mode.value)
 
     def set_clock(self, hour, minute):
         """Set the time in clock widget.
@@ -143,3 +161,13 @@ def log_leave(evt):
 def update_time(evt):
     """Updates the UI clock."""
     evt.context.ui.set_clock(evt.hour, evt.minute)
+
+
+@subscriber(GameModeChange)
+def show_gamemode(evt):
+    """In case we are in a gamemode different from the default one shows it."""
+    context = evt.context
+    if evt.cur != context.GameMode.default:
+        context.ui.set_mode(evt.cur)
+    else:
+        context.ui.set_mode(context.GameMode.default)
