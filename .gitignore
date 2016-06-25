@@ -1,2 +1,5 @@
 *.o
 demo
+build/
+.waf*
+.lock*

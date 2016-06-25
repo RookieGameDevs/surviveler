@@ -3,6 +3,7 @@
 #endif
 
 #include "matlib.h"
+#include <string.h>
 #include <stdarg.h>
 
 #ifdef __APPLE__
