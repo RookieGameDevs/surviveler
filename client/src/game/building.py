@@ -113,7 +113,7 @@ def show_building_template(evt):
             send_event(GameModeChange(prev, cur))
 
     if context.game_mode == context.GameMode.building:
-        resource = context.res_mgr.get('/prefabs/buildings/turret')
+        resource = context.res_mgr.get('/prefabs/buildings/barricade')
         map_res = context.res_mgr.get('/map')
         matrix, scale_factor = map_res['matrix'], map_res.data['scale_factor']
         building = Building(resource, matrix, scale_factor, context.scene.root)
