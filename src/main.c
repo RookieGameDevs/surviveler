@@ -1,3 +1,4 @@
+#include "anim.h"
 #include "matlib.h"
 #include <GL/glew.h>
 #include <SDL.h>
