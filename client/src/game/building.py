@@ -1,8 +1,11 @@
+from events import send_event
 from events import subscriber
-from game import Entity
+from game.character import EntityType
 from game.components import Movable
 from game.components import Renderable
+from game.entity import Entity
 from game.events import GameModeChange
+from game.events import GameModeToggle
 from matlib import Vec
 from utils import in_matrix
 from utils import to_matrix
@@ -95,13 +98,20 @@ class Building(Entity):
         t.translate(to_scene(x, y))
 
 
-@subscriber(GameModeChange)
+@subscriber(GameModeToggle)
 def show_building_template(evt):
     """In case we are in a gamemode different from the default one shows the
     building template otherwise destroies it.
     """
     context = evt.context
-    if evt.cur == context.GameMode.building:
+
+    if evt.mode == context.GameMode.building:
+        # Check if the player has the proper type and toggle the game mode.
+        if context.player_type == EntityType.engineer:
+            prev, cur = context.toggle_game_mode(evt.mode)
+            send_event(GameModeChange(prev, cur))
+
+    if context.game_mode == context.GameMode.building:
         resource = context.res_mgr.get('/prefabs/buildings/turret')
         map_res = context.res_mgr.get('/map')
         matrix, scale_factor = map_res['matrix'], map_res.data['scale_factor']

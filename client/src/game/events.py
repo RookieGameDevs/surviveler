@@ -138,23 +138,31 @@ class PlayerJoin(CharacterJoin):
 
 
 class GameModeChange(Event):
-    """Game mode changed.
+    """Game mode change.
 
     Event emitted when the game mode changed.
     """
 
     def __init__(self, prev, cur):
-        """Constructor.
-
-        :param prev: The previous game mode.
-        :type prev: :enum:`context.Context.GameMode`
-
-        :param cur: The current game mode.
-        :type cur: :enum:`context.Context.GameMode`
-        """
-        self.prev = prev
-        self.cur = cur
+        self.prev, self.cur = prev, cur
 
     def __str__(self):
-        return '<GameModeChange({})>'.format(
-            self.prev, self.cur)
+        return '<GameModeChange({}, {})>'.format(self.prev, self.cur)
+
+
+class GameModeToggle(Event):
+    """Game mode toggle.
+
+    Event emitted when the user is toggling a game mode.
+    """
+
+    def __init__(self, mode):
+        """Constructor.
+
+        :param mode: The game mode we want to toggle
+        :type mode: :enum:`context.Context.GameMode`
+        """
+        self.mode = mode
+
+    def __str__(self):
+        return '<GameModeToggle({})>'.format(self.mode)

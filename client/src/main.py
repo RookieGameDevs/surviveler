@@ -98,9 +98,31 @@ def main(name, character, config):
     renderer.shutdown()
 
 
+class EntityTypeParamType(click.ParamType):
+    """Custom click type for character type.
+
+    NOTE: bad naming, I know.
+    """
+    name = 'entity_type'
+
+    def convert(self, value, param, ctx):
+        try:
+            return EntityType(int(value))
+        except ValueError:
+            self.fail('{} is not a valid EntityType'.format(value))
+
+
+ENTITY_TYPE = EntityTypeParamType()
+
+
 @click.command()
-@click.option('--name', help='The player username', default='John Doe')
-@click.option('--character', help='The player class', default=EntityType.grunt)
+@click.argument(
+    'name',
+    default='John Doe')
+@click.argument(
+    'character',
+    type=ENTITY_TYPE,
+    default=EntityType.grunt)
 def bootstrap(name, character):
     config = ConfigParser()
     config.read(CONFIG_FILE)

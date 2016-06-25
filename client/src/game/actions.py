@@ -4,7 +4,7 @@ from core.events import MouseMoveEvent
 from events import send_event
 from events import subscriber
 from game.components import Movable
-from game.events import GameModeChange
+from game.events import GameModeToggle
 from matlib import Vec
 from network import Message
 from network import MessageField
@@ -104,5 +104,4 @@ def handle_key_press(evt):
     """
     context = evt.context
     if evt.key == sdl.SDLK_b:
-        prev, cur = context.toggle_game_mode(context.GameMode.building)
-        send_event(GameModeChange(prev, cur))
+        send_event(GameModeToggle(context.GameMode.building))
