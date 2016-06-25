@@ -39,11 +39,11 @@ func (g *survivelerGame) loop() error {
 	// message listeners
 	msgmgr := new(msg.MessageManager)
 	msgmgr.Listen(msg.MoveId, msg.MsgHandlerFunc(g.movementPlanner.OnMovePlayer))
-	msgmgr.Listen(msg.MovementRequestResultId, msg.MsgHandlerFunc(g.state.onMovementRequestResult))
 
 	// event listeners
-	g.eventManager.On(events.PlayerJoin, g.state.onPlayerJoined)
-	g.eventManager.On(events.PlayerLeave, g.state.onPlayerLeft)
+	g.eventManager.On(events.PlayerJoin, g.state.onPlayerJoin)
+	g.eventManager.On(events.PlayerLeave, g.state.onPlayerLeave)
+	g.eventManager.On(events.PathCalculated, g.state.onPathCalculated)
 
 	var lastTime, curTime time.Time
 	lastTime = time.Now()

@@ -6,6 +6,7 @@ package game
 
 import (
 	"fmt"
+	"server/game/events"
 	msg "server/game/messages"
 	"server/math"
 	"time"
@@ -139,15 +140,13 @@ func (mp *MovementPlanner) Start() {
 						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
 						// fill and send a MovementRequestResultMsg to the game loop
-						mp.game.GetMessageChan() <- msg.ClientMessage{
-							ClientId: serverOnly,
-							Message: msg.NewMessage(
-								msg.MovementRequestResultId,
-								msg.MovementRequestResultMsg{
-									EntityId: mvtReq.EntityId,
-									Path:     path,
-								}),
-						}
+						evt := events.NewEvent(
+							events.PathCalculated,
+							events.PathCalculatedEvent{
+								Id:   mvtReq.EntityId,
+								Path: path,
+							})
+						mp.game.GetEventChan() <- evt
 					}
 				} else {
 					log.WithField("req", mvtReq).Warn("Pathfinder failed to find path")

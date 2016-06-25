@@ -1,6 +1,7 @@
 package game
 
 import (
+	"server/game/events"
 	"server/game/messages"
 	"server/game/resource"
 	"server/math"
@@ -23,6 +24,7 @@ type Game interface {
 	GetState() GameState
 	GetQuitChan() chan struct{}
 	GetMessageChan() chan messages.ClientMessage
+	GetEventChan() chan *events.Event
 	GetPathfinder() *Pathfinder
 	GetWaitGroup() *sync.WaitGroup
 }

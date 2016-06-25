@@ -177,6 +177,10 @@ func (g *survivelerGame) GetMessageChan() chan msg.ClientMessage {
 	return g.msgChan
 }
 
+func (g *survivelerGame) GetEventChan() chan *events.Event {
+	return g.eventChan
+}
+
 func (g *survivelerGame) GetPathfinder() *game.Pathfinder {
 	return g.pathfinder
 }

@@ -123,9 +123,9 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 }
 
 /*
- * onPlayerJoined handles a JoinedMsg by instanting a new player entity
+ * TODO: add documentation
  */
-func (gs *gamestate) onPlayerJoined(event *events.Event) {
+func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	playerJoinEvent := event.Payload.(events.PlayerJoinEvent)
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", playerJoinEvent.Id).Info("We have one more player")
@@ -137,9 +137,9 @@ func (gs *gamestate) onPlayerJoined(event *events.Event) {
 }
 
 /*
- * onPlayerLeft handles a LeaveMsg by removing an entity
+ * TODO: add documentation
  */
-func (gs *gamestate) onPlayerLeft(event *events.Event) {
+func (gs *gamestate) onPlayerLeave(event *events.Event) {
 	playerLeaveEvent := event.Payload.(events.PlayerLeaveEvent)
 	// one player less, remove him from the map
 	log.WithField("clientId", playerLeaveEvent.Id).Info("We have one less player")
@@ -147,20 +147,16 @@ func (gs *gamestate) onPlayerLeft(event *events.Event) {
 }
 
 /*
- * onMovementRequestResult handles a MovementRequestResultMsg
- *
- * MovementRequestResult are server-side messages only emitted by the movement
- * planner to signal that the pathfinder has finished to compute a path
+ * TODO: add docomentation
  */
-func (gs *gamestate) onMovementRequestResult(imsg interface{}, clientId uint32) error {
-	mvtReqRes := imsg.(msg.MovementRequestResultMsg)
-	log.WithField("res", mvtReqRes).Info("Received a MovementRequestResultMsg")
+func (gs *gamestate) onPathCalculated(event *events.Event) {
+	pathCalculatedEvent := event.Payload.(events.PathCalculatedEvent)
+	log.WithField("res", pathCalculatedEvent).Info("Received a calculated movement")
 
 	// check that the entity exists
-	if player, ok := gs.entities[mvtReqRes.EntityId]; ok {
-		player.SetPath(mvtReqRes.Path)
+	if player, ok := gs.entities[pathCalculatedEvent.Id]; ok {
+		player.SetPath(pathCalculatedEvent.Path)
 	}
-	return nil
 }
 
 /*
