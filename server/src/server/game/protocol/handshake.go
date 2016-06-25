@@ -97,7 +97,6 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 			Id:   clientData.Id,
 			Type: join.Type,
 		})
-		// srv.msgcb(joined, clientData.Id)
 		srv.eventChan <- evt
 
 		// consider the client as accepted
