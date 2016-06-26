@@ -198,6 +198,29 @@ mesh_new(struct MeshData *md)
 		offset += 8;
 	}
 
+	// initialize joint ID and weight attributes
+	if (md->vertex_format & HAS_JOINTS) {
+		glEnableVertexAttribArray(VERTEX_ATTRIB_JOINT_IDS);
+		glVertexAttribIPointer(
+			VERTEX_ATTRIB_JOINT_IDS,
+			4,
+			GL_UNSIGNED_BYTE,
+			md->vertex_size,
+			(void*)(offset)
+		);
+		offset += 4;
+
+		glEnableVertexAttribArray(VERTEX_ATTRIB_JOINT_WEIGHTS);
+		glVertexAttribIPointer(
+			VERTEX_ATTRIB_JOINT_WEIGHTS,
+			4,
+			GL_UNSIGNED_BYTE,
+			md->vertex_size,
+			(void*)(offset)
+		);
+		offset += 4;
+	}
+
 	// initialize index data buffer
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 	glBufferData(

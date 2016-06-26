@@ -77,12 +77,12 @@ defined by the format. The full vertex entry looks as follow:
 |Normal       |float       |4   |3    |12    |
 |UV           |float       |4   |2    |24    |
 |Joint0 ID    |unsigned int|1   |1    |30    |
-|Joint0 weight|unsigned int|1   |1    |31    |
-|Joint1 ID    |unsigned int|1   |1    |32    |
-|Joint1 weight|unsigned int|1   |1    |33    |
-|Joint2 ID    |unsigned int|1   |1    |34    |
-|Joint2 weight|unsigned int|1   |1    |35    |
-|Joint3 ID    |unsigned int|1   |1    |36    |
+|Joint1 ID    |unsigned int|1   |1    |31    |
+|Joint2 ID    |unsigned int|1   |1    |32    |
+|Joint3 ID    |unsigned int|1   |1    |33    |
+|Joint0 weight|unsigned int|1   |1    |34    |
+|Joint1 weight|unsigned int|1   |1    |35    |
+|Joint2 weight|unsigned int|1   |1    |36    |
 |Joint3 weight|unsigned int|1   |1    |37    |
 
 *NOTE*: All attributes except `Position` are optional and the vertex entry size
@@ -98,5 +98,8 @@ Vertex normal vector as `(X,Y,Z)` tuple.
 ### UV
 Texture mapping coordinate as `(U,V)` tuple.
 
-### Joint ID/weight
-Sequence of joint binding information as `(id,weight)` tuples.
+### JointN ID
+Identifier of the N-th joint to which the vertex is attached.
+
+### JointN weight
+Weight of the N-th joint for given vertex.
