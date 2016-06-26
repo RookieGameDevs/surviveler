@@ -205,26 +205,17 @@ setup()
 static int
 update(float dt)
 {
-	static float angle = 0;
-
-	angle += dt * M_PI / 4.0f;
-	if (angle >= 2 * M_PI)
-		angle -= 2 * M_PI;
-
 	mat_ident(&modelview);
 	mat_lookat(
 		&modelview,
-		5, 5, 5,
-		0, 0, 0,
-		0, 1, 0
+		5, 5, 5, // eye
+		0, 0, 0, // target
+		0, 1, 0  // up
 	);
 
-	Vec axis = vec(0, 1, 0, 0);
+	Vec axis = vec(1, 0, 0, 0);
 	mat_ident(&transform);
-	mat_rotate(&transform, &axis, angle);
-	axis = vec(1, 0, 0, 0);
 	mat_rotate(&transform, &axis, -M_PI / 2);
-	mat_scale(&transform, 2, 2, 2);
 
 	return 1;
 }
