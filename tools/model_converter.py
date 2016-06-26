@@ -9,9 +9,10 @@ import pyassimp
 
 class VertexFormat(object):
 
-    has_normals = 1
-    has_uvs = 1 << 1
-    has_bones = 1 << 2
+    has_coord = 1
+    has_normal = 1 << 1
+    has_uv = 1 << 2
+    has_weight = 1 << 3
 
 
 class DataFormatError(Exception):
@@ -34,16 +35,29 @@ def main(model, out):
     b_count = len(mesh.bones)
 
     if n_count > 0:
-        fmt |= VertexFormat.has_normals
-    if t_count > 0:
-        fmt |= VertexFormat.has_uvs
-    if b_count > 0:
-        fmt |= VertexFormat.has_bones
+        fmt |= VertexFormat.has_normal
+    # if t_count > 0:
+    #     fmt |= VertexFormat.has_uvs
+    # if b_count > 0:
+    #     fmt |= VertexFormat.has_bones
 
     with open(out, 'wb') as fp:
         # write header
-        header = pack('hLLB', fmt, v_count, v_count, b_count)
+        header = pack('<hLLB', fmt, v_count, v_count, b_count)
         fp.write(header)
+
+        # write vertices
+        for x, y, z in mesh.vertices:
+            v = pack('<fff', x, y, z)
+            fp.write(v)
+
+        # write normals
+        for x, y, z in mesh.normals:
+            v = pack('<fff', x, y, z)
+
+        # write indices
+        for i in range(len(mesh.vertices)):
+            fp.write(pack('<L', i))
 
     pyassimp.release(scene)
 

@@ -1,5 +1,6 @@
 #include "anim.h"
 #include "matlib.h"
+#include "mesh.h"
 #include <GL/glew.h>
 #include <SDL.h>
 #include <stdbool.h>
@@ -27,47 +28,8 @@ static Mat modelview;
 // object transform matrix
 static Mat transform;
 
-// model
-static GLfloat vertices[] = {
-	+0.5, +0.5, +0.5,
-	-0.5, +0.5, +0.5,
-	-0.5, -0.5, +0.5,
-	+0.5, -0.5, +0.5,
-	+0.5, +0.5, -0.5,
-	-0.5, +0.5, -0.5,
-	-0.5, -0.5, -0.5,
-	+0.5, -0.5, -0.5
-};
-
-static GLuint indices[] = {
-	// front face
-	0, 1, 2,
-	0, 2, 3,
-	// back face
-	7, 5, 4,
-	7, 6, 5,
-	// top face
-	0, 4, 1,
-	1, 4, 5,
-	// bottom face
-	7, 3, 2,
-	7, 2, 6,
-	// left face
-	4, 0, 3,
-	4, 3, 7,
-	// right face
-	5, 2, 1,
-	5, 6, 2
-};
-
-static GLuint vao;
-
-enum {
-	VERTEX_BUFFER,
-	INDEX_BUFFER,
-	BUF_COUNT
-};
-static GLuint buffers[BUF_COUNT];
+// mesh to render
+static struct Mesh *mesh = NULL;
 
 static GLuint shader;
 
@@ -83,58 +45,18 @@ has_glerror()
 }
 
 static int
-all_ui(const unsigned int *array, size_t len)
+load_model(const char *filename)
 {
-	for (size_t i = 0; i < len; i++)
-		if (!array[i])
-			return 0;
-	return 1;
-}
+	struct MeshData *md = mesh_data_from_file(filename);
+	if (!md)
+		return 0;
 
-static int
-load_model()
-{
-	glGenVertexArrays(1, &vao);
-	if (!vao || has_glerror()) {
-		fprintf(stderr, "VAO generation failed\n");
+	mesh = mesh_new(md);
+	if (!mesh) {
+		mesh_data_free(md);
 		return 0;
 	}
-	glBindVertexArray(vao);
-
-	glGenBuffers(BUF_COUNT, buffers);
-	if (!all_ui(buffers, BUF_COUNT) || has_glerror()) {
-		fprintf(stderr, "VAO generation failed\n");
-		return 0;
-	}
-
-	glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTEX_BUFFER]);
-	glBufferData(
-		GL_ARRAY_BUFFER,
-		sizeof(vertices),
-		vertices,
-		GL_STATIC_DRAW
-	);
-	if (has_glerror()) {
-		fprintf(stderr, "vertex buffer initialization failed\n");
-		return 0;
-	}
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)(0));
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEX_BUFFER]);
-	glBufferData(
-		GL_ELEMENT_ARRAY_BUFFER,
-		sizeof(indices),
-		indices,
-		GL_STATIC_DRAW
-	);
-	if (has_glerror()) {
-		fprintf(stderr, "index buffer initialization failed\n");
-		return 0;
-	}
-
-	glBindVertexArray(0);
+	mesh_data_free(md);
 
 	return 1;
 }
@@ -330,18 +252,8 @@ render()
 	glUniformMatrix4fv(loc, 1, GL_TRUE, transform.data);
 
 	// draw the model
-	glBindVertexArray(vao);
-	glDrawElements(
-		GL_TRIANGLES,
-		sizeof(indices) / sizeof(GLuint),
-		GL_UNSIGNED_INT,
-		(void*)(0)
-	);
-
-	if (has_glerror()) {
-		fprintf(stderr, "failed to render model\n");
+	if (!mesh_render(mesh))
 		return 0;
-	}
 
 	glFlush();
 
@@ -351,6 +263,11 @@ render()
 int
 main(int argc, char *argv[])
 {
+	if (argc != 2) {
+		fprintf(stderr, "expected model file name\n");
+		return 1;
+	}
+
 	// initialize SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		fprintf(stderr, "failed to initialize SDL: %s", SDL_GetError());
@@ -403,7 +320,7 @@ main(int argc, char *argv[])
 	if (!setup())
 		return 0;
 
-	if (!load_model())
+	if (!load_model(argv[1]))
 		return 0;
 
 	if (!load_shader())
@@ -445,6 +362,8 @@ main(int argc, char *argv[])
 		run &= render();
 		SDL_GL_SwapWindow(window);
 	}
+
+	mesh_free(mesh);
 
 	return 0;
 }
