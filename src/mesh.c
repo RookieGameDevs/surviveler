@@ -159,14 +159,16 @@ mesh_new(struct MeshData *md)
 
 	// enable coord attribute
 	glEnableVertexAttribArray(VERTEX_ATTRIB_POSITION);
+	off_t offset = 0;
 	glVertexAttribPointer(
 		VERTEX_ATTRIB_POSITION,
 		3,
 		GL_FLOAT,
 		GL_FALSE,
 		md->vertex_size,
-		(void*)(0)
+		(void*)(offset)
 	);
+	offset += 12;
 
 	// enable normal attribute
 	if (md->vertex_format & HAS_NORMAL) {
@@ -177,8 +179,23 @@ mesh_new(struct MeshData *md)
 			GL_FLOAT,
 			GL_FALSE,
 			md->vertex_size,
-			(void*)(12)
+			(void*)(offset)
 		);
+		offset += 12;
+	}
+
+	// enable UV attribute
+	if (md->vertex_format & HAS_UV) {
+		glEnableVertexAttribArray(VERTEX_ATTRIB_UV);
+		glVertexAttribPointer(
+			VERTEX_ATTRIB_UV,
+			2,
+			GL_FLOAT,
+			GL_FALSE,
+			md->vertex_size,
+			(void*)(offset)
+		);
+		offset += 8;
 	}
 
 	// initialize index data buffer
