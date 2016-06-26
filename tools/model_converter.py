@@ -6,13 +6,17 @@ from struct import pack
 import argparse
 import pyassimp
 
+VERSION_MAJOR = 1
+VERSION_MINOR = 0
+VERSION = VERSION_MINOR << 4 | VERSION_MAJOR
+
 
 class VertexFormat(object):
 
-    has_coord = 1
+    has_position = 1
     has_normal = 1 << 1
     has_uv = 1 << 2
-    has_weight = 1 << 3
+    has_joints = 1 << 3
 
 
 class DataFormatError(Exception):
@@ -28,7 +32,8 @@ def main(model, out):
     mesh = scene.meshes[0]
 
     # determine output format
-    fmt = 0
+    fmt = VertexFormat.has_position
+
     v_count = len(mesh.vertices)
     n_count = len(mesh.normals)
     t_count = len(mesh.texturecoords)
@@ -36,24 +41,24 @@ def main(model, out):
 
     if n_count > 0:
         fmt |= VertexFormat.has_normal
-    # if t_count > 0:
-    #     fmt |= VertexFormat.has_uvs
-    # if b_count > 0:
-    #     fmt |= VertexFormat.has_bones
+    if t_count > 0:
+        fmt |= VertexFormat.has_uvs
+    if b_count > 0:
+        fmt |= VertexFormat.has_joints
 
     with open(out, 'wb') as fp:
         # write header
-        header = pack('<hLLB', fmt, v_count, v_count, b_count)
+        header = pack('<bhLLB', VERSION, fmt, v_count, v_count, b_count)
         fp.write(header)
 
         # write vertices
-        for x, y, z in mesh.vertices:
-            v = pack('<fff', x, y, z)
-            fp.write(v)
+        for v in range(v_count):
+            px, py, pz = mesh.vertices[v]
+            fp.write(pack('<fff', px, py, pz))
 
-        # write normals
-        for x, y, z in mesh.normals:
-            v = pack('<fff', x, y, z)
+            if fmt & VertexFormat.has_normal:
+                nx, ny, nz = mesh.normals[v]
+                fp.write(pack('<fff', nx, ny, nz))
 
         # write indices
         for i in range(len(mesh.vertices)):
