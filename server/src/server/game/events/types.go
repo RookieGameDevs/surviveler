@@ -13,6 +13,7 @@ type EventType uint16
 const (
 	PlayerJoin = iota
 	PlayerLeave
+	PlayerMove
 	PathCalculated
 )
 
@@ -23,6 +24,12 @@ type PlayerJoinEvent struct {
 
 type PlayerLeaveEvent struct {
 	Id uint32
+}
+
+type PlayerMoveEvent struct {
+	Id   uint32
+	Xpos float32
+	Ypos float32
 }
 
 type PathCalculatedEvent struct {

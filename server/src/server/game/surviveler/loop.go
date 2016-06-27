@@ -36,13 +36,13 @@ func (g *survivelerGame) loop() error {
 	timeChan := time.NewTicker(
 		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
 
-	// message listeners
+	// message manager (and eventually listeners)
 	msgmgr := new(msg.MessageManager)
-	msgmgr.Listen(msg.MoveId, msg.MsgHandlerFunc(g.movementPlanner.OnMovePlayer))
 
 	// event listeners
 	g.eventManager.On(events.PlayerJoin, g.state.onPlayerJoin)
 	g.eventManager.On(events.PlayerLeave, g.state.onPlayerLeave)
+	g.eventManager.On(events.PlayerMove, g.movementPlanner.OnMovePlayer)
 	g.eventManager.On(events.PathCalculated, g.state.onPathCalculated)
 
 	var lastTime, curTime time.Time

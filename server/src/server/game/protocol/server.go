@@ -142,6 +142,11 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			log.WithError(err).Error("Couldn't handle Join")
 			return false
 		}
+	case messages.MoveId:
+		if err := srv.handleMove(c, msg); err != nil {
+			log.WithError(err).Error("Couldn't handle Move")
+			return false
+		}
 	default:
 		// forward it
 		srv.msgcb(msg, clientData.Id)

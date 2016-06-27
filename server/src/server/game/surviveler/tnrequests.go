@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"server/game/messages"
+	"server/game/events"
 	"server/math"
 
 	log "github.com/Sirupsen/logrus"
@@ -180,17 +180,14 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		move := msg.Content.(*TnMoveEntity)
 		if _, ok := g.state.entities[move.Id]; ok {
 
-			// convert into MoveMsg
-			if err := g.movementPlanner.OnMovePlayer(
-				messages.MoveMsg{
-					Xpos: float32(move.Dest[0]),
-					Ypos: float32(move.Dest[1])},
-				move.Id); err == nil {
-				io.WriteString(msg.Context.App.Writer, "request forwarded to the movement planner\n")
-				return nil
-			} else {
-				return err
-			}
+			// emit a PlayerMove event
+			evt := events.NewEvent(events.PlayerMove, events.PlayerMoveEvent{
+				Id:   move.Id,
+				Xpos: float32(move.Dest[0]),
+				Ypos: float32(move.Dest[1]),
+			})
+
+			g.GetEventChan() <- evt
 		} else {
 			return fmt.Errorf("unknown entity id: %v", move.Id)
 		}
