@@ -21,6 +21,9 @@ func NewEventManager(q chan *Event) *EventManager {
 	return self
 }
 
+/*
+ * registers an event handler for a specified event type.
+ */
 func (self *EventManager) On(eventType EventType, callback EventHandler) {
 	lst, ok := self.listeners[eventType]
 	if !ok {
@@ -29,6 +32,9 @@ func (self *EventManager) On(eventType EventType, callback EventHandler) {
 	self.listeners[eventType] = append(lst, callback)
 }
 
+/*
+ * continuously process events blocking when no events are available
+ */
 func (self *EventManager) Process() {
 	for event := range self.eventQueue {
 		lst, ok := self.listeners[event.Type]

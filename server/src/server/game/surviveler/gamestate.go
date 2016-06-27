@@ -123,7 +123,7 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 }
 
 /*
- * TODO: add documentation
+ * event handler for PlayerJoin events
  */
 func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	playerJoinEvent := event.Payload.(events.PlayerJoinEvent)
@@ -137,7 +137,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 }
 
 /*
- * TODO: add documentation
+ * event handler for PlayerLeave events
  */
 func (gs *gamestate) onPlayerLeave(event *events.Event) {
 	playerLeaveEvent := event.Payload.(events.PlayerLeaveEvent)
@@ -147,7 +147,7 @@ func (gs *gamestate) onPlayerLeave(event *events.Event) {
 }
 
 /*
- * TODO: add docomentation
+ * event handler for PathCalculated events
  */
 func (gs *gamestate) onPathCalculated(event *events.Event) {
 	pathCalculatedEvent := event.Payload.(events.PathCalculatedEvent)
