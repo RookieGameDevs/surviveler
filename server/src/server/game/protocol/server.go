@@ -7,6 +7,7 @@ package protocol
 import (
 	log "github.com/Sirupsen/logrus"
 	"net"
+	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"sync"
@@ -25,26 +26,32 @@ type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
  * interface.
  */
 type Server struct {
-	port    string
-	server  network.Server    // tcp server instance
-	clients ClientRegistry    // manage the connected clients
-	msgcb   MsgCallbackFunc   // incoming messages callback
-	telnet  *TelnetServer     // embedded telnet server
-	factory *messages.Factory // the unique message factory
-	wg      *sync.WaitGroup   // game wait group
+	port      string
+	server    network.Server     // tcp server instance
+	clients   ClientRegistry     // manage the connected clients
+	msgcb     MsgCallbackFunc    // incoming messages callback
+	telnet    *TelnetServer      // embedded telnet server
+	factory   *messages.Factory  // the unique message factory
+	wg        *sync.WaitGroup    // game wait group
+	eventChan chan *events.Event // wait for all goroutines
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, msgcb MsgCallbackFunc, clients *ClientRegistry, telnet *TelnetServer, wg *sync.WaitGroup) *Server {
+func NewServer(
+	port string, msgcb MsgCallbackFunc, clients *ClientRegistry,
+	telnet *TelnetServer, wg *sync.WaitGroup,
+	eventChan chan *events.Event) *Server {
+
 	return &Server{
-		clients: *clients,
-		msgcb:   msgcb,
-		port:    port,
-		telnet:  telnet,
-		factory: messages.GetFactory(),
-		wg:      wg,
+		clients:   *clients,
+		msgcb:     msgcb,
+		port:      port,
+		telnet:    telnet,
+		factory:   messages.GetFactory(),
+		wg:        wg,
+		eventChan: eventChan,
 	}
 }
 
@@ -135,6 +142,11 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			log.WithError(err).Error("Couldn't handle Join")
 			return false
 		}
+	case messages.MoveId:
+		if err := srv.handleMove(c, msg); err != nil {
+			log.WithError(err).Error("Couldn't handle Move")
+			return false
+		}
 	default:
 		// forward it
 		srv.msgcb(msg, clientData.Id)
@@ -168,8 +180,13 @@ func (srv *Server) OnClose(c *network.Conn) {
 		// the client was not marked as JOINED, so nobody knows about him
 		// and we have nothing more to do
 	}
-	// send a LEAVE to the game loop (server-only msg)
-	srv.msgcb(messages.NewMessage(messages.LeaveId, messages.LeaveMsg{}), clientData.Id)
+
+	// inform the game loop that the player left
+	evt := events.NewEvent(events.PlayerLeave, events.PlayerLeaveEvent{
+		Id: clientData.Id,
+	})
+	srv.eventChan <- evt
+
 }
 
 /*

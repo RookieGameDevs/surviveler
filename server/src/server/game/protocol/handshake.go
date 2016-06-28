@@ -9,6 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"io"
+	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"time"
@@ -92,7 +93,11 @@ func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
 		srv.Broadcast(joined)
 
 		// informs the game loop that we have a new player
-		srv.msgcb(joined, clientData.Id)
+		evt := events.NewEvent(events.PlayerJoin, events.PlayerJoinEvent{
+			Id:   clientData.Id,
+			Type: join.Type,
+		})
+		srv.eventChan <- evt
 
 		// consider the client as accepted
 		clientData.Joined = true

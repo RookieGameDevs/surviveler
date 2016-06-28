@@ -47,9 +47,6 @@ func (mf Factory) registerMsgTypes() {
 	mf.registerMsgType(JoinedId, JoinedMsg{})
 	mf.registerMsgType(StayId, StayMsg{})
 	mf.registerMsgType(LeaveId, LeaveMsg{})
-
-	// server only message types
-	mf.registerMsgType(MovementRequestResultId, MovementRequestResultMsg{})
 }
 
 /*

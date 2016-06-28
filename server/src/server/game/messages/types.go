@@ -4,10 +4,6 @@
  */
 package messages
 
-import (
-	"server/math"
-)
-
 /*
  * Client - Server messages
  */
@@ -87,19 +83,4 @@ type StayMsg struct {
 type LeaveMsg struct {
 	Id     uint32
 	Reason string
-}
-
-/*
- * Server only messages
- */
-const (
-	MovementRequestResultId uint16 = 1024 + iota
-)
-
-/*
- * The result of a successfull movement request computation
- */
-type MovementRequestResultMsg struct {
-	EntityId uint32    // Id of the entity for which pathfinding was computed
-	Path     math.Path // the path found
 }
