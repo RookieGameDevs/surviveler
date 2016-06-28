@@ -139,8 +139,8 @@ func (mp *MovementPlanner) Start() {
 
 						// fill and send a MovementRequestResultMsg to the game loop
 						evt := events.NewEvent(
-							events.PathCalculated,
-							events.PathCalculatedEvent{
+							events.PathReady,
+							events.PathReadyEvent{
 								Id:   mvtReq.EntityId,
 								Path: path,
 							})

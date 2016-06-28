@@ -43,7 +43,7 @@ func (g *survivelerGame) loop() error {
 	g.eventManager.On(events.PlayerJoin, g.state.onPlayerJoin)
 	g.eventManager.On(events.PlayerLeave, g.state.onPlayerLeave)
 	g.eventManager.On(events.PlayerMove, g.movementPlanner.OnMovePlayer)
-	g.eventManager.On(events.PathCalculated, g.state.onPathCalculated)
+	g.eventManager.On(events.PathReady, g.state.onPathReady)
 
 	var lastTime, curTime time.Time
 	lastTime = time.Now()

@@ -14,7 +14,7 @@ const (
 	PlayerJoin = iota
 	PlayerLeave
 	PlayerMove
-	PathCalculated
+	PathReady
 )
 
 type PlayerJoinEvent struct {
@@ -32,7 +32,7 @@ type PlayerMoveEvent struct {
 	Ypos float32
 }
 
-type PathCalculatedEvent struct {
+type PathReadyEvent struct {
 	Id   uint32
 	Path math.Path // the path found
 }

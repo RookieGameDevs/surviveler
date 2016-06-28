@@ -147,15 +147,15 @@ func (gs *gamestate) onPlayerLeave(event *events.Event) {
 }
 
 /*
- * event handler for PathCalculated events
+ * event handler for PathReadyEvent events
  */
-func (gs *gamestate) onPathCalculated(event *events.Event) {
-	pathCalculatedEvent := event.Payload.(events.PathCalculatedEvent)
-	log.WithField("res", pathCalculatedEvent).Info("Received a calculated movement")
+func (gs *gamestate) onPathReady(event *events.Event) {
+	pathReadyEvent := event.Payload.(events.PathReadyEvent)
+	log.WithField("res", pathReadyEvent).Info("Received a calculated movement")
 
 	// check that the entity exists
-	if player, ok := gs.entities[pathCalculatedEvent.Id]; ok {
-		player.SetPath(pathCalculatedEvent.Path)
+	if player, ok := gs.entities[pathReadyEvent.Id]; ok {
+		player.SetPath(pathReadyEvent.Path)
 	}
 }
 
