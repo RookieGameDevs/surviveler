@@ -137,7 +137,7 @@ func (mp *MovementPlanner) Start() {
 					if len(path) > 1 {
 						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
-						// fill and send a MovementRequestResultMsg to the game loop
+						// emit a PathReady event
 						evt := events.NewEvent(
 							events.PathReady,
 							events.PathReadyEvent{

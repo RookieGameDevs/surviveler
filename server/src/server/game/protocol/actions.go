@@ -15,7 +15,7 @@ import (
  * handleMove processes a MoveMsg and fires a PlayerMove event
  */
 func (self *Server) handleMove(c *network.Conn, msg *messages.Message) error {
-	// decode payload into a ping message
+	// decode payload into a move message
 	move := self.factory.DecodePayload(messages.MoveId, msg.Payload).(messages.MoveMsg)
 	log.WithField("msg", move).Info("Move message")
 
