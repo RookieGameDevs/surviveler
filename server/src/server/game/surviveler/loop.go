@@ -40,10 +40,10 @@ func (g *survivelerGame) loop() error {
 	msgmgr := new(msg.MessageManager)
 
 	// event listeners
-	g.eventManager.On(events.PlayerJoin, g.state.onPlayerJoin)
-	g.eventManager.On(events.PlayerLeave, g.state.onPlayerLeave)
-	g.eventManager.On(events.PlayerMove, g.movementPlanner.OnMovePlayer)
-	g.eventManager.On(events.PathReady, g.state.onPathReady)
+	g.eventManager.Subscribe(events.PlayerJoin, g.state.onPlayerJoin)
+	g.eventManager.Subscribe(events.PlayerLeave, g.state.onPlayerLeave)
+	g.eventManager.Subscribe(events.PlayerMove, g.movementPlanner.OnMovePlayer)
+	g.eventManager.Subscribe(events.PathReady, g.state.onPathReady)
 
 	var lastTime, curTime time.Time
 	lastTime = time.Now()

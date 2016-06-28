@@ -24,7 +24,7 @@ func NewEventManager(q chan *Event) *EventManager {
 /*
  * registers an event handler for a specified event type.
  */
-func (self *EventManager) On(eventType EventType, callback EventHandler) {
+func (self *EventManager) Subscribe(eventType EventType, callback EventHandler) {
 	lst, ok := self.listeners[eventType]
 	if !ok {
 		lst = make([]EventHandler, 0)
