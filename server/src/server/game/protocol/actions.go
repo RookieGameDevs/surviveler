@@ -30,3 +30,24 @@ func (self *Server) handleMove(c *network.Conn, msg *messages.Message) error {
 	self.eventChan <- evt
 	return nil
 }
+
+/*
+ * handleBuild processes a BuildMsg and fires a PlayerBuild event
+ */
+func (self *Server) handleBuild(c *network.Conn, msg *messages.Message) error {
+	// decode payload into a move message
+	build := self.factory.DecodePayload(messages.BuildId, msg.Payload).(messages.BuildMsg)
+	log.WithField("msg", build).Info("Build message")
+
+	clientData := c.GetUserData().(ClientData)
+
+	evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
+		Id:   clientData.Id,
+		Type: build.Type,
+		Xpos: build.Xpos,
+		Ypos: build.Ypos,
+	})
+
+	self.eventChan <- evt
+	return nil
+}

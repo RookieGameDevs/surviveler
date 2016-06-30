@@ -43,6 +43,7 @@ func (mf Factory) registerMsgTypes() {
 	mf.registerMsgType(PongId, PongMsg{})
 	mf.registerMsgType(GameStateId, GameStateMsg{})
 	mf.registerMsgType(MoveId, MoveMsg{})
+	mf.registerMsgType(BuildId, BuildMsg{})
 	mf.registerMsgType(JoinId, JoinMsg{})
 	mf.registerMsgType(JoinedId, JoinedMsg{})
 	mf.registerMsgType(StayId, StayMsg{})

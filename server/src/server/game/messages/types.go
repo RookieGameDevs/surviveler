@@ -16,6 +16,7 @@ const (
 	LeaveId
 	GameStateId
 	MoveId
+	BuildId
 )
 
 /*
@@ -44,6 +45,15 @@ type GameStateMsg struct {
  * player initiated character movement. Client -> server message
  */
 type MoveMsg struct {
+	Xpos float32
+	Ypos float32
+}
+
+/*
+ * player initiated a duilbing action. Client -> server message
+ */
+type BuildMsg struct {
+	Type uint8
 	Xpos float32
 	Ypos float32
 }
