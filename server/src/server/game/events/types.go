@@ -14,6 +14,7 @@ const (
 	PlayerJoin = iota
 	PlayerLeave
 	PlayerMove
+	PlayerBuild
 	PathReady
 )
 
@@ -28,6 +29,13 @@ type PlayerLeaveEvent struct {
 
 type PlayerMoveEvent struct {
 	Id   uint32
+	Xpos float32
+	Ypos float32
+}
+
+type PlayerBuildEvent struct {
+	Id   uint32
+	Type uint8
 	Xpos float32
 	Ypos float32
 }

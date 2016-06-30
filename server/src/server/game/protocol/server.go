@@ -147,6 +147,11 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			log.WithError(err).Error("Couldn't handle Move")
 			return false
 		}
+	case messages.BuildId:
+		if err := srv.handleBuild(c, msg); err != nil {
+			log.WithError(err).Error("Couldn't handle Build")
+			return false
+		}
 	default:
 		// forward it
 		srv.msgcb(msg, clientData.Id)
