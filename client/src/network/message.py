@@ -18,25 +18,27 @@ class MessageType(IntEnum):
     leave = 5
     gamestate = 6
     move = 7
+    build = 8
 
 
 @unique
 class MessageField(bytes, Enum):
     """Enum of possible message fields."""
+    action = b'Action'
+    action_type = b'ActionType'
+    buildings = b'Buildings'
+    entities = b'Entities'
+    entity_type = b'Type'
     id = b'Id'
+    name = b'Name'
+    path = b'Path'
+    players = b'Players'
+    reason = b'Reason'
+    speed = b'Speed'
+    time = b'Time'
     timestamp = b'Tstamp'
     x_pos = b'Xpos'
     y_pos = b'Ypos'
-    action = b'Action'
-    action_type = b'ActionType'
-    speed = b'Speed'
-    path = b'Path'
-    entities = b'Entities'
-    name = b'Name'
-    players = b'Players'
-    reason = b'Reason'
-    time = b'Time'
-    entity_type = b'Type'
 
 
 class Message:
