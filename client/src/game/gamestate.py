@@ -1,7 +1,10 @@
 from enum import IntEnum
 from enum import unique
 from events import send_event
+from game import BuildingType
 from game import EntityType
+from game.events import BuildingDisappear
+from game.events import BuildingSpawn
 from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
@@ -187,3 +190,40 @@ def handle_time(gs_mgr):
     total_minutes = gs_mgr.get()[0].get(MF.time, 0)
     h, m = int(total_minutes / 60), total_minutes % 60
     send_event(TimeUpdate(h, m))
+
+
+@processor
+def handle_building_spawn(gs_mgr):
+    """Check for new buildings and send the appropriate events.
+
+    Check if there are new buildings that were not in the previous gamestate.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: dict
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.buildings], o.get(MF.buildings, {})
+    new_buildings = set(new) - set(old)
+    for building in new_buildings:
+        building_type = BuildingType(new[building][MF.building_type])
+        evt = BuildingSpawn(building, building_type)
+        send_event(evt)
+
+
+@processor
+def handle_building_disappear(gs_mgr):
+    """Check for disappeared buildings and send the appropriate events.
+
+    Check if there are new buildings that were not in the previous gamestate.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: dict
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.buildings], o.get(MF.buildings, {})
+    old_buildings = set(old) - set(new)
+    for building in old_buildings:
+        evt = BuildingDisappear(building)
+        send_event(evt)

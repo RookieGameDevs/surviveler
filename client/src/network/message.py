@@ -21,11 +21,11 @@ class MessageType(IntEnum):
     build = 8
 
 
-@unique
 class MessageField(bytes, Enum):
     """Enum of possible message fields."""
     action = b'Action'
     action_type = b'ActionType'
+    building_type = b'Type'
     buildings = b'Buildings'
     entities = b'Entities'
     entity_type = b'Type'

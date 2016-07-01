@@ -1,3 +1,5 @@
+from enum import IntEnum
+from enum import unique
 from events import send_event
 from events import subscriber
 from game.actions import place_building_template
@@ -14,6 +16,12 @@ from utils import to_scene
 import logging
 
 LOG = logging.getLogger(__name__)
+
+
+@unique
+class BuildingType(IntEnum):
+    """Enumeration of the possible buildings"""
+    barricade = 0
 
 
 class Building(Entity):

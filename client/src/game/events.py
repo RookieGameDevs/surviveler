@@ -26,6 +26,31 @@ class EntityDisappear(Event):
         return '<EntityDisappear({})>'.format(self.srv_id)
 
 
+class BuildingSpawn(Event):
+    """Handles building spawning on the scene.
+
+    Event emitted when a new building is discovered in the gamestate.
+    """
+    def __init__(self, srv_id, building_type):
+        self.srv_id = srv_id
+        self.building_type = building_type
+
+    def __str__(self):
+        return '<BuildingSpawn({}, {})>'.format(self.srv_id, self.building_type)
+
+
+class BuildingDisappear(Event):
+    """Handles building disappearing from the scene.
+
+    Event emitted when a previously existing building does not exist anymore.
+    """
+    def __init__(self, srv_id):
+        self.srv_id = srv_id
+
+    def __str__(self):
+        return '<BuildingDisappear({})>'.format(self.srv_id)
+
+
 class TimeUpdate(Event):
     """Game time updated.
 
