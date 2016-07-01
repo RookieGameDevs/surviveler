@@ -48,6 +48,6 @@ func (self *Server) handleBuild(c *network.Conn, msg *messages.Message) error {
 		Ypos: build.Ypos,
 	})
 
-	self.eventChan <- evt
+	self.evtCb(evt)
 	return nil
 }
