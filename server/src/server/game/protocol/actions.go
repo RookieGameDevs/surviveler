@@ -27,7 +27,7 @@ func (self *Server) handleMove(c *network.Conn, msg *messages.Message) error {
 		Ypos: move.Ypos,
 	})
 
-	self.eventChan <- evt
+	self.evtCb(evt)
 	return nil
 }
 

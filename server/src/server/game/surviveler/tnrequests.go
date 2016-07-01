@@ -186,8 +186,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 				Xpos: float32(move.Dest[0]),
 				Ypos: float32(move.Dest[1]),
 			})
-
-			g.GetEventChan() <- evt
+			g.PostEvent(evt)
 		} else {
 			return fmt.Errorf("unknown entity id: %v", move.Id)
 		}

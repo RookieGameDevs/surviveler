@@ -144,7 +144,7 @@ func (mp *MovementPlanner) Start() {
 								Id:   mvtReq.EntityId,
 								Path: path,
 							})
-						mp.game.GetEventChan() <- evt
+						mp.game.PostEvent(evt)
 					}
 				} else {
 					log.WithField("req", mvtReq).Warn("Pathfinder failed to find path")

@@ -21,19 +21,21 @@ const (
 
 type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
 
+type PostEventFunc func(*events.Event)
+
 /*
  * Server represents a TCP server. It implements the network.ConnEvtHandler
  * interface.
  */
 type Server struct {
-	port      string
-	server    network.Server     // tcp server instance
-	clients   ClientRegistry     // manage the connected clients
-	msgcb     MsgCallbackFunc    // incoming messages callback
-	telnet    *TelnetServer      // embedded telnet server
-	factory   *messages.Factory  // the unique message factory
-	wg        *sync.WaitGroup    // game wait group
-	eventChan chan *events.Event // wait for all goroutines
+	port    string
+	server  network.Server    // tcp server instance
+	clients ClientRegistry    // manage the connected clients
+	msgcb   MsgCallbackFunc   // incoming messages callback
+	telnet  *TelnetServer     // embedded telnet server
+	factory *messages.Factory // the unique message factory
+	wg      *sync.WaitGroup   // game wait group
+	evtCb   PostEventFunc     // call back to route events
 }
 
 /*
@@ -42,16 +44,16 @@ type Server struct {
 func NewServer(
 	port string, msgcb MsgCallbackFunc, clients *ClientRegistry,
 	telnet *TelnetServer, wg *sync.WaitGroup,
-	eventChan chan *events.Event) *Server {
+	evtCb PostEventFunc) *Server {
 
 	return &Server{
-		clients:   *clients,
-		msgcb:     msgcb,
-		port:      port,
-		telnet:    telnet,
-		factory:   messages.GetFactory(),
-		wg:        wg,
-		eventChan: eventChan,
+		clients: *clients,
+		msgcb:   msgcb,
+		port:    port,
+		telnet:  telnet,
+		factory: messages.GetFactory(),
+		wg:      wg,
+		evtCb:   evtCb,
 	}
 }
 
@@ -190,8 +192,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 	evt := events.NewEvent(events.PlayerLeave, events.PlayerLeaveEvent{
 		Id: clientData.Id,
 	})
-	srv.eventChan <- evt
-
+	srv.evtCb(evt)
 }
 
 /*
