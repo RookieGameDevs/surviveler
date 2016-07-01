@@ -6,11 +6,10 @@
 package surviveler
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"server/game/events"
 	msg "server/game/messages"
 	"time"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 /*

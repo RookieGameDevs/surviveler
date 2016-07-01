@@ -19,9 +19,10 @@ const (
 	MAX_IN_CHANNELS  = 100
 )
 
-type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
-
-type PostEventFunc func(*events.Event)
+type (
+	IncomingMsgFunc func(msg *messages.Message, clientId uint32) error
+	PostEvtFunc     func(*events.Event)
+)
 
 /*
  * Server represents a TCP server. It implements the network.ConnEvtHandler
@@ -31,28 +32,27 @@ type Server struct {
 	port    string
 	server  network.Server    // tcp server instance
 	clients ClientRegistry    // manage the connected clients
-	msgcb   MsgCallbackFunc   // incoming messages callback
 	telnet  *TelnetServer     // embedded telnet server
 	factory *messages.Factory // the unique message factory
 	wg      *sync.WaitGroup   // game wait group
-	evtCb   PostEventFunc     // call back to route events
+	msgCb   IncomingMsgFunc   // where to forward incoming messages
+	evtCb   PostEvtFunc       // where to forward game events
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(
-	port string, msgcb MsgCallbackFunc, clients *ClientRegistry,
+func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
 	telnet *TelnetServer, wg *sync.WaitGroup,
-	evtCb PostEventFunc) *Server {
+	evtCb PostEvtFunc) *Server {
 
 	return &Server{
 		clients: *clients,
-		msgcb:   msgcb,
 		port:    port,
 		telnet:  telnet,
 		factory: messages.GetFactory(),
 		wg:      wg,
+		msgCb:   msgCb,
 		evtCb:   evtCb,
 	}
 }
@@ -126,11 +126,12 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 	clientData := c.GetUserData().(ClientData)
 	msg := packet.(*messages.Message)
 
-	log.WithFields(log.Fields{
-		"clientData": clientData,
-		"addr":       c.GetRawConn().RemoteAddr(),
-		"msg":        msg,
-	}).Debug("Incoming message")
+	log.WithFields(
+		log.Fields{
+			"clientData": clientData,
+			"addr":       c.GetRawConn().RemoteAddr(),
+			"msg":        msg,
+		}).Debug("Incoming message")
 
 	switch msg.Type {
 	case messages.PingId:
@@ -156,7 +157,7 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 		}
 	default:
 		// forward it
-		srv.msgcb(msg, clientData.Id)
+		srv.msgCb(msg, clientData.Id)
 	}
 
 	return true
