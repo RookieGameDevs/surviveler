@@ -111,7 +111,7 @@ func (mp *MovementPlanner) Start() {
 		}
 	}()
 
-	// start the movent planner goroutine
+	// start the movement planner goroutine
 	mp.game.GetWaitGroup().Add(1)
 	go func() {
 		defer func() {
