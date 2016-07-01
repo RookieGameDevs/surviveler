@@ -36,9 +36,10 @@ type PongMsg PingMsg
  * Server->client game state
  */
 type GameStateMsg struct {
-	Tstamp   int64
-	Time     int16
-	Entities map[uint32]interface{}
+	Tstamp    int64
+	Time      int16
+	Entities  map[uint32]interface{}
+	Buildings map[uint32]interface{}
 }
 
 /*

@@ -119,6 +119,8 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 	for id, ent := range gs.entities {
 		gsMsg.Entities[id] = ent.GetState()
 	}
+	gsMsg.Buildings = make(map[uint32]interface{})
+	// TODO: add the real buildings here
 	return gsMsg
 }
 
