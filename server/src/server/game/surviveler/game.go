@@ -35,7 +35,6 @@ type survivelerGame struct {
 	telnetReq       chan TelnetRequest         // channel for game related telnet commands
 	telnetDone      chan error                 // signals the end of a telnet request
 	msgChan         chan msg.ClientMessage     // conducts ClientMessage to the game loop
-	eventChan       chan *events.Event         // conducts Event to the game loop
 	quitChan        chan struct{}              // to signal the game loop goroutine it must end
 	eventManager    *events.EventManager       // event manager
 	wg              sync.WaitGroup             // wait for the different goroutine to finish
@@ -89,9 +88,8 @@ func NewGame(cfg game.Config) game.Game {
 	// init channels
 	g.msgChan = make(chan msg.ClientMessage)
 	g.quitChan = make(chan struct{})
-	g.eventChan = make(chan *events.Event)
 
-	g.eventManager = events.NewEventManager(g.eventChan)
+	g.eventManager = events.NewEventManager()
 
 	// creates the client registry
 	allocId := func() uint32 {
@@ -122,7 +120,7 @@ func NewGame(cfg game.Config) game.Game {
 		g.msgChan <- msg.ClientMessage{imsg, clientId}
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventChan)
+	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
 
 	return g
 }
@@ -177,8 +175,8 @@ func (g *survivelerGame) GetMessageChan() chan msg.ClientMessage {
 	return g.msgChan
 }
 
-func (g *survivelerGame) GetEventChan() chan *events.Event {
-	return g.eventChan
+func (g *survivelerGame) PostEvent(evt *events.Event) {
+	g.eventManager.PostEvent(evt)
 }
 
 func (g *survivelerGame) GetPathfinder() *game.Pathfinder {
