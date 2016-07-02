@@ -25,15 +25,18 @@ import (
  * gamestate is the structure that contains all the complete game state
  */
 type gamestate struct {
-	gameTime    int16
-	entities    map[uint32]game.Entity
-	world       *game.World
-	md          *resource.MapData
-	numEntities uint32 // number of entities currently present in the game
+	gameTime        int16
+	entities        map[uint32]game.Entity
+	numEntities     uint32 // number of entities currently present in the game
+	game            *survivelerGame
+	world           *game.World
+	md              *resource.MapData
+	movementPlanner *game.MovementPlanner
 }
 
-func newGameState(gameStart int16) *gamestate {
+func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	gs := new(gamestate)
+	gs.game = g
 	gs.entities = make(map[uint32]game.Entity)
 	gs.gameTime = gameStart
 	return gs

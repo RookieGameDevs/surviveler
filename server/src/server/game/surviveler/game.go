@@ -79,7 +79,7 @@ func NewGame(cfg game.Config) game.Game {
 	}
 
 	// initialize the gamestate
-	g.state = newGameState(int16(cfg.GameStartingTime))
+	g.state = newGameState(g, int16(cfg.GameStartingTime))
 	if err := g.state.init(g.assets); err != nil {
 		log.WithError(err).Error("Couldn't initialize gamestate")
 		return nil
@@ -108,8 +108,9 @@ func NewGame(cfg game.Config) game.Game {
 	// initialize the pathfinder module
 	g.pathfinder = game.NewPathfinder(g)
 
-	// init the movement planner
+	// init the movement planner (and provide it to the game state)
 	g.movementPlanner = game.NewMovementPlanner(g)
+	g.state.movementPlanner = g.movementPlanner
 
 	// init the AI director
 	g.ai = ai.NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
