@@ -50,7 +50,6 @@ class Building(Entity):
         self.mesh_complete = resource['model_complete']
 
         params = {
-            'opacity': self.opacity,
             'color_ambient': Vec(0.2, 0.2, 0.2, 1),
             'color_diffuse': Vec(0.6, 0.6, 0.6, 1),
             'color_specular': Vec(0.8, 0.8, 0.8, 1),
@@ -72,17 +71,6 @@ class Building(Entity):
 
         # initialize entity
         super().__init__(renderable, movable)
-
-    @property
-    def opacity(self):
-        """Return the appropriate shader params based on the building status.
-
-        :returns: The shader params
-        :rtype: :class:`dict`
-        """
-        cur, tot = self.progress
-
-        return cur / tot
 
     @property
     def mesh(self):
@@ -112,7 +100,6 @@ class Building(Entity):
         :type dt: float
         """
         node = self[Renderable].node
-        node.params['opacity'] = self.opacity
         node.mesh = self.mesh
 
 
