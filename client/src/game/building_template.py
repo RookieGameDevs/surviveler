@@ -63,7 +63,7 @@ class BuildingTemplate(Entity):
     def destroy(self):
         """Removes itself from the scene.
         """
-        LOG.debug('Destroying character {}'.format(self.e_id))
+        LOG.debug('Destroying building template {}'.format(self.e_id))
         node = self[Renderable].node
         node.parent.remove_child(node)
 
