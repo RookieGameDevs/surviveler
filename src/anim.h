@@ -31,7 +31,7 @@ struct JointPose {
 };
 
 /**
- * Skeleton pose as a colleciton of per-joint poses.
+ * Skeleton pose as a collection of per-joint poses.
  */
 struct SkeletonPose {
 	struct Skeleton *skeleton;      // reference skeleton
