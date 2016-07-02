@@ -63,7 +63,6 @@ class Building(Entity):
             enable_light=True)
 
         t = renderable.transform
-        t.identity()
         t.translate(to_scene(*self.position))
 
         # initialize entity
