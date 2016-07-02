@@ -1,3 +1,6 @@
+// use open source standard library features
+#define _XOPEN_SOURCE 700
+
 #include "ioutils.h"
 #include "mesh.h"
 #include <stdio.h>
@@ -8,19 +11,21 @@
 #define VERSION_MINOR 0
 #define MESH_VERSION (VERSION_MINOR << 4 | VERSION_MAJOR)
 
-#define HEADER_SIZE 12
+#define HEADER_SIZE 13
 #define POSITION_ATTRIB_SIZE 12
 #define NORMAL_ATTRIB_SIZE 12
 #define UV_ATTRIB_SIZE 8
 #define JOINT_ATTRIB_SIZE 8
 #define INDEX_SIZE 4
 #define JOINT_SIZE 66
+#define ANIM_SIZE  12
 
 #define VERSION_FIELD uint8_t,  0
 #define FORMAT_FIELD  uint16_t, 1
 #define VCOUNT_FIELD  uint32_t, 3
 #define ICOUNT_FIELD  uint32_t, 7
 #define JCOUNT_FIELD  uint8_t,  11
+#define ACOUNT_FIELD  uint8_t,  12
 
 #define invoke(macro, ...) macro(__VA_ARGS__)
 #define cast(data, type, offset) (*(type*)(((char*)data) + offset))
@@ -32,6 +37,19 @@ enum {
 	HAS_UV        = 1 << 2,
 	HAS_JOINTS    = 1 << 3
 };
+
+static const char*
+get_string(char *data, size_t max_size, int index)
+{
+	size_t off = 0, count = 0;
+	while (off < max_size) {
+		if (count == index)
+			return data + off;
+		off = strnlen(data, max_size) + 1;
+		count++;
+	}
+	return NULL;
+}
 
 struct MeshData*
 mesh_data_from_file(const char *filename)
@@ -120,13 +138,33 @@ mesh_data_from_file(const char *filename)
 
 		md->skeleton->joint_count = joint_count;
 		for (size_t j = 0; j < joint_count; j++) {
-			offset += j * JOINT_SIZE;
 			md->skeleton->joints[j].parent = *(uint8_t*)(data + offset + 1);
 			memcpy(
 				&md->skeleton->joints[j].inv_bind_pose,
 				data + offset + 2,
 				64
 			);
+			offset += JOINT_SIZE;
+		}
+	}
+
+	// initialize animations (if there's a skeleton)
+	md->anim_count = get_field(data, ACOUNT_FIELD);
+	size_t anim_offset = offset + md->anim_count * ANIM_SIZE; // TODO: extend this
+	if (md->skeleton && md->anim_count) {
+		md->animations = malloc(sizeof(struct Animation));
+		for (size_t a = 0; a < md->anim_count; a++) {
+			struct Animation *anim = md->animations + a;
+			uint32_t name_str_idx = *(uint32_t*)(data + offset);
+			anim->name = get_string(
+				data + anim_offset,
+				data_size - anim_offset,
+				name_str_idx
+			);
+			anim->skeleton = md->skeleton;
+			anim->duration = *(float*)(data + offset + 4);
+			anim->speed = *(float*)(data + offset + 8);
+			offset += ANIM_SIZE;
 		}
 	}
 
@@ -149,6 +187,7 @@ mesh_data_free(struct MeshData *md)
 		if (md->skeleton)
 			free(md->skeleton->joints);
 		free(md->skeleton);
+		free(md->animations);
 		free(md);
 	}
 }

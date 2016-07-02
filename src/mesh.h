@@ -20,6 +20,8 @@ struct MeshData {
 	size_t index_count;
 	uint32_t *index_data;
 	struct Skeleton *skeleton;
+	size_t anim_count;
+	struct Animation *animations;
 };
 
 

@@ -12,12 +12,14 @@ General structure
 
 The data within a `.mesh` file is stored in contigous sections as following:
 
-  |Section    |Size            |Offset                              |
-  |-----------|----------------|------------------------------------|
-  |Header     |12              |0                                   |
-  |Vertex data|`vcount * vsize`|12                                  |
-  |Index data |`icount * 4`    |12 + `vcount * vsize`               |
-  |Joint data |`jcount * 66`   |12 + `vcount * vsize` + `icount * 4`|
+  |Section        |Size            |Offset                          |
+  |---------------|----------------|--------------------------------|
+  |Header         |13              |0                               |
+  |Vertex data    |`vcount * vsize`|13                              |
+  |Index data     |`icount * 4`    |13 + `vdata`                    |
+  |Joint data     |`jcount * 66`   |13 + `vdata` + `idata`          |
+  |Animation data |`acount * asize`|13 + `vdata` + `idata` + `jdata`|
+  |Strings        |variable        |13 + `vdata` + `idata` + `adata`|
 
 Data sections are tightly-packed with no padding between them.
 
@@ -30,13 +32,14 @@ The header has fixed size and must be always present, thus, the minimum size of
 a `.mesh` file is defined by the header size. The actual structure is defined as
 following:
 
-|Field       |Type        |Size|Offset|
-|------------|------------|----|------|
-|Version     |unsigned int|1   |0     |
-|Format      |unsigned int|2   |1     |
-|Vertex count|unsigned int|4   |3     |
-|Index count |unsigned int|4   |7     |
-|Joint count |unsigned int|1   |11    |
+|Field            |Type        |Size|Offset|
+|-----------------|------------|----|------|
+|Version          |unsigned int|1   |0     |
+|Format           |unsigned int|2   |1     |
+|Vertex count     |unsigned int|4   |3     |
+|Index count      |unsigned int|4   |7     |
+|Joint count      |unsigned int|1   |11    |
+|Animations count |unsigned int|1   |12    |
 
 ### Version
 MESH version, expressed as `(MINOR,MAJOR)` nibbles.
@@ -124,3 +127,32 @@ parent", e.g root joint.
 ### Transform
 4x4 row-major matrix which transforms a vertex from model space into joint
 space.
+
+
+Animation data
+--------------
+This section contains data about animations, each of which is defined as a
+fixed-size header followed by a variable number of keyframes (poses). The header
+is structured as following:
+
+|Field    |Type        |Size |Count |Offset |
+|---------|------------|-----|------|-------|
+|Name     |unsigned int|4    |1     |0      |
+|Duration |float       |4    |1     |4      |
+|Speed    |float       |4    |1     |8      |
+
+
+### Name
+Index in string constants section of the animation name string.
+
+### Duration
+Animation duration in ticks.
+
+### Speed
+Animation speed in ticks per second.
+
+
+Strings
+-------
+String constants referenced in other sections as a sequence of C-style
+`NUL`-terminated series of bytes.

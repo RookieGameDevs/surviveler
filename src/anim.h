@@ -42,8 +42,10 @@ struct SkeletonPose {
  * Animation as a collection of clips.
  */
 struct Animation {
+	const char *name;             // animation name
 	struct Skeleton *skeleton;    // reference skeleton
-	float frames_per_second;      // number of frames played per second
+	float duration;               // duration in ticks
+	float speed;                  // number of ticks played per second
 	size_t pose_count;            // total number of poses in the animation
 	struct SkeletonPose *poses;   // poses
 };

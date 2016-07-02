@@ -70,6 +70,9 @@ def main(model, out):
     n_count = len(mesh.normals)
     t_count = len(mesh.texturecoords)
     b_count = len(mesh.bones)
+    a_count = len(scene.animations)
+
+    strings = {}
 
     if n_count > 0:
         fmt |= VertexFormat.has_normal
@@ -136,9 +139,22 @@ def main(model, out):
                         bindings_count,
                         MAX_JOINTS_PER_VERTEX))
 
+    for i, anim in enumerate(scene.animations):
+        name = anim.name or 'animation{}'.format(i)
+        anim.name = name
+        if name not in strings:
+            strings[name] = len(strings)
+
     with open(out, 'wb') as fp:
         # write header
-        header = pack('<bhLLB', VERSION, fmt, v_count, v_count, len(skeleton))
+        header = pack(
+            '<bhLLBB',
+            VERSION,
+            fmt,
+            v_count,
+            v_count,
+            len(skeleton),
+            a_count)
         fp.write(header)
 
         # write vertices
@@ -175,12 +191,26 @@ def main(model, out):
             for row in bone.offsetmatrix if bone else identity:
                 fp.write(pack('<ffff', *row))
 
-    print('Mesh file: {}'.format(out))
-    print('Mesh size: {} bytes'.format(os.stat(out).st_size))
-    print('Polygons:  {}'.format(len(mesh.faces)))
-    print('Vertices:  {}'.format(v_count))
-    print('Indices:   {}'.format(v_count))
-    print('Joints:    {}'.format(len(skeleton)))
+        # write animations
+        for anim in scene.animations:
+            fp.write(pack('<Lff', strings[anim.name], anim.duration, anim.tickspersecond))
+
+        # write strings
+        for string in strings:
+            try:
+                enc_string = string.encode('ascii')
+            except UnicodeEncodeError:
+                raise DataFormatError(
+                    u'{} non-ascii string constants are not allowed'.format(string))
+            fp.write(pack('<{}sb'.format(len(enc_string)), enc_string, 0))
+
+    print('Mesh file:  {}'.format(out))
+    print('Mesh size:  {} bytes'.format(os.stat(out).st_size))
+    print('Polygons:   {}'.format(len(mesh.faces)))
+    print('Vertices:   {}'.format(v_count))
+    print('Indices:    {}'.format(v_count))
+    print('Joints:     {}'.format(len(skeleton)))
+    print('Animations: {}'.format(a_count))
 
     pyassimp.release(scene)
 
