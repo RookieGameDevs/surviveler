@@ -5,6 +5,8 @@ from game.character import EntityType
 from game.components import Movable
 from game.components import Renderable
 from game.entity import Entity
+from game.events import BuildingDisappear
+from game.events import BuildingSpawn
 from game.events import GameModeChange
 from game.events import GameModeToggle
 from matlib import Vec
@@ -38,7 +40,7 @@ class BuildingTemplate(Entity):
         self.scale_factor = scale_factor
 
         shader = resource['shader']
-        mesh = resource['model']
+        mesh = resource['model_complete']
 
         # shader params
         params = {
@@ -97,6 +99,7 @@ class BuildingTemplate(Entity):
         t = self[Renderable].transform
         t.identity()
         t.translate(to_scene(x, y))
+        t.scale(Vec(1.05, 1.05, 1.05))
 
 
 @subscriber(GameModeToggle)
@@ -115,8 +118,7 @@ def show_building_template(evt):
     if context.game_mode == context.GameMode.building:
         # TODO: load the proper resource based on the building type
         resource = context.res_mgr.get('/prefabs/buildings/barricade')
-        map_res = context.res_mgr.get('/map')
-        matrix, scale_factor = map_res['matrix'], map_res.data['scale_factor']
+        matrix, scale_factor = context.matrix, context.scale_factor
         building_template = BuildingTemplate(resource, matrix, scale_factor, context.scene.root)
 
         context.building_template = building_template
@@ -128,3 +130,23 @@ def show_building_template(evt):
         bt, context.building_template = context.building_template, None
         del context.entities[bt.e_id]
         bt.destroy()
+
+
+@subscriber(BuildingSpawn)
+def set_cell_unwalkable(evt):
+    """Set a cell as non-walkable in the debug terrain."""
+    context = evt.context
+    x, y = to_matrix(evt.pos[0], evt.pos[1], context.scale_factor)
+    if in_matrix(context.matrix, x, y):
+        context.matrix[y][x] = False
+        context.terrain.set_walkable_state(context.matrix)
+
+
+@subscriber(BuildingDisappear)
+def set_cell_walkable(evt):
+    """Set a cell as walkable in the debug terrain."""
+    context = evt.context
+    x, y = to_matrix(evt.pos[0], evt.pos[1], context.scale_factor)
+    if in_matrix(context.matrix, x, y):
+        context.matrix[y][x] = True
+        context.terrain.set_walkable_state(context.matrix)

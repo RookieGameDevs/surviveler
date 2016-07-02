@@ -31,14 +31,15 @@ class BuildingSpawn(Event):
 
     Event emitted when a new building is discovered in the gamestate.
     """
-    def __init__(self, srv_id, building_type, building_data):
+    def __init__(self, srv_id, b_type, pos, progress, completed):
         self.srv_id = srv_id
-        self.building_type = building_type
-        self.building_data = building_data
+        self.b_type = b_type
+        self.pos = pos
+        self.progress = progress
+        self.completed = completed
 
     def __str__(self):
-        return '<BuildingSpawn({}, {}, {})>'.format(
-            self.srv_id, self.building_type, self.building_data)
+        return '<BuildingSpawn({}, {})>'.format(self.srv_id, self.b_type)
 
 
 class BuildingDisappear(Event):
@@ -46,11 +47,15 @@ class BuildingDisappear(Event):
 
     Event emitted when a previously existing building does not exist anymore.
     """
-    def __init__(self, srv_id):
+    def __init__(self, srv_id, b_type, pos, progress, completed):
         self.srv_id = srv_id
+        self.b_type = b_type
+        self.pos = pos
+        self.progress = progress
+        self.completed = completed
 
     def __str__(self):
-        return '<BuildingDisappear({})>'.format(self.srv_id)
+        return '<BuildingDisappear({}, {})>'.format(self.srv_id, self.b_type)
 
 
 class TimeUpdate(Event):

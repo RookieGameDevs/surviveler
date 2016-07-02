@@ -30,8 +30,11 @@ class Context:
         self.conf = conf
         self.input_mgr = None
         self.res_mgr = None
+        self.matrix = None
+        self.scale_factor = 1
         self.scene = None
         self.camera = None
+        self.terrain = None
         self.ui = None
 
         # Entity related maps

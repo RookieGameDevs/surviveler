@@ -206,8 +206,12 @@ def handle_building_spawn(gs_mgr):
     new, old = n[MF.buildings], o.get(MF.buildings, {})
     new_buildings = set(new) - set(old)
     for building in new_buildings:
-        building_type = BuildingType(new[building][MF.building_type])
-        evt = BuildingSpawn(building, building_type, new[building])
+        data = new[building]
+        b_type = BuildingType(data[MF.building_type])
+        pos = data[MF.x_pos], data[MF.y_pos]
+        progress = data[MF.cur_hp], data[MF.tot_hp]
+        completed = data[MF.completed]
+        evt = BuildingSpawn(building, b_type, pos, progress, completed)
         send_event(evt)
 
 
@@ -225,5 +229,10 @@ def handle_building_disappear(gs_mgr):
     new, old = n[MF.buildings], o.get(MF.buildings, {})
     old_buildings = set(old) - set(new)
     for building in old_buildings:
-        evt = BuildingDisappear(building)
+        data = old[building]
+        b_type = BuildingType(data[MF.building_type])
+        pos = data[MF.x_pos], data[MF.y_pos]
+        progress = data[MF.cur_hp], data[MF.tot_hp]
+        completed = data[MF.completed]
+        evt = BuildingDisappear(building, b_type, pos, progress, completed)
         send_event(evt)

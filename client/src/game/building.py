@@ -7,7 +7,6 @@ from game.components import Renderable
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from matlib import Vec
-from network.message import MessageField as MF
 from utils import to_scene
 import logging
 
@@ -137,17 +136,14 @@ def building_spawn(evt):
         entities = context.res_mgr.get('/entities')
         resource = context.res_mgr.get(
             entities.data['buildings_map'].get(
-                BuildingType(evt.building_type).name,
+                BuildingType(evt.b_type).name,
                 '/prefabs/buildings/barricade'
             )
         )
 
         # Create the building
-        data = evt.building_data
-        pos = (data[MF.x_pos], data[MF.y_pos])
-        progress = (data[MF.cur_hp], data[MF.tot_hp])
         building = Building(
-            resource, pos, progress, data[MF.completed], context.scene.root)
+            resource, evt.pos, evt.progress, evt.completed, context.scene.root)
         context.entities[building.e_id] = building
         context.server_entities_map[evt.srv_id] = building.e_id
 

@@ -63,6 +63,9 @@ class Client:
         context = Context(conf)
         context.input_mgr = input_mgr
         context.res_mgr = res_mgr
+        map_res = res_mgr.get('/map')
+        context.matrix = map_res['matrix']
+        context.scale_factor = map_res.data['scale_factor']
         context.scene = self.setup_scene(context)
         context.camera = self.setup_camera(context)
         context.terrain = self.setup_terrain(context)
