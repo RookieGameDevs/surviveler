@@ -5,7 +5,6 @@
 package entities
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
@@ -91,12 +90,12 @@ func (p *Player) SetPath(path math.Path) {
 }
 
 /*
- * Move makes the player move until a specified destination.
+ * Move makes the player initiates a move action
  *
  * It cancels any high-level actions the player may already be doing and set
- * the player as moving.
+ * the player as waiting for the calculated path
  */
-func (p *Player) Move(dst math.Vec2) {
+func (p *Player) Move() {
 	p.emptyActions()
 	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
@@ -137,8 +136,18 @@ func (p *Player) GetState() game.EntityState {
 	}
 }
 
-func (p *Player) Build() {
-	fmt.Println("in player.build")
+/*
+ * Move makes the player initiates a build action
+ *
+ * It cancels any high-level actions the player may already be doing and set
+ * the player as waiting for the calculated path to join the building point
+ */
+
+func (p *Player) Build(t uint8, pos math.Vec2) {
+	p.emptyActions()
+	p.actions.Push(&game.Action{game.BuildingAction, struct{}{}})
+	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
+	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }
 
 /*

@@ -160,7 +160,8 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	// check that the entity exists
 	if ent, ok := gs.entities[evt.Id]; ok {
 		player := ent.(*entities.Player)
-		player.Build()
+		//TODO: should clip the destination
+		player.Build(evt.Type, math.FromFloat32(evt.Xpos, evt.Ypos))
 	}
 }
 
@@ -189,15 +190,15 @@ func (gs *gamestate) OnPlayerMove(event *events.Event) {
 		p := ent.(*entities.Player)
 
 		// enable the player move
-		dst := math.FromFloat32(evt.Xpos, evt.Ypos)
-		p.Move(dst)
+		p.Move()
 
 		// fills a MovementRequest
+		dst := math.FromFloat32(evt.Xpos, evt.Ypos)
 		mvtReq := game.MovementRequest{}
 		mvtReq.Org = p.GetPosition()
 		mvtReq.Dst = dst
 		mvtReq.EntityId = evt.Id
-		if gs.world.PointInBounds(mvtReq.Dst) {
+		if gs.world.PointInBounds(dst) {
 			// places it into the MovementPlanner
 			gs.movementPlanner.PlanMovement(&mvtReq)
 		} else {

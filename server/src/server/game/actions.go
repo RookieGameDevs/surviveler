@@ -12,6 +12,7 @@ type ActionType uint16
 const (
 	IdleAction ActionType = 0 + iota
 	MovingAction
+	BuildingAction
 )
 
 /*
