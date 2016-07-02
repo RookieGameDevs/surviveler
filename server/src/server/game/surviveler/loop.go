@@ -6,11 +6,10 @@
 package surviveler
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"server/game/events"
 	msg "server/game/messages"
 	"time"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -50,7 +49,6 @@ func (g *survivelerGame) loop() error {
 	log.Info("Starting game loop")
 	g.wg.Add(1)
 
-	go g.eventManager.Process()
 	go func() {
 		defer func() {
 			g.wg.Done()
@@ -81,6 +79,9 @@ func (g *survivelerGame) loop() error {
 				}
 
 			case <-tickChan:
+				// poll and process accumulated events
+				g.eventManager.Process()
+
 				// compute delta time
 				curTime = time.Now()
 				dt := curTime.Sub(lastTime)

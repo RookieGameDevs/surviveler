@@ -8,6 +8,7 @@ package surviveler
 import (
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"image"
 	"math/rand"
 	"server/game"
@@ -18,8 +19,6 @@ import (
 	"server/math"
 	"sort"
 	"time"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 /*

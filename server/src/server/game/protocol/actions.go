@@ -19,15 +19,13 @@ func (self *Server) handleMove(c *network.Conn, msg *messages.Message) error {
 	move := self.factory.DecodePayload(messages.MoveId, msg.Payload).(messages.MoveMsg)
 	log.WithField("msg", move).Info("Move message")
 
-	clientData := c.GetUserData().(ClientData)
-
-	evt := events.NewEvent(events.PlayerMove, events.PlayerMoveEvent{
-		Id:   clientData.Id,
-		Xpos: move.Xpos,
-		Ypos: move.Ypos,
-	})
-
-	self.eventChan <- evt
+	self.evtCb(
+		events.NewEvent(
+			events.PlayerMove,
+			events.PlayerMoveEvent{
+				Id:   (c.GetUserData().(ClientData)).Id,
+				Xpos: move.Xpos, Ypos: move.Ypos,
+			}))
 	return nil
 }
 
@@ -35,19 +33,16 @@ func (self *Server) handleMove(c *network.Conn, msg *messages.Message) error {
  * handleBuild processes a BuildMsg and fires a PlayerBuild event
  */
 func (self *Server) handleBuild(c *network.Conn, msg *messages.Message) error {
-	// decode payload into a move message
+	// decode payload into a build message
 	build := self.factory.DecodePayload(messages.BuildId, msg.Payload).(messages.BuildMsg)
 	log.WithField("msg", build).Info("Build message")
 
-	clientData := c.GetUserData().(ClientData)
-
-	evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
-		Id:   clientData.Id,
-		Type: build.Type,
-		Xpos: build.Xpos,
-		Ypos: build.Ypos,
-	})
-
-	self.eventChan <- evt
+	self.evtCb(
+		events.NewEvent(events.PlayerBuild,
+			events.PlayerBuildEvent{
+				Id:   c.GetUserData().(ClientData).Id,
+				Type: build.Type,
+				Xpos: build.Xpos, Ypos: build.Ypos,
+			}))
 	return nil
 }

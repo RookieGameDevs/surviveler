@@ -19,39 +19,41 @@ const (
 	MAX_IN_CHANNELS  = 100
 )
 
-type MsgCallbackFunc func(msg *messages.Message, clientId uint32) error
+type (
+	IncomingMsgFunc func(msg *messages.Message, clientId uint32) error
+	PostEvtFunc     func(*events.Event)
+)
 
 /*
  * Server represents a TCP server. It implements the network.ConnEvtHandler
  * interface.
  */
 type Server struct {
-	port      string
-	server    network.Server     // tcp server instance
-	clients   ClientRegistry     // manage the connected clients
-	msgcb     MsgCallbackFunc    // incoming messages callback
-	telnet    *TelnetServer      // embedded telnet server
-	factory   *messages.Factory  // the unique message factory
-	wg        *sync.WaitGroup    // game wait group
-	eventChan chan *events.Event // wait for all goroutines
+	port    string
+	server  network.Server    // tcp server instance
+	clients ClientRegistry    // manage the connected clients
+	telnet  *TelnetServer     // embedded telnet server
+	factory *messages.Factory // the unique message factory
+	wg      *sync.WaitGroup   // game wait group
+	msgCb   IncomingMsgFunc   // where to forward incoming messages
+	evtCb   PostEvtFunc       // where to forward game events
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(
-	port string, msgcb MsgCallbackFunc, clients *ClientRegistry,
+func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
 	telnet *TelnetServer, wg *sync.WaitGroup,
-	eventChan chan *events.Event) *Server {
+	evtCb PostEvtFunc) *Server {
 
 	return &Server{
-		clients:   *clients,
-		msgcb:     msgcb,
-		port:      port,
-		telnet:    telnet,
-		factory:   messages.GetFactory(),
-		wg:        wg,
-		eventChan: eventChan,
+		clients: *clients,
+		port:    port,
+		telnet:  telnet,
+		factory: messages.GetFactory(),
+		wg:      wg,
+		msgCb:   msgCb,
+		evtCb:   evtCb,
 	}
 }
 
@@ -124,11 +126,12 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 	clientData := c.GetUserData().(ClientData)
 	msg := packet.(*messages.Message)
 
-	log.WithFields(log.Fields{
-		"clientData": clientData,
-		"addr":       c.GetRawConn().RemoteAddr(),
-		"msg":        msg,
-	}).Debug("Incoming message")
+	log.WithFields(
+		log.Fields{
+			"clientData": clientData,
+			"addr":       c.GetRawConn().RemoteAddr(),
+			"msg":        msg,
+		}).Debug("Incoming message")
 
 	switch msg.Type {
 	case messages.PingId:
@@ -154,7 +157,7 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 		}
 	default:
 		// forward it
-		srv.msgcb(msg, clientData.Id)
+		srv.msgCb(msg, clientData.Id)
 	}
 
 	return true
@@ -190,8 +193,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 	evt := events.NewEvent(events.PlayerLeave, events.PlayerLeaveEvent{
 		Id: clientData.Id,
 	})
-	srv.eventChan <- evt
-
+	srv.evtCb(evt)
 }
 
 /*

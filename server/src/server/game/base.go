@@ -24,7 +24,7 @@ type Game interface {
 	GetState() GameState
 	GetQuitChan() chan struct{}
 	GetMessageChan() chan messages.ClientMessage
-	GetEventChan() chan *events.Event
+	PostEvent(*events.Event)
 	GetPathfinder() *Pathfinder
 	GetWaitGroup() *sync.WaitGroup
 }

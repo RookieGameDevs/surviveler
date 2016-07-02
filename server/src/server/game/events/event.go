@@ -4,6 +4,7 @@
  */
 package events
 
+//go:generate go-gencon -type Event -cont LockFreeQueue -name EventQueue
 type Event struct {
 	Type    EventType
 	Payload interface{}
