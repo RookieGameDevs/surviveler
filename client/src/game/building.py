@@ -2,7 +2,6 @@ from enum import IntEnum
 from enum import unique
 from events import subscriber
 from game import Entity
-from game.components import Movable
 from game.components import Renderable
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
@@ -67,10 +66,8 @@ class Building(Entity):
         t.identity()
         t.translate(to_scene(*self.position))
 
-        movable = Movable((0.0, 0.0))
-
         # initialize entity
-        super().__init__(renderable, movable)
+        super().__init__(renderable)
 
     @property
     def mesh(self):
