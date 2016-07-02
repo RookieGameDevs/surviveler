@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Model import tool which converts model data into native binary format."""
 
+from itertools import count
 from collections import defaultdict
 from struct import pack
 import argparse
@@ -24,6 +25,33 @@ class VertexFormat(object):
 
 class DataFormatError(Exception):
     pass
+
+
+def traverse_children(node, op):
+    for child in node.children:
+        if op(child):
+            traverse_children(child, op)
+
+
+def traverse_scene(scene, op):
+
+    traverse_children(scene.rootnode, op)
+
+
+def traverse_parents(scene, node, op):
+    op(node)
+    if node.parent != scene.rootnode:
+        traverse_parents(scene, node.parent, op)
+
+
+def find_root(nodes):
+    root = None
+    for node in nodes:
+        if node.parent not in nodes:
+            if root is not None:
+                raise DataFormatError('inconsistent skeleton hierarchy')
+            root = node
+    return root
 
 
 def main(model, out):
@@ -49,15 +77,55 @@ def main(model, out):
     if b_count > 0:
         fmt |= VertexFormat.has_joints
 
-    # populate per-vertex joint data
     if fmt & VertexFormat.has_joints:
+        def mark_node(n, flag):
+            skeleton_parts.setdefault(n.name, [False, n])
+            skeleton_parts[n.name][0] = flag
+            return True
+
+        # create a mapping with nodes which are part of the skeleton
+        skeleton_parts = {}
+        bones_by_name = {}
+        traverse_scene(scene, lambda n: mark_node(n, False))
+        for bone in mesh.bones:
+            bones_by_name[bone.name] = bone
+            # mark node and its parents as part of the skeleton
+            node = skeleton_parts[bone.name][1]
+            traverse_parents(
+                scene,
+                node,
+                lambda n: mark_node(n, True))
+
+        # find the root node for nodes which are part of the skeleton
+        skeleton_root = find_root([
+            node_info[1] for node_info in
+            skeleton_parts.itervalues()
+            if node_info[0]
+        ])
+
+        # build up the skeleton starting from root and including only node
+        # branches which are required
+        skeleton = {}
+        joint_id = count()
+
+        def add_to_skeleton(node):
+            is_part = skeleton_parts[node.name][0]
+            if is_part:
+                parent_id = skeleton.get(node.parent.name, [255])[0]
+                skeleton[node.name] = (next(joint_id), parent_id, bones_by_name.get(node.name))
+            return is_part
+
+        add_to_skeleton(skeleton_root)
+        traverse_children(skeleton_root, add_to_skeleton)
+
+        # populate per-vertex joint attribute data
         vertex_bone_weights = defaultdict(list)
         vertex_bone_ids = defaultdict(list)
-
-        for i, bone in enumerate(mesh.bones):
+        for bone in mesh.bones:
             for vw in bone.weights:
                 v_id = vw.vertexid
-                vertex_bone_ids[v_id].append(i)
+                j_id = skeleton[bone.name][0]
+                vertex_bone_ids[v_id].append(j_id)
                 vertex_bone_weights[v_id].append(int(round(vw.weight * 255)))
 
                 bindings_count = len(vertex_bone_ids[v_id])
@@ -69,7 +137,7 @@ def main(model, out):
 
     with open(out, 'wb') as fp:
         # write header
-        header = pack('<bhLLB', VERSION, fmt, v_count, v_count, b_count)
+        header = pack('<bhLLB', VERSION, fmt, v_count, v_count, len(skeleton))
         fp.write(header)
 
         # write vertices
@@ -98,6 +166,13 @@ def main(model, out):
         # write indices
         for i in range(len(mesh.vertices)):
             fp.write(pack('<L', i))
+
+        # write joints
+        identity = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
+        for j_id, p_id, bone in sorted(skeleton.values(), key=lambda j: j[0]):
+            fp.write(pack('<BB', j_id, p_id))
+            for row in bone.offsetmatrix if bone else identity:
+                fp.write(pack('<ffff', *row))
 
     pyassimp.release(scene)
 

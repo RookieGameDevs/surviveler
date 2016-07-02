@@ -1,5 +1,6 @@
 #pragma once
 
+#include "anim.h"
 #include <stddef.h>
 #include <GL/glew.h>
 
@@ -18,6 +19,7 @@ struct MeshData {
 	void *vertex_data;
 	size_t index_count;
 	uint32_t *index_data;
+	struct Skeleton *skeleton;
 };
 
 

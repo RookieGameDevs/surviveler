@@ -12,11 +12,12 @@ General structure
 
 The data within a `.mesh` file is stored in contigous sections as following:
 
-  |Section    |Size            |Offset          |
-  |-----------|----------------|----------------|
-  |Header     |12              |0               |
-  |Vertex data|`vcount * vsize`|12              |
-  |Index data |`icount * 4`    |`vcount * vsize`|
+  |Section    |Size            |Offset                              |
+  |-----------|----------------|------------------------------------|
+  |Header     |12              |0                                   |
+  |Vertex data|`vcount * vsize`|12                                  |
+  |Index data |`icount * 4`    |12 + `vcount * vsize`               |
+  |Joint data |`jcount * 66`   |12 + `vcount * vsize` + `icount * 4`|
 
 Data sections are tightly-packed with no padding between them.
 
@@ -103,3 +104,23 @@ Identifier of the N-th joint to which the vertex is attached.
 
 ### JointN weight
 Weight of the N-th joint for given vertex.
+
+
+Joint data
+----------
+Joint data is located right after index data and has the following entry
+structure:
+
+|Field    |Type        |Size |Count |Offset |
+|---------|------------|-----|------|-------|
+|Joint ID |unsigned int|1    |1     |0      |
+|Parent ID|unsigned int|1    |1     |1      |
+|Transform|float       |4    |16    |2      |
+
+### Parent ID
+Index of the parent joint entry. ID value `255` is reserved and stands for "no
+parent", e.g root joint.
+
+### Transform
+4x4 row-major matrix which transforms a vertex from model space into joint
+space.

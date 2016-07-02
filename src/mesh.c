@@ -9,6 +9,12 @@
 #define MESH_VERSION (VERSION_MINOR << 4 | VERSION_MAJOR)
 
 #define HEADER_SIZE 12
+#define POSITION_ATTRIB_SIZE 12
+#define NORMAL_ATTRIB_SIZE 12
+#define UV_ATTRIB_SIZE 8
+#define JOINT_ATTRIB_SIZE 8
+#define INDEX_SIZE 4
+#define JOINT_SIZE 66
 
 #define VERSION_FIELD uint8_t,  0
 #define FORMAT_FIELD  uint16_t, 1
@@ -66,33 +72,63 @@ mesh_data_from_file(const char *filename)
 
 	// compute vertex entry size based on the attributes specified in format
 	// field
-	md->vertex_size = 12;  // HAS_POSITION
+	md->vertex_size = POSITION_ATTRIB_SIZE;  // HAS_POSITION
 	if (md->vertex_format & HAS_NORMAL)
-		md->vertex_size += 12;
+		md->vertex_size += NORMAL_ATTRIB_SIZE;
 	if (md->vertex_format & HAS_UV)
-		md->vertex_size += 8;
+		md->vertex_size += UV_ATTRIB_SIZE;
 	if (md->vertex_format & HAS_JOINTS)
-		md->vertex_size += 8;
+		md->vertex_size += JOINT_ATTRIB_SIZE;
+
+	size_t offset = HEADER_SIZE;
 
 	// initialize vertex data buffer
 	size_t vdata_size = md->vertex_count * md->vertex_size;
-	if (data_size < HEADER_SIZE + vdata_size) {
+	if (data_size < offset + vdata_size) {
 		fprintf(stderr, "Corrupted vertex data section\n");
 		goto error;
 	}
 	if (!(md->vertex_data = malloc(vdata_size)))
 		goto error;
-	memcpy(md->vertex_data, data + HEADER_SIZE, vdata_size);
+	memcpy(md->vertex_data, data + offset, vdata_size);
+	offset += vdata_size;
 
 	// initialize index data buffer
-	size_t idata_size = md->index_count * 4;
-	if (data_size < HEADER_SIZE + vdata_size + idata_size) {
+	size_t idata_size = md->index_count * INDEX_SIZE;
+	if (data_size < offset + idata_size) {
 		fprintf(stderr, "Corrupted index data section\n");
 		goto error;
 	}
 	if (!(md->index_data = malloc(idata_size)))
 		goto error;
-	memcpy(md->index_data, data + HEADER_SIZE + vdata_size, idata_size);
+	memcpy(md->index_data, data + offset, idata_size);
+	offset += idata_size;
+
+	// build the skeleton
+	if (md->vertex_format & HAS_JOINTS) {
+		size_t joint_count = get_field(data, JCOUNT_FIELD);
+		size_t jdata_size = joint_count * JOINT_SIZE;
+		if (data_size < offset + jdata_size) {
+			fprintf(stderr, "Corrupted joint data section\n");
+			goto error;
+		}
+
+		if (!(md->skeleton = malloc(sizeof(struct Skeleton))))
+			goto error;
+		if (!(md->skeleton->joints = malloc(sizeof(struct Joint) * joint_count)))
+			goto error;
+
+		md->skeleton->joint_count = joint_count;
+		for (size_t j = 0; j < joint_count; j++) {
+			offset += j * JOINT_SIZE;
+			md->skeleton->joints[j].parent = *(uint8_t*)(data + offset + 1);
+			memcpy(
+				&md->skeleton->joints[j].inv_bind_pose,
+				data + offset + 2,
+				64
+			);
+		}
+	}
 
 cleanup:
 	free(data);
@@ -110,6 +146,9 @@ mesh_data_free(struct MeshData *md)
 	if (md) {
 		free(md->index_data);
 		free(md->vertex_data);
+		if (md->skeleton)
+			free(md->skeleton->joints);
+		free(md->skeleton);
 		free(md);
 	}
 }
