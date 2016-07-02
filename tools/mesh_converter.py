@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 """Model import tool which converts model data into native binary format."""
 
-from itertools import count
 from collections import defaultdict
+from itertools import count
 from struct import pack
 import argparse
+import os
 import pyassimp
 
 VERSION_MAJOR = 1
@@ -173,6 +174,13 @@ def main(model, out):
             fp.write(pack('<BB', j_id, p_id))
             for row in bone.offsetmatrix if bone else identity:
                 fp.write(pack('<ffff', *row))
+
+    print('Mesh file: {}'.format(out))
+    print('Mesh size: {} bytes'.format(os.stat(out).st_size))
+    print('Polygons:  {}'.format(len(mesh.faces)))
+    print('Vertices:  {}'.format(v_count))
+    print('Indices:   {}'.format(v_count))
+    print('Joints:    {}'.format(len(skeleton)))
 
     pyassimp.release(scene)
 
