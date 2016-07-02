@@ -56,6 +56,10 @@ func (z *Zombie) GetId() uint32 {
 	return z.id
 }
 
+func (z *Zombie) SetId(id uint32) {
+	z.id = id
+}
+
 func (z *Zombie) findPathToTarget() (math.Path, bool) {
 	path, _, found := z.game.GetPathfinder().FindPath(z.Pos, z.target.GetPosition())
 	return path, found
