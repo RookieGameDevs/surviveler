@@ -2,7 +2,6 @@ from events import send_event
 from events import subscriber
 from game.actions import place_building_template
 from game.character import EntityType
-from game.components import Movable
 from game.components import Renderable
 from game.entity import Entity
 from game.events import BuildingDisappear
@@ -46,6 +45,7 @@ class BuildingTemplate(Entity):
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        self.pos = (0, 0)
         self.matrix = matrix
         self.scale_factor = scale_factor
 
@@ -65,10 +65,8 @@ class BuildingTemplate(Entity):
             params,
             enable_light=True)
 
-        movable = Movable((0.0, 0.0))
-
         # initialize entity
-        super().__init__(renderable, movable)
+        super().__init__(renderable)
 
     def destroy(self):
         """Removes itself from the scene.
@@ -86,8 +84,7 @@ class BuildingTemplate(Entity):
         :param dt: Time delta from last update.
         :type dt: float
         """
-        self[Movable].update(dt)
-        x, y = self[Movable].position
+        x, y = self.pos
 
         m_x, m_y = to_matrix(x, y, self.scale_factor)
         if not in_matrix(self.matrix, m_x, m_y) or not self.matrix[m_y][m_x]:
