@@ -23,19 +23,25 @@ const maxWaypointsToSend = 3
 type Player struct {
 	entityType game.EntityType // player type
 	curAction  game.ActionType // current action
+	id         uint32
 	components.Movable
 }
 
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
+func NewPlayer(id uint32, spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
 	p := new(Player)
+	p.id = id
 	p.entityType = entityType
 	p.Speed = speed
 	p.Pos = spawn
 	p.curAction = game.IdleAction
 	return p
+}
+
+func (p *Player) GetId() uint32 {
+	return p.id
 }
 
 /*

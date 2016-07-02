@@ -33,6 +33,7 @@ const (
 )
 
 type Zombie struct {
+	id       uint32
 	game     game.Game
 	curState int // current state
 	timeAcc  time.Duration
@@ -40,7 +41,7 @@ type Zombie struct {
 	components.Movable
 }
 
-func NewZombie(game game.Game, pos math.Vec2) game.Entity {
+func NewZombie(game game.Game, pos math.Vec2) *Zombie {
 	return &Zombie{
 		game:     game,
 		curState: lookingState,
@@ -49,6 +50,10 @@ func NewZombie(game game.Game, pos math.Vec2) game.Entity {
 			Pos:   pos,
 		},
 	}
+}
+
+func (z *Zombie) GetId() uint32 {
+	return z.id
 }
 
 func (z *Zombie) findPathToTarget() (math.Path, bool) {
