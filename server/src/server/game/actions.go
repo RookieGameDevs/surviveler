@@ -26,3 +26,14 @@ type MoveActionData struct {
 	Speed float64
 	Path  []math.Vec2
 }
+
+/*
+ * Action is a structure packing an concrete Action alongside its type.
+ *
+ * Its sole purpose is to be used inside containers.
+ */
+//go:generate go-gencon -type Action -cont Stack
+type Action struct {
+	Type uint16
+	Item interface{}
+}
