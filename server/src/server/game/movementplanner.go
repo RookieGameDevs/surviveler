@@ -153,29 +153,3 @@ func (mp *MovementPlanner) Start() {
 		}
 	}()
 }
-
-/*
- * OnMovePlayer handles the PlayerMove event
- */
-func (mp *MovementPlanner) OnMovePlayer(event *events.Event) {
-	playerMoveEvent := event.Payload.(events.PlayerMoveEvent)
-	// new movement action issued by a player
-	log.WithFields(log.Fields{"clientId": playerMoveEvent.Id, "msg": playerMoveEvent}).Info("MovementPlanner.OnMovePlayer")
-
-	if player := mp.game.GetState().GetEntity(playerMoveEvent.Id); player != nil {
-		// fills a MovementRequest
-		mvtReq := MovementRequest{}
-		mvtReq.Org = player.GetPosition()
-		mvtReq.Dst = math.FromFloat32(playerMoveEvent.Xpos, playerMoveEvent.Ypos)
-		mvtReq.EntityId = playerMoveEvent.Id
-		if mp.game.GetState().GetWorld().PointInBounds(mvtReq.Dst) {
-			// places it into the MovementPlanner
-			mp.PlanMovement(&mvtReq)
-		} else {
-			// do not forward a request with out-of-bounds destination
-			log.WithField("dst", mvtReq.Dst).Warn("Out of bounds destination in MoveMsg")
-		}
-	} else {
-		log.WithField("id", playerMoveEvent.Id).Warn("Client Id not found")
-	}
-}

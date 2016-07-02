@@ -178,16 +178,32 @@ func (gs *gamestate) onPathReady(event *events.Event) {
 }
 
 /*
- * event handler for PlayerBuild events
+ * event handler for PlayerMove events
  */
-func (gs *gamestate) onPlayerBuild(event *events.Event) {
-	evt := event.Payload.(events.PlayerBuildEvent)
-	log.WithField("res", evt).Info("Received a player build event")
+func (gs *gamestate) OnPlayerMove(event *events.Event) {
+	evt := event.Payload.(events.PlayerMoveEvent)
+	log.WithField("evt", evt).Info("Received a player move event")
 
 	// check that the entity exists
 	if ent, ok := gs.entities[evt.Id]; ok {
-		player := ent.(*entities.Player)
-		player.Build()
+		p := ent.(*entities.Player)
+
+		// enable the player move
+		dst := math.FromFloat32(evt.Xpos, evt.Ypos)
+		p.Move(dst)
+
+		// fills a MovementRequest
+		mvtReq := game.MovementRequest{}
+		mvtReq.Org = p.GetPosition()
+		mvtReq.Dst = dst
+		mvtReq.EntityId = evt.Id
+		if gs.world.PointInBounds(mvtReq.Dst) {
+			// places it into the MovementPlanner
+			gs.movementPlanner.PlanMovement(&mvtReq)
+		} else {
+			// do not forward a request with out-of-bounds destination
+			log.WithField("dst", mvtReq.Dst).Warn("Out of bounds destination in MoveMsg")
+		}
 	}
 }
 
