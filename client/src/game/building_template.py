@@ -101,7 +101,7 @@ class BuildingTemplate(Entity):
 @subscriber(GameModeToggle)
 def show_building_template(evt):
     """In case we are in a gamemode different from the default one shows the
-    building template otherwise destroies it.
+    building template otherwise destroys it.
     """
     context = evt.context
 
