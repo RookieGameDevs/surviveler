@@ -87,3 +87,7 @@ func (p *Player) GetState() game.EntityState {
 		Action:     actionData,
 	}
 }
+
+func (p *Player) Build() {
+	fmt.Println("in player.build")
+}
