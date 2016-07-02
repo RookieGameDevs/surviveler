@@ -116,7 +116,7 @@ def show_building_template(evt):
 
     if context.game_mode == context.GameMode.building:
         # TODO: load the proper resource based on the building type
-        resource = context.res_mgr.get('/prefabs/buildings/barricade')
+        resource = context.res_mgr.get('/prefabs/buildings/mg_turret')
         matrix, scale_factor = context.matrix, context.scale_factor
         building_template = BuildingTemplate(resource, matrix, scale_factor, context.scene.root)
 
