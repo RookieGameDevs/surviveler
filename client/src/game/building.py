@@ -154,5 +154,9 @@ def building_spawn(evt):
 def building_disappear(evt):
     """Remove a building from the game.
     """
-    # TODO: Remove the building object
-    # TODO: Change the walkable matrix appropriately
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    if evt.srv_id in context.server_entities_map:
+        e_id = context.server_entities_map.pop(evt.srv_id)
+        building = context.entities.pop(e_id)
+        building.destroy()
