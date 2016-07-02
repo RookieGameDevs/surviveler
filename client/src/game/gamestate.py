@@ -1,7 +1,10 @@
 from enum import IntEnum
 from enum import unique
 from events import send_event
+from game import BuildingType
 from game import EntityType
+from game.events import BuildingDisappear
+from game.events import BuildingSpawn
 from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
@@ -187,3 +190,57 @@ def handle_time(gs_mgr):
     total_minutes = gs_mgr.get()[0].get(MF.time, 0)
     h, m = int(total_minutes / 60), total_minutes % 60
     send_event(TimeUpdate(h, m))
+
+
+def handle_buildings(selected, buildings, event):
+    """Generic function for building spawning/disappearing handling.
+
+    :param selected: The ids of the building to be handled.
+    :type selected: :class:`set`
+
+    :param buildings: The mapping of all the buildings in the gamestate.
+    :type buildings: :class:`dict`
+
+    :param event: The event class to be used
+    :type event: :class:`type`
+    """
+    for building in selected:
+        data = buildings[building]
+        b_type = BuildingType(data[MF.building_type])
+        pos = data[MF.x_pos], data[MF.y_pos]
+        progress = data[MF.cur_hp], data[MF.tot_hp]
+        completed = data[MF.completed]
+        evt = event(building, b_type, pos, progress, completed)
+        send_event(evt)
+
+
+@processor
+def handle_building_spawn(gs_mgr):
+    """Check for new buildings and send the appropriate events.
+
+    Check if there are new buildings that were not in the previous gamestate.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: dict
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.buildings], o.get(MF.buildings, {})
+    new_buildings = set(new) - set(old)
+    handle_buildings(new_buildings, new, BuildingSpawn)
+
+
+@processor
+def handle_building_disappear(gs_mgr):
+    """Check for disappeared buildings and send the appropriate events.
+
+    Check if there are new buildings that were not in the previous gamestate.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: dict
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.buildings], o.get(MF.buildings, {})
+    old_buildings = set(old) - set(new)
+    handle_buildings(old_buildings, old, BuildingDisappear)

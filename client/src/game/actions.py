@@ -3,7 +3,6 @@ from core.events import MouseClickEvent
 from core.events import MouseMoveEvent
 from events import send_event
 from events import subscriber
-from game.components import Movable
 from game.events import GameModeToggle
 from matlib import Vec
 from network import Message
@@ -98,7 +97,7 @@ def place_building_template(context, x, y):
     world_pos = to_world(target.x, target.y, target.z)
     pos = clamp_to_grid(
             world_pos.x, world_pos.y, map_res.data['scale_factor'])
-    context.building_template[Movable].position = pos
+    context.building_template.pos = pos
 
 
 @subscriber(MouseMoveEvent)
