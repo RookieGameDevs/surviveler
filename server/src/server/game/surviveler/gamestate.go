@@ -161,6 +161,20 @@ func (gs *gamestate) onPathReady(event *events.Event) {
 }
 
 /*
+ * event handler for PlayerBuild events
+ */
+func (gs *gamestate) onPlayerBuild(event *events.Event) {
+	evt := event.Payload.(events.PlayerBuildEvent)
+	log.WithField("res", evt).Info("Received a player build event")
+
+	// check that the entity exists
+	if ent, ok := gs.entities[evt.Id]; ok {
+		player := ent.(*entities.Player)
+		player.Build()
+	}
+}
+
+/*
  * allocates a new entity identifier.
  */
 func (gs *gamestate) allocEntityId() uint32 {
