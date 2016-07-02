@@ -2,6 +2,7 @@ from OpenGL.GL import GL_ACTIVE_UNIFORMS
 from OpenGL.GL import GL_ACTIVE_UNIFORM_BLOCKS
 from OpenGL.GL import GL_COMPILE_STATUS
 from OpenGL.GL import GL_DYNAMIC_DRAW
+from OpenGL.GL import GL_FLOAT
 from OpenGL.GL import GL_FLOAT_MAT4
 from OpenGL.GL import GL_FLOAT_VEC3
 from OpenGL.GL import GL_FLOAT_VEC4
@@ -36,6 +37,7 @@ from OpenGL.GL import glGetShaderiv
 from OpenGL.GL import glGetUniformLocation
 from OpenGL.GL import glLinkProgram
 from OpenGL.GL import glShaderSource
+from OpenGL.GL import glUniform1f
 from OpenGL.GL import glUniform1i
 from OpenGL.GL import glUniform3fv
 from OpenGL.GL import glUniform4fv
@@ -60,6 +62,7 @@ UNIFORM_TYPES_MAP = {
     GL_FLOAT_VEC4: Vec,
     GL_SAMPLER_2D: Texture,
     GL_INT: int,
+    GL_FLOAT: float,
 }
 
 UNIFORM_TYPES_SIZE_MAP = {
@@ -68,6 +71,7 @@ UNIFORM_TYPES_SIZE_MAP = {
     GL_FLOAT_VEC4: ctypes.sizeof(ctypes.c_float) * 4,
     GL_SAMPLER_2D: ctypes.sizeof(ctypes.c_int),
     GL_INT: ctypes.sizeof(ctypes.c_int),
+    GL_FLOAT: ctypes.sizeof(ctypes.c_float),
 }
 
 
@@ -77,6 +81,7 @@ UNIFORM_CONVERTERS = {
     GL_FLOAT_VEC4: bytes,
     GL_SAMPLER_2D: lambda v: v.tex_unit,
     GL_INT: lambda v: v,
+    GL_FLOAT: lambda v: v,
 }
 
 
@@ -86,6 +91,7 @@ UNIFORM_DEFAULTS = {
     GL_FLOAT_VEC4: Vec,
     GL_SAMPLER_2D: lambda: Texture(0, 0, 0),
     GL_INT: lambda: 0,
+    GL_FLOAT: lambda: 0,
 }
 
 
@@ -95,6 +101,7 @@ UNIFORM_SETTERS = {
     GL_FLOAT_VEC4: lambda i, v: glUniform4fv(i, 1, v),
     GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v),
     GL_INT: lambda i, v: glUniform1i(i, v),
+    GL_FLOAT: lambda i, v: glUniform1f(i, v),
 }
 
 

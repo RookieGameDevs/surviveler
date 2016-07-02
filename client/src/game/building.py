@@ -24,7 +24,7 @@ class BuildingType(IntEnum):
 class Building(Entity):
     """Game entity which represents a building."""
 
-    def __init__(self, resource, position, parent_node):
+    def __init__(self, resource, position, progress, completed, parent_node):
         """Constructor.
 
         :param resource: The building resource
@@ -33,27 +33,29 @@ class Building(Entity):
         :param position: The position of the building
         :type position: :class:`tuple`
 
+        :param progress: The current amount of hp and the total one
+        :type progress: :class:`tuple`
+
+        :param completed: Whether the building is completed or not
+        :type completed: :class:`bool`
+
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
         self.position = position
+        self.progress = progress
+        self.completed = completed
 
         shader = resource['shader']
-        mesh = resource['model']
-
-        # shader params
-        params = {
-            'color_ambient': Vec(0.0, 0.6, 0.2, 1),
-            'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
-            'color_specular': Vec(1, 1, 1, 1),
-        }
+        self.mesh_project = resource['model_project']
+        self.mesh_complete = resource['model_complete']
 
         # create components
         renderable = Renderable(
             parent_node,
-            mesh,
+            self.mesh,
             shader,
-            params,
+            self.shader_params,
             enable_light=True)
 
         t = renderable.transform
@@ -65,6 +67,38 @@ class Building(Entity):
         # initialize entity
         super().__init__(renderable, movable)
 
+    @property
+    def shader_params(self):
+        """Return the appropriate shader params based on the building status.
+
+        :returns: The shader params
+        :rtype: :class:`dict`
+        """
+        cur, tot = self.progress
+
+        alpha = cur / tot
+
+        params = {
+            'opacity': alpha,
+            'color_ambient': Vec(0.2, 0.2, 0.2, 1),
+            'color_diffuse': Vec(0.6, 0.6, 0.6, 1),
+            'color_specular': Vec(0.8, 0.8, 0.8, 1),
+        }
+
+        return params
+
+    @property
+    def mesh(self):
+        """Return the appropriate mesh based on the building status.
+
+        :returns: The appropriate mesh
+        :rtype: :class:`renderer.Mesh`
+        """
+        if not self.completed:
+            return self.mesh_project
+        else:
+            return self.mesh_complete
+
     def destroy(self):
         """Removes itself from the scene.
         """
@@ -75,20 +109,14 @@ class Building(Entity):
     def update(self, dt):
         """Update the building template.
 
-        This method just applies the current position of the entity to the
-        renderable transform.
+        Applies the status of the building in terms of shader params and meshes.
 
         :param dt: Time delta from last update.
         :type dt: float
         """
-        # TODO: update alpha based on the hit points
-        params = {
-            'color_ambient': Vec(0.0, 0.6, 0.2, 1),
-            'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
-            'color_specular': Vec(1, 1, 1, 1),
-        }
-
-        self[Renderable].node.params = params
+        node = self[Renderable].node
+        node.params = self.shader_params
+        node.mesh = self.mesh
 
 
 @subscriber(BuildingSpawn)
@@ -115,8 +143,11 @@ def building_spawn(evt):
         )
 
         # Create the building
-        pos = (evt.building_data[MF.x_pos], evt.building_data[MF.y_pos])
-        building = Building(resource, pos, context.scene.root)
+        data = evt.building_data
+        pos = (data[MF.x_pos], data[MF.y_pos])
+        progress = (data[MF.cur_hp], data[MF.tot_hp])
+        building = Building(
+            resource, pos, progress, data[MF.completed], context.scene.root)
         context.entities[building.e_id] = building
         context.server_entities_map[evt.srv_id] = building.e_id
 

@@ -27,6 +27,8 @@ class MessageField(bytes, Enum):
     action_type = b'ActionType'
     building_type = b'Type'
     buildings = b'Buildings'
+    completed = b'Completed'
+    cur_hp = b'CurHitPoints'
     entities = b'Entities'
     entity_type = b'Type'
     id = b'Id'
@@ -37,6 +39,7 @@ class MessageField(bytes, Enum):
     speed = b'Speed'
     time = b'Time'
     timestamp = b'Tstamp'
+    tot_hp = b'TotHitPoints'
     x_pos = b'Xpos'
     y_pos = b'Ypos'
 
