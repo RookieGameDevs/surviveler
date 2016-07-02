@@ -192,6 +192,28 @@ def handle_time(gs_mgr):
     send_event(TimeUpdate(h, m))
 
 
+def handle_buildings(selected, buildings, event):
+    """Generic function for building spawning/disappearing handling.
+
+    :param selected: The ids of the building to be handled.
+    :type selected: :class:`set`
+
+    :param buildings: The mapping of all the buildings in the gamestate.
+    :type buildings: :class:`dict`
+
+    :param event: The event class to be used
+    :type event: :class:`type`
+    """
+    for building in selected:
+        data = buildings[building]
+        b_type = BuildingType(data[MF.building_type])
+        pos = data[MF.x_pos], data[MF.y_pos]
+        progress = data[MF.cur_hp], data[MF.tot_hp]
+        completed = data[MF.completed]
+        evt = event(building, b_type, pos, progress, completed)
+        send_event(evt)
+
+
 @processor
 def handle_building_spawn(gs_mgr):
     """Check for new buildings and send the appropriate events.
@@ -205,14 +227,7 @@ def handle_building_spawn(gs_mgr):
     o = o or {}
     new, old = n[MF.buildings], o.get(MF.buildings, {})
     new_buildings = set(new) - set(old)
-    for building in new_buildings:
-        data = new[building]
-        b_type = BuildingType(data[MF.building_type])
-        pos = data[MF.x_pos], data[MF.y_pos]
-        progress = data[MF.cur_hp], data[MF.tot_hp]
-        completed = data[MF.completed]
-        evt = BuildingSpawn(building, b_type, pos, progress, completed)
-        send_event(evt)
+    handle_buildings(new_buildings, new, BuildingSpawn)
 
 
 @processor
@@ -228,11 +243,4 @@ def handle_building_disappear(gs_mgr):
     o = o or {}
     new, old = n[MF.buildings], o.get(MF.buildings, {})
     old_buildings = set(old) - set(new)
-    for building in old_buildings:
-        data = old[building]
-        b_type = BuildingType(data[MF.building_type])
-        pos = data[MF.x_pos], data[MF.y_pos]
-        progress = data[MF.cur_hp], data[MF.tot_hp]
-        completed = data[MF.completed]
-        evt = BuildingDisappear(building, b_type, pos, progress, completed)
-        send_event(evt)
+    handle_buildings(old_buildings, old, BuildingDisappear)
