@@ -1,4 +1,6 @@
+# NOTE: leave this import here to avoid cyclic imports
 from game.entity import Entity  # noqa
+
 from game.building import Building  # noqa
 from game.building import BuildingType  # noqa
 from game.building_template import BuildingTemplate  # noqa
