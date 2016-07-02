@@ -127,36 +127,36 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
  * event handler for PlayerJoin events
  */
 func (gs *gamestate) onPlayerJoin(event *events.Event) {
-	playerJoinEvent := event.Payload.(events.PlayerJoinEvent)
+	evt := event.Payload.(events.PlayerJoinEvent)
 	// we have a new player, his id will be its unique connection id
-	log.WithField("clientId", playerJoinEvent.Id).Info("We have one more player")
+	log.WithField("clientId", evt.Id).Info("We have one more player")
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
 	// TODO: speed from resource
-	gs.entities[playerJoinEvent.Id] = entities.NewPlayer(
-		org, 3, game.EntityType(playerJoinEvent.Type))
+	gs.entities[evt.Id] = entities.NewPlayer(evt.Id, org, 3,
+		game.EntityType(evt.Type))
 }
 
 /*
  * event handler for PlayerLeave events
  */
 func (gs *gamestate) onPlayerLeave(event *events.Event) {
-	playerLeaveEvent := event.Payload.(events.PlayerLeaveEvent)
+	evt := event.Payload.(events.PlayerLeaveEvent)
 	// one player less, remove him from the map
-	log.WithField("clientId", playerLeaveEvent.Id).Info("We have one less player")
-	delete(gs.entities, playerLeaveEvent.Id)
+	log.WithField("clientId", evt.Id).Info("We have one less player")
+	delete(gs.entities, evt.Id)
 }
 
 /*
  * event handler for PathReadyEvent events
  */
 func (gs *gamestate) onPathReady(event *events.Event) {
-	pathReadyEvent := event.Payload.(events.PathReadyEvent)
-	log.WithField("res", pathReadyEvent).Info("Received a calculated movement")
+	evt := event.Payload.(events.PathReadyEvent)
+	log.WithField("evt", evt).Info("Received a path ready event")
 
 	// check that the entity exists
-	if player, ok := gs.entities[pathReadyEvent.Id]; ok {
-		player.SetPath(pathReadyEvent.Path)
+	if player, ok := gs.entities[evt.Id]; ok {
+		player.SetPath(evt.Path)
 	}
 }
 

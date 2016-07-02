@@ -15,7 +15,7 @@ import (
  *
  * This struct is meant to be used as a component of another higher-level entity,
  * and take care of its movement. It accepts a path and updates the pos to move
- * alongside it. It implements the Entity and Updater interfaces
+ * alongside it
  */
 type Movable struct {
 	Pos                   math.Vec2 // current position
