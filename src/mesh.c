@@ -159,7 +159,7 @@ mesh_new(struct MeshData *md)
 
 	// enable coord attribute
 	glEnableVertexAttribArray(VERTEX_ATTRIB_POSITION);
-	off_t offset = 0;
+	size_t offset = 0;
 	glVertexAttribPointer(
 		VERTEX_ATTRIB_POSITION,
 		3,
