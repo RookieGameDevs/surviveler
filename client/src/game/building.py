@@ -49,12 +49,19 @@ class Building(Entity):
         self.mesh_project = resource['model_project']
         self.mesh_complete = resource['model_complete']
 
+        params = {
+            'opacity': self.opacity,
+            'color_ambient': Vec(0.2, 0.2, 0.2, 1),
+            'color_diffuse': Vec(0.6, 0.6, 0.6, 1),
+            'color_specular': Vec(0.8, 0.8, 0.8, 1),
+        }
+
         # create components
         renderable = Renderable(
             parent_node,
             self.mesh,
             shader,
-            self.shader_params,
+            params,
             enable_light=True)
 
         t = renderable.transform
@@ -67,7 +74,7 @@ class Building(Entity):
         super().__init__(renderable, movable)
 
     @property
-    def shader_params(self):
+    def opacity(self):
         """Return the appropriate shader params based on the building status.
 
         :returns: The shader params
@@ -75,16 +82,7 @@ class Building(Entity):
         """
         cur, tot = self.progress
 
-        alpha = cur / tot
-
-        params = {
-            'opacity': alpha,
-            'color_ambient': Vec(0.2, 0.2, 0.2, 1),
-            'color_diffuse': Vec(0.6, 0.6, 0.6, 1),
-            'color_specular': Vec(0.8, 0.8, 0.8, 1),
-        }
-
-        return params
+        return cur / tot
 
     @property
     def mesh(self):
@@ -106,7 +104,7 @@ class Building(Entity):
         node.parent.remove_child(node)
 
     def update(self, dt):
-        """Update the building template.
+        """Update the building.
 
         Applies the status of the building in terms of shader params and meshes.
 
@@ -114,7 +112,7 @@ class Building(Entity):
         :type dt: float
         """
         node = self[Renderable].node
-        node.params = self.shader_params
+        node.params['opacity'] = self.opacity
         node.mesh = self.mesh
 
 
