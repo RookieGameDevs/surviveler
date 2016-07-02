@@ -8,6 +8,7 @@ import "server/math"
 
 type ActionType uint16
 
+// gamestate action types
 const (
 	IdleAction ActionType = 0 + iota
 	MovingAction
@@ -34,6 +35,6 @@ type MoveActionData struct {
  */
 //go:generate go-gencon -type Action -cont Stack
 type Action struct {
-	Type uint16
+	Type ActionType
 	Item interface{}
 }
