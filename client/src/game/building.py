@@ -7,6 +7,8 @@ from game.character import EntityType
 from game.components import Movable
 from game.components import Renderable
 from game.entity import Entity
+from game.events import BuildingDisappear
+from game.events import BuildingSpawn
 from game.events import GameModeChange
 from game.events import GameModeToggle
 from matlib import Vec
@@ -105,6 +107,25 @@ class Building(Entity):
         t = self[Renderable].transform
         t.identity()
         t.translate(to_scene(x, y))
+
+
+@subscriber(BuildingSpawn)
+def building_spawn(evt):
+    """Create a building.
+
+    A building of the appropriate type is created and placed into the game.
+    """
+    # TODO: Create the building object
+    # TODO: Place the building in the appropriate position
+    # TODO: Change the walkable matrix appropriately
+
+
+@subscriber(BuildingDisappear)
+def building_disappear(evt):
+    """Remove a building from the game.
+    """
+    # TODO: Remove the building object
+    # TODO: Change the walkable matrix appropriately
 
 
 @subscriber(GameModeToggle)

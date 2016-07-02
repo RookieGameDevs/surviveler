@@ -207,7 +207,7 @@ def handle_building_spawn(gs_mgr):
     new_buildings = set(new) - set(old)
     for building in new_buildings:
         building_type = BuildingType(new[building][MF.building_type])
-        evt = BuildingSpawn(building, building_type)
+        evt = BuildingSpawn(building, building_type, new[building])
         send_event(evt)
 
 
