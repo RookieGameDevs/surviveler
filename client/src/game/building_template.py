@@ -21,6 +21,16 @@ LOG = logging.getLogger(__name__)
 class BuildingTemplate(Entity):
     """Game entity which represents a building template."""
 
+    BUILDABLE_COLOR = {
+        'color_ambient': Vec(0.0, 0.6, 0.2, 1),
+        'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
+    }
+
+    NON_BUILDABLE_COLOR = {
+        'color_ambient': Vec(0.8, 0.0, 0.1, 1),
+        'color_diffuse': Vec(1, 0.0, 0.2, 1),
+    }
+
     def __init__(self, resource, matrix, scale_factor, parent_node):
         """Constructor.
 
@@ -43,11 +53,9 @@ class BuildingTemplate(Entity):
         mesh = resource['model_complete']
 
         # shader params
-        params = {
-            'color_ambient': Vec(0.0, 0.6, 0.2, 1),
-            'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
+        params = dict({
             'color_specular': Vec(1, 1, 1, 1),
-        }
+        }, **self.BUILDABLE_COLOR)
 
         # create components
         renderable = Renderable(
@@ -83,19 +91,10 @@ class BuildingTemplate(Entity):
 
         m_x, m_y = to_matrix(x, y, self.scale_factor)
         if not in_matrix(self.matrix, m_x, m_y) or not self.matrix[m_y][m_x]:
-            params = {
-                'color_ambient': Vec(0.8, 0.0, 0.1, 1),
-                'color_diffuse': Vec(1, 0.0, 0.2, 1),
-                'color_specular': Vec(1, 1, 1, 1),
-            }
+            self[Renderable].node.params.update(self.NON_BUILDABLE_COLOR)
         else:
-            params = {
-                'color_ambient': Vec(0.0, 0.6, 0.2, 1),
-                'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
-                'color_specular': Vec(1, 1, 1, 1),
-            }
+            self[Renderable].node.params.update(self.BUILDABLE_COLOR)
 
-        self[Renderable].node.params = params
         t = self[Renderable].transform
         t.identity()
         t.translate(to_scene(x, y))
