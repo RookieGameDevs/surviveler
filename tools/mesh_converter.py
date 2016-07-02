@@ -92,10 +92,8 @@ def main(model, out):
                 ids.extend([255] * (MAX_JOINTS_PER_VERTEX - bindings_count))
                 weights.extend([0] * (MAX_JOINTS_PER_VERTEX - bindings_count))
 
-                for i in range(MAX_JOINTS_PER_VERTEX):
-                    fp.write(pack('<B', ids[i]))
-                for i in range(MAX_JOINTS_PER_VERTEX):
-                    fp.write(pack('<B', weights[i]))
+                for attr in ids + weights:
+                    fp.write(pack('<B', attr))
 
         # write indices
         for i in range(len(mesh.vertices)):
