@@ -94,7 +94,7 @@ func (me *Movable) SetPath(path math.Path) {
 	}
 }
 
-func (me *Movable) GetPath(maxLen int) math.Path {
+func (me *Movable) Path(maxLen int) math.Path {
 	count := me.curPathIdx + 1
 	if maxLen > 0 {
 		count = math.IMin(count, maxLen)

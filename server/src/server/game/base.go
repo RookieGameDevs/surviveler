@@ -11,20 +11,20 @@ import (
 type EntityFilter func(e Entity) bool
 
 type GameState interface {
-	GetWorld() *World
-	GetEntity(id uint32) Entity
-	GetNearestEntity(pos math.Vec2, f EntityFilter) (Entity, float32)
+	World() *World
+	Entity(id uint32) Entity
+	NearestEntity(pos math.Vec2, f EntityFilter) (Entity, float32)
 	AddEntity(ent Entity) uint32
-	GetMapData() *resource.MapData
-	GetGameTime() int16
+	MapData() *resource.MapData
+	GameTime() int16
 }
 
 type Game interface {
 	Start()
-	GetState() GameState
-	GetQuitChan() chan struct{}
-	GetMessageChan() chan messages.ClientMessage
+	State() GameState
+	QuitChan() chan struct{}
+	MessageChan() chan messages.ClientMessage
 	PostEvent(*events.Event)
-	GetPathfinder() *Pathfinder
-	GetWaitGroup() *sync.WaitGroup
+	Pathfinder() *Pathfinder
+	WaitGroup() *sync.WaitGroup
 }

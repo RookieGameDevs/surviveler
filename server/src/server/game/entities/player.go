@@ -107,19 +107,19 @@ func (p *Player) Move() {
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }
 
-func (p *Player) GetPosition() math.Vec2 {
+func (p *Player) Position() math.Vec2 {
 	return p.Movable.Pos
 }
 
-func (p *Player) GetType() game.EntityType {
+func (p *Player) Type() game.EntityType {
 	return p.entityType
 }
 
-func (p *Player) GetId() uint32 {
+func (p *Player) Id() uint32 {
 	return p.id
 }
 
-func (p *Player) GetState() game.EntityState {
+func (p *Player) State() game.EntityState {
 	var (
 		actionData interface{}  // action data to be sent
 		curAction  *game.Action // action action from the stack
@@ -133,7 +133,7 @@ func (p *Player) GetState() game.EntityState {
 	case game.MovingAction:
 		actionData = game.MoveActionData{
 			Speed: p.Speed,
-			Path:  p.Movable.GetPath(maxWaypointsToSend),
+			Path:  p.Movable.Path(maxWaypointsToSend),
 		}
 	}
 

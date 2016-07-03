@@ -51,7 +51,7 @@ func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
 }
 
 func (ai *AIDirector) summonZombie() {
-	keypoints := ai.game.GetState().GetMapData().AIKeypoints
+	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
 	org := keypoints.Spawn.Enemies[rand.Intn(len(keypoints.Spawn.Enemies))]
 
@@ -60,7 +60,7 @@ func (ai *AIDirector) summonZombie() {
 	}).Info("summoning zombie")
 
 	zombie := entities.NewZombie(ai.game, org)
-	id := ai.game.GetState().AddEntity(zombie)
+	id := ai.game.State().AddEntity(zombie)
 	zombie.SetId(id)
 }
 
@@ -97,7 +97,7 @@ func (ai *AIDirector) Update(curTime time.Time) {
  * and nightEnd
  */
 func (ai *AIDirector) IsNight() bool {
-	now := ai.game.GetState().GetGameTime()
+	now := ai.game.State().GameTime()
 	// Actually checks if currentTime is in daytime and return the opposite
 	return !(now > ai.nightEnd && now < ai.nightStart)
 }

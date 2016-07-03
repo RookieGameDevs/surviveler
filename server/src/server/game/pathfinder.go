@@ -29,7 +29,7 @@ func NewPathfinder(game Game) *Pathfinder {
  * resolution
  */
 func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64, found bool) {
-	world := pf.game.GetState().GetWorld()
+	world := pf.game.State().World()
 	// scale org and dst coordinates
 	scaledOrg, scaledDst := org.Mul(world.GridScale), dst.Mul(world.GridScale)
 

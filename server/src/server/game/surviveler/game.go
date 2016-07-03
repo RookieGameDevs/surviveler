@@ -164,15 +164,15 @@ func (g *survivelerGame) Start() {
 	g.stop()
 }
 
-func (g *survivelerGame) GetState() game.GameState {
+func (g *survivelerGame) State() game.GameState {
 	return g.state
 }
 
-func (g *survivelerGame) GetQuitChan() chan struct{} {
+func (g *survivelerGame) QuitChan() chan struct{} {
 	return g.quitChan
 }
 
-func (g *survivelerGame) GetMessageChan() chan msg.ClientMessage {
+func (g *survivelerGame) MessageChan() chan msg.ClientMessage {
 	return g.msgChan
 }
 
@@ -180,11 +180,11 @@ func (g *survivelerGame) PostEvent(evt *events.Event) {
 	g.eventManager.PostEvent(evt)
 }
 
-func (g *survivelerGame) GetPathfinder() *game.Pathfinder {
+func (g *survivelerGame) Pathfinder() *game.Pathfinder {
 	return g.pathfinder
 }
 
-func (g *survivelerGame) GetWaitGroup() *sync.WaitGroup {
+func (g *survivelerGame) WaitGroup() *sync.WaitGroup {
 	return &g.wg
 }
 

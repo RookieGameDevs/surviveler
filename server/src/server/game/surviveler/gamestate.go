@@ -119,7 +119,7 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 	gsMsg.Time = gs.gameTime
 	gsMsg.Entities = make(map[uint32]interface{})
 	for id, ent := range gs.entities {
-		gsMsg.Entities[id] = ent.GetState()
+		gsMsg.Entities[id] = ent.State()
 	}
 	gsMsg.Buildings = make(map[uint32]interface{})
 	// TODO: add the real buildings here
@@ -207,16 +207,16 @@ func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
 	if gs.world.PointInBounds(dst) {
 		// fills up a movement request
 		mvtReq := game.MovementRequest{}
-		mvtReq.Org = p.GetPosition()
+		mvtReq.Org = p.Position()
 		mvtReq.Dst = dst
-		mvtReq.EntityId = p.GetId()
+		mvtReq.EntityId = p.Id()
 		// and send if to the movement planner
 		gs.movementPlanner.PlanMovement(&mvtReq)
 	} else {
 		// do not forward a request with out-of-bounds destination
 		log.WithFields(log.Fields{
 			"dst":    dst,
-			"player": p.GetId()}).
+			"player": p.Id()}).
 			Error("Can't plan path to out-of-bounds destination")
 	}
 }
@@ -229,11 +229,11 @@ func (gs *gamestate) allocEntityId() uint32 {
 	return gs.numEntities
 }
 
-func (gs *gamestate) GetWorld() *game.World {
+func (gs *gamestate) World() *game.World {
 	return gs.world
 }
 
-func (gs *gamestate) GetEntity(id uint32) game.Entity {
+func (gs *gamestate) Entity(id uint32) game.Entity {
 	if ent, ok := gs.entities[id]; ok == true {
 		return ent
 	}
@@ -246,11 +246,11 @@ func (gs *gamestate) AddEntity(ent game.Entity) uint32 {
 	return id
 }
 
-func (gs *gamestate) GetMapData() *resource.MapData {
+func (gs *gamestate) MapData() *resource.MapData {
 	return gs.md
 }
 
-func (gs *gamestate) GetGameTime() int16 {
+func (gs *gamestate) GameTime() int16 {
 	return gs.gameTime
 }
 
@@ -273,12 +273,12 @@ func (c entityDistCollection) Swap(i, j int) {
 	c[i], c[j] = c[j], c[i]
 }
 
-func (gs *gamestate) GetNearestEntity(pos math.Vec2, f game.EntityFilter) (game.Entity, float32) {
+func (gs *gamestate) NearestEntity(pos math.Vec2, f game.EntityFilter) (game.Entity, float32) {
 	result := make(entityDistCollection, 0)
 	for _, ent := range gs.entities {
 		if f(ent) {
 			result = append(result, entityDist{
-				d: float32(ent.GetPosition().Sub(pos).Len()),
+				d: float32(ent.Position().Sub(pos).Len()),
 				e: ent,
 			})
 		}

@@ -78,11 +78,11 @@ func (mp *MovementPlanner) PlanMovement(mvtReq *MovementRequest) {
 func (mp *MovementPlanner) Start() {
 	log.Info("Starting movement planner")
 
-	mp.game.GetWaitGroup().Add(1)
+	mp.game.WaitGroup().Add(1)
 	// start the ring buffer goroutine
 	go func() {
 		defer func() {
-			mp.game.GetWaitGroup().Done()
+			mp.game.WaitGroup().Done()
 			close(mp.ringBufIn)
 			close(mp.ringBufOut)
 		}()
@@ -90,7 +90,7 @@ func (mp *MovementPlanner) Start() {
 
 			select {
 
-			case <-mp.game.GetQuitChan():
+			case <-mp.game.QuitChan():
 				return
 
 			case req := <-mp.ringBufIn:
@@ -112,17 +112,17 @@ func (mp *MovementPlanner) Start() {
 	}()
 
 	// start the movement planner goroutine
-	mp.game.GetWaitGroup().Add(1)
+	mp.game.WaitGroup().Add(1)
 	go func() {
 		defer func() {
 			log.Info("Stopping movement planner")
-			mp.game.GetWaitGroup().Done()
+			mp.game.WaitGroup().Done()
 		}()
 
 		for {
 			select {
 
-			case <-mp.game.GetQuitChan():
+			case <-mp.game.QuitChan():
 				return
 
 			case mvtReq := <-mp.ringBufOut:
@@ -133,7 +133,7 @@ func (mp *MovementPlanner) Start() {
 				log.WithField("req", mvtReq).Info("Processing an movement request")
 
 				// compute pathfinding
-				if path, _, found := mp.game.GetPathfinder().FindPath(mvtReq.Org, mvtReq.Dst); found {
+				if path, _, found := mp.game.Pathfinder().FindPath(mvtReq.Org, mvtReq.Dst); found {
 					if len(path) > 1 {
 						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
