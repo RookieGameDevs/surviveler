@@ -52,10 +52,6 @@ func NewPlayer(id uint32, spawn math.Vec2, speed float64, entityType game.Entity
 	return p
 }
 
-func (p *Player) GetId() uint32 {
-	return p.id
-}
-
 /*
  * Update updates the local state of the player
  */
@@ -117,6 +113,10 @@ func (p *Player) GetPosition() math.Vec2 {
 
 func (p *Player) GetType() game.EntityType {
 	return p.entityType
+}
+
+func (p *Player) GetId() uint32 {
+	return p.id
 }
 
 func (p *Player) GetState() game.EntityState {
