@@ -81,7 +81,10 @@ func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64,
 		}
 		last = pt
 	}
-	log.WithFields(log.Fields{"raw path length": len(rawPath), "smoothed path length": len(path)}).Debug("Path smoothing result")
+	log.WithFields(log.Fields{
+		"raw path length":      len(rawPath),
+		"smoothed path length": len(path)}).
+		Debug("Path smoothing result")
 	return
 }
 
