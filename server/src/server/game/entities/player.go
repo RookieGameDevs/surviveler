@@ -8,14 +8,16 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
+	"server/game/events"
 	"server/math"
 	"time"
 )
 
 // player private action types
 const (
-	WaitingForPathAction = 1000 + iota
-	PlayerBuildPower     = 3 // this is hard-coded for now, but will ideally be loaded from asset package
+	WaitingForPathAction      = 1000 + iota
+	PlayerBuildPower          = 3 // this is hard-coded for now, but will ideally be loaded from asset package
+	BuildPowerInductionPeriod = time.Second
 )
 
 /*
@@ -28,10 +30,11 @@ const maxWaypointsToSend = 3
  * implements the Entity interface.
  */
 type Player struct {
-	id         uint32
-	entityType game.EntityType  // player type
-	actions    game.ActionStack // action stack
-	g          game.Game
+	id            uint32
+	entityType    game.EntityType  // player type
+	actions       game.ActionStack // action stack
+	lastBPinduced time.Time        // time of last initiated BP induction
+	g             game.Game
 	components.Movable
 }
 
@@ -63,12 +66,28 @@ func (p *Player) Update(dt time.Duration) {
 			p.Movable.Update(dt)
 			if p.Movable.HasReachedDestination() {
 				// pop current action to get ready for next update
-				p.actions.Pop()
+				next := p.actions.Pop()
+				log.WithField("action", next).Debug("next player action")
 			}
 		case WaitingForPathAction:
-			log.Debug("player is in waiting for path action")
+			log.Debug("player is waiting for path action")
 		case game.BuildingAction:
-			log.Debug("player is in building action")
+			if p.lastBPinduced.IsZero() {
+				// we are starting to build, mark the time
+				p.lastBPinduced = time.Now()
+			} else {
+				if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
+					// BP induction period elapsed -> transmit BP to building
+					p.g.PostEvent(events.NewEvent(events.InduceBP,
+						events.InduceBPEvent{
+							FromId: p.id,
+							ToId:   100, // TODO: continue here, we should
+							// already have a building ID, got from NewBuilding(),
+							// called when we are starting to build
+							BP: PlayerBuildPower,
+						}))
+				}
+			}
 		}
 	} else {
 		// little consistency check...
@@ -131,14 +150,13 @@ func (p *Player) State() game.EntityState {
 
 	curAction, _ = p.actions.Peek()
 	switch curAction.Type {
-	case game.IdleAction, WaitingForPathAction:
-		actionData = game.IdleActionData{}
-
 	case game.MovingAction:
 		actionData = game.MoveActionData{
 			Speed: p.Speed,
 			Path:  p.Movable.Path(maxWaypointsToSend),
 		}
+	default:
+		actionData = game.IdleActionData{}
 	}
 
 	return game.EntityState{
@@ -159,7 +177,9 @@ func (p *Player) State() game.EntityState {
 
 func (p *Player) Build(t uint8, pos math.Vec2) {
 	log.Debug("Player.Build")
+	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
+	// fill the player action stack
 	p.actions.Push(&game.Action{game.BuildingAction, struct{}{}})
 	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
