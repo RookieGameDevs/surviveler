@@ -136,7 +136,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
 	// TODO: speed from resource
-	player := entities.NewPlayer(org, 3, game.EntityType(evt.Type))
+	player := entities.NewPlayer(gs.game, org, 3, game.EntityType(evt.Type))
 	gs.entities[evt.Id] = player
 	player.SetId(evt.Id)
 }

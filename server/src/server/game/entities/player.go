@@ -31,13 +31,14 @@ type Player struct {
 	id         uint32
 	entityType game.EntityType  // player type
 	actions    game.ActionStack // action stack
+	g          game.Game
 	components.Movable
 }
 
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
+func NewPlayer(g game.Game, spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
 	p := new(Player)
 	p.entityType = entityType
 	p.Speed = speed
