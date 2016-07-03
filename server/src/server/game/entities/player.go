@@ -15,6 +15,7 @@ import (
 // player private action types
 const (
 	WaitingForPathAction = 1000 + iota
+	PlayerBuildPower     = 3 // this is hard-coded for now, but will ideally be loaded from asset package
 )
 
 /*
