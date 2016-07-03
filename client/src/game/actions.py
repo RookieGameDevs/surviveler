@@ -51,27 +51,66 @@ def ray_cast(x, y, w, h, camera):
     return pos + (ray * t)
 
 
+def start_move_action(context, position):
+    """Start a move action to the defined position.
+
+    :param context: The game context.
+    :type context: :class:`context.Context`
+
+    :param position: The position in world ccoordinates
+    :type position: :class:`tuple`
+    """
+    msg = Message(MessageType.move, {
+        MessageField.x_pos: position[0],
+        MessageField.y_pos: position[1],
+    })
+
+    context.msg_queue.append(msg)
+
+
+def start_build_action(context, position):
+    """Start a build action to the defined position.
+
+    NOTE: the game context has all the information required.
+
+    :param context: The game context.
+    :type context: :class:`context.Context`
+
+    :param position: The position in world ccoordinates
+    :type position: :class:`tuple`
+    """
+    building_type = context.building_type
+    msg = Message(MessageType.build, {
+        MessageField.building_type: building_type,
+        MessageField.x_pos: position[0],
+        MessageField.y_pos: position[1],
+    })
+
+    context.msg_queue.append(msg)
+
+
 @subscriber(MouseClickEvent)
 def handle_mouse_click(evt):
-    if evt.state == MouseClickEvent.State.up and evt.context.player:
+    context = evt.context
+    if evt.state == MouseClickEvent.State.up and context.player:
+
         LOG.debug('Action: {}'.format(evt))
         LOG.debug('Viewport pos: {},{}'.format(evt.x, evt.y))
 
-        renderer_conf = evt.context.conf['Renderer']
+        renderer_conf = context.conf['Renderer']
         w = int(renderer_conf['width'])
         h = int(renderer_conf['height'])
 
-        camera = evt.context.camera
+        camera = context.camera
         target = ray_cast(evt.x, evt.y, w, h, camera)
         world_pos = to_world(target.x, target.y, target.z)
         LOG.debug('World pos: {}'.format(world_pos))
 
-        msg = Message(MessageType.move, {
-            MessageField.x_pos: world_pos.x,
-            MessageField.y_pos: world_pos.y,
-        })
-
-        evt.context.msg_queue.append(msg)
+        pos = world_pos.x, world_pos.y
+        if context.game_mode == context.GameMode.default:
+            start_move_action(context, pos)
+        elif context.game_mode == context.GameMode.building:
+            start_build_action(context, pos)
 
 
 def place_building_template(context, x, y):
