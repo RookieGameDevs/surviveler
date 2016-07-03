@@ -28,6 +28,7 @@ const (
  */
 type Entity interface {
 	Id() uint32
+	SetId(uint32)
 	Type() EntityType
 	State() EntityState
 	Position() math.Vec2

@@ -37,9 +37,8 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(id uint32, spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
+func NewPlayer(spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
 	p := new(Player)
-	p.id = id
 	p.entityType = entityType
 	p.Speed = speed
 	p.Pos = spawn
@@ -113,6 +112,10 @@ func (p *Player) Position() math.Vec2 {
 
 func (p *Player) Type() game.EntityType {
 	return p.entityType
+}
+
+func (p *Player) SetId(id uint32) {
+	p.id = id
 }
 
 func (p *Player) Id() uint32 {
