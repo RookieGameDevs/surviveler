@@ -63,12 +63,15 @@ func (p *Player) Update(dt time.Duration) {
 	if action, exist := p.actions.Peek(); exist {
 		switch action.Type {
 		case game.MovingAction:
-			// the action data is not interesting as it should always
 			p.Movable.Update(dt)
 			if p.Movable.HasReachedDestination() {
 				// pop current action to get ready for next update
 				p.actions.Pop()
 			}
+		case WaitingForPathAction:
+			log.Debug("player is in waiting for path action")
+		case game.BuildingAction:
+			log.Debug("player is in building action")
 		}
 	} else {
 		// little consistency check...
@@ -80,11 +83,16 @@ func (p *Player) Update(dt time.Duration) {
  * SetPath defines the path that the player must follow.
  */
 func (p *Player) SetPath(path math.Path) {
-	// consistency check: we should be waiting for a path
-	if action := p.actions.Pop(); action.Type != WaitingForPathAction {
+	if action, exist := p.actions.Peek(); !exist {
+		// check stack
+		log.Panic("Player.actions stack should not be empty")
+	} else if action.Type != WaitingForPathAction {
+		// check stack topmost item
 		log.WithField("action", action.Type).
-			Panic("calling player.SetPath while we are not waiting for a path")
+			Panic("next action in Player.actions stack must be WaitingForPathAction")
 	} else {
+		log.Debug("Player.SetPath, setting path to movable")
+		p.actions.Pop()
 		p.Movable.SetPath(path)
 	}
 }
@@ -96,6 +104,7 @@ func (p *Player) SetPath(path math.Path) {
  * the player as waiting for the calculated path
  */
 func (p *Player) Move() {
+	log.Debug("Player.Move")
 	p.emptyActions()
 	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
@@ -117,7 +126,7 @@ func (p *Player) GetState() game.EntityState {
 
 	curAction, _ = p.actions.Peek()
 	switch curAction.Type {
-	case game.IdleAction:
+	case game.IdleAction, WaitingForPathAction:
 		actionData = game.IdleActionData{}
 
 	case game.MovingAction:
@@ -144,6 +153,7 @@ func (p *Player) GetState() game.EntityState {
  */
 
 func (p *Player) Build(t uint8, pos math.Vec2) {
+	log.Debug("Player.Build")
 	p.emptyActions()
 	p.actions.Push(&game.Action{game.BuildingAction, struct{}{}})
 	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})

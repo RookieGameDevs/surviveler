@@ -151,21 +151,6 @@ func (gs *gamestate) onPlayerLeave(event *events.Event) {
 }
 
 /*
- * event handler for PlayerBuild events
- */
-func (gs *gamestate) onPlayerBuild(event *events.Event) {
-	evt := event.Payload.(events.PlayerBuildEvent)
-	log.WithField("evt", evt).Info("Received a player build event")
-
-	// check that the entity exists
-	if ent, ok := gs.entities[evt.Id]; ok {
-		player := ent.(*entities.Player)
-		//TODO: should clip the destination
-		player.Build(evt.Type, math.FromFloat32(evt.Xpos, evt.Ypos))
-	}
-}
-
-/*
  * event handler for PathReadyEvent events
  */
 func (gs *gamestate) onPathReady(event *events.Event) {
@@ -183,28 +168,56 @@ func (gs *gamestate) onPathReady(event *events.Event) {
  */
 func (gs *gamestate) OnPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMoveEvent)
-	log.WithField("evt", evt).Info("Received a player move event")
+	log.WithField("evt", evt).Info("Received PlayerMove event")
 
 	// check that the entity exists
 	if ent, ok := gs.entities[evt.Id]; ok {
 		p := ent.(*entities.Player)
-
-		// enable the player move
+		// set player action
 		p.Move()
+		// plan movement
+		gs.fillMovementRequest(p, math.FromFloat32(evt.Xpos, evt.Ypos))
+	}
+}
 
-		// fills a MovementRequest
-		dst := math.FromFloat32(evt.Xpos, evt.Ypos)
+/*
+ * event handler for PlayerBuild events
+ */
+func (gs *gamestate) onPlayerBuild(event *events.Event) {
+	evt := event.Payload.(events.PlayerBuildEvent)
+	log.WithField("evt", evt).Info("Received PlayerBuild event")
+
+	// check that the entity exists
+	if ent, ok := gs.entities[evt.Id]; ok {
+		p := ent.(*entities.Player)
+		// clip building center to center of a game square unit
+		dst := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
+			Add(math.Vec2{0.5, 0.5})
+		// set player action
+		p.Build(evt.Type, dst)
+		// plan movement
+		gs.fillMovementRequest(p, dst)
+	}
+}
+
+/*
+ * fillMovementRequest fills up and sends a movement request
+ */
+func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
+	if gs.world.PointInBounds(dst) {
+		// fills up a movement request
 		mvtReq := game.MovementRequest{}
 		mvtReq.Org = p.GetPosition()
 		mvtReq.Dst = dst
-		mvtReq.EntityId = evt.Id
-		if gs.world.PointInBounds(dst) {
-			// places it into the MovementPlanner
-			gs.movementPlanner.PlanMovement(&mvtReq)
-		} else {
-			// do not forward a request with out-of-bounds destination
-			log.WithField("dst", mvtReq.Dst).Warn("Out of bounds destination in MoveMsg")
-		}
+		mvtReq.EntityId = p.GetId()
+		// and send if to the movement planner
+		gs.movementPlanner.PlanMovement(&mvtReq)
+	} else {
+		// do not forward a request with out-of-bounds destination
+		log.WithFields(log.Fields{
+			"dst":    dst,
+			"player": p.GetId()}).
+			Error("Can't plan path to out-of-bounds destination")
 	}
 }
 
