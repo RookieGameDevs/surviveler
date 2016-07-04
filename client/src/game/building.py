@@ -5,7 +5,9 @@ from game import Entity
 from game.components import Renderable
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
+from game.health_bar import HealthBar
 from matlib import Vec
+from renderer.scene import SceneNode
 from utils import to_scene
 import logging
 
@@ -48,6 +50,15 @@ class Building(Entity):
         self.mesh_project = resource['model_project']
         self.mesh_complete = resource['model_complete']
 
+        # Setup the group node and add the health bar
+        group_node = SceneNode()
+        g_transform = group_node.transform
+        g_transform.translate(to_scene(*self.position))
+        parent_node.add_child(group_node)
+
+        self.health_bar = HealthBar(
+            resource['health_bar'], progress[0] / progress[1], group_node)
+
         params = {
             'color_ambient': Vec(0.2, 0.2, 0.2, 1),
             'color_diffuse': Vec(0.6, 0.6, 0.6, 1),
@@ -56,14 +67,15 @@ class Building(Entity):
 
         # create components
         renderable = Renderable(
-            parent_node,
+            group_node,
             self.mesh,
             shader,
             params,
             enable_light=True)
 
-        t = renderable.transform
-        t.translate(to_scene(*self.position))
+        # TODO: eventually rotate the the building
+        # t = renderable.transform
+        # t.translate(to_scene(*self.position))
 
         # initialize entity
         super().__init__(renderable)
@@ -84,6 +96,10 @@ class Building(Entity):
         """Removes itself from the scene.
         """
         LOG.debug('Destroying building {}'.format(self.e_id))
+
+        # Destroys the health bar first.
+        self.health_bar.destroy()
+
         node = self[Renderable].node
         node.parent.remove_child(node)
 

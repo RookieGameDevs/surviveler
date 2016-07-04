@@ -50,6 +50,15 @@ class Resource(dict):
         return '<Resource({})>'.format(self.r_path)
 
 
+class Package(Resource):
+    """Override of the Resource class used to discern which resource is a
+    package and which is not."""
+
+    def __repr__(self):
+        """Print the proper representation of the resource."""
+        return '<Package({})>'.format(self.r_path)
+
+
 class ResourceManager:
 
     #: Mapping of the various resource handlers
@@ -114,12 +123,15 @@ class ResourceManager:
         data = json.load(open(self.norm_path(datafile), 'r'))
 
         # Create the bare resource structure
-        res = Resource(package, data)
+        res = Package(package, data)
 
         # Parse the package data.json file and load linked resources
         for name, path in data.get('resources', {}).items():
             r = self.get(os.path.join(package, path))
-            res[name] = r.data
+            if isinstance(r, Package):
+                res[name] = r
+            else:
+                res[name] = r.data
 
         return res
 
