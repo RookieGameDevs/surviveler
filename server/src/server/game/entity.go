@@ -32,13 +32,19 @@ type Entity interface {
 	Type() EntityType
 	State() EntityState
 	Position() math.Vec2
-	// TODO: should move SetPath out out Entity interface
-	SetPath(path math.Path)
 	Update(dt time.Duration)
 }
 
 /*
- * Building is the interface that implements buildings.
+ * MobileEntity is an entity that accepts a path
+ */
+type MobileEntity interface {
+	Entity
+	SetPath(path math.Path)
+}
+
+/*
+ * Building is the interface implemented by building objects.
  *
  * Buildings are entities and thus implement the Entity interface
  */
