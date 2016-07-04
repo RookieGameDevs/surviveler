@@ -38,6 +38,17 @@ type Entity interface {
 }
 
 /*
+ * Building is the interface that implements buildings.
+ *
+ * Buildings are entities and thus implement the Entity interface
+ */
+type Building interface {
+	Entity
+	IsBuilt() bool
+	InduceBuildPower(bp uint16)
+}
+
+/*
  * EntityState represents a snapshot of an entity
  */
 type EntityState struct {

@@ -30,12 +30,6 @@ type BuildingUpdater interface {
 	Update(dt time.Duration)
 }
 
-type Building interface {
-	IsBuilt() bool
-	Id() uint32
-	InduceBuildPower(bp uint16)
-}
-
 /*
  * BasicBuilding is basic generic building.
  *
