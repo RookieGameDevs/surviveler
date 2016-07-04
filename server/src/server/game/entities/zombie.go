@@ -34,16 +34,16 @@ const (
 
 type Zombie struct {
 	id       uint32
-	game     game.Game
+	g        game.Game
 	curState int // current state
 	timeAcc  time.Duration
 	target   game.Entity
 	components.Movable
 }
 
-func NewZombie(game game.Game, pos math.Vec2) *Zombie {
+func NewZombie(g game.Game, pos math.Vec2) *Zombie {
 	return &Zombie{
-		game:     game,
+		g:        g,
 		curState: lookingState,
 		Movable: components.Movable{
 			Speed: zombieWalkSpeed,
@@ -61,7 +61,7 @@ func (z *Zombie) SetId(id uint32) {
 }
 
 func (z *Zombie) findPathToTarget() (math.Path, bool) {
-	path, _, found := z.game.Pathfinder().FindPath(z.Pos, z.target.Position())
+	path, _, found := z.g.Pathfinder().FindPath(z.Pos, z.target.Position())
 	return path, found
 }
 
@@ -211,7 +211,7 @@ func (z *Zombie) State() game.EntityState {
 }
 
 func (z *Zombie) findTarget() (game.Entity, float32) {
-	ent, dist := z.game.State().NearestEntity(
+	ent, dist := z.g.State().NearestEntity(
 		z.Pos,
 		func(e game.Entity) bool {
 			return e.Type() != game.ZombieEntity
