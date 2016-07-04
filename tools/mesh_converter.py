@@ -116,7 +116,14 @@ def main(model, out):
             is_part = skeleton_parts[node.name][0]
             if is_part:
                 parent_id = skeleton.get(node.parent.name, [255])[0]
-                skeleton[node.name] = (next(joint_id), parent_id, bones_by_name.get(node.name))
+                transform = (
+                    bones_by_name[node.name].offsetmatrix
+                    if node.name in bones_by_name
+                    else node.transformation)
+                skeleton[node.name] = (
+                    next(joint_id),  # joint id
+                    parent_id,  # parent id
+                    transform)  # joint transform
             return is_part
 
         add_to_skeleton(skeleton_root)
@@ -185,10 +192,9 @@ def main(model, out):
             fp.write(pack('<L', i))
 
         # write joints
-        identity = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]
-        for j_id, p_id, bone in sorted(skeleton.values(), key=lambda j: j[0]):
+        for j_id, p_id, transform in sorted(skeleton.values(), key=lambda j: j[0]):
             fp.write(pack('<BB', j_id, p_id))
-            for row in bone.offsetmatrix if bone else identity:
+            for row in transform:
                 fp.write(pack('<ffff', *row))
 
         # write animations
