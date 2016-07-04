@@ -5,12 +5,11 @@
 package protocol
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"server/game/messages"
 	"server/network"
 	"sync"
 	"time"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -113,6 +112,20 @@ func (reg *ClientRegistry) Broadcast(msg *messages.Message) error {
 		}
 	}
 	return nil
+}
+
+func (reg *ClientRegistry) Kick(id uint32, reason string) {
+	// protect client map access (read)
+	reg.mutex.RLock()
+	defer reg.mutex.RUnlock()
+
+	if conn, ok := reg.clients[id]; ok {
+		if err := sendLeave(conn, reason); err != nil {
+			log.WithError(err).Error("Couldn't kick client")
+		}
+	} else {
+		log.WithField("client", id).Error("Uknown client id, can't kick him/her")
+	}
 }
 
 /*
