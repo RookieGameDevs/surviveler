@@ -8,6 +8,7 @@
 
 typedef struct Vec Vec;
 typedef struct Mat Mat;
+typedef struct Qtr Qtr;
 
 
 /*******************************************************************************
@@ -105,3 +106,13 @@ vec_cross(const Vec *a, const Vec *b, Vec *r_v);
 
 void
 vec_norm(Vec *v);
+
+/*******************************************************************************
+ * Quaternion type and quaternion operations
+*******************************************************************************/
+struct Qtr {
+	float data[4];
+};
+
+Qtr
+qtr(float w, float x, float y, float z);

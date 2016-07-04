@@ -413,6 +413,13 @@ vec_cross(const Vec *a, const Vec *b, Vec *r_v)
 	r_v->data[3] = 0;  // no cross product exists for 4D vectors
 }
 
+Qtr
+qtr(float w, float x, float y, float z)
+{
+	Qtr q = {{w, x, y, z}};
+	return q;
+}
+
 /******************************************************************************
  * Python3 wrappers.
  *****************************************************************************/

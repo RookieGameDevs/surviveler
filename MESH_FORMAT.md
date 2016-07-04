@@ -135,12 +135,13 @@ This section contains data about animations, each of which is defined as a
 fixed-size header followed by a variable number of keyframes (poses). The header
 is structured as following:
 
-|Field    |Type        |Size |Count |Offset |
-|---------|------------|-----|------|-------|
-|Name     |unsigned int|4    |1     |0      |
-|Duration |float       |4    |1     |4      |
-|Speed    |float       |4    |1     |8      |
-
+|Field     |Type        |Size |Count       |Offset |
+|----------|------------|-----|------------|-------|
+|Name      |unsigned int|4    |1           |0      |
+|Duration  |float       |4    |1           |4      |
+|Speed     |float       |4    |1           |8      |
+|Pose count|unsigned int|4    |1           |12     |
+|Timestamps|float       |4    |`Pose count`|16     |
 
 ### Name
 Index in string constants section of the animation name string.
@@ -150,6 +151,42 @@ Animation duration in ticks.
 
 ### Speed
 Animation speed in ticks per second.
+
+### Pose count
+Number of skeleton poses in the animation.
+
+### Timestamps
+Pose timestamps as absolute tick values in the animation timeline.
+
+## Skeleton poses
+The actual animation is made up of skeleton poses. A skeleton pose is a full set
+of poses of its joints for the given timestamp. Skeleton poses are contiguos and
+follow the chronological order of the animation timeline, thus, skeleton pose 0
+will correspond to timestamp at index 0. Since a single skeleton pose is
+actually made up of pose entries for all of its joints, the number of entries is
+given by `Joint count`, and the size of whole skeleton pose data for the entire
+animation is given by `Joint count` * `Pose count` * `Pose entry size`. A single
+joint pose entry is structured as following:
+
+|Field     |Type        |Size |Count |Offset |
+|----------|------------|-----|------|-------|
+|Joint ID  |unsigned int|4    |1     |0      |
+|Position  |float       |4    |3     |4      |
+|Rotation  |float       |4    |4     |16     |
+|Scale     |float       |4    |3     |32     |
+
+### Joint ID
+Identifier of the joint to which the pose refers.
+
+### Position
+Position of the joint at given time expressed as `(X,Y,Z`) tuple.
+
+### Scale
+Scale of the joint at given time expressed as `(Xs,Ys,Zs)` tuple.
+
+### Rotation
+Rotation of the joint at given time expressed as rotation quaternion
+`(W,X,Y,Z)`.
 
 
 Strings

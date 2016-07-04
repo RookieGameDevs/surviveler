@@ -25,8 +25,8 @@ struct Skeleton {
  * Joint pose (e.g transformation).
  */
 struct JointPose {
-	Vec rot;    // rotation expressed in euler angles
 	Vec trans;  // translation
+	Qtr rot;    // rotation quaternion
 	Vec scale;  // scale
 };
 
@@ -47,5 +47,6 @@ struct Animation {
 	float duration;               // duration in ticks
 	float speed;                  // number of ticks played per second
 	size_t pose_count;            // total number of poses in the animation
+	float *timestamps;            // animation timeline
 	struct SkeletonPose *poses;   // poses
 };

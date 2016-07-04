@@ -18,7 +18,8 @@
 #define JOINT_ATTRIB_SIZE 8
 #define INDEX_SIZE 4
 #define JOINT_SIZE 66
-#define ANIM_SIZE  12
+#define ANIM_SIZE  16
+#define POSE_SIZE  44
 
 #define VERSION_FIELD uint8_t,  0
 #define FORMAT_FIELD  uint16_t, 1
@@ -55,6 +56,7 @@ struct MeshData*
 mesh_data_from_file(const char *filename)
 {
 	struct MeshData *md = NULL;
+	size_t *anim_name_indices = NULL;
 
 	// read file contents into a buffer
 	char *data = NULL;
@@ -150,25 +152,81 @@ mesh_data_from_file(const char *filename)
 
 	// initialize animations (if there's a skeleton)
 	md->anim_count = get_field(data, ACOUNT_FIELD);
-	size_t anim_offset = offset + md->anim_count * ANIM_SIZE; // TODO: extend this
-	if (md->skeleton && md->anim_count) {
+	anim_name_indices = malloc(sizeof(size_t) * md->anim_count);
+	if (md->skeleton && md->anim_count > 0) {
 		md->animations = malloc(sizeof(struct Animation));
 		for (size_t a = 0; a < md->anim_count; a++) {
 			struct Animation *anim = md->animations + a;
-			uint32_t name_str_idx = *(uint32_t*)(data + offset);
-			anim->name = get_string(
-				data + anim_offset,
-				data_size - anim_offset,
-				name_str_idx
-			);
+			anim_name_indices[a] = *(uint32_t*)(data + offset);
 			anim->skeleton = md->skeleton;
 			anim->duration = *(float*)(data + offset + 4);
 			anim->speed = *(float*)(data + offset + 8);
+			anim->pose_count = *(uint32_t*)(data + offset + 12);
+
 			offset += ANIM_SIZE;
+
+			// read timestamps
+			anim->timestamps = malloc(sizeof(float) * anim->pose_count);
+			if (!anim->timestamps)
+				goto error; // TODO: free timestamp data
+			for (size_t t = 0; t < anim->pose_count; t++) {
+				anim->timestamps[t] = *(float*)(data + offset);
+				offset += 4;
+			}
+
+			// read skeleton poses
+			anim->poses = malloc(sizeof(struct SkeletonPose) * anim->pose_count);
+			if (!anim->poses)
+				goto error;  // TODO: free animation data
+			for (size_t p = 0; p < anim->pose_count; p++) {
+				struct SkeletonPose *sp = anim->poses + p;
+				sp->skeleton = md->skeleton;
+
+				sp->joint_poses = malloc(sizeof(struct JointPose) * md->skeleton->joint_count);
+				if (!sp->skeleton || !sp->joint_poses)
+					goto error;  // TODO: free skeleton pose data
+
+				// read joint poses for given timestamp
+				for (size_t j = 0; j < md->skeleton->joint_count; j++) {
+					size_t id = *(uint32_t*)(data + offset);
+					struct JointPose *jp = &sp->joint_poses[id];
+
+					// translation
+					float tx = *(float*)(data + offset + 4);
+					float ty = *(float*)(data + offset + 8);
+					float tz = *(float*)(data + offset + 12);
+					jp->trans = vec(tx, ty, tz, 0);
+
+					// rotation
+					float rw = *(float*)(data + offset + 16);
+					float rx = *(float*)(data + offset + 20);
+					float ry = *(float*)(data + offset + 24);
+					float rz = *(float*)(data + offset + 28);
+					jp->rot = qtr(rw, rx, ry, rz);
+
+					// scale
+					float sx = *(float*)(data + offset + 32);
+					float sy = *(float*)(data + offset + 36);
+					float sz = *(float*)(data + offset + 40);
+					jp->scale = vec(sx, sy, sz, 0);
+
+					offset += POSE_SIZE;
+				}
+			}
+		}
+
+		// lookup animation names
+		for (size_t a = 0; a < md->anim_count; a++) {
+			md->animations[a].name = get_string(
+				data + offset,
+				data_size - offset,
+				anim_name_indices[a]
+			);
 		}
 	}
 
 cleanup:
+	free(anim_name_indices);
 	free(data);
 	return md;
 

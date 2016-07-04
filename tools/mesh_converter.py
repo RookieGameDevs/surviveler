@@ -146,11 +146,73 @@ def main(model, out):
                         bindings_count,
                         MAX_JOINTS_PER_VERTEX))
 
+    animations = {}
     for i, anim in enumerate(scene.animations):
         name = anim.name or 'animation{}'.format(i)
         anim.name = name
+
         if name not in strings:
             strings[name] = len(strings)
+
+        if len(anim.channels) == 0 or len(anim.channels[0].positionkeys) == 0:
+            raise DataFormatError('animation "{}" has no keyframes'.format(name))
+
+        timestamps = [
+            pos.time for pos in anim.channels[0].positionkeys
+        ]
+
+        # build local node timelines
+        node_timelines = {}
+        for node in anim.channels:
+            node_name = node.nodename.data
+            node_timeline = {}
+            for pos, rot, scale in zip(node.positionkeys, node.rotationkeys, node.scalingkeys):
+                t = pos.time
+                if pos.time != rot.time or rot.time != scale.time:
+                    raise DataFormatError(
+                        'node "{}" in animation "{}" has inconsistent channel timeline'.format(
+                            node_name,
+                            name))
+                node_timeline[t] = (pos.value, rot.value, scale.value)
+            node_timelines[node_name] = node_timeline
+
+            # assert local node timelines match the global one
+            if node_timeline.keys() != timestamps:
+                raise DataFormatError(
+                    'node "{}" in animation "{}" local timeline does not match '
+                    'global timeline'.format(
+                        node_name,
+                        name))
+
+        # inject identity transformations for non-joint animation nodes for each
+        # timestamp in the timeline
+        node_timelines.update({
+            node_name: {
+                t: (
+                    # position
+                    [0, 0, 0],
+                    # rotation
+                    [1, 0, 0, 0],
+                    # scale
+                    [1, 1, 1],
+                ) for t in timestamps
+            } for node_name in set(skeleton) - set(node_timelines)
+        })
+
+        # fill the pose data
+        pose_data = []
+        for t in timestamps:
+            skeleton_pose = []
+            for node_name, timeline in node_timelines.iteritems():
+                joint_id = skeleton[node_name][0]
+                pos, rot, scale = timeline[t]
+                skeleton_pose.append((joint_id, pos, rot, scale))
+
+            # sort joint poses by joint_id
+            skeleton_pose = sorted(skeleton_pose, key=lambda p: p[0])
+            pose_data.extend(skeleton_pose)
+
+        animations[name] = (timestamps, pose_data)
 
     with open(out, 'wb') as fp:
         # write header
@@ -199,7 +261,29 @@ def main(model, out):
 
         # write animations
         for anim in scene.animations:
-            fp.write(pack('<Lff', strings[anim.name], anim.duration, anim.tickspersecond))
+            timestamps, poses = animations[anim.name]
+
+            # header
+            fp.write(pack(
+                '<LffL',
+                strings[anim.name],
+                anim.duration,
+                anim.tickspersecond,
+                len(timestamps)))
+
+            # timestamps
+            for t in timestamps:
+                fp.write(pack('<f', t))
+
+            # pose data
+            for joint_id, pos, rot, scale in poses:
+                pose = pack(
+                    '<Lffffffffff',
+                    joint_id,
+                    pos[0], pos[1], pos[2],
+                    rot[0], rot[1], rot[2], rot[3],
+                    scale[0], scale[1], scale[2])
+                fp.write(pose)
 
         # write strings
         for string in strings:
