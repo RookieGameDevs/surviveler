@@ -26,8 +26,9 @@ import (
  */
 type gamestate struct {
 	gameTime        int16
-	entities        map[uint32]game.Entity
-	numEntities     uint32 // number of entities currently present in the game
+	entities        map[uint32]game.Entity   // entities currently in game
+	buildings       map[uint32]game.Building // buildings currently in game
+	numEntities     uint32                   // number of entities currently present in the game
 	game            *survivelerGame
 	world           *game.World
 	md              *resource.MapData
