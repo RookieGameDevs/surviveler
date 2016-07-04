@@ -4,6 +4,7 @@
 package game
 
 import (
+	gomath "math"
 	"server/math"
 	"time"
 )
@@ -23,11 +24,15 @@ const (
 	ZombieEntity
 )
 
+const (
+	InvalidId uint32 = gomath.MaxUint32
+)
+
 /*
  * Entity is the interface that represents stateful game objects
  */
 type Entity interface {
-	Id() uint32
+	Id() uint32 // should return InvalidId if Id has not been assigned yet
 	SetId(uint32)
 	Type() EntityType
 	State() EntityState

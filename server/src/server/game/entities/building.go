@@ -66,6 +66,7 @@ type BasicBuilding struct {
 func NewBasicBuilding() *BasicBuilding {
 	return &BasicBuilding{
 		BuildingBase{
+			id:           game.InvalidId,
 			totalHP:      BuildingTotalHitPoints,
 			curHP:        BuildingTotalHitPoints,
 			requiredBP:   RequiredBuildPower,

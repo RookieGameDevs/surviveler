@@ -136,8 +136,9 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
 	// TODO: speed from resource
-	gs.AddEntity(entities.NewPlayer(
-		gs.game, org, 3, game.EntityType(evt.Type)))
+	p := entities.NewPlayer(gs.game, org, 3, game.EntityType(evt.Type))
+	p.SetId(evt.Id)
+	gs.AddEntity(p)
 }
 
 /*
@@ -256,13 +257,16 @@ func (gs *gamestate) Entity(id uint32) game.Entity {
 /*
  * AddEntity adds specifies entity to the game state.
  *
- * It also assigns it a unique Id
+ * It entity Id is InvalidId, an unique id is generated and assigned
+ * to the entity
  */
-func (gs *gamestate) AddEntity(ent game.Entity) uint32 {
-	id := gs.allocEntityId()
+func (gs *gamestate) AddEntity(ent game.Entity) {
+	id := ent.Id()
+	if id == game.InvalidId {
+		id = gs.allocEntityId()
+		ent.SetId(id)
+	}
 	gs.entities[id] = ent
-	ent.SetId(id)
-	return id
 }
 
 func (gs *gamestate) MapData() *resource.MapData {

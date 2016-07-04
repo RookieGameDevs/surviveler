@@ -43,6 +43,7 @@ type Zombie struct {
 
 func NewZombie(g game.Game, pos math.Vec2) *Zombie {
 	return &Zombie{
+		id:       game.InvalidId,
 		g:        g,
 		curState: lookingState,
 		Movable: components.Movable{
