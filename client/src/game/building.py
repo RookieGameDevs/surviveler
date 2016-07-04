@@ -86,7 +86,7 @@ class Building(Entity):
 
     @property
     def mesh(self):
-        """Return the appropriate mesh based on the building status.
+        """Returns the appropriate mesh based on the building status.
 
         :returns: The appropriate mesh
         :rtype: :class:`renderer.Mesh`
@@ -98,10 +98,22 @@ class Building(Entity):
 
     @property
     def progress(self):
+        """Returns the progress of the building as a tuple current/total.
+
+        :returns: The progress of the building
+        :rtype: :class:`tuple`
+        """
         return self._progress
 
     @progress.setter
     def progress(self, value):
+        """Sets the progress of the building.
+
+        Propagate the modification to the buliding health bar.
+
+        :param value: The new progress
+        :type value: :class:`tuple`
+        """
         self._progress = value
         self.health_bar.value = value[0] / value[1]
 
@@ -117,7 +129,7 @@ class Building(Entity):
         node.parent.remove_child(node)
 
     def update(self, dt):
-        """Update the building.
+        """Updates the building.
 
         Applies the status of the building in terms of shader params and meshes.
 
@@ -130,7 +142,7 @@ class Building(Entity):
 
 @subscriber(BuildingSpawn)
 def building_spawn(evt):
-    """Create a building.
+    """Creates a building.
 
     A building of the appropriate type is created and placed into the game.
     """
@@ -162,7 +174,7 @@ def building_spawn(evt):
 
 @subscriber(BuildingDisappear)
 def building_disappear(evt):
-    """Remove a building from the game.
+    """Removes a building from the game.
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
@@ -174,7 +186,7 @@ def building_disappear(evt):
 
 @subscriber(BuildingHealthChange)
 def building_health_change(evt):
-    """Update the number of hp of the building.
+    """Updates the number of hp of the building.
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
@@ -186,7 +198,7 @@ def building_health_change(evt):
 
 @subscriber(BuildingComplete)
 def building_complete(evt):
-    """Update the status of the building.
+    """Updates the status of the building.
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context

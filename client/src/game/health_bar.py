@@ -55,10 +55,20 @@ class HealthBar(Entity):
 
     @property
     def value(self):
+        """Returns the value [0,1] of that is currently displayed.
+
+        :returns: The value of the health bar
+        :rtype: :class:`float`
+        """
         return self._value
 
     @value.setter
     def value(self, v):
+        """Sets the value [0,1] to be displayed.
+
+        :param v: The value of the health bar
+        :type v: :class:`float`
+        """
         self._value = v
         self[Renderable].node.params['value'] = v * self.w
 
@@ -70,7 +80,7 @@ class HealthBar(Entity):
         node.parent.remove_child(node)
 
     def update(self, dt):
-        """Update the health bar.
+        """Updates the health bar.
 
         :param dt: Time delta from last update.
         :type dt: float

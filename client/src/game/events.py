@@ -2,7 +2,7 @@ from events import Event
 
 
 class EntitySpawn(Event):
-    """Handles entity spawning on the scene.
+    """An entity spawned on the scene.
 
     Event emitted when a new entity is discovered in the gamestate.
     """
@@ -15,7 +15,7 @@ class EntitySpawn(Event):
 
 
 class EntityDisappear(Event):
-    """Handles entity disappearing from the scene.
+    """An entity disappeared from the scene.
 
     Event emitted when a previously existing entity does not exist anymore.
     """
@@ -27,7 +27,7 @@ class EntityDisappear(Event):
 
 
 class BuildingSpawn(Event):
-    """Handles building spawning on the scene.
+    """A building spawned on the scene.
 
     Event emitted when a new building is discovered in the gamestate.
     """
@@ -43,7 +43,7 @@ class BuildingSpawn(Event):
 
 
 class BuildingDisappear(Event):
-    """Handles building disappearing from the scene.
+    """A building disappeared from the scene.
 
     Event emitted when a previously existing building does not exist anymore.
     """
