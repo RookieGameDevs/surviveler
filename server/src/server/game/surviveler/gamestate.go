@@ -136,9 +136,8 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
 	// TODO: speed from resource
-	player := entities.NewPlayer(gs.game, org, 3, game.EntityType(evt.Type))
-	gs.entities[evt.Id] = player
-	player.SetId(evt.Id)
+	gs.AddEntity(entities.NewPlayer(
+		gs.game, org, 3, game.EntityType(evt.Type)))
 }
 
 /*
@@ -195,6 +194,11 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		// clip building center to center of a game square unit
 		dst := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
 			Add(math.Vec2{0.5, 0.5})
+
+		// create the building
+		building := entities.NewBasicBuilding()
+		gs.AddEntity(building)
+
 		// set player action
 		p.Build(evt.Type, dst)
 		// plan movement
@@ -242,9 +246,15 @@ func (gs *gamestate) Entity(id uint32) game.Entity {
 	return nil
 }
 
+/*
+ * AddEntity adds specifies entity to the game state.
+ *
+ * It also assigns it a unique Id
+ */
 func (gs *gamestate) AddEntity(ent game.Entity) uint32 {
 	id := gs.allocEntityId()
 	gs.entities[id] = ent
+	ent.SetId(id)
 	return id
 }
 
