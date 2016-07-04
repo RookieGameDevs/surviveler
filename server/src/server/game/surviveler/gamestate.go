@@ -191,6 +191,13 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	// check that the entity exists
 	if ent, ok := gs.entities[evt.Id]; ok {
 		p := ent.(*entities.Player)
+
+		// only engineers can build
+		if p.Type() != game.EngineerEntity {
+			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
+			return
+		}
+
 		// clip building center to center of a game square unit
 		dst := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
 			Add(math.Vec2{0.5, 0.5})
