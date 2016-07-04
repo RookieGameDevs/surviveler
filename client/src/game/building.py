@@ -44,7 +44,7 @@ class Building(Entity):
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
         self.position = position
-        self.progress = progress
+        self._progress = progress
         self.completed = completed
 
         shader = resource['shader']
@@ -92,6 +92,15 @@ class Building(Entity):
             return self.mesh_project
         else:
             return self.mesh_complete
+
+    @property
+    def progress(self):
+        return self._progress
+
+    @progress.setter
+    def progress(self, value):
+        self._progress = value
+        self.health_bar.value = value[0] / value[1]
 
     def destroy(self):
         """Removes itself from the scene.
