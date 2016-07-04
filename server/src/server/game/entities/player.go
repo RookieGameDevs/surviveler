@@ -8,7 +8,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
-	"server/game/events"
 	"server/math"
 	"time"
 )
@@ -34,6 +33,7 @@ type Player struct {
 	entityType    game.EntityType  // player type
 	actions       game.ActionStack // action stack
 	lastBPinduced time.Time        // time of last initiated BP induction
+	curBuilding   game.Building    // building in construction
 	g             game.Game
 	components.Movable
 }
@@ -46,10 +46,13 @@ func NewPlayer(g game.Game, spawn math.Vec2, speed float64, entityType game.Enti
 	p.entityType = entityType
 	p.Speed = speed
 	p.Pos = spawn
+	p.g = g
+	p.id = game.InvalidId
+	p.curBuilding = nil
 
-	// place an idle action as bottommost action stack item this should
-	// never be removed as the player should remain idle when he has nothing
-	// better to do
+	// place an idle action as the bottommost item of the action stack item.
+	// This should never be removed as the player should remain idle if he
+	// has nothing better to do
 	p.actions = *game.NewActionStack()
 	p.actions.Push(&game.Action{game.IdleAction, game.IdleActionData{}})
 	return p
@@ -69,23 +72,37 @@ func (p *Player) Update(dt time.Duration) {
 				next := p.actions.Pop()
 				log.WithField("action", next).Debug("next player action")
 			}
+
 		case WaitingForPathAction:
 			log.Debug("player is waiting for path action")
+
 		case game.BuildingAction:
-			if p.lastBPinduced.IsZero() {
-				// we are starting to build, mark the time
+
+			if p.curBuilding == nil {
+
+				// we are starting to build, create the building
+				log.WithField("building", p.curBuilding).
+					Info("Starting building construction")
+				p.curBuilding = NewBasicBuilding()
+				p.g.State().AddEntity(p.curBuilding)
+				// mark current time
 				p.lastBPinduced = time.Now()
+
 			} else {
+
 				if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
 					// BP induction period elapsed -> transmit BP to building
-					p.g.PostEvent(events.NewEvent(events.InduceBP,
-						events.InduceBPEvent{
-							FromId: p.id,
-							ToId:   100, // TODO: continue here, we should
-							// already have a building ID, got from NewBuilding(),
-							// called when we are starting to build
-							BP: PlayerBuildPower,
-						}))
+					p.curBuilding.InduceBuildPower(PlayerBuildPower)
+					p.lastBPinduced = time.Now()
+					log.WithFields(log.Fields{
+						"player":   p,
+						"building": p.curBuilding,
+					}).Info("Inducing Build Power")
+				}
+				if p.curBuilding.IsBuilt() {
+					log.WithField("building", p.curBuilding).
+						Info("Finished building construction")
+					p.actions.Pop()
 				}
 			}
 		}
