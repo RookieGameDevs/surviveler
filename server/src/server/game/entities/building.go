@@ -68,7 +68,7 @@ func NewBasicBuilding() *BasicBuilding {
 		BuildingBase{
 			id:           game.InvalidId,
 			totalHP:      BuildingTotalHitPoints,
-			curHP:        BuildingTotalHitPoints,
+			curHP:        1,
 			requiredBP:   RequiredBuildPower,
 			curBP:        0,
 			buildingType: 0,
