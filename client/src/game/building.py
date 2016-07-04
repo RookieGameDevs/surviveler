@@ -4,6 +4,7 @@ from events import subscriber
 from game import Entity
 from game.components import Renderable
 from game.events import BuildingDisappear
+from game.events import BuildingHealthChange
 from game.events import BuildingSpawn
 from game.health_bar import HealthBar
 from matlib import Vec
@@ -157,3 +158,15 @@ def building_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         building = context.entities.pop(e_id)
         building.destroy()
+
+
+@subscriber(BuildingHealthChange)
+def building_health_change(evt):
+    """Update the number of hp of the building.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    if evt.srv_id in context.server_entities_map:
+        e_id = context.server_entities_map[evt.srv_id]
+        building = context.entities[e_id]
+        building.progress = evt.new, building.progress[1]

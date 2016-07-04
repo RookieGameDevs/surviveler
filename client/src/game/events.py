@@ -58,6 +58,33 @@ class BuildingDisappear(Event):
         return '<BuildingDisappear({}, {})>'.format(self.srv_id, self.b_type)
 
 
+class BuildingHealthChange(Event):
+    """A building has a different amount of hp.
+
+    Event emitted when the amount of hp of a building changes.
+    """
+    def __init__(self, srv_id, old, new):
+        self.srv_id = srv_id
+        self.old = old
+        self.new = new
+
+    def __str__(self):
+        return '<BuildingHealthChange({}, {}, {})>'.format(
+            self.srv_id, self.old, self.new)
+
+
+class BuildingComplete(Event):
+    """A building was completed.
+
+    Event emitted when a building construction is completed.
+    """
+    def __init__(self, srv_id):
+        self.srv_id = srv_id
+
+    def __str__(self):
+        return '<BuildingComplete({})>'.format(self.srv_id)
+
+
 class TimeUpdate(Event):
     """Game time updated.
 
