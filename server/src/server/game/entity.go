@@ -32,6 +32,7 @@ type Entity interface {
 	Type() EntityType
 	State() EntityState
 	Position() math.Vec2
+	// TODO: should move SetPath out out Entity interface
 	SetPath(path math.Path)
 	Update(dt time.Duration)
 }
