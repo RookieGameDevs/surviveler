@@ -278,7 +278,7 @@ def main(model, out):
             # pose data
             for joint_id, pos, rot, scale in poses:
                 pose = pack(
-                    '<Lffffffffff',
+                    '<Bffffffffff',
                     joint_id,
                     pos[0], pos[1], pos[2],
                     rot[0], rot[1], rot[2], rot[3],

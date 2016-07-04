@@ -3,6 +3,7 @@
 
 #include "ioutils.h"
 #include "mesh.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +20,7 @@
 #define INDEX_SIZE 4
 #define JOINT_SIZE 66
 #define ANIM_SIZE  16
-#define POSE_SIZE  44
+#define POSE_SIZE  41
 
 #define VERSION_FIELD uint8_t,  0
 #define FORMAT_FIELD  uint16_t, 1
@@ -140,9 +141,12 @@ mesh_data_from_file(const char *filename)
 
 		md->skeleton->joint_count = joint_count;
 		for (size_t j = 0; j < joint_count; j++) {
-			md->skeleton->joints[j].parent = *(uint8_t*)(data + offset + 1);
+			uint8_t id = *(uint8_t*)(data + offset);
+			assert(id < joint_count);
+
+			md->skeleton->joints[id].parent = *(uint8_t*)(data + offset + 1);
 			memcpy(
-				&md->skeleton->joints[j].inv_bind_pose,
+				&md->skeleton->joints[id].inv_bind_pose,
 				data + offset + 2,
 				64
 			);
@@ -189,25 +193,27 @@ mesh_data_from_file(const char *filename)
 				// read joint poses for given timestamp
 				for (size_t j = 0; j < md->skeleton->joint_count; j++) {
 					size_t id = *(uint32_t*)(data + offset);
+					assert(id < md->skeleton->joint_count);
+
 					struct JointPose *jp = &sp->joint_poses[id];
 
 					// translation
-					float tx = *(float*)(data + offset + 4);
-					float ty = *(float*)(data + offset + 8);
-					float tz = *(float*)(data + offset + 12);
+					float tx = *(float*)(data + offset + 1);
+					float ty = *(float*)(data + offset + 5);
+					float tz = *(float*)(data + offset + 9);
 					jp->trans = vec(tx, ty, tz, 0);
 
 					// rotation
-					float rw = *(float*)(data + offset + 16);
-					float rx = *(float*)(data + offset + 20);
-					float ry = *(float*)(data + offset + 24);
-					float rz = *(float*)(data + offset + 28);
+					float rw = *(float*)(data + offset + 13);
+					float rx = *(float*)(data + offset + 17);
+					float ry = *(float*)(data + offset + 21);
+					float rz = *(float*)(data + offset + 25);
 					jp->rot = qtr(rw, rx, ry, rz);
 
 					// scale
-					float sx = *(float*)(data + offset + 32);
-					float sy = *(float*)(data + offset + 36);
-					float sz = *(float*)(data + offset + 40);
+					float sx = *(float*)(data + offset + 29);
+					float sy = *(float*)(data + offset + 33);
+					float sz = *(float*)(data + offset + 37);
 					jp->scale = vec(sx, sy, sz, 0);
 
 					offset += POSE_SIZE;

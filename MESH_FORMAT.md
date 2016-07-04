@@ -170,10 +170,10 @@ joint pose entry is structured as following:
 
 |Field     |Type        |Size |Count |Offset |
 |----------|------------|-----|------|-------|
-|Joint ID  |unsigned int|4    |1     |0      |
-|Position  |float       |4    |3     |4      |
-|Rotation  |float       |4    |4     |16     |
-|Scale     |float       |4    |3     |32     |
+|Joint ID  |unsigned int|1    |1     |0      |
+|Position  |float       |4    |3     |1      |
+|Rotation  |float       |4    |4     |13     |
+|Scale     |float       |4    |3     |29     |
 
 ### Joint ID
 Identifier of the joint to which the pose refers.
