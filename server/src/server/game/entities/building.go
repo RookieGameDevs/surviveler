@@ -104,5 +104,5 @@ func (mg *MgTurret) InduceBuildPower(bp uint16) {
 }
 
 func (mg *MgTurret) IsBuilt() bool {
-	return bb.isBuilt
+	return mg.isBuilt
 }
