@@ -45,20 +45,27 @@ type MapData struct {
 }
 
 /*
- * EntityDAta regroups settings and information about the specific entity type.
+ * EntititesData lists the URI for the various entity types
  */
-type EntityData struct {
-	Resources     ResourceList `json:"resources"`
-	BuildingPower uint8        `json:"building_power"`
-	Speed         uint8        `json:"speed"`
+type EntitiesData struct {
+	Entities  map[string]string `json:"entities_map"`
+	Buildings map[string]string `json:"buildings_map"`
 }
 
 /*
- * BuildingData regroups settings and information about the specific buildnig
- * type.
+ * EntityData regroups settings and information about a specific player entity
+ * type
+ */
+type EntityData struct {
+	BuildingPower uint8 `json:"building_power"`
+	Speed         uint8 `json:"speed"`
+}
+
+/*
+ * BuildingData regroups settings and information about a specific building
+ * entity type
  */
 type BuildingData struct {
-	Resources        ResourceList `json:"resources"`
-	TotHp            uint16       `json:"tot_hp"`
-	BuildingPowerRec uint16       `json:"building_power_req"`
+	TotHp            uint16 `json:"tot_hp"`
+	BuildingPowerRec uint16 `json:"building_power_req"`
 }
