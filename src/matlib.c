@@ -254,6 +254,40 @@ mat_invert(Mat *m, Mat *out_m)
 	return 1;
 }
 
+Mat
+mat_from_qtr(const Qtr *q)
+{
+	float w = q->data[0], x = q->data[1], y = q->data[2], z = q->data[3];
+	float yy = y * y;
+	float xx = x * x;
+	float zz = z * z;
+
+	float m00 = 1 - 2*yy - 2*zz;
+	float m01 = 2*x*y - 2*z*w;
+	float m02 = 2*x*z + 2*y*w;
+	float m03 = 0;
+
+	float m10 = 2*x*y + 2*z*w;
+	float m11 = 1 - 2*xx - 2*zz;
+	float m12 = 2*y*z - 2*x*w;
+	float m13 = 0;
+
+	float m20 = 2*x*z - 2*y*w;
+	float m21 = 2*y*z + 2*x*w;
+	float m22 = 1 - 2*xx - 2*yy;
+	float m23 = 0;
+
+	float m30 = 0, m31 = 0, m32 = 0, m33 = 1;
+
+	Mat m = {{
+		m00, m01, m02, m03,
+		m10, m11, m12, m13,
+		m20, m21, m22, m23,
+		m30, m31, m32, m33
+	}};
+	return m;
+}
+
 void
 mat_lookat(
 	Mat *m,
@@ -418,6 +452,48 @@ qtr(float w, float x, float y, float z)
 {
 	Qtr q = {{w, x, y, z}};
 	return q;
+}
+
+void
+qtr_mulf(const Qtr *a, float scalar, Qtr *r_q)
+{
+	r_q->data[0] = a->data[0] * scalar;
+	r_q->data[1] = a->data[1] * scalar;
+	r_q->data[2] = a->data[2] * scalar;
+	r_q->data[3] = a->data[3] * scalar;
+}
+
+void
+qtr_mul(const Qtr *a, const Qtr *b, Qtr *r_q)
+{
+	r_q->data[1] =  a->data[1] * b->data[0] + a->data[2] * b->data[3] - a->data[3] * b->data[2] + a->data[0] * b->data[1];
+	r_q->data[2] = -a->data[1] * b->data[3] + a->data[2] * b->data[0] + a->data[3] * b->data[1] + a->data[0] * b->data[2];
+	r_q->data[3] =  a->data[1] * b->data[2] - a->data[2] * b->data[1] + a->data[3] * b->data[0] + a->data[0] * b->data[3];
+	r_q->data[0] = -a->data[1] * b->data[1] - a->data[2] * b->data[2] - a->data[3] * b->data[3] + a->data[0] * b->data[0];
+}
+
+void
+qtr_add(const Qtr *a, const Qtr *b, Qtr *r_q)
+{
+	r_q->data[0] = a->data[0] + b->data[0];
+	r_q->data[1] = a->data[1] + b->data[1];
+	r_q->data[2] = a->data[2] + b->data[2];
+	r_q->data[3] = a->data[3] + b->data[3];
+}
+
+void
+qtr_norm(Qtr *q)
+{
+	float n = sqrt(
+		q->data[0] * q->data[0] +
+		q->data[1] * q->data[1] +
+		q->data[2] * q->data[2] +
+		q->data[3] * q->data[3]
+	);
+	q->data[0] /= n;
+	q->data[1] /= n;
+	q->data[2] /= n;
+	q->data[3] /= n;
 }
 
 /******************************************************************************

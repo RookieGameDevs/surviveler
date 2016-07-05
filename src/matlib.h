@@ -66,6 +66,9 @@ mat_ident(Mat *m);
 int
 mat_invert(Mat *m, Mat *out_m);
 
+Mat
+mat_from_qtr(const Qtr *q);
+
 /*******************************************************************************
  * Vector type and vector operations.
 *******************************************************************************/
@@ -116,3 +119,15 @@ struct Qtr {
 
 Qtr
 qtr(float w, float x, float y, float z);
+
+void
+qtr_add(const Qtr *a, const Qtr *b, Qtr *r_q);
+
+void
+qtr_mulf(const Qtr *a, float scalar, Qtr *r_q);
+
+void
+qtr_mul(const Qtr *a, const Qtr *b, Qtr *r_q);
+
+void
+qtr_norm(Qtr *a);
