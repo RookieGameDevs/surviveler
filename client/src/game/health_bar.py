@@ -38,6 +38,8 @@ class HealthBar(Entity):
             'width': float(self.w),
             'height': float(self.h),
             'value': value * self.w,
+            'bg_color': Vec(0, 0, 0, 1),
+            'fg_color': Vec(0.2, 0.4, 1, 1),
         }
 
         renderable = Renderable(
