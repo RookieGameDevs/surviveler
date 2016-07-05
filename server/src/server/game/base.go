@@ -16,6 +16,8 @@ type GameState interface {
 	NearestEntity(pos math.Vec2, f EntityFilter) (Entity, float32)
 	AddEntity(ent Entity)
 	MapData() *resource.MapData
+	EntityData(EntityType) *resource.EntityData
+	BuildingData(EntityType) *resource.BuildingData
 	GameTime() int16
 }
 
