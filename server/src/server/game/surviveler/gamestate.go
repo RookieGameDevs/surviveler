@@ -171,12 +171,19 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 	gsMsg := new(msg.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Time = gs.gameTime
+
+	// to ease client reception, we separate mobile entities and buildings
 	gsMsg.Entities = make(map[uint32]interface{})
-	for id, ent := range gs.entities {
-		gsMsg.Entities[id] = ent.State()
-	}
 	gsMsg.Buildings = make(map[uint32]interface{})
-	// TODO: add the real buildings here
+
+	for id, ent := range gs.entities {
+		switch ent.(type) {
+		case game.Building:
+			gsMsg.Buildings[id] = ent.State()
+		default:
+			gsMsg.Entities[id] = ent.State()
+		}
+	}
 	return gsMsg
 }
 
