@@ -21,6 +21,10 @@ import (
 	"time"
 )
 
+// TODO: this map is hard-coded for now, but will be read from resources
+// in the future
+var _entityTypes = map[string]game.EntityType{}
+
 /*
  * gamestate is the structure that contains all the complete game state
  */
@@ -31,6 +35,8 @@ type gamestate struct {
 	game            *survivelerGame
 	world           *game.World
 	md              *resource.MapData
+	bd              map[game.EntityType]*resource.BuildingData
+	ed              map[game.EntityType]*resource.EntityData
 	movementPlanner *game.MovementPlanner
 }
 
@@ -38,7 +44,16 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	gs := new(gamestate)
 	gs.game = g
 	gs.entities = make(map[uint32]game.Entity)
+	gs.ed = make(map[game.EntityType]*resource.EntityData)
+	gs.bd = make(map[game.EntityType]*resource.BuildingData)
 	gs.gameTime = gameStart
+
+	// TODO: this map is hard-coded for now, but will be read from resources
+	// in the future
+	_entityTypes["grunt"] = game.TankEntity
+	_entityTypes["engineer"] = game.EngineerEntity
+	_entityTypes["zombie"] = game.ZombieEntity
+	_entityTypes["mg_turret"] = game.MgTurretBuilding
 	return gs
 }
 
@@ -48,22 +63,54 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
  */
 func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	var err error
+	// load map data and information
 	if gs.md, err = pkg.LoadMapData(); err != nil {
 		return err
 	}
 	if gs.md.ScaleFactor == 0 {
-		err = errors.New("'scale_factor' can't be 0")
+		return errors.New("'scale_factor' can't be 0")
+	}
+	// package must contain the path to world matrix bitmap
+	if fname, ok := gs.md.Resources["matrix"]; !ok {
+		return errors.New("'matrix' field not found in the map asset")
 	} else {
-		// package must contain the path to world matrix bitmap
-		if fname, ok := gs.md.Resources["matrix"]; !ok {
-			err = errors.New("'matrix' field not found in the map asset")
-		} else {
-			var worldBmp image.Image
-			if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-				if gs.world, err = game.NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
-					err = gs.validateWorld()
-				}
+		var worldBmp image.Image
+		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
+			if gs.world, err = game.NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
+				return gs.validateWorld()
 			}
+		}
+	}
+
+	// load entities URI map
+	var (
+		em *resource.EntitiesData
+		t  game.EntityType
+		ok bool
+	)
+	if em, err = pkg.LoadEntitiesData(); err != nil {
+		return err
+	}
+	for name := range em.Entities {
+		var ed resource.EntityData
+		if pkg.LoadJSON(em.Entities[name], &ed); err != nil {
+			return err
+		} else {
+			if t, ok = _entityTypes[name]; !ok {
+				return fmt.Errorf("Couldn't find type of '%s' entity", name)
+			}
+			gs.ed[t] = &ed
+		}
+	}
+	for name := range em.Buildings {
+		var bd resource.BuildingData
+		if pkg.LoadJSON(em.Buildings[name], &bd); err != nil {
+			return err
+		} else {
+			if t, ok = _entityTypes[name]; !ok {
+				return fmt.Errorf("Couldn't find type of '%s' building", name)
+			}
+			gs.bd[t] = &bd
 		}
 	}
 	return err
@@ -273,12 +320,20 @@ func (gs *gamestate) MapData() *resource.MapData {
 	return gs.md
 }
 
-func (gs *gamestate) EntityData(EntityType) *resource.EntityData {
-	return nil
+func (gs *gamestate) EntityData(et game.EntityType) *resource.EntityData {
+	ed, ok := gs.ed[et]
+	if !ok {
+		log.WithField("type", et).Error("No resource for this EntityType")
+	}
+	return ed
 }
 
-func (gs *gamestate) BuildingData(EntityType) *resource.BuildingData {
-	return nil
+func (gs *gamestate) BuildingData(bt game.EntityType) *resource.BuildingData {
+	bd, ok := gs.bd[bt]
+	if !ok {
+		log.WithField("type", bt).Error("No resource for this EntityType")
+	}
+	return bd
 }
 
 func (gs *gamestate) GameTime() int16 {
