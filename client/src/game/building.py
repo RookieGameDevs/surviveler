@@ -134,6 +134,9 @@ class Building(Entity):
         node = self[Renderable].node
         node.mesh = self.mesh
 
+        # Update the health bar
+        self.health_bar.update(dt)
+
 
 @subscriber(BuildingSpawn)
 def building_spawn(evt):

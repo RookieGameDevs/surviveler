@@ -1,9 +1,11 @@
+from context import Context
 from game import Entity
 from game.components import Renderable
+from math import pi
 from matlib import Vec
 from renderer import Rect
-from math import pi
 import logging
+import math
 
 
 LOG = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ class HealthBar(Entity):
 
         self.w = resource.data['width']
         self.h = resource.data['height']
-        y_offset = resource.data['y_offset']
+        self.y_offset = resource.data['y_offset']
 
         mesh = resource.userdata.get('mesh')
         if not mesh:
@@ -53,7 +55,7 @@ class HealthBar(Entity):
             enable_light=False)
 
         t = renderable.transform
-        t.translate(Vec(-self.w / 2, y_offset, 0))
+        t.translate(Vec(-self.w / 2, self.y_offset, 0))
         t.rotate(Vec(1, 0, 0), pi / 2)
 
         super().__init__(renderable)
@@ -90,4 +92,15 @@ class HealthBar(Entity):
         :param dt: Time delta from last update.
         :type dt: float
         """
-        pass
+        context = Context.get_instance()
+        c_pos = context.camera.position
+        direction = Vec(c_pos.x, c_pos.y, c_pos.z, 1)
+        direction.norm()
+        z_axis = Vec(0, 0, 1)
+
+        # Find the angle between the camera and the health bar, then rotate it.
+        angle = math.acos(z_axis.dot(direction))
+        t = self[Renderable].transform
+        t.identity()
+        t.translate(Vec(-self.w / 2, self.y_offset, 0))
+        t.rotate(Vec(1, 0, 0), angle)
