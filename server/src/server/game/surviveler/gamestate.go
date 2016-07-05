@@ -259,7 +259,9 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
 			return
 		}
-		// clip building center to center of a game square unit
+		// clip building center to center of a game square unit:
+		//   * round down to get the cell the building will occupy
+		//   * xlate (.5,.5) to the have the game unit center
 		dst := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
 			Add(math.Vec2{0.5, 0.5})
 
