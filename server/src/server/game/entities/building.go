@@ -44,8 +44,14 @@ func (bb *BuildingBase) Position() math.Vec2 {
 }
 
 func (bb *BuildingBase) State() game.EntityState {
-	// nothing, builds have no state, at least for now!
-	return game.EntityState{}
+	return game.BuildingState{
+		Type:         bb.buildingType,
+		Xpos:         float32(bb.pos[0]),
+		Ypos:         float32(bb.pos[1]),
+		CurHitPoints: uint16(bb.curHP),
+		TotHitPoints: uint16(bb.totalHP),
+		Completed:    bb.isBuilt,
+	}
 }
 
 func (bb *BuildingBase) induceBuildPower(bp uint16) {
@@ -80,10 +86,11 @@ type MgTurret struct {
 /*
  * NewMgTurret creates a new machine-gun turret
  */
-func NewMgTurret(totHP, reqBP uint16) *MgTurret {
+func NewMgTurret(pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           game.InvalidId,
+			pos:          pos,
 			totalHP:      float64(totHP),
 			curHP:        1,
 			requiredBP:   reqBP,

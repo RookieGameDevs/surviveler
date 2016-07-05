@@ -202,7 +202,7 @@ func (z *Zombie) State() game.EntityState {
 		}
 	}
 
-	return game.EntityState{
+	return game.MobileEntityState{
 		Type:       game.ZombieEntity,
 		Xpos:       float32(z.Pos[0]),
 		Ypos:       float32(z.Pos[1]),

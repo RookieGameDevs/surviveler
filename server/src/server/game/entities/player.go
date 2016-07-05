@@ -173,7 +173,7 @@ func (p *Player) State() game.EntityState {
 		actionData = game.IdleActionData{}
 	}
 
-	return game.EntityState{
+	return game.MobileEntityState{
 		Type:       p.entityType,
 		Xpos:       float32(p.Pos[0]),
 		Ypos:       float32(p.Pos[1]),
