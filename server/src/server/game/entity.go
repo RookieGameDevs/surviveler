@@ -69,10 +69,27 @@ type Building interface {
 /*
  * EntityState represents a snapshot of an entity
  */
-type EntityState struct {
+type EntityState interface{}
+
+/*
+ * MobileEntityState represents a snapshot of a mobile entity
+ */
+type MobileEntityState struct {
 	Type       EntityType
 	Xpos       float32
 	Ypos       float32
 	ActionType ActionType
 	Action     interface{}
+}
+
+/*
+ * BuildingState represents a snapshot of a building
+ */
+type BuildingState struct {
+	Type         EntityType
+	Xpos         float32
+	Ypos         float32
+	CurHitPoints uint16
+	TotHitPoints uint16
+	Completed    bool
 }
