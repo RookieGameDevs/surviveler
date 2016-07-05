@@ -273,6 +273,14 @@ func (gs *gamestate) MapData() *resource.MapData {
 	return gs.md
 }
 
+func (gs *gamestate) EntityData(EntityType) *resource.EntityData {
+	return nil
+}
+
+func (gs *gamestate) BuildingData(EntityType) *resource.BuildingData {
+	return nil
+}
+
 func (gs *gamestate) GameTime() int16 {
 	return gs.gameTime
 }
