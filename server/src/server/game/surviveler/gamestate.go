@@ -333,7 +333,7 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 	switch t {
 	case game.MgTurretBuilding:
 		data := gs.BuildingData(t)
-		building = entities.NewMgTurret(data.TotHp, data.BuildingPowerRec)
+		building = entities.NewMgTurret(pos, data.TotHp, data.BuildingPowerRec)
 	default:
 		log.WithField("type", t).Panic("Can't create building, unsupported type")
 	}
