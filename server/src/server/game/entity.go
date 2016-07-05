@@ -15,13 +15,20 @@ import (
 type EntityType uint8
 
 /*
- * Entity type identifiers.
+ * Playable Entity type identifiers.
  */
 const (
 	TankEntity EntityType = iota
 	ProgrammerEntity
 	EngineerEntity
 	ZombieEntity
+)
+
+/*
+ * Building type identifiers.
+ */
+const (
+	MgTurretBuilding EntityType = iota
 )
 
 const (
