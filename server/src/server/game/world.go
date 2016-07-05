@@ -33,9 +33,10 @@ type Grid []Tile
  * It implements the fmt.GoStringer interface for commodity.
  */
 type Tile struct {
-	Kind TileKind // kind of tile, each kind has its own cost
-	X, Y int      // 2D coordinates
-	W    *World   // reference to the map this is tile is part of
+	Kind     TileKind // kind of tile, each kind has its own cost
+	X, Y     int      // 2D coordinates
+	W        *World   // reference to the map this is tile is part of
+	Building          // may contain a building
 }
 
 func (t Tile) GoString() string {

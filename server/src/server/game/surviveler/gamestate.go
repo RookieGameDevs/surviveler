@@ -259,19 +259,28 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
 			return
 		}
+
 		// clip building center to center of a game square unit:
 		//   * round down to get the cell the building will occupy
 		//   * xlate (.5,.5) to the have the game unit center
-		dst := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
+		pos := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
 			Add(math.Vec2{0.5, 0.5})
 
-		// create the building
-		building := gs.createBuilding(game.EntityType(evt.Type), dst)
+		// check that there isn't a building there already
+		tile := gs.world.TileFromWorldVec(pos)
+		if tile.Building != nil {
+			log.WithField("tile", tile).Error("There's already a building on this tile")
+			return
+		}
+
+		// create the building, attach it to the tile
+		building := gs.createBuilding(game.EntityType(evt.Type), pos)
+		tile.Building = building
 
 		// set player action
 		p.Build(building)
 		// plan movement
-		gs.fillMovementRequest(p, dst)
+		gs.fillMovementRequest(p, pos)
 	}
 }
 
