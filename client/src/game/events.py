@@ -58,31 +58,20 @@ class BuildingDisappear(Event):
         return '<BuildingDisappear({}, {})>'.format(self.srv_id, self.b_type)
 
 
-class BuildingHealthChange(Event):
-    """A building has a different amount of hp.
+class BuildingStatusChange(Event):
+    """A building has different status
 
     Event emitted when the amount of hp of a building changes.
     """
-    def __init__(self, srv_id, old, new):
+    def __init__(self, srv_id, old, new, completed):
         self.srv_id = srv_id
         self.old = old
         self.new = new
+        self.completed = completed
 
     def __str__(self):
-        return '<BuildingHealthChange({}, {}, {})>'.format(
-            self.srv_id, self.old, self.new)
-
-
-class BuildingComplete(Event):
-    """A building was completed.
-
-    Event emitted when a building construction is completed.
-    """
-    def __init__(self, srv_id):
-        self.srv_id = srv_id
-
-    def __str__(self):
-        return '<BuildingComplete({})>'.format(self.srv_id)
+        return '<BuildingStatusChange({}, {}, {}, {})>'.format(
+            self.srv_id, self.old, self.new, self.completed)
 
 
 class TimeUpdate(Event):

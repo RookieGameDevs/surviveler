@@ -3,10 +3,9 @@ from enum import unique
 from events import send_event
 from game import BuildingType
 from game import EntityType
-from game.events import BuildingComplete
 from game.events import BuildingDisappear
-from game.events import BuildingHealthChange
 from game.events import BuildingSpawn
+from game.events import BuildingStatusChange
 from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
@@ -250,7 +249,7 @@ def handle_building_disappear(gs_mgr):
 
 @processor
 def handle_building_health(gs_mgr):
-    """Check for building health changes and send the appropriate events.
+    """Check for building health/satatus changes and send the appropriate event.
 
     :param gs_mgr: the gs_mgr
     :type gs_mgr: :class:`dict`
@@ -262,23 +261,8 @@ def handle_building_health(gs_mgr):
         if b_id in old:
             new_hp = building[MF.cur_hp]
             old_hp = old[b_id][MF.cur_hp]
-            if new_hp != old_hp:
-                send_event(BuildingHealthChange(b_id, old_hp, new_hp))
-
-
-@processor
-def handle_building_completed(gs_mgr):
-    """Check for building that were completed.
-
-    :param gs_mgr: the gs_mgr
-    :type gs_mgr: :class:`dict`
-    """
-    n, o = gs_mgr.get(2)
-    o = o or {}
-    new, old = n[MF.buildings], o.get(MF.buildings, {})
-    for b_id, building in new.items():
-        if b_id in old:
-            new_completed = building[MF.completed]
-            old_completed = old[b_id][MF.completed]
-            if new_completed != old_completed:
-                send_event(BuildingComplete(b_id))
+            hp_changed = new_hp != old_hp
+            status_changed = building[MF.completed] == old[b_id][MF.completed]
+            if hp_changed or status_changed:
+                send_event(BuildingStatusChange(
+                    b_id, old_hp, new_hp, building[MF.completed]))
