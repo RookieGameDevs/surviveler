@@ -78,15 +78,11 @@ func (p *Player) Update(dt time.Duration) {
 
 		case game.BuildingAction:
 
-			if p.curBuilding == nil {
-
-				// we are starting to build, create the building
+			if p.lastBPinduced.IsZero() {
+				// we are starting to build, mark current time
+				p.lastBPinduced = time.Now()
 				log.WithField("building", p.curBuilding).
 					Info("Starting building construction")
-				p.curBuilding = NewBasicBuilding()
-				p.g.State().AddEntity(p.curBuilding)
-				// mark current time
-				p.lastBPinduced = time.Now()
 
 			} else {
 
@@ -95,13 +91,14 @@ func (p *Player) Update(dt time.Duration) {
 					p.curBuilding.InduceBuildPower(PlayerBuildPower)
 					p.lastBPinduced = time.Now()
 					log.WithFields(log.Fields{
-						"player":   p,
-						"building": p.curBuilding,
-					}).Info("Inducing Build Power")
+						"player":   p.id,
+						"building": p.curBuilding.Id(),
+					}).Debug("Inducing Build Power")
 				}
 				if p.curBuilding.IsBuilt() {
 					log.WithField("building", p.curBuilding).
-						Info("Finished building construction")
+						Info("Player finished building construction")
+					p.curBuilding = nil
 					p.actions.Pop()
 				}
 			}
@@ -192,7 +189,7 @@ func (p *Player) State() game.EntityState {
  * the player as waiting for the calculated path to join the building point
  */
 
-func (p *Player) Build(t uint8, pos math.Vec2) {
+func (p *Player) Build(b game.Building) {
 	log.Debug("Player.Build")
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
@@ -200,6 +197,7 @@ func (p *Player) Build(t uint8, pos math.Vec2) {
 	p.actions.Push(&game.Action{game.BuildingAction, struct{}{}})
 	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
+	p.curBuilding = b
 }
 
 /*
