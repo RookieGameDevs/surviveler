@@ -54,6 +54,13 @@ func (v1 Vec2) Mul(c float64) Vec2 {
 	return Vec2{v1[0] * c, v1[1] * c}
 }
 
+// Div performs a scalar division between the vector and some constant
+// value c. This is equivalent to iterating over every vector element and
+// dividing by c.
+func (v1 Vec2) Div(c float64) Vec2 {
+	return Vec2{v1[0] / c, v1[1] / c}
+}
+
 // Dot returns the dot product of this vector with another. There are multiple
 // ways to describe this value. One is the multiplication of their lengths and
 // cos(theta) where theta is the angle between the vectors: v1.v2 =
