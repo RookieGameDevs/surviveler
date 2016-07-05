@@ -38,6 +38,7 @@ class Resource(dict):
         """
         self.r_path = r_path
         self.data = data
+        self.userdata = {}
 
         self.resources = {}
 

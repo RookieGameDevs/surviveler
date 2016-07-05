@@ -30,7 +30,10 @@ class HealthBar(Entity):
         self.h = resource.data['height']
         y_offset = resource.data['y_offset']
 
-        rect = Rect(self.w, self.h)
+        mesh = resource.userdata.get('mesh')
+        if not mesh:
+            mesh = Rect(self.w, self.h)
+            resource.userdata['mesh'] = mesh
 
         shader = resource['shader']
 
@@ -44,7 +47,7 @@ class HealthBar(Entity):
 
         renderable = Renderable(
             parent_node,
-            rect,
+            mesh,
             shader,
             params,
             enable_light=False)
