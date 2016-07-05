@@ -24,6 +24,7 @@ import (
 // TODO: this map is hard-coded for now, but will be read from resources
 // in the future
 var _entityTypes = map[string]game.EntityType{}
+var txCenter math.Vec2
 
 /*
  * gamestate is the structure that contains all the complete game state
@@ -160,6 +161,8 @@ func (gs *gamestate) validateWorld() error {
 		}
 	}
 
+	// precompute constant, translation from corner to center of tile
+	txCenter = math.Vec2{1.0, 1.0}.Div(2.0 * gs.world.GridScale)
 	return nil
 }
 
@@ -260,18 +263,17 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 			return
 		}
 
-		// clip building center to center of a game square unit:
-		//   * round down to get the cell the building will occupy
-		//   * xlate (.5,.5) to the have the game unit center
-		pos := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
-			Add(math.Vec2{0.5, 0.5})
-
-		// check that there isn't a building there already
-		tile := gs.world.TileFromWorldVec(pos)
+		// get the tile at building point coordinates
+		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
 		if tile.Building != nil {
 			log.WithField("tile", tile).Error("There's already a building on this tile")
 			return
 		}
+
+		// clip building center with tile center
+		pos := math.FromInts(tile.X, tile.Y).
+			Div(gs.world.GridScale).
+			Add(txCenter)
 
 		// create the building, attach it to the tile
 		building := gs.createBuilding(game.EntityType(evt.Type), pos)
@@ -279,6 +281,7 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 
 		// set player action
 		p.Build(building)
+
 		// plan movement
 		gs.fillMovementRequest(p, pos)
 	}
