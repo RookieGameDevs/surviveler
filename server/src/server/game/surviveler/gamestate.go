@@ -94,9 +94,9 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	if em, err = pkg.LoadEntitiesData(); err != nil {
 		return err
 	}
-	for name := range em.Entities {
+	for name, uri := range em.Entities {
 		var ed resource.EntityData
-		if pkg.LoadJSON(em.Entities[name], &ed); err != nil {
+		if pkg.LoadJSON(uri, &ed); err != nil {
 			return err
 		} else {
 			if t, ok = _entityTypes[name]; !ok {
@@ -107,9 +107,9 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 			gs.ed[t] = &ed
 		}
 	}
-	for name := range em.Buildings {
+	for name, uri := range em.Buildings {
 		var bd resource.BuildingData
-		if pkg.LoadJSON(em.Buildings[name], &bd); err != nil {
+		if pkg.LoadJSON(uri, &bd); err != nil {
 			return err
 		} else {
 			if t, ok = _entityTypes[name]; !ok {
