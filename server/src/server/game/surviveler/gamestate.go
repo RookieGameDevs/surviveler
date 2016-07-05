@@ -68,18 +68,21 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 		return err
 	}
 	if gs.md.ScaleFactor == 0 {
-		return errors.New("'scale_factor' can't be 0")
+		err = errors.New("'scale_factor' can't be 0")
 	}
 	// package must contain the path to world matrix bitmap
 	if fname, ok := gs.md.Resources["matrix"]; !ok {
-		return errors.New("'matrix' field not found in the map asset")
+		err = errors.New("'matrix' field not found in the map asset")
 	} else {
 		var worldBmp image.Image
 		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
 			if gs.world, err = game.NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
-				return gs.validateWorld()
+				err = gs.validateWorld()
 			}
 		}
+	}
+	if err != nil {
+		return err
 	}
 
 	// load entities URI map
@@ -99,6 +102,8 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 			if t, ok = _entityTypes[name]; !ok {
 				return fmt.Errorf("Couldn't find type of '%s' entity", name)
 			}
+			log.WithFields(log.Fields{"name": name, "type": t, "data": ed}).
+				Debug("Loaded EntityData")
 			gs.ed[t] = &ed
 		}
 	}
@@ -110,6 +115,8 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 			if t, ok = _entityTypes[name]; !ok {
 				return fmt.Errorf("Couldn't find type of '%s' building", name)
 			}
+			log.WithFields(log.Fields{"name": name, "type": t, "data": bd}).
+				Debug("Loaded BuildingData")
 			gs.bd[t] = &bd
 		}
 	}
@@ -240,22 +247,20 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	if ent, ok := gs.entities[evt.Id]; ok {
 		p := ent.(*entities.Player)
 
-		// only engineers can build
+		// check entity type because only engineers can build
 		if p.Type() != game.EngineerEntity {
 			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
 			return
 		}
-
 		// clip building center to center of a game square unit
 		dst := math.FromInts(int(evt.Xpos), int(evt.Ypos)).
 			Add(math.Vec2{0.5, 0.5})
 
 		// create the building
-		building := entities.NewBasicBuilding()
-		gs.AddEntity(building)
+		building := gs.createBuilding(game.EntityType(evt.Type), dst)
 
 		// set player action
-		p.Build(evt.Type, dst)
+		p.Build(building)
 		// plan movement
 		gs.fillMovementRequest(p, dst)
 	}
@@ -316,6 +321,19 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 	gs.entities[id] = ent
 }
 
+func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Building {
+	var building game.Building
+	switch t {
+	case game.MgTurretBuilding:
+		data := gs.BuildingData(t)
+		building = entities.NewMgTurret(data.TotHp, data.BuildingPowerRec)
+	default:
+		log.WithField("type", t).Panic("Can't create building, unsupported type")
+	}
+	gs.AddEntity(building)
+	return building
+}
+
 func (gs *gamestate) MapData() *resource.MapData {
 	return gs.md
 }
@@ -323,7 +341,7 @@ func (gs *gamestate) MapData() *resource.MapData {
 func (gs *gamestate) EntityData(et game.EntityType) *resource.EntityData {
 	ed, ok := gs.ed[et]
 	if !ok {
-		log.WithField("type", et).Error("No resource for this EntityType")
+		log.WithField("type", et).Error("No resource for this Entity Type")
 	}
 	return ed
 }
@@ -331,7 +349,7 @@ func (gs *gamestate) EntityData(et game.EntityType) *resource.EntityData {
 func (gs *gamestate) BuildingData(bt game.EntityType) *resource.BuildingData {
 	bd, ok := gs.bd[bt]
 	if !ok {
-		log.WithField("type", bt).Error("No resource for this EntityType")
+		log.WithField("type", bt).Error("No resource for this Building Type")
 	}
 	return bd
 }
