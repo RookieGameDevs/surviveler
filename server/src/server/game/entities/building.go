@@ -5,19 +5,18 @@
 package entities
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/math"
 	"time"
 )
 
-// TODO: those are const hard-coded for now, but have to be loaded from
-// resources ideally
-const (
-	BuildingTotalHitPoints = 100
-	RequiredBuildPower     = 50
-)
-
-// BuildingBase is a base containing the required fields for every building
+/*
+ * BuildingBase is a base containing the required fields for every building
+ *
+ * It also embeds the common buiding features through methods like induceBuildPower,
+ * etc.
+ */
 type BuildingBase struct {
 	totalHP      uint16 // total hit points
 	curHP        uint16 // current hit points
@@ -49,41 +48,61 @@ func (bb *BuildingBase) State() game.EntityState {
 	return game.EntityState{}
 }
 
+func (bb *BuildingBase) induceBuildPower(bp uint16) {
+	if !bb.isBuilt {
+		bb.curBP += bp
+		bb.curHP = bb.totalHP * (float64(bb.curBP) / float64(bb.requiredBP))
+		if bb.curBP >= bb.requiredBP {
+			bb.isBuilt = true
+			bb.curHP = bb.totalHP
+			bb.curBP = bb.requiredBP
+		}
+		log.WithFields(log.Fields{
+			"curHP": uint16(bb.curHP), "totHP": uint16(bb.totalHP),
+			"curBP": bb.curBP, "reqBP": bb.requiredBP,
+		}).Debug("Inducing Build Power")
+	}
+}
+
 type BuildingUpdater interface {
 	Update(dt time.Duration)
 }
 
 /*
- * BasicBuilding is basic generic building.
+ * MgTurret is a machine-gun turret building
  *
- * It will be replaced by different implementations, turrets, barricades.
- * It implements the Building interface.
+ * It implements the Building interface
  */
-type BasicBuilding struct {
+type MgTurret struct {
 	BuildingBase
 }
 
-func NewBasicBuilding() *BasicBuilding {
-	return &BasicBuilding{
+/*
+ * NewMgTurret creates a new machine-gun turret
+ */
+func NewMgTurret(totHP, reqBP uint16) *MgTurret {
+	return &MgTurret{
 		BuildingBase{
 			id:           game.InvalidId,
-			totalHP:      BuildingTotalHitPoints,
+			totalHP:      float64(totHP),
 			curHP:        1,
-			requiredBP:   RequiredBuildPower,
+			requiredBP:   reqBP,
 			curBP:        0,
-			buildingType: 0,
+			buildingType: game.MgTurretBuilding,
 		},
 	}
 }
 
-func (bb *BasicBuilding) Update(dt time.Duration) {
+func (mg *MgTurret) Update(dt time.Duration) {
 }
 
-// Induce a given quantity of build power into the building construction
-func (bb *BasicBuilding) InduceBuildPower(bp uint16) {
-	bb.curBP += bp
+/*
+ * Induce a given quantity of build power into the building construction
+ */
+func (mg *MgTurret) InduceBuildPower(bp uint16) {
+	mg.induceBuildPower(bp)
 }
 
-func (bb *BasicBuilding) IsBuilt() bool {
-	return bb.curBP >= bb.requiredBP
+func (mg *MgTurret) IsBuilt() bool {
+	return bb.isBuilt
 }
