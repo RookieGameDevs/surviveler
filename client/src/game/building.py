@@ -45,8 +45,8 @@ class Building(Entity):
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
         self.position = position
-        # Progress is going to be a property to update only when necessary the
-        # health bar.
+        # Progress is going to be a property used to update only when necessary
+        # the health bar.
         self._progress = progress
         self.completed = completed
 
@@ -76,10 +76,6 @@ class Building(Entity):
             shader,
             params,
             enable_light=True)
-
-        # TODO: eventually rotate the the building
-        # t = renderable.transform
-        # t.translate(to_scene(*self.position))
 
         # initialize entity
         super().__init__(renderable)
