@@ -51,7 +51,7 @@ type MoveMsg struct {
 }
 
 /*
- * player initiated a duilbing action. Client -> server message
+ * player initiated a building action. Client -> server message
  */
 type BuildMsg struct {
 	Type uint8
