@@ -18,13 +18,14 @@ import (
  * etc.
  */
 type BuildingBase struct {
-	totalHP      uint16 // total hit points
-	curHP        uint16 // current hit points
-	requiredBP   uint16 // required build power to finish construction
-	curBP        uint16 // current build power induced in the construction
+	totalHP      float64 // total hit points
+	curHP        float64 // current hit points
+	requiredBP   uint16  // required build power to finish construction
+	curBP        uint16  // build power already induced into the construction
 	id           uint32
 	pos          math.Vec2
 	buildingType game.EntityType
+	isBuilt      bool
 }
 
 func (bb *BuildingBase) Type() game.EntityType {
