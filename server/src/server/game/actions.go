@@ -22,6 +22,12 @@ type IdleActionData struct {
 }
 
 /*
+ * Building action
+ */
+type BuildActionData struct {
+}
+
+/*
  * Movement action data.
  */
 type MoveActionData struct {

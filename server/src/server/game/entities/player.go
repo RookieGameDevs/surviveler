@@ -169,7 +169,9 @@ func (p *Player) State() game.EntityState {
 			Speed: p.Speed,
 			Path:  p.Movable.Path(maxWaypointsToSend),
 		}
-	default:
+	case game.BuildingAction:
+		actionData = game.BuildActionData{}
+	case game.IdleAction:
 		actionData = game.IdleActionData{}
 	}
 
