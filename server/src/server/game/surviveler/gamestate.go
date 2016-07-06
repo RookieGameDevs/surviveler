@@ -196,13 +196,22 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	evt := event.Payload.(events.PlayerJoinEvent)
 	// we have a new player, his id will be its unique connection id
-	log.WithField("clientId", evt.Id).Info("We have one more player")
+	log.WithField("clientId", evt.Id).Info("Received a PlayerJoin event")
+
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
-	// TODO: speed from resource
-	p := entities.NewPlayer(gs.game, org, 3, game.EntityType(evt.Type))
-	p.SetId(evt.Id)
-	gs.AddEntity(p)
+
+	// load entity data
+	et := game.EntityType(evt.Type)
+	if ed := gs.EntityData(et); ed == nil {
+		return
+	} else {
+		// instantiate player with settings from the resources pkg
+		p := entities.NewPlayer(gs.game, org,
+			float64(ed.Speed), game.EntityType(evt.Type))
+		p.SetId(evt.Id)
+		gs.AddEntity(p)
+	}
 }
 
 /*
