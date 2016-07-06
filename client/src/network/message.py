@@ -19,6 +19,7 @@ class MessageType(IntEnum):
     gamestate = 6
     move = 7
     build = 8
+    repair = 9
 
 
 class MessageField(bytes, Enum):

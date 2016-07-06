@@ -3,6 +3,7 @@ from core.events import MouseClickEvent
 from core.events import MouseMoveEvent
 from events import send_event
 from events import subscriber
+from game.events import EntityPick
 from game.events import GameModeToggle
 from matlib import Vec
 from network import Message
@@ -89,6 +90,18 @@ def start_build_action(context, position):
     context.msg_queue.append(msg)
 
 
+def entity_picked(context, entity):
+    """An entity was picked with the mouse click.
+
+    :param context: The game context.
+    :type context: :class:`context.Context`
+
+    :param entity: The entity picked
+    :type entity: :class:`game.entity.Entity`
+    """
+    send_event(EntityPick(entity))
+
+
 @subscriber(MouseClickEvent)
 def handle_mouse_click(evt):
     context = evt.context
@@ -108,7 +121,11 @@ def handle_mouse_click(evt):
 
         pos = world_pos.x, world_pos.y
         if context.game_mode == context.GameMode.default:
-            start_move_action(context, pos)
+            entity = context.pick_entity(pos)
+            if entity:
+                entity_picked(context, entity)
+            else:
+                start_move_action(context, pos)
         elif context.game_mode == context.GameMode.building:
             start_build_action(context, pos)
 

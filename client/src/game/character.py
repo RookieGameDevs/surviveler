@@ -110,6 +110,15 @@ class Character(Entity):
             if self.heading < -WHOLE_ANGLE / 2:
                 self.heading = WHOLE_ANGLE + self.heading
 
+    @property
+    def position(self):
+        """The position of the entity in world coordinates.
+
+        :returns: The position
+        :rtype: :class:`tuple`
+        """
+        return self[Movable].position
+
     def destroy(self):
         """Removes itself from the scene.
         """

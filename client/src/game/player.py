@@ -2,7 +2,6 @@ from context import Context
 from events import subscriber
 from game import Character
 from game.character import EntityType
-from game.components import Movable
 from game.events import EntitySpawn
 from utils import to_scene
 import logging
@@ -25,7 +24,7 @@ class Player(Character):
         """
         super(Player, self).update(dt)
 
-        x, y = self[Movable].position
+        x, y = self.position
 
         # update camera position
         context = Context.get_instance()

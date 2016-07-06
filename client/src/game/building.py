@@ -4,10 +4,14 @@ from events import subscriber
 from game import Entity
 from game.components import Renderable
 from game.events import BuildingDisappear
-from game.events import BuildingStatusChange
 from game.events import BuildingSpawn
+from game.events import BuildingStatusChange
+from game.events import EntityPick
 from game.health_bar import HealthBar
 from matlib import Vec
+from network.message import Message
+from network.message import MessageField as MF
+from network.message import MessageType
 from renderer.scene import SceneNode
 from utils import to_scene
 import logging
@@ -43,7 +47,7 @@ class Building(Entity):
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
-        self.position = position
+        self._position = position
         # Progress is going to be a property used to update only when necessary
         # the health bar.
         self._progress = progress
@@ -56,7 +60,7 @@ class Building(Entity):
         # Setup the group node and add the health bar
         group_node = SceneNode()
         g_transform = group_node.transform
-        g_transform.translate(to_scene(*self.position))
+        g_transform.translate(to_scene(*position))
         parent_node.add_child(group_node)
 
         self.health_bar = HealthBar(
@@ -111,6 +115,15 @@ class Building(Entity):
         """
         self._progress = value
         self.health_bar.value = value[0] / value[1]
+
+    @property
+    def position(self):
+        """The position of the entity in world coordinates.
+
+        :returns: The position
+        :rtype: :class:`tuple`
+        """
+        return self._position
 
     def destroy(self):
         """Removes itself from the scene.
@@ -193,3 +206,16 @@ def building_health_change(evt):
         building = context.entities[e_id]
         building.progress = evt.new, building.progress[1]
         building.completed = evt.completed
+
+
+@subscriber(EntityPick)
+def building_click(evt):
+    """Check if the object picked is a building and if it needs repairing.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    if isinstance(evt.entity, Building):
+        msg = Message(MessageType.repair, {
+            MF.id: context.server_id(evt.entity.e_id),
+        })
+        context.msg_queue.append(msg)

@@ -92,6 +92,21 @@ class TimeUpdate(Event):
         self.minute = minute
 
 
+class EntityPick(Event):
+    """The player clicked on an entity.
+    """
+    def __init__(self, entity):
+        """Constructor.
+
+        :param entity: The game entity the player clicked on
+        :type entity: :class:`game.entity.Entity`
+        """
+        self.entity = entity
+
+    def __str__(self):
+        return '<EntityPick({})>'.format(self.entity)
+
+
 class EntityIdle(Event):
     """Entity is idle.
 
