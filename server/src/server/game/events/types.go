@@ -15,6 +15,7 @@ const (
 	PlayerLeave
 	PlayerMove
 	PlayerBuild
+	PlayerRepair
 	PathReady
 )
 
@@ -38,6 +39,11 @@ type PlayerBuildEvent struct {
 	Type uint8
 	Xpos float32
 	Ypos float32
+}
+
+type PlayerRepairEvent struct {
+	Id         uint32
+	BuildingId uint32
 }
 
 type PathReadyEvent struct {
