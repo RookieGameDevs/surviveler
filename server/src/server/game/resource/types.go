@@ -23,8 +23,8 @@ type ResourceList map[string]string
  * Spawn regroups the spawn points for different kinds of entities
  */
 type Spawn struct {
-	Players  VecList  `json:"players"`  // player unique spawn point
-	Enemies  VecList  `json:"enemies"` // list of spawn points for enemies
+	Players VecList `json:"players"` // player unique spawn point
+	Enemies VecList `json:"enemies"` // list of spawn points for enemies
 }
 
 /*
@@ -42,4 +42,30 @@ type MapData struct {
 	ScaleFactor float64      `json:"scale_factor"`
 	Objects     []MapObject  `json:"objects"`
 	AIKeypoints AIKeypoints  `json:"ai_keypoints"`
+}
+
+/*
+ * EntititesData lists the URI for the various entity types
+ */
+type EntitiesData struct {
+	Entities  map[string]string `json:"entities_map"`
+	Buildings map[string]string `json:"buildings_map"`
+}
+
+/*
+ * EntityData regroups settings and information about a specific player entity
+ * type
+ */
+type EntityData struct {
+	BuildingPower uint8 `json:"building_power"`
+	Speed         uint8 `json:"speed"`
+}
+
+/*
+ * BuildingData regroups settings and information about a specific building
+ * entity type
+ */
+type BuildingData struct {
+	TotHp            uint16 `json:"tot_hp"`
+	BuildingPowerRec uint16 `json:"building_power_req"`
 }

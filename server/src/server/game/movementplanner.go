@@ -78,11 +78,11 @@ func (mp *MovementPlanner) PlanMovement(mvtReq *MovementRequest) {
 func (mp *MovementPlanner) Start() {
 	log.Info("Starting movement planner")
 
-	mp.game.GetWaitGroup().Add(1)
+	mp.game.WaitGroup().Add(1)
 	// start the ring buffer goroutine
 	go func() {
 		defer func() {
-			mp.game.GetWaitGroup().Done()
+			mp.game.WaitGroup().Done()
 			close(mp.ringBufIn)
 			close(mp.ringBufOut)
 		}()
@@ -90,7 +90,7 @@ func (mp *MovementPlanner) Start() {
 
 			select {
 
-			case <-mp.game.GetQuitChan():
+			case <-mp.game.QuitChan():
 				return
 
 			case req := <-mp.ringBufIn:
@@ -112,17 +112,17 @@ func (mp *MovementPlanner) Start() {
 	}()
 
 	// start the movement planner goroutine
-	mp.game.GetWaitGroup().Add(1)
+	mp.game.WaitGroup().Add(1)
 	go func() {
 		defer func() {
 			log.Info("Stopping movement planner")
-			mp.game.GetWaitGroup().Done()
+			mp.game.WaitGroup().Done()
 		}()
 
 		for {
 			select {
 
-			case <-mp.game.GetQuitChan():
+			case <-mp.game.QuitChan():
 				return
 
 			case mvtReq := <-mp.ringBufOut:
@@ -133,7 +133,7 @@ func (mp *MovementPlanner) Start() {
 				log.WithField("req", mvtReq).Info("Processing an movement request")
 
 				// compute pathfinding
-				if path, _, found := mp.game.GetPathfinder().FindPath(mvtReq.Org, mvtReq.Dst); found {
+				if path, _, found := mp.game.Pathfinder().FindPath(mvtReq.Org, mvtReq.Dst); found {
 					if len(path) > 1 {
 						log.WithFields(log.Fields{"path": path, "req": mvtReq}).Debug("Pathfinder found a path")
 
@@ -152,30 +152,4 @@ func (mp *MovementPlanner) Start() {
 			}
 		}
 	}()
-}
-
-/*
- * OnMovePlayer handles the PlayerMove event
- */
-func (mp *MovementPlanner) OnMovePlayer(event *events.Event) {
-	playerMoveEvent := event.Payload.(events.PlayerMoveEvent)
-	// new movement action issued by a player
-	log.WithFields(log.Fields{"clientId": playerMoveEvent.Id, "msg": playerMoveEvent}).Info("MovementPlanner.OnMovePlayer")
-
-	if player := mp.game.GetState().GetEntity(playerMoveEvent.Id); player != nil {
-		// fills a MovementRequest
-		mvtReq := MovementRequest{}
-		mvtReq.Org = player.GetPosition()
-		mvtReq.Dst = math.FromFloat32(playerMoveEvent.Xpos, playerMoveEvent.Ypos)
-		mvtReq.EntityId = playerMoveEvent.Id
-		if mp.game.GetState().GetWorld().PointInBounds(mvtReq.Dst) {
-			// places it into the MovementPlanner
-			mp.PlanMovement(&mvtReq)
-		} else {
-			// do not forward a request with out-of-bounds destination
-			log.WithField("dst", mvtReq.Dst).Warn("Out of bounds destination in MoveMsg")
-		}
-	} else {
-		log.WithField("id", playerMoveEvent.Id).Warn("Client Id not found")
-	}
 }

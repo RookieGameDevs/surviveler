@@ -14,8 +14,11 @@ import (
 	"path"
 )
 
-// URI of the map element contained in a package
-const mapURI string = "map/data.json"
+// URI of some static elements contained in a package
+const (
+	mapURI      string = "map/data.json"
+	entitiesURI string = "entities/data.json"
+)
 
 /*
  * SurvivelerPackage represents a package of data, resource files and assets for
@@ -38,11 +41,13 @@ func NewSurvivelerPackage(path string) SurvivelerPackage {
 
 /*
  * Exists check if an uri exists inside a package
+ *
+ * The specified URI must represent a file, not a directory
  */
 func (sp SurvivelerPackage) Exists(uri string) bool {
 	p := path.Join(sp.root, uri)
-	_, err := os.Stat(p)
-	return err == nil
+	fi, err := os.Stat(p)
+	return err == nil && !fi.IsDir()
 }
 
 /*
@@ -64,6 +69,9 @@ func (sp SurvivelerPackage) getReader(uri string) (io.ReadCloser, error) {
  * an interface
  */
 func (sp SurvivelerPackage) LoadJSON(uri string, i interface{}) error {
+	if !sp.Exists(uri) {
+		uri = uri + "/data.json"
+	}
 	r, err := sp.getReader(uri)
 	if err != nil {
 		return err
@@ -92,5 +100,15 @@ func (sp SurvivelerPackage) LoadBitmap(uri string) (image.Image, error) {
 func (sp SurvivelerPackage) LoadMapData() (*MapData, error) {
 	md := new(MapData)
 	err := sp.LoadJSON(mapURI, &md)
+	return md, err
+}
+
+/*
+ * LoadEntitiesData loads the entities data from the package and decodes it in
+ * a EntititesData struct
+ */
+func (sp SurvivelerPackage) LoadEntitiesData() (*EntitiesData, error) {
+	md := new(EntitiesData)
+	err := sp.LoadJSON(entitiesURI, &md)
 	return md, err
 }

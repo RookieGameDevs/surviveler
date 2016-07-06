@@ -21,21 +21,40 @@ import (
 	"time"
 )
 
+// TODO: this map is hard-coded for now, but will be read from resources
+// in the future
+var _entityTypes = map[string]game.EntityType{}
+var txCenter math.Vec2
+
 /*
  * gamestate is the structure that contains all the complete game state
  */
 type gamestate struct {
-	gameTime    int16
-	entities    map[uint32]game.Entity
-	world       *game.World
-	md          *resource.MapData
-	numEntities uint32 // number of entities currently present in the game
+	gameTime        int16
+	entities        map[uint32]game.Entity // entities currently in game
+	numEntities     uint32                 // number of entities currently present in the game
+	game            *survivelerGame
+	world           *game.World
+	md              *resource.MapData
+	bd              map[game.EntityType]*resource.BuildingData
+	ed              map[game.EntityType]*resource.EntityData
+	movementPlanner *game.MovementPlanner
 }
 
-func newGameState(gameStart int16) *gamestate {
+func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	gs := new(gamestate)
+	gs.game = g
 	gs.entities = make(map[uint32]game.Entity)
+	gs.ed = make(map[game.EntityType]*resource.EntityData)
+	gs.bd = make(map[game.EntityType]*resource.BuildingData)
 	gs.gameTime = gameStart
+
+	// TODO: this map is hard-coded for now, but will be read from resources
+	// in the future
+	_entityTypes["grunt"] = game.TankEntity
+	_entityTypes["engineer"] = game.EngineerEntity
+	_entityTypes["zombie"] = game.ZombieEntity
+	_entityTypes["mg_turret"] = game.MgTurretBuilding
 	return gs
 }
 
@@ -45,22 +64,61 @@ func newGameState(gameStart int16) *gamestate {
  */
 func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	var err error
+	// load map data and information
 	if gs.md, err = pkg.LoadMapData(); err != nil {
 		return err
 	}
 	if gs.md.ScaleFactor == 0 {
 		err = errors.New("'scale_factor' can't be 0")
+	}
+	// package must contain the path to world matrix bitmap
+	if fname, ok := gs.md.Resources["matrix"]; !ok {
+		err = errors.New("'matrix' field not found in the map asset")
 	} else {
-		// package must contain the path to world matrix bitmap
-		if fname, ok := gs.md.Resources["matrix"]; !ok {
-			err = errors.New("'matrix' field not found in the map asset")
-		} else {
-			var worldBmp image.Image
-			if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-				if gs.world, err = game.NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
-					err = gs.validateWorld()
-				}
+		var worldBmp image.Image
+		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
+			if gs.world, err = game.NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
+				err = gs.validateWorld()
 			}
+		}
+	}
+	if err != nil {
+		return err
+	}
+
+	// load entities URI map
+	var (
+		em *resource.EntitiesData
+		t  game.EntityType
+		ok bool
+	)
+	if em, err = pkg.LoadEntitiesData(); err != nil {
+		return err
+	}
+	for name, uri := range em.Entities {
+		var ed resource.EntityData
+		if pkg.LoadJSON(uri, &ed); err != nil {
+			return err
+		} else {
+			if t, ok = _entityTypes[name]; !ok {
+				return fmt.Errorf("Couldn't find type of '%s' entity", name)
+			}
+			log.WithFields(log.Fields{"name": name, "type": t, "data": ed}).
+				Debug("Loaded EntityData")
+			gs.ed[t] = &ed
+		}
+	}
+	for name, uri := range em.Buildings {
+		var bd resource.BuildingData
+		if pkg.LoadJSON(uri, &bd); err != nil {
+			return err
+		} else {
+			if t, ok = _entityTypes[name]; !ok {
+				return fmt.Errorf("Couldn't find type of '%s' building", name)
+			}
+			log.WithFields(log.Fields{"name": name, "type": t, "data": bd}).
+				Debug("Loaded BuildingData")
+			gs.bd[t] = &bd
 		}
 	}
 	return err
@@ -103,6 +161,8 @@ func (gs *gamestate) validateWorld() error {
 		}
 	}
 
+	// precompute constant, translation from corner to center of tile
+	txCenter = math.Vec2{1.0, 1.0}.Div(2.0 * gs.world.GridScale)
 	return nil
 }
 
@@ -114,12 +174,19 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 	gsMsg := new(msg.GameStateMsg)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Time = gs.gameTime
+
+	// to ease client reception, we separate mobile entities and buildings
 	gsMsg.Entities = make(map[uint32]interface{})
-	for id, ent := range gs.entities {
-		gsMsg.Entities[id] = ent.GetState()
-	}
 	gsMsg.Buildings = make(map[uint32]interface{})
-	// TODO: add the real buildings here
+
+	for id, ent := range gs.entities {
+		switch ent.(type) {
+		case game.Building:
+			gsMsg.Buildings[id] = ent.State()
+		default:
+			gsMsg.Entities[id] = ent.State()
+		}
+	}
 	return gsMsg
 }
 
@@ -127,36 +194,117 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
  * event handler for PlayerJoin events
  */
 func (gs *gamestate) onPlayerJoin(event *events.Event) {
-	playerJoinEvent := event.Payload.(events.PlayerJoinEvent)
+	evt := event.Payload.(events.PlayerJoinEvent)
 	// we have a new player, his id will be its unique connection id
-	log.WithField("clientId", playerJoinEvent.Id).Info("We have one more player")
+	log.WithField("clientId", evt.Id).Info("We have one more player")
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
 	// TODO: speed from resource
-	gs.entities[playerJoinEvent.Id] = entities.NewPlayer(
-		org, 3, game.EntityType(playerJoinEvent.Type))
+	p := entities.NewPlayer(gs.game, org, 3, game.EntityType(evt.Type))
+	p.SetId(evt.Id)
+	gs.AddEntity(p)
 }
 
 /*
  * event handler for PlayerLeave events
  */
 func (gs *gamestate) onPlayerLeave(event *events.Event) {
-	playerLeaveEvent := event.Payload.(events.PlayerLeaveEvent)
+	evt := event.Payload.(events.PlayerLeaveEvent)
 	// one player less, remove him from the map
-	log.WithField("clientId", playerLeaveEvent.Id).Info("We have one less player")
-	delete(gs.entities, playerLeaveEvent.Id)
+	log.WithField("clientId", evt.Id).Info("We have one less player")
+	delete(gs.entities, evt.Id)
 }
 
 /*
  * event handler for PathReadyEvent events
  */
 func (gs *gamestate) onPathReady(event *events.Event) {
-	pathReadyEvent := event.Payload.(events.PathReadyEvent)
-	log.WithField("res", pathReadyEvent).Info("Received a calculated movement")
+	evt := event.Payload.(events.PathReadyEvent)
+	log.WithField("evt", evt).Info("Received a path ready event")
 
 	// check that the entity exists
-	if player, ok := gs.entities[pathReadyEvent.Id]; ok {
-		player.SetPath(pathReadyEvent.Path)
+	if player, ok := gs.entities[evt.Id]; ok {
+		mobileEntity := player.(game.MobileEntity)
+		mobileEntity.SetPath(evt.Path)
+	}
+}
+
+/*
+ * event handler for PlayerMove events
+ */
+func (gs *gamestate) OnPlayerMove(event *events.Event) {
+	evt := event.Payload.(events.PlayerMoveEvent)
+	log.WithField("evt", evt).Info("Received PlayerMove event")
+
+	// check that the entity exists
+	if ent, ok := gs.entities[evt.Id]; ok {
+		p := ent.(*entities.Player)
+		// set player action
+		p.Move()
+		// plan movement
+		gs.fillMovementRequest(p, math.FromFloat32(evt.Xpos, evt.Ypos))
+	}
+}
+
+/*
+ * event handler for PlayerBuild events
+ */
+func (gs *gamestate) onPlayerBuild(event *events.Event) {
+	evt := event.Payload.(events.PlayerBuildEvent)
+	log.WithField("evt", evt).Info("Received PlayerBuild event")
+
+	// check that the entity exists
+	if ent, ok := gs.entities[evt.Id]; ok {
+		p := ent.(*entities.Player)
+
+		// check entity type because only engineers can build
+		if p.Type() != game.EngineerEntity {
+			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
+			return
+		}
+
+		// get the tile at building point coordinates
+		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
+		if tile.Building != nil {
+			log.WithField("tile", tile).Error("There's already a building on this tile")
+			return
+		}
+
+		// clip building center with tile center
+		pos := math.FromInts(tile.X, tile.Y).
+			Div(gs.world.GridScale).
+			Add(txCenter)
+
+		// create the building, attach it to the tile
+		building := gs.createBuilding(game.EntityType(evt.Type), pos)
+		tile.Building = building
+
+		// set player action
+		p.Build(building)
+
+		// plan movement
+		gs.fillMovementRequest(p, pos)
+	}
+}
+
+/*
+ * fillMovementRequest fills up and sends a movement request
+ */
+func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
+	if gs.world.PointInBounds(dst) {
+		// fills up a movement request
+		mvtReq := game.MovementRequest{}
+		mvtReq.Org = p.Position()
+		mvtReq.Dst = dst
+		mvtReq.EntityId = p.Id()
+		// and send if to the movement planner
+		gs.movementPlanner.PlanMovement(&mvtReq)
+	} else {
+		// do not forward a request with out-of-bounds destination
+		log.WithFields(log.Fields{
+			"dst":    dst,
+			"player": p.Id()}).
+			Error("Can't plan path to out-of-bounds destination")
 	}
 }
 
@@ -168,28 +316,66 @@ func (gs *gamestate) allocEntityId() uint32 {
 	return gs.numEntities
 }
 
-func (gs *gamestate) GetWorld() *game.World {
+func (gs *gamestate) World() *game.World {
 	return gs.world
 }
 
-func (gs *gamestate) GetEntity(id uint32) game.Entity {
+func (gs *gamestate) Entity(id uint32) game.Entity {
 	if ent, ok := gs.entities[id]; ok == true {
 		return ent
 	}
 	return nil
 }
 
-func (gs *gamestate) AddEntity(ent game.Entity) uint32 {
-	id := gs.allocEntityId()
+/*
+ * AddEntity adds specifies entity to the game state.
+ *
+ * It entity Id is InvalidId, an unique id is generated and assigned
+ * to the entity
+ */
+func (gs *gamestate) AddEntity(ent game.Entity) {
+	id := ent.Id()
+	if id == game.InvalidId {
+		id = gs.allocEntityId()
+		ent.SetId(id)
+	}
 	gs.entities[id] = ent
-	return id
 }
 
-func (gs *gamestate) GetMapData() *resource.MapData {
+func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Building {
+	var building game.Building
+	switch t {
+	case game.MgTurretBuilding:
+		data := gs.BuildingData(t)
+		building = entities.NewMgTurret(pos, data.TotHp, data.BuildingPowerRec)
+	default:
+		log.WithField("type", t).Panic("Can't create building, unsupported type")
+	}
+	gs.AddEntity(building)
+	return building
+}
+
+func (gs *gamestate) MapData() *resource.MapData {
 	return gs.md
 }
 
-func (gs *gamestate) GetGameTime() int16 {
+func (gs *gamestate) EntityData(et game.EntityType) *resource.EntityData {
+	ed, ok := gs.ed[et]
+	if !ok {
+		log.WithField("type", et).Error("No resource for this Entity Type")
+	}
+	return ed
+}
+
+func (gs *gamestate) BuildingData(bt game.EntityType) *resource.BuildingData {
+	bd, ok := gs.bd[bt]
+	if !ok {
+		log.WithField("type", bt).Error("No resource for this Building Type")
+	}
+	return bd
+}
+
+func (gs *gamestate) GameTime() int16 {
 	return gs.gameTime
 }
 
@@ -212,12 +398,12 @@ func (c entityDistCollection) Swap(i, j int) {
 	c[i], c[j] = c[j], c[i]
 }
 
-func (gs *gamestate) GetNearestEntity(pos math.Vec2, f game.EntityFilter) (game.Entity, float32) {
+func (gs *gamestate) NearestEntity(pos math.Vec2, f game.EntityFilter) (game.Entity, float32) {
 	result := make(entityDistCollection, 0)
 	for _, ent := range gs.entities {
 		if f(ent) {
 			result = append(result, entityDist{
-				d: float32(ent.GetPosition().Sub(pos).Len()),
+				d: float32(ent.Position().Sub(pos).Len()),
 				e: ent,
 			})
 		}

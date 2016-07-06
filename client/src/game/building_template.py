@@ -1,6 +1,7 @@
 from events import send_event
 from events import subscriber
 from game.actions import place_building_template
+from game.building import BuildingType
 from game.character import EntityType
 from game.components import Renderable
 from game.entity import Entity
@@ -112,17 +113,28 @@ def show_building_template(evt):
             send_event(GameModeChange(prev, cur))
 
     if context.game_mode == context.GameMode.building:
-        # TODO: load the proper resource based on the building type
-        resource = context.res_mgr.get('/prefabs/buildings/mg_turret')
+        # TODO: Remove the hardcoded building type with a dynamic one
+        building_type = BuildingType.mg_turret.value
+        entities = context.res_mgr.get('/entities')
+        resource = context.res_mgr.get(
+            entities.data['buildings_map'].get(
+                BuildingType(building_type).name,
+                '/prefabs/buildings/mg_turret'
+            )
+        )
+
         matrix, scale_factor = context.matrix, context.scale_factor
         building_template = BuildingTemplate(resource, matrix, scale_factor, context.scene.root)
 
+        context.building_type = building_type
         context.building_template = building_template
         context.entities[building_template.e_id] = building_template
         x, y = context.input_mgr.mouse_position
         place_building_template(context, x, y)
 
     elif context.building_template is not None:
+        # Reset the building-mode related context while exiting building mode
+        context.building_type = 0
         bt, context.building_template = context.building_template, None
         del context.entities[bt.e_id]
         bt.destroy()

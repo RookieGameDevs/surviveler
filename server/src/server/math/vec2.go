@@ -33,11 +33,6 @@ func (v Vec2) Elem() (x, y float64) {
 	return v[0], v[1]
 }
 
-// Vec2FromInts creates a Vec2 from a pair of integer numbers
-func Vec2FromInts(x, y int) Vec2 {
-	return Vec2{float64(x), float64(y)}
-}
-
 // Add performs element-wise addition between two vectors. It is equivalent to
 // iterating over every element of v1 and adding the corresponding element of v2
 // to it.
@@ -57,6 +52,13 @@ func (v1 Vec2) Sub(v2 Vec2) Vec2 {
 // multiplying by c.
 func (v1 Vec2) Mul(c float64) Vec2 {
 	return Vec2{v1[0] * c, v1[1] * c}
+}
+
+// Div performs a scalar division between the vector and some constant
+// value c. This is equivalent to iterating over every vector element and
+// dividing by c.
+func (v1 Vec2) Div(c float64) Vec2 {
+	return Vec2{v1[0] / c, v1[1] / c}
 }
 
 // Dot returns the dot product of this vector with another. There are multiple

@@ -29,6 +29,7 @@ const (
 	TnGameStateId uint32 = 0 + iota
 	TnMoveEntityId
 	TnTeleportEntityId
+	TnBuildId
 )
 
 /*
@@ -50,6 +51,12 @@ type TnMoveEntity struct {
 
 type TnTeleportEntity TnMoveEntity
 
+type TnBuild struct {
+	Id   uint32    // entity id
+	Type uint8     // building type
+	Pos  math.Vec2 // building position
+}
+
 func (req *TnGameState) FromContext(c *cli.Context) error {
 	return nil
 }
@@ -59,8 +66,10 @@ func (req *TnMoveEntity) FromContext(c *cli.Context) error {
 	Id := c.Int("id")
 	if Id < 0 {
 		return fmt.Errorf("invalid id")
+	} else {
+		req.Id = uint32(Id)
 	}
-	req.Id = uint32(Id)
+
 	if err := req.Dest.Set(c.String("pos")); err != nil {
 		return fmt.Errorf("invalid position vector: %s", c.String("pos"))
 	}
@@ -72,10 +81,34 @@ func (req *TnTeleportEntity) FromContext(c *cli.Context) error {
 	Id := c.Int("id")
 	if Id < 0 {
 		return fmt.Errorf("invalid id")
+	} else {
+		req.Id = uint32(Id)
 	}
-	req.Id = uint32(Id)
+
 	if err := req.Dest.Set(c.String("pos")); err != nil {
 		return fmt.Errorf("invalid position vector: %s", c.String("pos"))
+	}
+	return nil
+}
+
+func (req *TnBuild) FromContext(c *cli.Context) error {
+	fmt.Println("In TnBuild")
+	Id := c.Int("id")
+	if Id < 0 {
+		return fmt.Errorf("invalid id")
+	} else {
+		req.Id = uint32(Id)
+	}
+
+	if err := req.Pos.Set(c.String("pos")); err != nil {
+		return fmt.Errorf("invalid position vector: %s", c.String("pos"))
+	}
+
+	Type := c.Int("type")
+	if Type < 0 {
+		return fmt.Errorf("invalid id")
+	} else {
+		req.Type = uint8(Type)
 	}
 	return nil
 }
@@ -156,6 +189,22 @@ func (g *survivelerGame) registerTelnetHandlers() {
 		}
 		g.telnet.RegisterCommand(&cmd)
 	}()
+
+	func() {
+		// register 'build' command
+		cmd := cli.Command{
+			Name:  "build",
+			Usage: "make a player create a building of given type at a specific -walkable- 2D point",
+			Flags: []cli.Flag{
+				cli.IntFlag{Name: "id", Usage: "entity id", Value: -1},
+				cli.StringFlag{Name: "type", Usage: "building type"},
+				cli.StringFlag{Name: "pos", Usage: "2D vector, ex: 3,4.5"},
+			},
+			Action: createHandler(
+				TelnetRequest{Type: TnBuildId, Content: &TnBuild{}}),
+		}
+		g.telnet.RegisterCommand(&cmd)
+	}()
 }
 
 /*
@@ -191,6 +240,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 			return fmt.Errorf("unknown entity id: %v", move.Id)
 		}
 		return nil
+
 	case TnTeleportEntityId:
 		teleport := msg.Content.(*TnTeleportEntity)
 		return fmt.Errorf("not implemented! but teleport received: %v", *teleport)
@@ -201,6 +251,27 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		// cancel the pathfinding? but also set the entity state to idle?
 		// it's ok if it's a player...
 		// but what will happen when it will be a zombie?
+	case TnBuildId:
+		build := msg.Content.(*TnBuild)
+		if _, ok := g.state.entities[build.Id]; ok {
+			// TODO: hard-coded building type for now
+			if build.Type != 0 {
+				return fmt.Errorf("unknown building id: %v", build.Id)
+
+			}
+			// emit a PLayerBuild event
+			evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
+				Id:   build.Id,
+				Xpos: float32(build.Pos[0]),
+				Ypos: float32(build.Pos[1]),
+				Type: uint8(build.Type),
+			})
+			g.PostEvent(evt)
+		} else {
+			return fmt.Errorf("unknown entity id: %v", build.Id)
+		}
+		return nil
+
 	}
 	return errors.New("Unknow telnet message id")
 }
