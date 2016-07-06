@@ -4,8 +4,11 @@ from events import subscriber
 from game import Entity
 from game.components import Renderable
 from game.events import BuildingDisappear
+from game.events import BuildingStatusChange
 from game.events import BuildingSpawn
+from game.health_bar import HealthBar
 from matlib import Vec
+from renderer.scene import SceneNode
 from utils import to_scene
 import logging
 
@@ -41,12 +44,23 @@ class Building(Entity):
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
         self.position = position
-        self.progress = progress
+        # Progress is going to be a property used to update only when necessary
+        # the health bar.
+        self._progress = progress
         self.completed = completed
 
         shader = resource['shader']
         self.mesh_project = resource['model_project']
         self.mesh_complete = resource['model_complete']
+
+        # Setup the group node and add the health bar
+        group_node = SceneNode()
+        g_transform = group_node.transform
+        g_transform.translate(to_scene(*self.position))
+        parent_node.add_child(group_node)
+
+        self.health_bar = HealthBar(
+            resource['health_bar'], progress[0] / progress[1], group_node)
 
         params = {
             'color_ambient': Vec(0.2, 0.2, 0.2, 1),
@@ -56,21 +70,18 @@ class Building(Entity):
 
         # create components
         renderable = Renderable(
-            parent_node,
+            group_node,
             self.mesh,
             shader,
             params,
             enable_light=True)
-
-        t = renderable.transform
-        t.translate(to_scene(*self.position))
 
         # initialize entity
         super().__init__(renderable)
 
     @property
     def mesh(self):
-        """Return the appropriate mesh based on the building status.
+        """Returns the appropriate mesh based on the building status.
 
         :returns: The appropriate mesh
         :rtype: :class:`renderer.Mesh`
@@ -80,15 +91,40 @@ class Building(Entity):
         else:
             return self.mesh_complete
 
+    @property
+    def progress(self):
+        """Returns the progress of the building as a tuple current/total.
+
+        :returns: The progress of the building
+        :rtype: :class:`tuple`
+        """
+        return self._progress
+
+    @progress.setter
+    def progress(self, value):
+        """Sets the progress of the building.
+
+        Propagate the modification to the buliding health bar.
+
+        :param value: The new progress
+        :type value: :class:`tuple`
+        """
+        self._progress = value
+        self.health_bar.value = value[0] / value[1]
+
     def destroy(self):
         """Removes itself from the scene.
         """
         LOG.debug('Destroying building {}'.format(self.e_id))
+
+        # Destroys the health bar first.
+        self.health_bar.destroy()
+
         node = self[Renderable].node
         node.parent.remove_child(node)
 
     def update(self, dt):
-        """Update the building.
+        """Updates the building.
 
         Applies the status of the building in terms of shader params and meshes.
 
@@ -98,10 +134,13 @@ class Building(Entity):
         node = self[Renderable].node
         node.mesh = self.mesh
 
+        # Update the health bar
+        self.health_bar.update(dt)
+
 
 @subscriber(BuildingSpawn)
 def building_spawn(evt):
-    """Create a building.
+    """Creates a building.
 
     A building of the appropriate type is created and placed into the game.
     """
@@ -133,7 +172,7 @@ def building_spawn(evt):
 
 @subscriber(BuildingDisappear)
 def building_disappear(evt):
-    """Remove a building from the game.
+    """Removes a building from the game.
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
@@ -141,3 +180,16 @@ def building_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         building = context.entities.pop(e_id)
         building.destroy()
+
+
+@subscriber(BuildingStatusChange)
+def building_health_change(evt):
+    """Updates the number of hp of the building.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    if evt.srv_id in context.server_entities_map:
+        e_id = context.server_entities_map[evt.srv_id]
+        building = context.entities[e_id]
+        building.progress = evt.new, building.progress[1]
+        building.completed = evt.completed

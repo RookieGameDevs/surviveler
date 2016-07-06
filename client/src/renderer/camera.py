@@ -23,6 +23,7 @@ class Camera(ABC):
         :param center: The new center of the scene
         :type center: :class:`matlib.Vec`
         """
+        self.position = center
         self.translate_mat.identity()
         self.translate_mat.translate(-center)
 

@@ -5,6 +5,7 @@ from game import BuildingType
 from game import EntityType
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
+from game.events import BuildingStatusChange
 from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
@@ -244,3 +245,24 @@ def handle_building_disappear(gs_mgr):
     new, old = n[MF.buildings], o.get(MF.buildings, {})
     old_buildings = set(old) - set(new)
     handle_buildings(old_buildings, old, BuildingDisappear)
+
+
+@processor
+def handle_building_health(gs_mgr):
+    """Check for building health/satatus changes and send the appropriate event.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: :class:`dict`
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.buildings], o.get(MF.buildings, {})
+    for b_id, building in new.items():
+        if b_id in old:
+            new_hp = building[MF.cur_hp]
+            old_hp = old[b_id][MF.cur_hp]
+            hp_changed = new_hp != old_hp
+            status_changed = building[MF.completed] == old[b_id][MF.completed]
+            if hp_changed or status_changed:
+                send_event(BuildingStatusChange(
+                    b_id, old_hp, new_hp, building[MF.completed]))
