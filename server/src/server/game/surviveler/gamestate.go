@@ -231,10 +231,8 @@ func (gs *gamestate) onPathReady(event *events.Event) {
 	evt := event.Payload.(events.PathReadyEvent)
 	log.WithField("evt", evt).Info("Received a path ready event")
 
-	// check that the entity exists
-	if player, ok := gs.entities[evt.Id]; ok {
-		mobileEntity := player.(game.MobileEntity)
-		mobileEntity.SetPath(evt.Path)
+	if player := gs.getPlayer(evt.Id); player != nil {
+		player.SetPath(evt.Path)
 	}
 }
 
@@ -245,13 +243,11 @@ func (gs *gamestate) OnPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMoveEvent)
 	log.WithField("evt", evt).Info("Received PlayerMove event")
 
-	// check that the entity exists
-	if ent, ok := gs.entities[evt.Id]; ok {
-		p := ent.(*entities.Player)
+	if player := gs.getPlayer(evt.Id); player != nil {
 		// set player action
-		p.Move()
+		player.Move()
 		// plan movement
-		gs.fillMovementRequest(p, math.FromFloat32(evt.Xpos, evt.Ypos))
+		gs.fillMovementRequest(player, math.FromFloat32(evt.Xpos, evt.Ypos))
 	}
 }
 
@@ -262,12 +258,10 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	evt := event.Payload.(events.PlayerBuildEvent)
 	log.WithField("evt", evt).Info("Received PlayerBuild event")
 
-	// check that the entity exists
-	if ent, ok := gs.entities[evt.Id]; ok {
-		p := ent.(*entities.Player)
+	if player := gs.getPlayer(evt.Id); player != nil {
 
 		// check entity type because only engineers can build
-		if p.Type() != game.EngineerEntity {
+		if player.Type() != game.EngineerEntity {
 			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
 			return
 		}
