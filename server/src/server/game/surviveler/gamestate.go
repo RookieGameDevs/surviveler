@@ -207,8 +207,8 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 		return
 	} else {
 		// instantiate player with settings from the resources pkg
-		p := entities.NewPlayer(gs.game, org,
-			float64(ed.Speed), game.EntityType(evt.Type))
+		p := entities.NewPlayer(gs.game, org, game.EntityType(evt.Type),
+			float64(ed.Speed), uint16(ed.BuildingPower))
 		p.SetId(evt.Id)
 		gs.AddEntity(p)
 	}

@@ -15,7 +15,6 @@ import (
 // player private action types
 const (
 	WaitingForPathAction      = 1000 + iota
-	PlayerBuildPower          = 3 // this is hard-coded for now, but will ideally be loaded from asset package
 	BuildPowerInductionPeriod = time.Second
 )
 
@@ -34,6 +33,7 @@ type Player struct {
 	actions       game.ActionStack // action stack
 	lastBPinduced time.Time        // time of last initiated BP induction
 	curBuilding   game.Building    // building in construction
+	buildPower    uint16
 	g             game.Game
 	components.Movable
 }
@@ -41,10 +41,12 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(g game.Game, spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
+func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
+	speed float64, buildPower uint16) *Player {
 	p := new(Player)
 	p.entityType = entityType
 	p.Speed = speed
+	p.buildPower = buildPower
 	p.Pos = spawn
 	p.g = g
 	p.id = game.InvalidId
@@ -88,7 +90,7 @@ func (p *Player) Update(dt time.Duration) {
 
 				if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
 					// BP induction period elapsed -> transmit BP to building
-					p.curBuilding.InduceBuildPower(PlayerBuildPower)
+					p.curBuilding.InduceBuildPower(p.buildPower)
 					p.lastBPinduced = time.Now()
 					log.WithFields(log.Fields{
 						"player":   p.id,
