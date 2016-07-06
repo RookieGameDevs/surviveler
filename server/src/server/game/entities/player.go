@@ -45,9 +45,11 @@ func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
 	speed float64, buildPower uint16) *Player {
 	p := new(Player)
 	p.entityType = entityType
-	p.Speed = speed
+	p.Movable = components.Movable{
+		Pos:   spawn,
+		Speed: speed,
+	}
 	p.buildPower = buildPower
-	p.Pos = spawn
 	p.g = g
 	p.id = game.InvalidId
 	p.curBuilding = nil
