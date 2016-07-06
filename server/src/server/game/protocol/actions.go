@@ -46,3 +46,20 @@ func (self *Server) handleBuild(c *network.Conn, msg *messages.Message) error {
 			}))
 	return nil
 }
+
+/*
+ * handleRepair processes a RepairMsg and fires a PlayerRepair event
+ */
+func (self *Server) handleRepair(c *network.Conn, msg *messages.Message) error {
+	// decode payload into a repair message
+	repair := self.factory.DecodePayload(messages.RepairId, msg.Payload).(messages.RepairMsg)
+	log.WithField("msg", repair).Info("Repair message")
+
+	self.evtCb(
+		events.NewEvent(events.PlayerRepair,
+			events.PlayerRepairEvent{
+				Id:         c.GetUserData().(ClientData).Id,
+				BuildingId: repair.Id,
+			}))
+	return nil
+}
