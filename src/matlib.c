@@ -262,19 +262,19 @@ mat_from_qtr(const Qtr *q)
 	float xx = x * x;
 	float zz = z * z;
 
-	float m00 = 1 - 2*yy - 2*zz;
-	float m01 = 2*x*y - 2*z*w;
-	float m02 = 2*x*z + 2*y*w;
+	float m00 = 1.0f - 2.0f*yy - 2.0f*zz;
+	float m01 = 2.0f*x*y - 2.0f*z*w;
+	float m02 = 2.0f*x*z + 2.0f*y*w;
 	float m03 = 0;
 
-	float m10 = 2*x*y + 2*z*w;
-	float m11 = 1 - 2*xx - 2*zz;
-	float m12 = 2*y*z - 2*x*w;
+	float m10 = 2.0f*x*y + 2.0f*z*w;
+	float m11 = 1.0f - 2.0f*xx - 2.0f*zz;
+	float m12 = 2.0f*y*z - 2.0f*x*w;
 	float m13 = 0;
 
-	float m20 = 2*x*z - 2*y*w;
-	float m21 = 2*y*z + 2*x*w;
-	float m22 = 1 - 2*xx - 2*yy;
+	float m20 = 2.0f*x*z - 2.0f*y*w;
+	float m21 = 2.0f*y*z + 2.0f*x*w;
+	float m22 = 1.0f - 2.0f*xx - 2.0f*yy;
 	float m23 = 0;
 
 	float m30 = 0, m31 = 0, m32 = 0, m33 = 1;
@@ -451,6 +451,19 @@ Qtr
 qtr(float w, float x, float y, float z)
 {
 	Qtr q = {{w, x, y, z}};
+	return q;
+}
+
+Qtr
+qtr_rotation(float x, float y, float z, float angle)
+{
+	float s = sin(angle / 2.0f);
+	Qtr q = {{
+		cos(angle / 2.0f),
+		x * s,
+		y * s,
+		z * s,
+	}};
 	return q;
 }
 

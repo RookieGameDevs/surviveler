@@ -120,6 +120,9 @@ struct Qtr {
 Qtr
 qtr(float w, float x, float y, float z);
 
+Qtr
+qtr_rotation(float x, float y, float z, float angle);
+
 void
 qtr_add(const Qtr *a, const Qtr *b, Qtr *r_q);
 
