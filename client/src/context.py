@@ -1,5 +1,7 @@
 from enum import Enum
 from enum import unique
+from utils import clamp_to_grid
+from utils import distance
 
 
 class Context:
@@ -76,6 +78,18 @@ class Context:
         """
         return self.entities.get(self.server_entities_map.get(srv_id))
 
+    def server_id(self, e_id):
+        """Take the entity or id and return the corresponding server id.
+
+        :param e_id: The entity id
+        :type e_id: :class:`int`
+
+        :returns: The server id
+        :rtype: :class:`int`
+        """
+        reverse_map = {v: k for k, v in self.server_entities_map.items()}
+        return reverse_map.get(e_id)
+
     def get_entity(self, e_id):
         """Returns the entity identified by the given (local) id.
 
@@ -99,3 +113,19 @@ class Context:
         else:
             prev, self.game_mode = self.game_mode, mode
         return prev, self.game_mode
+
+    def pick_entity(self, pos):
+        """Picks an entity and returns it.
+
+        :param pos: The position clicked
+        :type pos: :class:`tuple`
+
+        :returns: The entity picked
+        :rtype: :class:`game.entity.Entity` or None
+        """
+        n_pos = clamp_to_grid(pos[0], pos[1], self.scale_factor)
+        for srv_id, e_id in self.server_entities_map.items():
+            e = self.entities[e_id]
+            if e.position and distance(n_pos, e.position) < 1 / (self.scale_factor * 2):
+                return e
+        return None

@@ -41,3 +41,13 @@ class Entity(ABC):
         :type dt: float
         """
         pass
+
+    @property
+    def position(self):
+        """The position of the entity in world coordinates.
+
+        :returns: Absolutely None, tons of entities will not have a specific
+            position
+        :rtype: None
+        """
+        return None
