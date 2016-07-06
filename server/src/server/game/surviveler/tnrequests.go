@@ -30,6 +30,7 @@ const (
 	TnMoveEntityId
 	TnTeleportEntityId
 	TnBuildId
+	TnRepairId
 )
 
 /*
@@ -55,6 +56,11 @@ type TnBuild struct {
 	Id   uint32    // entity id
 	Type uint8     // building type
 	Pos  math.Vec2 // building position
+}
+
+type TnRepair struct {
+	Id         uint32 // entity id
+	BuildingId uint32 // building id
 }
 
 func (req *TnGameState) FromContext(c *cli.Context) error {
@@ -109,6 +115,24 @@ func (req *TnBuild) FromContext(c *cli.Context) error {
 		return fmt.Errorf("invalid id")
 	} else {
 		req.Type = uint8(Type)
+	}
+	return nil
+}
+
+func (req *TnRepair) FromContext(c *cli.Context) error {
+	fmt.Println("In TnRepair")
+	Id := c.Int("id")
+	if Id < 0 {
+		return fmt.Errorf("invalid id")
+	} else {
+		req.Id = uint32(Id)
+	}
+
+	BId := c.Int("bid")
+	if BId < 0 {
+		return fmt.Errorf("invalid building id")
+	} else {
+		req.BuildingId = uint32(BId)
 	}
 	return nil
 }
@@ -205,6 +229,21 @@ func (g *survivelerGame) registerTelnetHandlers() {
 		}
 		g.telnet.RegisterCommand(&cmd)
 	}()
+
+	func() {
+		// register 'repair' command
+		cmd := cli.Command{
+			Name:  "repair",
+			Usage: "make a player repair a 'not-completed' building",
+			Flags: []cli.Flag{
+				cli.IntFlag{Name: "id", Usage: "entity id", Value: -1},
+				cli.IntFlag{Name: "bid", Usage: "building id", Value: -1},
+			},
+			Action: createHandler(
+				TelnetRequest{Type: TnRepairId, Content: &TnRepair{}}),
+		}
+		g.telnet.RegisterCommand(&cmd)
+	}()
 }
 
 /*
@@ -270,6 +309,21 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		} else {
 			return fmt.Errorf("unknown entity id: %v", build.Id)
 		}
+		return nil
+	case TnRepairId:
+		repair := msg.Content.(*TnRepair)
+		if err := g.state.isPlayer(repair.Id); err != nil {
+			return err
+		}
+		if err := g.state.isBuilding(repair.BuildingId); err != nil {
+			return err
+		}
+		// emit a PlayerRepair event
+		evt := events.NewEvent(events.PlayerRepair, events.PlayerRepairEvent{
+			Id:         repair.Id,
+			BuildingId: repair.BuildingId,
+		})
+		g.PostEvent(evt)
 		return nil
 
 	}
