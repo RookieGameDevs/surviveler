@@ -88,6 +88,7 @@ def start_build_action(context, position):
     })
 
     context.msg_queue.append(msg)
+    send_event(GameModeToggle(context.GameMode.building))
 
 
 def entity_picked(context, entity):
