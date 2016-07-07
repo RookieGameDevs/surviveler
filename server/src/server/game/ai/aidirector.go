@@ -5,12 +5,11 @@
 package ai
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
 	"server/game/entities"
 	"time"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 // This number represents the ration between the number of logic ticks for one
