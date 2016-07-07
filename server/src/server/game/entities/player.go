@@ -15,7 +15,6 @@ import (
 // player private action types
 const (
 	WaitingForPathAction      = 1000 + iota
-	PlayerBuildPower          = 3 // this is hard-coded for now, but will ideally be loaded from asset package
 	BuildPowerInductionPeriod = time.Second
 )
 
@@ -34,6 +33,7 @@ type Player struct {
 	actions       game.ActionStack // action stack
 	lastBPinduced time.Time        // time of last initiated BP induction
 	curBuilding   game.Building    // building in construction
+	buildPower    uint16
 	g             game.Game
 	components.Movable
 }
@@ -41,11 +41,15 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(g game.Game, spawn math.Vec2, speed float64, entityType game.EntityType) *Player {
+func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
+	speed float64, buildPower uint16) *Player {
 	p := new(Player)
 	p.entityType = entityType
-	p.Speed = speed
-	p.Pos = spawn
+	p.Movable = components.Movable{
+		Pos:   spawn,
+		Speed: speed,
+	}
+	p.buildPower = buildPower
 	p.g = g
 	p.id = game.InvalidId
 	p.curBuilding = nil
@@ -65,7 +69,9 @@ func (p *Player) Update(dt time.Duration) {
 	// peek the topmost stack action
 	if action, exist := p.actions.Peek(); exist {
 		switch action.Type {
+
 		case game.MovingAction:
+
 			p.Movable.Update(dt)
 			if p.Movable.HasReachedDestination() {
 				// pop current action to get ready for next update
@@ -74,34 +80,12 @@ func (p *Player) Update(dt time.Duration) {
 			}
 
 		case WaitingForPathAction:
-			log.Debug("player is waiting for path action")
 
-		case game.BuildingAction:
+			log.Debug("player is waiting for a path")
 
-			if p.lastBPinduced.IsZero() {
-				// we are starting to build, mark current time
-				p.lastBPinduced = time.Now()
-				log.WithField("building", p.curBuilding).
-					Info("Starting building construction")
-
-			} else {
-
-				if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
-					// BP induction period elapsed -> transmit BP to building
-					p.curBuilding.InduceBuildPower(PlayerBuildPower)
-					p.lastBPinduced = time.Now()
-					log.WithFields(log.Fields{
-						"player":   p.id,
-						"building": p.curBuilding.Id(),
-					}).Debug("Inducing Build Power")
-				}
-				if p.curBuilding.IsBuilt() {
-					log.WithField("building", p.curBuilding).
-						Info("Player finished building construction")
-					p.curBuilding = nil
-					p.actions.Pop()
-				}
-			}
+		case game.BuildingAction, game.RepairingAction:
+			// building/repairing actually end up being the same
+			p.induceBuildPower()
 		}
 	} else {
 		// little consistency check...
@@ -109,22 +93,33 @@ func (p *Player) Update(dt time.Duration) {
 	}
 }
 
+func (p *Player) induceBuildPower() {
+
+	// TODO: check if building still exists
+
+	// induce build power by chunks of `player BP` per second
+	if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
+		// period elapsed -> induce BP
+		p.curBuilding.ReceiveBuildPower(p.buildPower)
+		p.lastBPinduced = time.Now()
+	}
+
+	if p.curBuilding.IsBuilt() {
+		// building is built: pop current action
+		p.curBuilding = nil
+		p.actions.Pop()
+		// zero time of last BP induced
+		p.lastBPinduced = time.Time{}
+	}
+}
+
 /*
  * SetPath defines the path that the player must follow.
  */
 func (p *Player) SetPath(path math.Path) {
-	if action, exist := p.actions.Peek(); !exist {
-		// check stack
-		log.Panic("Player.actions stack should not be empty")
-	} else if action.Type != WaitingForPathAction {
-		// check stack topmost item
-		log.WithField("action", action.Type).
-			Panic("next action in Player.actions stack must be WaitingForPathAction")
-	} else {
-		log.Debug("Player.SetPath, setting path to movable")
-		p.actions.Pop()
-		p.Movable.SetPath(path)
-	}
+	log.Debug("Player.SetPath, setting path to movable")
+	p.actions.Pop()
+	p.Movable.SetPath(path)
 }
 
 /*
@@ -171,6 +166,8 @@ func (p *Player) State() game.EntityState {
 		}
 	case game.BuildingAction:
 		actionData = game.BuildActionData{}
+	case game.RepairingAction:
+		actionData = game.RepairActionData{}
 	case game.IdleAction:
 		actionData = game.IdleActionData{}
 	}
@@ -185,21 +182,32 @@ func (p *Player) State() game.EntityState {
 }
 
 /*
- * Move makes the player initiates a build action
+ * Build makes the player initiates a build action
  *
  * It cancels any high-level actions the player may already be doing and set
- * the player as waiting for the calculated path to join the building point
+ * the player as waiting for the calculated path to join the building point.
+ * At destination, it immediately starts the construction until the building
+ * is complete.
  */
-
 func (p *Player) Build(b game.Building) {
 	log.Debug("Player.Build")
-	// empty action stack, this cancel any current action(s)
-	p.emptyActions()
-	// fill the player action stack
-	p.actions.Push(&game.Action{game.BuildingAction, struct{}{}})
-	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
-	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
+	p.moveAndAction(game.BuildingAction, game.BuildActionData{})
 	p.curBuilding = b
+	p.lastBPinduced = time.Time{}
+}
+
+/*
+ * Repair makes the player initiates a repair action
+ *
+ * It cancels any high-level actions the player may already be doing and set
+ * the player as waiting for the calculated path to join the building point.
+ * At destination, it immediately repairs the building until its completion.
+ */
+func (p *Player) Repair(b game.Building) {
+	log.Debug("Player.Repair")
+	p.moveAndAction(game.RepairingAction, game.RepairActionData{})
+	p.curBuilding = b
+	p.lastBPinduced = time.Time{}
 }
 
 /*
@@ -211,4 +219,20 @@ func (p *Player) emptyActions() {
 	// empty the action stack, just let the bottommost (idle)
 	for ; p.actions.Len() > 1; p.actions.Pop() {
 	}
+}
+
+/*
+ * moveAndAction makes a player move until to reach a specified action point
+ *
+ * After this call, the player will be waiting for a path. When received, he
+ * will be moving alongside the path. When reached the path destination, the
+ * specified action will begin
+ */
+func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{}) {
+	// empty action stack, this cancel any current action(s)
+	p.emptyActions()
+	// fill the player action stack
+	p.actions.Push(&game.Action{actionType, actionData})
+	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
+	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }

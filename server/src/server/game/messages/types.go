@@ -17,6 +17,7 @@ const (
 	GameStateId
 	MoveId
 	BuildId
+	RepairId
 )
 
 /*
@@ -51,12 +52,19 @@ type MoveMsg struct {
 }
 
 /*
- * player initiated a duilbing action. Client -> server message
+ * player initiated a building action. Client -> server message
  */
 type BuildMsg struct {
 	Type uint8
 	Xpos float32
 	Ypos float32
+}
+
+/*
+ * player initiated a repair action. Client -> server message
+ */
+type RepairMsg struct {
+	Id uint32 // id of the building to repair
 }
 
 /*

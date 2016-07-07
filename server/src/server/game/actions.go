@@ -13,22 +13,26 @@ const (
 	IdleAction ActionType = 0 + iota
 	MovingAction
 	BuildingAction
+	RepairingAction
 )
 
 /*
- * Idle action
+ * Idle action payload
  */
-type IdleActionData struct {
-}
+type IdleActionData struct{}
 
 /*
- * Building action
+ * Building action payload
  */
-type BuildActionData struct {
-}
+type BuildActionData struct{}
 
 /*
- * Movement action data.
+ * Repairing action payload
+ */
+type RepairActionData struct{}
+
+/*
+ * Movement action payload
  */
 type MoveActionData struct {
 	Speed float64

@@ -7,12 +7,11 @@ package surviveler
 import (
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 	"io"
 	"server/game/events"
 	"server/math"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
 )
 
 /*
@@ -30,6 +29,7 @@ const (
 	TnMoveEntityId
 	TnTeleportEntityId
 	TnBuildId
+	TnRepairId
 )
 
 /*
@@ -55,6 +55,11 @@ type TnBuild struct {
 	Id   uint32    // entity id
 	Type uint8     // building type
 	Pos  math.Vec2 // building position
+}
+
+type TnRepair struct {
+	Id         uint32 // entity id
+	BuildingId uint32 // building id
 }
 
 func (req *TnGameState) FromContext(c *cli.Context) error {
@@ -109,6 +114,24 @@ func (req *TnBuild) FromContext(c *cli.Context) error {
 		return fmt.Errorf("invalid id")
 	} else {
 		req.Type = uint8(Type)
+	}
+	return nil
+}
+
+func (req *TnRepair) FromContext(c *cli.Context) error {
+	fmt.Println("In TnRepair")
+	Id := c.Int("id")
+	if Id < 0 {
+		return fmt.Errorf("invalid id")
+	} else {
+		req.Id = uint32(Id)
+	}
+
+	BId := c.Int("bid")
+	if BId < 0 {
+		return fmt.Errorf("invalid building id")
+	} else {
+		req.BuildingId = uint32(BId)
 	}
 	return nil
 }
@@ -205,6 +228,21 @@ func (g *survivelerGame) registerTelnetHandlers() {
 		}
 		g.telnet.RegisterCommand(&cmd)
 	}()
+
+	func() {
+		// register 'repair' command
+		cmd := cli.Command{
+			Name:  "repair",
+			Usage: "make a player repair a buliding, that is partially destroyed or unfinished",
+			Flags: []cli.Flag{
+				cli.IntFlag{Name: "id", Usage: "entity id", Value: -1},
+				cli.IntFlag{Name: "bid", Usage: "building id", Value: -1},
+			},
+			Action: createHandler(
+				TelnetRequest{Type: TnRepairId, Content: &TnRepair{}}),
+		}
+		g.telnet.RegisterCommand(&cmd)
+	}()
 }
 
 /*
@@ -217,31 +255,37 @@ func (g *survivelerGame) registerTelnetHandlers() {
  */
 func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	log.WithField("msg", msg).Info("Handling a telnet game message")
+
 	switch msg.Type {
+
 	case TnGameStateId:
+
 		if gsMsg := g.state.pack(); gsMsg != nil {
 			io.WriteString(msg.Context.App.Writer, fmt.Sprintf("%v\n", *gsMsg))
 			return nil
 		} else {
 			return errors.New("no gamestate to show")
 		}
-	case TnMoveEntityId:
-		move := msg.Content.(*TnMoveEntity)
-		if _, ok := g.state.entities[move.Id]; ok {
 
-			// emit a PlayerMove event
-			evt := events.NewEvent(events.PlayerMove, events.PlayerMoveEvent{
+	case TnMoveEntityId:
+
+		move := msg.Content.(*TnMoveEntity)
+		if err := g.state.isPlayer(move.Id); err != nil {
+			return err
+		}
+
+		// emit a PlayerMove event
+		evt := events.NewEvent(events.PlayerMove,
+			events.PlayerMoveEvent{
 				Id:   move.Id,
 				Xpos: float32(move.Dest[0]),
 				Ypos: float32(move.Dest[1]),
 			})
-			g.PostEvent(evt)
-		} else {
-			return fmt.Errorf("unknown entity id: %v", move.Id)
-		}
+		g.PostEvent(evt)
 		return nil
 
 	case TnTeleportEntityId:
+
 		teleport := msg.Content.(*TnTeleportEntity)
 		return fmt.Errorf("not implemented! but teleport received: %v", *teleport)
 		// TODO: implement instant telnet teleportation
@@ -251,25 +295,42 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		// cancel the pathfinding? but also set the entity state to idle?
 		// it's ok if it's a player...
 		// but what will happen when it will be a zombie?
-	case TnBuildId:
-		build := msg.Content.(*TnBuild)
-		if _, ok := g.state.entities[build.Id]; ok {
-			// TODO: hard-coded building type for now
-			if build.Type != 0 {
-				return fmt.Errorf("unknown building id: %v", build.Id)
 
-			}
-			// emit a PLayerBuild event
-			evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
-				Id:   build.Id,
-				Xpos: float32(build.Pos[0]),
-				Ypos: float32(build.Pos[1]),
-				Type: uint8(build.Type),
-			})
-			g.PostEvent(evt)
-		} else {
-			return fmt.Errorf("unknown entity id: %v", build.Id)
+	case TnBuildId:
+
+		build := msg.Content.(*TnBuild)
+		if err := g.state.isPlayer(build.Id); err != nil {
+			return err
 		}
+		// TODO: hard-coded building type check for now
+		if build.Type != 0 {
+			return fmt.Errorf("unknown building type: %v", build.Type)
+		}
+		// emit a PlayerBuild event
+		evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
+			Id:   build.Id,
+			Xpos: float32(build.Pos[0]),
+			Ypos: float32(build.Pos[1]),
+			Type: uint8(build.Type),
+		})
+		g.PostEvent(evt)
+		return nil
+
+	case TnRepairId:
+
+		repair := msg.Content.(*TnRepair)
+		if err := g.state.isPlayer(repair.Id); err != nil {
+			return err
+		}
+		if err := g.state.isBuilding(repair.BuildingId); err != nil {
+			return err
+		}
+		// emit a PlayerRepair event
+		evt := events.NewEvent(events.PlayerRepair, events.PlayerRepairEvent{
+			Id:         repair.Id,
+			BuildingId: repair.BuildingId,
+		})
+		g.PostEvent(evt)
 		return nil
 
 	}

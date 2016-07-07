@@ -196,13 +196,22 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	evt := event.Payload.(events.PlayerJoinEvent)
 	// we have a new player, his id will be its unique connection id
-	log.WithField("clientId", evt.Id).Info("We have one more player")
+	log.WithField("clientId", evt.Id).Info("Received a PlayerJoin event")
+
 	// pick a random spawn point
 	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
-	// TODO: speed from resource
-	p := entities.NewPlayer(gs.game, org, 3, game.EntityType(evt.Type))
-	p.SetId(evt.Id)
-	gs.AddEntity(p)
+
+	// load entity data
+	et := game.EntityType(evt.Type)
+	if ed := gs.EntityData(et); ed == nil {
+		return
+	} else {
+		// instantiate player with settings from the resources pkg
+		p := entities.NewPlayer(gs.game, org, game.EntityType(evt.Type),
+			float64(ed.Speed), uint16(ed.BuildingPower))
+		p.SetId(evt.Id)
+		gs.AddEntity(p)
+	}
 }
 
 /*
@@ -222,10 +231,8 @@ func (gs *gamestate) onPathReady(event *events.Event) {
 	evt := event.Payload.(events.PathReadyEvent)
 	log.WithField("evt", evt).Info("Received a path ready event")
 
-	// check that the entity exists
-	if player, ok := gs.entities[evt.Id]; ok {
-		mobileEntity := player.(game.MobileEntity)
-		mobileEntity.SetPath(evt.Path)
+	if player := gs.getPlayer(evt.Id); player != nil {
+		player.SetPath(evt.Path)
 	}
 }
 
@@ -236,13 +243,11 @@ func (gs *gamestate) OnPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMoveEvent)
 	log.WithField("evt", evt).Info("Received PlayerMove event")
 
-	// check that the entity exists
-	if ent, ok := gs.entities[evt.Id]; ok {
-		p := ent.(*entities.Player)
+	if player := gs.getPlayer(evt.Id); player != nil {
 		// set player action
-		p.Move()
+		player.Move()
 		// plan movement
-		gs.fillMovementRequest(p, math.FromFloat32(evt.Xpos, evt.Ypos))
+		gs.fillMovementRequest(player, math.FromFloat32(evt.Xpos, evt.Ypos))
 	}
 }
 
@@ -253,12 +258,10 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	evt := event.Payload.(events.PlayerBuildEvent)
 	log.WithField("evt", evt).Info("Received PlayerBuild event")
 
-	// check that the entity exists
-	if ent, ok := gs.entities[evt.Id]; ok {
-		p := ent.(*entities.Player)
+	if player := gs.getPlayer(evt.Id); player != nil {
 
 		// check entity type because only engineers can build
-		if p.Type() != game.EngineerEntity {
+		if player.Type() != game.EngineerEntity {
 			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
 			return
 		}
@@ -280,10 +283,29 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		tile.Building = building
 
 		// set player action
-		p.Build(building)
+		player.Build(building)
 
 		// plan movement
-		gs.fillMovementRequest(p, pos)
+		gs.fillMovementRequest(player, pos)
+	}
+}
+
+/*
+ * event handler for PlayerRepair events
+ */
+func (gs *gamestate) onPlayerRepair(event *events.Event) {
+	evt := event.Payload.(events.PlayerRepairEvent)
+	log.WithField("evt", evt).Info("Received PlayerRepair event")
+
+	if player := gs.getPlayer(evt.Id); player != nil {
+
+		if building := gs.getBuilding(evt.BuildingId); building != nil {
+			// set player action
+			player.Repair(building)
+
+			// plan movement
+			gs.fillMovementRequest(player, building.Position())
+		}
 	}
 }
 

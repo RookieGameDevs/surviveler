@@ -5,14 +5,12 @@
 package main
 
 import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
+	"gopkg.in/ini.v2"
 	"os"
 	"server/game"
 	"server/game/surviveler"
-
-	"gopkg.in/ini.v2"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
 )
 
 /*

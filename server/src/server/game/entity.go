@@ -63,7 +63,7 @@ type MobileEntity interface {
 type Building interface {
 	Entity
 	IsBuilt() bool
-	InduceBuildPower(bp uint16)
+	ReceiveBuildPower(bp uint16)
 }
 
 /*
