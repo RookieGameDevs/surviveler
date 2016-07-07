@@ -96,9 +96,6 @@ func (p *Player) Update(dt time.Duration) {
 func (p *Player) induceBuildPower() {
 
 	// TODO: check if building still exists
-	log.WithFields(log.Fields{
-		"lastBPinduced": p.lastBPinduced,
-	}).Debug("inducing BP")
 
 	// induce build power by chunks of `player BP` per second
 	if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
@@ -108,14 +105,11 @@ func (p *Player) induceBuildPower() {
 	}
 
 	if p.curBuilding.IsBuilt() {
-		log.Debug("building is built")
 		// building is built: pop current action
 		p.curBuilding = nil
 		p.actions.Pop()
 		// zero time of last BP induced
 		p.lastBPinduced = time.Time{}
-	} else {
-		log.Debug("building is not built")
 	}
 }
 
