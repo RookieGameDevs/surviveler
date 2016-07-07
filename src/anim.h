@@ -10,6 +10,7 @@
 struct Joint {
 	Mat inv_bind_pose;  // inverse bind pose transform
 	uint8_t parent;     // index of the parent joint or 0xff if root
+	uint8_t *children;
 };
 
 /**
@@ -50,3 +51,10 @@ struct Animation {
 	float *timestamps;            // animation timeline
 	struct SkeletonPose *poses;   // poses
 };
+
+
+/**
+ * Compute the transformation matrix palette for the given time instant.
+ */
+void
+anim_compute_pose(struct Animation *anim, float time, Mat *transforms);
