@@ -270,18 +270,18 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	case TnMoveEntityId:
 
 		move := msg.Content.(*TnMoveEntity)
-		if _, ok := g.state.entities[move.Id]; ok {
+		if err := g.state.isPlayer(move.Id); err != nil {
+			return err
+		}
 
-			// emit a PlayerMove event
-			evt := events.NewEvent(events.PlayerMove, events.PlayerMoveEvent{
+		// emit a PlayerMove event
+		evt := events.NewEvent(events.PlayerMove,
+			events.PlayerMoveEvent{
 				Id:   move.Id,
 				Xpos: float32(move.Dest[0]),
 				Ypos: float32(move.Dest[1]),
 			})
-			g.PostEvent(evt)
-		} else {
-			return fmt.Errorf("unknown entity id: %v", move.Id)
-		}
+		g.PostEvent(evt)
 		return nil
 
 	case TnTeleportEntityId:
@@ -295,27 +295,29 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		// cancel the pathfinding? but also set the entity state to idle?
 		// it's ok if it's a player...
 		// but what will happen when it will be a zombie?
-	case TnBuildId:
-		build := msg.Content.(*TnBuild)
-		if _, ok := g.state.entities[build.Id]; ok {
-			// TODO: hard-coded building type for now
-			if build.Type != 0 {
-				return fmt.Errorf("unknown building id: %v", build.Id)
 
-			}
-			// emit a PLayerBuild event
-			evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
-				Id:   build.Id,
-				Xpos: float32(build.Pos[0]),
-				Ypos: float32(build.Pos[1]),
-				Type: uint8(build.Type),
-			})
-			g.PostEvent(evt)
-		} else {
-			return fmt.Errorf("unknown entity id: %v", build.Id)
+	case TnBuildId:
+
+		build := msg.Content.(*TnBuild)
+		if err := g.state.isPlayer(build.Id); err != nil {
+			return err
 		}
+		// TODO: hard-coded building type check for now
+		if build.Type != 0 {
+			return fmt.Errorf("unknown building type: %v", build.Type)
+		}
+		// emit a PlayerBuild event
+		evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
+			Id:   build.Id,
+			Xpos: float32(build.Pos[0]),
+			Ypos: float32(build.Pos[1]),
+			Type: uint8(build.Type),
+		})
+		g.PostEvent(evt)
 		return nil
+
 	case TnRepairId:
+
 		repair := msg.Content.(*TnRepair)
 		if err := g.state.isPlayer(repair.Id); err != nil {
 			return err
