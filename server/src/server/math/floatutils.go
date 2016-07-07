@@ -18,7 +18,7 @@ import (
 //
 // This is, obviously, not mutex protected so be **absolutely sure** that no functions using Epsilon
 // are being executed when you change this.
-var Epsilon float64 = 1e-10
+var Epsilon = 1e-10
 
 // FloatEqual is a safe utility function to compare floats.
 // It's Taken from http://floating-point-gui.de/errors/comparison/
@@ -38,13 +38,19 @@ func FloatEqualFunc(epsilon float64) func(float64, float64) bool {
 }
 
 var (
-	MinNormal = 1.1754943508222875e-38 // 1 / 2**(127 - 1)
-	MinValue  = math.SmallestNonzeroFloat64
-	MaxValue  = math.MaxFloat64
+	// MinNormal is the minimum positive normal 1 / 2**(127 - 1)
+	MinNormal = 1.1754943508222875e-38
+	// MinValue is next smallest float after 0
+	MinValue = math.SmallestNonzeroFloat64
+	// MaxValue is the maximal value representable with a float64
+	MaxValue = math.MaxFloat64
 
+	// InfPos represents the positive infinity
 	InfPos = math.Inf(1)
+	// InfNeg represents the negative infinity
 	InfNeg = math.Inf(-1)
-	NaN    = math.NaN()
+	// NaN represents a not-a-number
+	NaN = math.NaN()
 )
 
 // FloatEqualThreshold is a utility function to compare floats.
@@ -62,11 +68,10 @@ func FloatEqualThreshold(a, b, epsilon float64) bool {
 
 	if a == 0 || b == 0 || diff < MinNormal { // If a or b are 0 or both are extremely close to it
 		return diff < epsilon*MinNormal
-	} else {
-		// Else compare difference
-		absA, absB := math.Abs(a), math.Abs(b)
-		return diff/math.Min((absA+absB), MaxValue) < epsilon
 	}
+	// Else compare difference
+	absA, absB := math.Abs(a), math.Abs(b)
+	return diff/math.Min((absA+absB), MaxValue) < epsilon
 }
 
 // Clamp takes in a value and two thresholds. If the value is smaller than the low
@@ -93,26 +98,26 @@ func ClampFunc(low, high float64) func(float64) float64 {
 	}
 }
 
-/* The IsClamped functions use strict equality (meaning: not the FloatEqual function)
-there shouldn't be any major issues with this since clamp is often used to fix minor errors*/
-
+// IsClamped uses strict equality (meaning: not the FloatEqual function) there
+// shouldn't be any major issues with this since clamp is often used to fix minor
+//i errors
+//
 // Checks if a is clamped between low and high as if
 // Clamp(a, low, high) had been called.
-//
 // In most cases it's probably better to just call Clamp
 // without checking this since it's relatively cheap.
 func IsClamped(a, low, high float64) bool {
 	return a >= low && a <= high
 }
 
-// If a > b, then a will be set to the value of b.
+// SetMin checks if a > b, then a will be set to the value of b.
 func SetMin(a *float64, b float64) {
 	if b < *a {
 		*a = b
 	}
 }
 
-// If a < b, then a will be set to the value of b.
+// SetMax checks if a < b, then a will be set to the value of b.
 func SetMax(a *float64, b float64) {
 	if *a < b {
 		*a = b
