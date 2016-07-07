@@ -7,12 +7,11 @@ package surviveler
 import (
 	"errors"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 	"io"
 	"server/game/events"
 	"server/math"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
 )
 
 /*
@@ -234,7 +233,7 @@ func (g *survivelerGame) registerTelnetHandlers() {
 		// register 'repair' command
 		cmd := cli.Command{
 			Name:  "repair",
-			Usage: "make a player repair a 'not-completed' building",
+			Usage: "make a player repair a buliding, that is partially destroyed or unfinished",
 			Flags: []cli.Flag{
 				cli.IntFlag{Name: "id", Usage: "entity id", Value: -1},
 				cli.IntFlag{Name: "bid", Usage: "building id", Value: -1},
@@ -256,15 +255,20 @@ func (g *survivelerGame) registerTelnetHandlers() {
  */
 func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	log.WithField("msg", msg).Info("Handling a telnet game message")
+
 	switch msg.Type {
+
 	case TnGameStateId:
+
 		if gsMsg := g.state.pack(); gsMsg != nil {
 			io.WriteString(msg.Context.App.Writer, fmt.Sprintf("%v\n", *gsMsg))
 			return nil
 		} else {
 			return errors.New("no gamestate to show")
 		}
+
 	case TnMoveEntityId:
+
 		move := msg.Content.(*TnMoveEntity)
 		if _, ok := g.state.entities[move.Id]; ok {
 
@@ -281,6 +285,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		return nil
 
 	case TnTeleportEntityId:
+
 		teleport := msg.Content.(*TnTeleportEntity)
 		return fmt.Errorf("not implemented! but teleport received: %v", *teleport)
 		// TODO: implement instant telnet teleportation

@@ -69,7 +69,9 @@ func (p *Player) Update(dt time.Duration) {
 	// peek the topmost stack action
 	if action, exist := p.actions.Peek(); exist {
 		switch action.Type {
+
 		case game.MovingAction:
+
 			p.Movable.Update(dt)
 			if p.Movable.HasReachedDestination() {
 				// pop current action to get ready for next update
