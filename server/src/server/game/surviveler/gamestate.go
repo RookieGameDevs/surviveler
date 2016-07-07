@@ -24,6 +24,8 @@ import (
 // TODO: this map is hard-coded for now, but will be read from resources
 // in the future
 var _entityTypes = map[string]game.EntityType{}
+
+// translation from topleft of tile to its center
 var txCenter math.Vec2
 
 /*
@@ -207,7 +209,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 		return
 	} else {
 		// instantiate player with settings from the resources pkg
-		p := entities.NewPlayer(gs.game, org, game.EntityType(evt.Type),
+		p := entities.NewPlayer(gs, org, game.EntityType(evt.Type),
 			float64(ed.Speed), uint16(ed.BuildingPower))
 		p.SetId(evt.Id)
 		gs.AddEntity(p)
@@ -350,7 +352,7 @@ func (gs *gamestate) Entity(id uint32) game.Entity {
 }
 
 /*
- * AddEntity adds specifies entity to the game state.
+ * AddEntity adds an entity to the game state.
  *
  * It entity Id is InvalidId, an unique id is generated and assigned
  * to the entity
@@ -362,6 +364,13 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 		ent.SetId(id)
 	}
 	gs.entities[id] = ent
+}
+
+/*
+ * RemoveEntity removes an entity from the game state
+ */
+func (gs *gamestate) RemoveEntity(id uint32) {
+	delete(gs.entities, id)
 }
 
 func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Building {
