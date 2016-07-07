@@ -283,10 +283,29 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		tile.Building = building
 
 		// set player action
-		p.Build(building)
+		player.Build(building)
 
 		// plan movement
-		gs.fillMovementRequest(p, pos)
+		gs.fillMovementRequest(player, pos)
+	}
+}
+
+/*
+ * event handler for PlayerRepair events
+ */
+func (gs *gamestate) onPlayerRepair(event *events.Event) {
+	evt := event.Payload.(events.PlayerRepairEvent)
+	log.WithField("evt", evt).Info("Received PlayerRepair event")
+
+	if player := gs.getPlayer(evt.Id); player != nil {
+
+		if building := gs.getBuilding(evt.BuildingId); building != nil {
+			// set player action
+			player.Repair(building)
+
+			// plan movement
+			gs.fillMovementRequest(player, building.Position())
+		}
 	}
 }
 

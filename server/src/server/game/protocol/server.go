@@ -155,6 +155,11 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			log.WithError(err).Error("Couldn't handle Build")
 			return false
 		}
+	case messages.RepairId:
+		if err := srv.handleRepair(c, msg); err != nil {
+			log.WithError(err).Error("Couldn't handle Repair")
+			return false
+		}
 	default:
 		// forward it
 		srv.msgCb(msg, clientData.Id)
