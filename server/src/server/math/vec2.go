@@ -34,41 +34,41 @@ func (v Vec2) Elem() (x, y float64) {
 }
 
 // Add performs element-wise addition between two vectors. It is equivalent to
-// iterating over every element of v1 and adding the corresponding element of v2
+// iterating over every element of v and adding the corresponding element of v2
 // to it.
-func (v1 Vec2) Add(v2 Vec2) Vec2 {
-	return Vec2{v1[0] + v2[0], v1[1] + v2[1]}
+func (v Vec2) Add(v2 Vec2) Vec2 {
+	return Vec2{v[0] + v2[0], v[1] + v2[1]}
 }
 
 // Sub performs element-wise subtraction between two vectors. It is equivalent
-// to iterating over every element of v1 and subtracting the corresponding element
+// to iterating over every element of v and subtracting the corresponding element
 // of v2 from it.
-func (v1 Vec2) Sub(v2 Vec2) Vec2 {
-	return Vec2{v1[0] - v2[0], v1[1] - v2[1]}
+func (v Vec2) Sub(v2 Vec2) Vec2 {
+	return Vec2{v[0] - v2[0], v[1] - v2[1]}
 }
 
 // Mul performs a scalar multiplication between the vector and some constant
 // value c. This is equivalent to iterating over every vector element and
 // multiplying by c.
-func (v1 Vec2) Mul(c float64) Vec2 {
-	return Vec2{v1[0] * c, v1[1] * c}
+func (v Vec2) Mul(c float64) Vec2 {
+	return Vec2{v[0] * c, v[1] * c}
 }
 
 // Div performs a scalar division between the vector and some constant
 // value c. This is equivalent to iterating over every vector element and
 // dividing by c.
-func (v1 Vec2) Div(c float64) Vec2 {
-	return Vec2{v1[0] / c, v1[1] / c}
+func (v Vec2) Div(c float64) Vec2 {
+	return Vec2{v[0] / c, v[1] / c}
 }
 
 // Dot returns the dot product of this vector with another. There are multiple
 // ways to describe this value. One is the multiplication of their lengths and
-// cos(theta) where theta is the angle between the vectors: v1.v2 =
-// |v1||v2|cos(theta).
+// cos(theta) where theta is the angle between the vectors: v.v2 =
+// |v||v2|cos(theta).
 
 // The other (and what is actually done) is the sum of the element-wise
-// multiplication of all elements. So for instance, two Vec3s would yield v1.x *
-// v2.x + v1.y * v2.y + v1.z * v2.z.
+// multiplication of all elements. So for instance, two Vec3s would yield v.x *
+// v2.x + v.y * v2.y + v.z * v2.z.
 
 // This means that the dot product of a vector and itself is the square of its
 // Len (within the bounds of floating points error).
@@ -77,17 +77,17 @@ func (v1 Vec2) Div(c float64) Vec2 {
 // pointing in the same direction. If both vectors are normalized, the value will
 // be -1 for opposite pointing, one for same pointing, and 0 for perpendicular
 // vectors.
-func (v1 Vec2) Dot(v2 Vec2) float64 {
-	return v1[0]*v2[0] + v1[1]*v2[1]
+func (v Vec2) Dot(v2 Vec2) float64 {
+	return v[0]*v2[0] + v[1]*v2[1]
 }
 
 // Len returns the vector's length. Note that this is NOT the dimension of the
 // vector (len(v)), but the mathematical length. This is equivalent to the square
 // root of the sum of the squares of all elements. E.G. for a Vec2 it's
 // math.Hypot(v[0], v[1]).
-func (v1 Vec2) Len() float64 {
+func (v Vec2) Len() float64 {
 
-	return float64(math.Hypot(float64(v1[0]), float64(v1[1])))
+	return float64(math.Hypot(float64(v[0]), float64(v[1])))
 
 }
 
@@ -100,16 +100,16 @@ func (v1 Vec2) Len() float64 {
 // point error), while maintaining its directionality.
 //
 // (Can be seen here: http://play.golang.org/p/Aaj7SnbqIp )
-func (v1 Vec2) Normalize() Vec2 {
-	l := 1.0 / v1.Len()
-	return Vec2{v1[0] * l, v1[1] * l}
+func (v Vec2) Normalize() Vec2 {
+	l := 1.0 / v.Len()
+	return Vec2{v[0] * l, v[1] * l}
 }
 
 // ApproxEqual takes in a vector and does an element-wise
 // approximate float comparison as if FloatEqual had been used
-func (v1 Vec2) ApproxEqual(v2 Vec2) bool {
-	for i := range v1 {
-		if !FloatEqual(v1[i], v2[i]) {
+func (v Vec2) ApproxEqual(v2 Vec2) bool {
+	for i := range v {
+		if !FloatEqual(v[i], v2[i]) {
 			return false
 		}
 	}
@@ -118,9 +118,9 @@ func (v1 Vec2) ApproxEqual(v2 Vec2) bool {
 
 // ApproxThresholdEq takes in a threshold for comparing two floats, and uses it
 // to do an element-wise comparison of the vector to another.
-func (v1 Vec2) ApproxEqualThreshold(v2 Vec2, threshold float64) bool {
-	for i := range v1 {
-		if !FloatEqualThreshold(v1[i], v2[i], threshold) {
+func (v Vec2) ApproxEqualThreshold(v2 Vec2, threshold float64) bool {
+	for i := range v {
+		if !FloatEqualThreshold(v[i], v2[i], threshold) {
 			return false
 		}
 	}
@@ -130,9 +130,9 @@ func (v1 Vec2) ApproxEqualThreshold(v2 Vec2, threshold float64) bool {
 // ApproxFuncEq takes in a func that compares two floats, and uses it to do an
 // element-wise comparison of the vector to another. This is intended to be used
 // with FloatEqualFunc
-func (v1 Vec2) ApproxFuncEqual(v2 Vec2, eq func(float64, float64) bool) bool {
-	for i := range v1 {
-		if !eq(v1[i], v2[i]) {
+func (v Vec2) ApproxFuncEqual(v2 Vec2, eq func(float64, float64) bool) bool {
+	for i := range v {
+		if !eq(v[i], v2[i]) {
 			return false
 		}
 	}
@@ -177,6 +177,6 @@ func (v *Vec2) Set(s string) error {
 //
 // The outer product orients it so they're facing "outward": Vec2*Vec3
 // = Mat2x1*Mat1x3 = Mat2x3.
-//func (v1 Vec2) OuterProd2(v2 Vec2) Mat2 {
-//return Mat2{v1[0] * v2[0], v1[1] * v2[0], v1[0] * v2[1], v1[1] * v2[1]}
+//func (v Vec2) OuterProd2(v2 Vec2) Mat2 {
+//return Mat2{v[0] * v2[0], v[1] * v2[0], v[0] * v2[1], v[1] * v2[1]}
 //}
