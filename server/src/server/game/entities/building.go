@@ -55,7 +55,7 @@ func (bb *BuildingBase) State() game.EntityState {
 	}
 }
 
-func (bb *BuildingBase) induceBuildPower(bp uint16) {
+func (bb *BuildingBase) receiveBuildPower(bp uint16) {
 	if !bb.isBuilt {
 		bb.curBP += bp
 		bb.curHP = bb.totalHP * (float64(bb.curBP) / float64(bb.requiredBP))
@@ -67,7 +67,7 @@ func (bb *BuildingBase) induceBuildPower(bp uint16) {
 		log.WithFields(log.Fields{
 			"curHP": uint16(bb.curHP), "totHP": uint16(bb.totalHP),
 			"curBP": bb.curBP, "reqBP": bb.requiredBP,
-		}).Debug("Inducing Build Power")
+		}).Debug("Receiving Build Power")
 	}
 }
 
@@ -107,8 +107,8 @@ func (mg *MgTurret) Update(dt time.Duration) {
 /*
  * Induce a given quantity of build power into the building construction
  */
-func (mg *MgTurret) InduceBuildPower(bp uint16) {
-	mg.induceBuildPower(bp)
+func (mg *MgTurret) ReceiveBuildPower(bp uint16) {
+	mg.receiveBuildPower(bp)
 }
 
 func (mg *MgTurret) IsBuilt() bool {
