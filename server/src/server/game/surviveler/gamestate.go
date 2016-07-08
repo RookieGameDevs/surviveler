@@ -37,9 +37,9 @@ type gamestate struct {
 	numEntities     uint32                 // number of entities currently present in the game
 	game            *survivelerGame
 	world           *game.World
-	md              *resource.MapData
-	bd              map[game.EntityType]*resource.BuildingData
-	ed              map[game.EntityType]*resource.EntityData
+	mapData         *resource.MapData
+	buildingData    map[game.EntityType]*resource.BuildingData
+	entityData      map[game.EntityType]*resource.EntityData
 	movementPlanner *game.MovementPlanner
 }
 
@@ -47,8 +47,8 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	gs := new(gamestate)
 	gs.game = g
 	gs.entities = make(map[uint32]game.Entity)
-	gs.ed = make(map[game.EntityType]*resource.EntityData)
-	gs.bd = make(map[game.EntityType]*resource.BuildingData)
+	gs.entityData = make(map[game.EntityType]*resource.EntityData)
+	gs.buildingData = make(map[game.EntityType]*resource.BuildingData)
 	gs.gameTime = gameStart
 
 	// TODO: this map is hard-coded for now, but will be read from resources
@@ -67,19 +67,20 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	var err error
 	// load map data and information
-	if gs.md, err = pkg.LoadMapData(); err != nil {
+	if gs.mapData, err = pkg.LoadMapData(); err != nil {
 		return err
 	}
-	if gs.md.ScaleFactor == 0 {
+	if gs.mapData.ScaleFactor == 0 {
 		err = errors.New("'scale_factor' can't be 0")
 	}
 	// package must contain the path to world matrix bitmap
-	if fname, ok := gs.md.Resources["matrix"]; !ok {
+	if fname, ok := gs.mapData.Resources["matrix"]; !ok {
 		err = errors.New("'matrix' field not found in the map asset")
 	} else {
 		var worldBmp image.Image
 		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-			if gs.world, err = game.NewWorld(worldBmp, gs.md.ScaleFactor); err == nil {
+			if gs.world, err =
+				game.NewWorld(worldBmp, gs.mapData.ScaleFactor); err == nil {
 				err = gs.validateWorld()
 			}
 		}
@@ -98,29 +99,30 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 		return err
 	}
 	for name, uri := range em.Entities {
-		var ed resource.EntityData
-		if pkg.LoadJSON(uri, &ed); err != nil {
+		var entityData resource.EntityData
+		if pkg.LoadJSON(uri, &entityData); err != nil {
 			return err
 		} else {
 			if t, ok = _entityTypes[name]; !ok {
 				return fmt.Errorf("Couldn't find type of '%s' entity", name)
 			}
-			log.WithFields(log.Fields{"name": name, "type": t, "data": ed}).
+			log.WithFields(
+				log.Fields{"name": name, "type": t, "data": entityData}).
 				Debug("Loaded EntityData")
-			gs.ed[t] = &ed
+			gs.entityData[t] = &entityData
 		}
 	}
 	for name, uri := range em.Buildings {
-		var bd resource.BuildingData
-		if pkg.LoadJSON(uri, &bd); err != nil {
+		var buildingData resource.BuildingData
+		if pkg.LoadJSON(uri, &buildingData); err != nil {
 			return err
 		} else {
 			if t, ok = _entityTypes[name]; !ok {
 				return fmt.Errorf("Couldn't find type of '%s' building", name)
 			}
-			log.WithFields(log.Fields{"name": name, "type": t, "data": bd}).
+			log.WithFields(log.Fields{"name": name, "type": t, "data": buildingData}).
 				Debug("Loaded BuildingData")
-			gs.bd[t] = &bd
+			gs.buildingData[t] = &buildingData
 		}
 	}
 	return err
@@ -130,7 +132,7 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
  * validateWorld performs some logical and semantic checks on the loaded world
  */
 func (gs *gamestate) validateWorld() error {
-	spawnPoints := gs.md.AIKeypoints.Spawn
+	spawnPoints := gs.mapData.AIKeypoints.Spawn
 	// validate player spawn point
 	for i := range spawnPoints.Players {
 		pt := gs.world.TileFromWorldVec(spawnPoints.Players[i])
@@ -201,16 +203,17 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	log.WithField("clientId", evt.Id).Info("Received a PlayerJoin event")
 
 	// pick a random spawn point
-	org := gs.md.AIKeypoints.Spawn.Players[rand.Intn(len(gs.md.AIKeypoints.Spawn.Players))]
+	org := gs.mapData.AIKeypoints.Spawn.
+		Players[rand.Intn(len(gs.mapData.AIKeypoints.Spawn.Players))]
 
 	// load entity data
 	et := game.EntityType(evt.Type)
-	if ed := gs.EntityData(et); ed == nil {
+	if entityData := gs.EntityData(et); entityData == nil {
 		return
 	} else {
 		// instantiate player with settings from the resources pkg
 		p := entities.NewPlayer(gs, org, game.EntityType(evt.Type),
-			float64(ed.Speed), uint16(ed.BuildingPower))
+			float64(entityData.Speed), uint16(entityData.BuildingPower))
 		p.SetId(evt.Id)
 		gs.AddEntity(p)
 	}
@@ -264,14 +267,16 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 
 		// check entity type because only engineers can build
 		if player.Type() != game.EngineerEntity {
-			gs.game.clients.Kick(evt.Id, "illegal action: only engineers can build!")
+			gs.game.clients.Kick(evt.Id,
+				"illegal action: only engineers can build!")
 			return
 		}
 
 		// get the tile at building point coordinates
 		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
 		if tile.Building != nil {
-			log.WithField("tile", tile).Error("There's already a building on this tile")
+			log.WithField("tile", tile).
+				Error("There's already a building on this tile")
 			return
 		}
 
@@ -387,23 +392,23 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 }
 
 func (gs *gamestate) MapData() *resource.MapData {
-	return gs.md
+	return gs.mapData
 }
 
 func (gs *gamestate) EntityData(et game.EntityType) *resource.EntityData {
-	ed, ok := gs.ed[et]
+	entityData, ok := gs.entityData[et]
 	if !ok {
 		log.WithField("type", et).Error("No resource for this Entity Type")
 	}
-	return ed
+	return entityData
 }
 
 func (gs *gamestate) BuildingData(bt game.EntityType) *resource.BuildingData {
-	bd, ok := gs.bd[bt]
+	buildingData, ok := gs.buildingData[bt]
 	if !ok {
 		log.WithField("type", bt).Error("No resource for this Building Type")
 	}
-	return bd
+	return buildingData
 }
 
 func (gs *gamestate) GameTime() int16 {
@@ -429,7 +434,8 @@ func (c entityDistCollection) Swap(i, j int) {
 	c[i], c[j] = c[j], c[i]
 }
 
-func (gs *gamestate) NearestEntity(pos math.Vec2, f game.EntityFilter) (game.Entity, float32) {
+func (gs *gamestate) NearestEntity(pos math.Vec2,
+	f game.EntityFilter) (game.Entity, float32) {
 	result := make(entityDistCollection, 0)
 	for _, ent := range gs.entities {
 		if f(ent) {

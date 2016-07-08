@@ -33,7 +33,7 @@ type Player struct {
 	actions       game.ActionStack // action stack
 	lastBPinduced time.Time        // time of last initiated BP induction
 	curBuilding   game.Building    // building in construction
-	gs            game.GameState
+	gamestate     game.GameState
 	buildPower    uint16
 	components.Movable
 }
@@ -41,7 +41,7 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(gs game.GameState, spawn math.Vec2, entityType game.EntityType,
+func NewPlayer(gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
 	speed float64, buildPower uint16) *Player {
 	p := new(Player)
 	p.entityType = entityType
@@ -50,7 +50,7 @@ func NewPlayer(gs game.GameState, spawn math.Vec2, entityType game.EntityType,
 		Speed: speed,
 	}
 	p.buildPower = buildPower
-	p.gs = gs
+	p.gamestate = gamestate
 	p.id = game.InvalidId
 	p.curBuilding = nil
 
@@ -92,7 +92,7 @@ func (p *Player) Update(dt time.Duration) {
 
 func (p *Player) induceBuildPower() {
 	bid := p.curBuilding.Id()
-	if ent := p.gs.Entity(bid); ent == nil {
+	if ent := p.gamestate.Entity(bid); ent == nil {
 		// building doesn't exist anymore, cancel action
 		p.curBuilding = nil
 		p.actions.Pop()
