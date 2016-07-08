@@ -87,9 +87,6 @@ func (p *Player) Update(dt time.Duration) {
 			// building/repairing actually end up being the same
 			p.induceBuildPower()
 		}
-	} else {
-		// little consistency check...
-		log.Panic("There should always be one action in player ActionStack...")
 	}
 }
 
