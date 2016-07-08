@@ -33,15 +33,15 @@ type Player struct {
 	actions       game.ActionStack // action stack
 	lastBPinduced time.Time        // time of last initiated BP induction
 	curBuilding   game.Building    // building in construction
+	gamestate     game.GameState
 	buildPower    uint16
-	g             game.Game
 	components.Movable
 }
 
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
+func NewPlayer(gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
 	speed float64, buildPower uint16) *Player {
 	p := new(Player)
 	p.entityType = entityType
@@ -50,7 +50,7 @@ func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
 		Speed: speed,
 	}
 	p.buildPower = buildPower
-	p.g = g
+	p.gamestate = gamestate
 	p.id = game.InvalidId
 	p.curBuilding = nil
 
@@ -87,20 +87,22 @@ func (p *Player) Update(dt time.Duration) {
 			// building/repairing actually end up being the same
 			p.induceBuildPower()
 		}
-	} else {
-		// little consistency check...
-		log.Panic("There should always be one action in player ActionStack...")
 	}
 }
 
 func (p *Player) induceBuildPower() {
-
-	// TODO: check if building still exists
+	bid := p.curBuilding.Id()
+	if ent := p.gamestate.Entity(bid); ent == nil {
+		// building doesn't exist anymore, cancel action
+		p.curBuilding = nil
+		p.actions.Pop()
+		return
+	}
 
 	// induce build power by chunks of `player BP` per second
 	if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
 		// period elapsed -> induce BP
-		p.curBuilding.ReceiveBuildPower(p.buildPower)
+		p.curBuilding.AddBuildPower(p.buildPower)
 		p.lastBPinduced = time.Now()
 	}
 

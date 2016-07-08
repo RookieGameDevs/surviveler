@@ -30,6 +30,7 @@ const (
 	TnTeleportEntityId
 	TnBuildId
 	TnRepairId
+	TnDestroyId
 )
 
 /*
@@ -60,6 +61,10 @@ type TnBuild struct {
 type TnRepair struct {
 	Id         uint32 // entity id
 	BuildingId uint32 // building id
+}
+
+type TnDestroy struct {
+	Id uint32 // building id
 }
 
 func (req *TnGameState) FromContext(c *cli.Context) error {
@@ -132,6 +137,17 @@ func (req *TnRepair) FromContext(c *cli.Context) error {
 		return fmt.Errorf("invalid building id")
 	} else {
 		req.BuildingId = uint32(BId)
+	}
+	return nil
+}
+
+func (req *TnDestroy) FromContext(c *cli.Context) error {
+	fmt.Println("In TnDestroy")
+	Id := c.Int("id")
+	if Id < 0 {
+		return fmt.Errorf("invalid id")
+	} else {
+		req.Id = uint32(Id)
 	}
 	return nil
 }
@@ -243,6 +259,20 @@ func (g *survivelerGame) registerTelnetHandlers() {
 		}
 		g.telnet.RegisterCommand(&cmd)
 	}()
+
+	func() {
+		// register 'destroy' command
+		cmd := cli.Command{
+			Name:  "destroy",
+			Usage: "immediately destroy a building",
+			Flags: []cli.Flag{
+				cli.IntFlag{Name: "id", Usage: "building id", Value: -1},
+			},
+			Action: createHandler(
+				TelnetRequest{Type: TnDestroyId, Content: &TnDestroy{}}),
+		}
+		g.telnet.RegisterCommand(&cmd)
+	}()
 }
 
 /*
@@ -333,6 +363,16 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		g.PostEvent(evt)
 		return nil
 
+	case TnDestroyId:
+
+		destroy := msg.Content.(*TnDestroy)
+		if err := g.state.isBuilding(destroy.Id); err != nil {
+			return err
+		}
+		// remove the building
+		g.state.RemoveEntity(destroy.Id)
+		return nil
 	}
+
 	return errors.New("Unknow telnet message id")
 }
