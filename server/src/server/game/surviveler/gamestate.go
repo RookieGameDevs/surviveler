@@ -79,8 +79,8 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	} else {
 		var worldBmp image.Image
 		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-			if gs.world, err =
-				game.NewWorld(worldBmp, gs.mapData.ScaleFactor); err == nil {
+			if gs.world, err = game.NewWorld(
+				worldBmp, gs.mapData.ScaleFactor); err == nil {
 				err = gs.validateWorld()
 			}
 		}
