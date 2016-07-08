@@ -6,10 +6,7 @@
 package surviveler
 
 import (
-	"errors"
-	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"image"
 	"math/rand"
 	"server/game"
 	"server/game/entities"
@@ -32,14 +29,12 @@ var txCenter math.Vec2
  * gamestate is the structure that contains all the complete game state
  */
 type gamestate struct {
+	gameData        // game constants/resources coming from assets
 	gameTime        int16
 	entities        map[uint32]game.Entity // entities currently in game
 	numEntities     uint32                 // number of entities currently present in the game
 	game            *survivelerGame
 	world           *game.World
-	mapData         *resource.MapData
-	buildingData    map[game.EntityType]*resource.BuildingData
-	entityData      map[game.EntityType]*resource.EntityData
 	movementPlanner *game.MovementPlanner
 }
 
@@ -47,8 +42,6 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	gs := new(gamestate)
 	gs.game = g
 	gs.entities = make(map[uint32]game.Entity)
-	gs.entityData = make(map[game.EntityType]*resource.EntityData)
-	gs.buildingData = make(map[game.EntityType]*resource.BuildingData)
 	gs.gameTime = gameStart
 
 	// TODO: this map is hard-coded for now, but will be read from resources
@@ -66,103 +59,9 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
  */
 func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	var err error
-	// load map data and information
-	if gs.mapData, err = pkg.LoadMapData(); err != nil {
+	// load game assets
+	if gs.world, err = gs.gameData.load(pkg); err != nil {
 		return err
-	}
-	if gs.mapData.ScaleFactor == 0 {
-		err = errors.New("'scale_factor' can't be 0")
-	}
-	// package must contain the path to world matrix bitmap
-	if fname, ok := gs.mapData.Resources["matrix"]; !ok {
-		err = errors.New("'matrix' field not found in the map asset")
-	} else {
-		var worldBmp image.Image
-		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-			if gs.world, err = game.NewWorld(
-				worldBmp, gs.mapData.ScaleFactor); err == nil {
-				err = gs.validateWorld()
-			}
-		}
-	}
-	if err != nil {
-		return err
-	}
-
-	// load entities URI map
-	var (
-		em *resource.EntitiesData
-		t  game.EntityType
-		ok bool
-	)
-	if em, err = pkg.LoadEntitiesData(); err != nil {
-		return err
-	}
-	for name, uri := range em.Entities {
-		var entityData resource.EntityData
-		if pkg.LoadJSON(uri, &entityData); err != nil {
-			return err
-		} else {
-			if t, ok = _entityTypes[name]; !ok {
-				return fmt.Errorf("Couldn't find type of '%s' entity", name)
-			}
-			log.WithFields(
-				log.Fields{"name": name, "type": t, "data": entityData}).
-				Debug("Loaded EntityData")
-			gs.entityData[t] = &entityData
-		}
-	}
-	for name, uri := range em.Buildings {
-		var buildingData resource.BuildingData
-		if pkg.LoadJSON(uri, &buildingData); err != nil {
-			return err
-		} else {
-			if t, ok = _entityTypes[name]; !ok {
-				return fmt.Errorf("Couldn't find type of '%s' building", name)
-			}
-			log.WithFields(log.Fields{"name": name, "type": t, "data": buildingData}).
-				Debug("Loaded BuildingData")
-			gs.buildingData[t] = &buildingData
-		}
-	}
-	return err
-}
-
-/*
- * validateWorld performs some logical and semantic checks on the loaded world
- */
-func (gs *gamestate) validateWorld() error {
-	spawnPoints := gs.mapData.AIKeypoints.Spawn
-	// validate player spawn point
-	for i := range spawnPoints.Players {
-		pt := gs.world.TileFromWorldVec(spawnPoints.Players[i])
-		if pt == nil {
-			return fmt.Errorf(
-				"Player spawn point is out of bounds (%#v)",
-				spawnPoints.Players[i])
-		}
-		if pt.Kind&game.KindWalkable == 0 {
-			return fmt.Errorf(
-				"Player spawn point is located on a non-walkable point: (%#v)",
-				*pt)
-		}
-	}
-	// validate enemies spawn points
-	if len(spawnPoints.Enemies) == 0 {
-		return errors.New("At least one enemy spawn point must be defined")
-	}
-	for i := range spawnPoints.Enemies {
-		zt := gs.world.TileFromWorldVec(spawnPoints.Enemies[i])
-		if zt == nil {
-			return fmt.Errorf(
-				"A Zombie spawn point is out of bounds: (%#v)",
-				spawnPoints.Enemies[i])
-		}
-		if zt.Kind&game.KindWalkable == 0 {
-			return fmt.Errorf(
-				"A Zombie spawn point is located on a non-walkable tile: (%#v)",
-				*zt)
-		}
 	}
 
 	// precompute constant, translation from corner to center of tile
