@@ -65,7 +65,7 @@ type Building interface {
 
 	// IsBuilt indicates if the building is totally constructed.
 	//
-	// For the case of a building with shooting hability (eg a turret), this
+	// For the case of a building with shooting ability (eg a turret), this
 	// implies the building is active and can shoot
 	IsBuilt() bool
 
