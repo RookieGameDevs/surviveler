@@ -55,7 +55,7 @@ func (bb *BuildingBase) State() game.EntityState {
 	}
 }
 
-func (bb *BuildingBase) receiveBuildPower(bp uint16) {
+func (bb *BuildingBase) addBuildPower(bp uint16) {
 	if !bb.isBuilt {
 		bb.curBP += bp
 		bb.curHP = bb.totalHP * (float64(bb.curBP) / float64(bb.requiredBP))
@@ -105,12 +105,20 @@ func (mg *MgTurret) Update(dt time.Duration) {
 }
 
 /*
- * Induce a given quantity of build power into the building construction
+ * AddBuildPower adds a given quantity of build power into the building.
+ *
+ * Build Power is induced by construction or reparation.
  */
-func (mg *MgTurret) ReceiveBuildPower(bp uint16) {
-	mg.receiveBuildPower(bp)
+func (mg *MgTurret) AddBuildPower(bp uint16) {
+	mg.addBuildPower(bp)
 }
 
+/*
+ * IsBuilt indicates if the building is totally constructed.
+ *
+ * For the case of a building with shooting hability (eg a turret), this
+ * implies the building is active and can shoot
+ */
 func (mg *MgTurret) IsBuilt() bool {
 	return mg.isBuilt
 }

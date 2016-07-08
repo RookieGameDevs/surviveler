@@ -62,12 +62,21 @@ type MobileEntity interface {
  */
 type Building interface {
 	Entity
+
+	// IsBuilt indicates if the building is totally constructed.
+	//
+	// For the case of a building with shooting hability (eg a turret), this
+	// implies the building is active and can shoot
 	IsBuilt() bool
-	ReceiveBuildPower(bp uint16)
+
+	// AddBuildPower adds a given quantity of build power into the building.
+	//
+	// Build Power is induced by construction or reparation.
+	AddBuildPower(bp uint16)
 }
 
 /*
- * EntityState represents a snapshot of an entity
+ * EntityState represents a snapshot of an entity state
  */
 type EntityState interface{}
 

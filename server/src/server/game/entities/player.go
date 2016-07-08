@@ -105,7 +105,7 @@ func (p *Player) induceBuildPower() {
 	// induce build power by chunks of `player BP` per second
 	if time.Since(p.lastBPinduced) > BuildPowerInductionPeriod {
 		// period elapsed -> induce BP
-		p.curBuilding.ReceiveBuildPower(p.buildPower)
+		p.curBuilding.AddBuildPower(p.buildPower)
 		p.lastBPinduced = time.Now()
 	}
 
