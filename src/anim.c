@@ -30,12 +30,14 @@ static void
 joint_compute_scale(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_sm)
 {
 	mat_ident(r_sm);
+	mat_scalev(r_sm, &p0->scale);
 }
 
 static void
 joint_compute_translation(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_tm)
 {
 	mat_ident(r_tm);
+	mat_translatev(r_tm, &p0->trans);
 }
 
 /**
@@ -99,6 +101,8 @@ void
 anim_compute_pose(struct Animation *anim, float absolute_time, Mat *transforms)
 {
 	int n_joints = anim->skeleton->joint_count;
+
+	// joint processing status flags
 	bool computed[n_joints];
 	memset(computed, 0, sizeof(bool) * n_joints);
 

@@ -28,8 +28,18 @@ static Mat modelview;
 // object transform matrix
 static Mat transform;
 
+// skeleton pose transform matrix palette
+static Mat *pose_transforms = NULL;
+
 // mesh to render
+static struct MeshData *mesh_data = NULL;
 static struct Mesh *mesh = NULL;
+
+// animation trigger
+static bool animate = false;
+
+// global animation timer
+static float time = 0.0f;
 
 static GLuint shader;
 
@@ -47,18 +57,23 @@ has_glerror()
 static int
 load_model(const char *filename)
 {
-	struct MeshData *md = mesh_data_from_file(filename);
-	if (!md)
+	mesh_data = mesh_data_from_file(filename);
+	if (!mesh_data)
 		return 0;
 
-	mesh = mesh_new(md);
-	if (!mesh) {
-		mesh_data_free(md);
-		return 0;
-	}
-	mesh_data_free(md);
+	mesh = mesh_new(mesh_data);
+	if (!mesh)
+		goto error;
+
+	if (mesh_data->skeleton &&
+	    !(pose_transforms = malloc(sizeof(Mat) * mesh_data->skeleton->joint_count)))
+		goto error;
 
 	return 1;
+
+error:
+	mesh_data_free(mesh_data);
+	return 0;
 }
 
 static int
@@ -205,6 +220,8 @@ setup()
 static int
 update(float dt)
 {
+	time += dt;
+
 	mat_ident(&modelview);
 	mat_lookat(
 		&modelview,
@@ -213,9 +230,19 @@ update(float dt)
 		0, 1, 0  // up
 	);
 
-	Vec axis = vec(1, 0, 0, 0);
 	mat_ident(&transform);
-	mat_rotate(&transform, &axis, -M_PI / 2);
+
+	// play the animation
+	if (animate) {
+		if (mesh_data->anim_count > 0) {
+			anim_compute_pose(
+				&mesh_data->animations[0],
+				time,
+				pose_transforms
+			);
+		}
+		printf("t = %.4fs\n", time);
+	}
 
 	return 1;
 }
@@ -243,6 +270,23 @@ render()
 
 	loc = glGetUniformLocation(shader, "transform");
 	glUniformMatrix4fv(loc, 1, GL_TRUE, transform.data);
+
+	loc = glGetUniformLocation(shader, "animate");
+	glUniform1i(loc, animate);
+
+	if (animate && mesh_data->anim_count > 0) {
+		loc = glGetUniformLocation(shader, "joints");
+		if (loc < 0) {
+			fprintf(stderr, "no 'joints' uniform defined\n");
+			return 0;
+		};
+		glUniformMatrix4fv(
+			loc,
+			mesh_data->skeleton->joint_count,
+			GL_TRUE,
+			(float*)pose_transforms
+		);
+	}
 
 	// draw the model
 	if (!mesh_render(mesh))
@@ -339,8 +383,12 @@ main(int argc, char *argv[])
 						projection_mode = ORTHOGRAPHIC;
 					run &= setup();
 					break;
-				}
 
+				case SDLK_SPACE:
+					animate = !animate;
+					time = 0.0f;
+					break;
+				}
 			}
 		}
 
@@ -357,6 +405,7 @@ main(int argc, char *argv[])
 	}
 
 	mesh_free(mesh);
+	mesh_data_free(mesh_data);
 
 	return 0;
 }
