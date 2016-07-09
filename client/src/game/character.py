@@ -193,6 +193,9 @@ class Character(Entity):
 
         self.orientate()
 
+        # Update the health bar
+        self.health_bar.update(dt)
+
 
 @subscriber(EntitySpawn)
 def character_spawn(evt):
