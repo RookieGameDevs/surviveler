@@ -58,6 +58,8 @@ type EntitiesData struct {
  */
 type EntityData struct {
 	BuildingPower uint8 `json:"building_power"`
+	CombatPower   uint8 `json:"combat_power"`
+	TotalHp       uint8 `json:"tot_hp"`
 	Speed         uint8 `json:"speed"`
 }
 

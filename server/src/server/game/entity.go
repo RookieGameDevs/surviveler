@@ -84,11 +84,13 @@ type EntityState interface{}
  * MobileEntityState represents a snapshot of a mobile entity
  */
 type MobileEntityState struct {
-	Type       EntityType
-	Xpos       float32
-	Ypos       float32
-	ActionType ActionType
-	Action     interface{}
+	Type         EntityType
+	Xpos         float32
+	Ypos         float32
+	CurHitPoints uint16
+	TotHitPoints uint16
+	ActionType   ActionType
+	Action       interface{}
 }
 
 /*
