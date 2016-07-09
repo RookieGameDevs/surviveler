@@ -197,7 +197,7 @@ mesh_data_from_file(const char *filename)
 
 				// read joint poses for given timestamp
 				for (size_t j = 0; j < md->skeleton->joint_count; j++) {
-					size_t id = *(uint32_t*)(data + offset);
+					uint8_t id = *(uint8_t*)(data + offset);
 					assert(id < md->skeleton->joint_count);
 
 					struct JointPose *jp = &sp->joint_poses[id];
