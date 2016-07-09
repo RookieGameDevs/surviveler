@@ -173,19 +173,18 @@ func (g *survivelerGame) registerTelnetHandlers() {
 			req.Context = c
 			// parse cli args into req structure fields
 			if err := req.Content.FromContext(c); err != nil {
-				io.WriteString(c.App.Writer, fmt.Sprintf("error: %v\n", err))
+				io.WriteString(c.App.Writer,
+					fmt.Sprintf("failed to parse arguments: %v\n", err))
 				return nil
 			}
 			// send the request
 			g.telnetReq <- req
-			// now wait that til' it has been executed
-			// by convention, the handler should return an error in case of failure
-			// and nil in case of success; it means that any success report should
-			// be done from the handler
-			if err := <-g.telnetDone; err == nil {
-				io.WriteString(c.App.Writer, "success!\n")
-			} else {
-				io.WriteString(c.App.Writer, fmt.Sprintf("error: %v\n", err))
+			// now wait that til' it has been executed. By convention, the
+			// handler should return an error in case of failure and nil in
+			// case of success
+			if err := <-g.telnetDone; err != nil {
+				io.WriteString(c.App.Writer,
+					fmt.Sprintf("failed to run command: %v\n", err))
 			}
 			return nil
 		}
