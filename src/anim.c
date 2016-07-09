@@ -6,18 +6,18 @@
 #define ROOT_NODE_ID 255
 
 /**
- * Find the skeleton key poses for given timestamp.
+ * Find the skeleton key poses indices for given timestamp.
  */
 static void
-find_poses(struct Animation *anim, float time, struct SkeletonPose **r_sp0, struct SkeletonPose **r_sp1)
+find_poses(struct Animation *anim, float time, size_t *r_key0, size_t *r_key1)
 {
 	size_t i = 0;
 	for (; i < anim->pose_count - 1; i++) {
-		if (time >= anim->timestamps[i])
+		if (time < anim->timestamps[i + 1])
 			break;
 	}
-	*r_sp0 = &anim->poses[i];
-	*r_sp1 = &anim->poses[i + 1];
+	*r_key0 = i;
+	*r_key1 = i + 1;
 }
 
 static void
@@ -30,7 +30,11 @@ static void
 joint_compute_scale(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_sm)
 {
 	mat_ident(r_sm);
-	mat_scalev(r_sm, &p0->scale);
+	Vec a, b, scale = vec(0, 0, 0, 1);
+	vec_mul(&p0->scale, 1 - time, &a);
+	vec_mul(&p1->scale, time, &b);
+	vec_addv(&a, &b, &scale);
+	mat_scalev(r_sm, &scale);
 }
 
 static void
@@ -110,11 +114,18 @@ anim_compute_pose(struct Animation *anim, float absolute_time, Mat *transforms)
 	// frames (ticks) per second
 	float speed = anim->speed != 0 ? anim->speed : 25.0f;
 	float time_in_ticks = absolute_time * speed;
-	float time = fmod(time_in_ticks, anim->duration);
+	float local_time = fmod(time_in_ticks, anim->duration);
 
-	// lookup the skeleton poses in which the timestamp
-	struct SkeletonPose *sp0, *sp1;
-	find_poses(anim, time, &sp0, &sp1);
+	// lookup the key poses indices for given timestamp
+	size_t key0, key1;
+	find_poses(anim, local_time, &key0, &key1);
+
+	// compute the pose time where t = 0 matches pose 0 and t = 1 pose 1
+	float t0 = anim->timestamps[key0], t1 = anim->timestamps[key1];
+	float pose_time = (local_time - t0) / (t1 - t0);
+
+	// lookup the key poses
+	struct SkeletonPose *sp0 = &anim->poses[key0], *sp1 = &anim->poses[key1];
 
 	// for each joint, compute its pose transformation matrix;
 	// the process is iterative and keeps track of which joints have already
@@ -127,7 +138,7 @@ anim_compute_pose(struct Animation *anim, float absolute_time, Mat *transforms)
 				sp0,        // pose before t
 				sp1,        // pose after t
 				j,          // joint index
-				time,       // animation timestamp
+				pose_time,  // exact pose time
 				transforms, // output transforms array
 				computed    // joint processing status array
 			);
