@@ -157,9 +157,9 @@ def main(model, out):
         if len(anim.channels) == 0 or len(anim.channels[0].positionkeys) == 0:
             raise DataFormatError('animation "{}" has no keyframes'.format(name))
 
-        timestamps = [
+        timestamps = list(sorted([
             pos.time for pos in anim.channels[0].positionkeys
-        ]
+        ]))
 
         # build local node timelines
         node_timelines = {}
@@ -177,7 +177,8 @@ def main(model, out):
             node_timelines[node_name] = node_timeline
 
             # assert local node timelines match the global one
-            if node_timeline.keys() != timestamps:
+            node_timestamps = list(sorted(node_timeline.keys()))
+            if node_timestamps != timestamps:
                 raise DataFormatError(
                     'node "{}" in animation "{}" local timeline does not match '
                     'global timeline'.format(
