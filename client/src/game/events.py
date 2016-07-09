@@ -6,12 +6,14 @@ class EntitySpawn(Event):
 
     Event emitted when a new entity is discovered in the gamestate.
     """
-    def __init__(self, srv_id, entity_type):
+    def __init__(self, srv_id, entity_type, health):
         self.srv_id = srv_id
         self.entity_type = entity_type
+        self.health = health
 
     def __str__(self):
-        return '<EntitySpawn({}, {})>'.format(self.srv_id, self.entity_type)
+        return '<EntitySpawn({}, {}, {})>'.format(
+            self.srv_id, self.entity_type, self.health)
 
 
 class EntityDisappear(Event):
@@ -24,6 +26,21 @@ class EntityDisappear(Event):
 
     def __str__(self):
         return '<EntityDisappear({})>'.format(self.srv_id)
+
+
+class EntityStatusChange(Event):
+    """A building has different status
+
+    Event emitted when the amount of hp of a building changes.
+    """
+    def __init__(self, srv_id, old, new):
+        self.srv_id = srv_id
+        self.old = old
+        self.new = new
+
+    def __str__(self):
+        return '<EntityStatusChange({}, {}, {})>'.format(
+            self.srv_id, self.old, self.new)
 
 
 class BuildingSpawn(Event):

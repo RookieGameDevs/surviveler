@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 class HealthBar(Entity):
     """Game entity which represents a generic health bar."""
 
-    def __init__(self, resource, value, parent_node):
+    def __init__(self, resource, value, parent_node, y_offset=None):
         """Constructor.
 
         :param resource: The health bar resource
@@ -25,12 +25,16 @@ class HealthBar(Entity):
 
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
+
+        :param y_offset: The offset on y-axis in world coordinates (NOTE:
+            defaults to the resource value
+        :type y_offset: :class:`float`
         """
         self._value = value
 
         self.w = resource.data['width']
         self.h = resource.data['height']
-        self.y_offset = resource.data['y_offset']
+        self.y_offset = y_offset or resource.data['y_offset']
 
         mesh = resource.userdata.get('mesh')
         if not mesh:
