@@ -447,6 +447,16 @@ vec_cross(const Vec *a, const Vec *b, Vec *r_v)
 	r_v->data[3] = 0;  // no cross product exists for 4D vectors
 }
 
+void
+vec_lerp(const Vec *a, const Vec *b, float t, Vec *r_v)
+{
+	Vec at, bt;
+	vec_mul(a, 1 - t, &at);
+	vec_mul(b, t, &bt);
+	vec_addv(&at, &bt, r_v);
+}
+
+
 Qtr
 qtr(float w, float x, float y, float z)
 {

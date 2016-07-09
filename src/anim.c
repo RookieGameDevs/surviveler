@@ -29,19 +29,19 @@ joint_compute_rotation(struct JointPose *p0, struct JointPose *p1, float time, M
 static void
 joint_compute_scale(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_sm)
 {
+	Vec scale;
+	vec_lerp(&p0->scale, &p1->scale, time, &scale);
 	mat_ident(r_sm);
-	Vec a, b, scale = vec(0, 0, 0, 1);
-	vec_mul(&p0->scale, 1 - time, &a);
-	vec_mul(&p1->scale, time, &b);
-	vec_addv(&a, &b, &scale);
 	mat_scalev(r_sm, &scale);
 }
 
 static void
 joint_compute_translation(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_tm)
 {
+	Vec trans;
+	vec_lerp(&p0->trans, &p1->trans, time, &trans);
 	mat_ident(r_tm);
-	mat_translatev(r_tm, &p0->trans);
+	mat_translatev(r_tm, &trans);
 }
 
 /**

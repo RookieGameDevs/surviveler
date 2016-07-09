@@ -110,6 +110,9 @@ vec_cross(const Vec *a, const Vec *b, Vec *r_v);
 void
 vec_norm(Vec *v);
 
+void
+vec_lerp(const Vec *a, const Vec *b, float t, Vec *r_v);
+
 /*******************************************************************************
  * Quaternion type and quaternion operations
 *******************************************************************************/
