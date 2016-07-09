@@ -39,7 +39,7 @@ func runCliApp() error {
 	app.Action = func(c *cli.Context) error {
 		// read config file
 		if inifile := c.String("inifile"); inifile != "" {
-			if err := ini.MapToWithMapper(cfg, ini.AllCapsUnderscore, inifile); err != nil {
+			if err := ini.MapToWithMapper(&cfg, ini.AllCapsUnderscore, inifile); err != nil {
 				log.WithField("inifile", inifile).WithError(err).Error("Couldn't read config file")
 				os.Exit(1)
 			}
