@@ -300,7 +300,9 @@ def main(model, out):
     print('Vertices:   {}'.format(v_count))
     print('Indices:    {}'.format(v_count))
     print('Joints:     {}'.format(len(skeleton)))
-    print('Animations: {}'.format(a_count))
+    for name, (timeline, pose_data) in animations.items():
+        print('Animation   "{}"'.format(name))
+        print('  Poses:    {}'.format(len(timeline)))
 
     pyassimp.release(scene)
 
