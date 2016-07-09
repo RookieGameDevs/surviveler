@@ -9,8 +9,10 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
+	"gopkg.in/yaml.v2"
 	"io"
 	"server/game/events"
+	"server/game/messages"
 	"server/math"
 )
 
@@ -42,7 +44,7 @@ type Contexter interface {
 }
 
 type TnGameState struct {
-	// empty
+	Short bool // use short form? go representation is shorter than YAML
 }
 
 type TnMoveEntity struct {
@@ -68,6 +70,7 @@ type TnDestroy struct {
 }
 
 func (req *TnGameState) FromContext(c *cli.Context) error {
+	req.Short = c.Bool("short")
 	return nil
 }
 
@@ -170,19 +173,18 @@ func (g *survivelerGame) registerTelnetHandlers() {
 			req.Context = c
 			// parse cli args into req structure fields
 			if err := req.Content.FromContext(c); err != nil {
-				io.WriteString(c.App.Writer, fmt.Sprintf("error: %v\n", err))
+				io.WriteString(c.App.Writer,
+					fmt.Sprintf("failed to parse arguments: %v\n", err))
 				return nil
 			}
 			// send the request
 			g.telnetReq <- req
-			// now wait that til' it has been executed
-			// by convention, the handler should return an error in case of failure
-			// and nil in case of success; it means that any success report should
-			// be done from the handler
-			if err := <-g.telnetDone; err == nil {
-				io.WriteString(c.App.Writer, "success!\n")
-			} else {
-				io.WriteString(c.App.Writer, fmt.Sprintf("error: %v\n", err))
+			// now wait that til' it has been executed. By convention, the
+			// handler should return an error in case of failure and nil in
+			// case of success
+			if err := <-g.telnetDone; err != nil {
+				io.WriteString(c.App.Writer,
+					fmt.Sprintf("failed to run command: %v\n", err))
 			}
 			return nil
 		}
@@ -191,8 +193,12 @@ func (g *survivelerGame) registerTelnetHandlers() {
 	func() {
 		// register 'gamestate' command
 		cmd := cli.Command{
-			Name:  "gamestate",
-			Usage: "shows current gamestate",
+			Name:    "gamestate",
+			Aliases: []string{"gs"},
+			Usage:   "shows current gamestate",
+			Flags: []cli.Flag{
+				cli.BoolFlag{Name: "short, s", Usage: "use short form"},
+			},
 			Action: createHandler(
 				TelnetRequest{Type: TnGameStateId, Content: &TnGameState{}}),
 		}
@@ -290,12 +296,26 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 
 	case TnGameStateId:
 
-		if gsMsg := g.state.pack(); gsMsg != nil {
-			io.WriteString(msg.Context.App.Writer, fmt.Sprintf("%v\n", *gsMsg))
-			return nil
-		} else {
+		var (
+			gsMsg *messages.GameStateMsg
+			gs    *TnGameState
+			str   string
+		)
+		if gsMsg = g.state.pack(); gsMsg == nil {
 			return errors.New("no gamestate to show")
 		}
+		gs = msg.Content.(*TnGameState)
+		if gs.Short {
+			str = fmt.Sprintf("%v\n", *gsMsg)
+		} else {
+			// marshal to YAML
+			if b, err := yaml.Marshal(*gsMsg); err == nil {
+				str = string(b)
+			} else {
+				str = fmt.Sprintf("%v\n", *gsMsg)
+			}
+		}
+		io.WriteString(msg.Context.App.Writer, str)
 
 	case TnMoveEntityId:
 
@@ -312,7 +332,6 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 				Ypos: float32(move.Dest[1]),
 			})
 		g.PostEvent(evt)
-		return nil
 
 	case TnTeleportEntityId:
 
@@ -344,7 +363,6 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 			Type: uint8(build.Type),
 		})
 		g.PostEvent(evt)
-		return nil
 
 	case TnRepairId:
 
@@ -361,7 +379,6 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 			BuildingId: repair.BuildingId,
 		})
 		g.PostEvent(evt)
-		return nil
 
 	case TnDestroyId:
 
@@ -371,8 +388,11 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		}
 		// remove the building
 		g.state.RemoveEntity(destroy.Id)
-		return nil
+
+	default:
+
+		return errors.New("Unknow telnet message id")
 	}
 
-	return errors.New("Unknow telnet message id")
+	return nil
 }

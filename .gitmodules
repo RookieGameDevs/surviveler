@@ -19,3 +19,6 @@
 [submodule "go-ini"]
 	path = server/src/server/vendor/gopkg.in/ini.v2
 	url = git@github.com:go-ini/ini.git
+[submodule "go-yaml"]
+	path = server/src/server/vendor/gopkg.in/yaml.v2
+	url = git@github.com:go-yaml/yaml.git

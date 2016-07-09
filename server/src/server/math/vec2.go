@@ -15,7 +15,7 @@ import (
 // Vec2 is a 2-element vector.
 //
 // It implements the Value interface, and thus can be read from and written to
-// a string
+// a string. It implements the encoding.TextMarshaler interface.
 type Vec2 [2]float64
 
 // FromFloat32 creates a Vec2 from 2 float32 values
@@ -164,6 +164,10 @@ func (v *Vec2) Set(s string) error {
 		return fmt.Errorf("invalid syntax \"%s\"", s)
 	}
 	return nil
+}
+
+func (v Vec2) MarshalText() (text []byte, err error) {
+	return []byte(v.String()), nil
 }
 
 // Does the vector outer product
