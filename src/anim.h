@@ -10,7 +10,6 @@
 struct Joint {
 	Mat inv_bind_pose;  // inverse bind pose transform
 	uint8_t parent;     // index of the parent joint or 0xff if root
-	uint8_t *children;
 };
 
 /**
