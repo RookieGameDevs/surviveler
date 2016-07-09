@@ -33,21 +33,27 @@ const (
 )
 
 type Zombie struct {
-	id       uint32
-	g        game.Game
-	curState int // current state
-	timeAcc  time.Duration
-	target   game.Entity
+	id          uint32
+	g           game.Game
+	curState    int // current state
+	combatPower uint8
+	totalHP     uint16
+	curHP       uint16
+	timeAcc     time.Duration
+	target      game.Entity
 	components.Movable
 }
 
-func NewZombie(g game.Game, pos math.Vec2) *Zombie {
+func NewZombie(g game.Game, pos math.Vec2, speed float64, combatPower uint8, totalHP uint16) *Zombie {
 	return &Zombie{
-		id:       game.InvalidId,
-		g:        g,
-		curState: lookingState,
+		id:          game.InvalidId,
+		g:           g,
+		curState:    lookingState,
+		totalHP:     totalHP,
+		curHP:       totalHP,
+		combatPower: combatPower,
 		Movable: components.Movable{
-			Speed: zombieWalkSpeed,
+			Speed: speed,
 			Pos:   pos,
 		},
 	}
@@ -203,11 +209,13 @@ func (z *Zombie) State() game.EntityState {
 	}
 
 	return game.MobileEntityState{
-		Type:       game.ZombieEntity,
-		Xpos:       float32(z.Pos[0]),
-		Ypos:       float32(z.Pos[1]),
-		ActionType: actionType,
-		Action:     actionData,
+		Type:         game.ZombieEntity,
+		Xpos:         float32(z.Pos[0]),
+		Ypos:         float32(z.Pos[1]),
+		CurHitPoints: uint16(z.curHP),
+		TotHitPoints: uint16(z.totalHP),
+		ActionType:   actionType,
+		Action:       actionData,
 	}
 }
 

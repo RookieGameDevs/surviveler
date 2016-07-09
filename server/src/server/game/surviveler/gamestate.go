@@ -113,7 +113,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 		// instantiate player with settings from the resources pkg
 		p := entities.NewPlayer(gs, org, game.EntityType(evt.Type),
 			float64(entityData.Speed), uint16(entityData.BuildingPower),
-			uint16(entityData.CombatPower), uint16(entityData.TotalHp))
+			uint16(entityData.CombatPower), uint16(entityData.TotalHP))
 		p.SetId(evt.Id)
 		gs.AddEntity(p)
 	}
@@ -269,6 +269,18 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 		ent.SetId(id)
 	}
 	gs.entities[id] = ent
+}
+
+func (gs *gamestate) AddZombie(org math.Vec2) {
+	et := game.ZombieEntity
+	if entityData := gs.EntityData(et); entityData == nil {
+		return
+	} else {
+		speed := entityData.Speed
+		combatPower := entityData.CombatPower
+		totHP := entityData.TotalHP
+		gs.AddEntity(entities.NewZombie(gs.game, org, speed, combatPower, totHP))
+	}
 }
 
 /*
