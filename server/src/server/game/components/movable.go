@@ -20,25 +20,12 @@ import (
 type Movable struct {
 	Pos                   math.Vec2 // current position
 	Speed                 float64   // speed
-	curPath               math.Path // player path
-	curPathIdx            int       // index in the path
 	hasReachedDestination bool
 	waypoints             *math.VecStack
-	state                 movableState
 }
 
-type movableState int
-
-const (
-	NoGoal            movableState = iota // before a goal has been assigned
-	IncrementWayPoint                     // increment current waypoint
-	WaitingForPath                        // repathing is needed
-	ReachedGoal                           // final destination has been reached
-)
-
-func (me *Movable) init() {
+func (me *Movable) Init() {
 	me.waypoints = math.NewVecStack()
-	me.state = NoGoal
 }
 
 func (me *Movable) findMicroPath(wp math.Vec2) (path math.Path, found bool) {
@@ -62,14 +49,11 @@ func (me *Movable) nextPos(startPos, direction math.Vec2, speed float64, dt time
 	return startPos.Add(direction.Mul(distance))
 }
 
-func (me *Movable) Update(dt time.Duration) {
-	// update position on the player path
-	if me.curPathIdx >= 0 && me.curPathIdx < len(me.curPath) {
-		// get sub-destination (current path segment)
-		dst := me.curPath[me.curPathIdx]
-
+func (me *Movable) move(dt time.Duration) {
+	// get next waypoint
+	if wp, exists := me.waypoints.Peek(); exists {
 		// compute translation and direction vectors
-		xlate := dst.Sub(me.Pos)
+		xlate := wp.Sub(me.Pos)
 		distToDest := xlate.Len()
 		direction := xlate.Normalize()
 
@@ -83,54 +67,48 @@ func (me *Movable) Update(dt time.Duration) {
 		isNan := gomath.IsNaN(distMove) || gomath.IsNaN(distToDest) ||
 			gomath.IsNaN(direction.Len()) || gomath.Abs(distMove-distToDest) < 1e-3
 		if distMove > distToDest || isNan {
-			me.Pos = dst
-			me.curPathIdx--
-			if me.curPathIdx < 0 {
+			me.Pos = *wp
+			if next := me.waypoints.Pop(); next == nil {
 				me.hasReachedDestination = true
-			} else {
-				dst = me.curPath[me.curPathIdx]
 			}
 		} else {
 			me.Pos = newPos
 		}
 	} else {
+		// no more waypoints!
 		me.hasReachedDestination = true
-		me.curPathIdx = 0
 	}
+}
+
+func (me *Movable) Update(dt time.Duration) {
+
+	// movement update
+	me.move(dt)
 }
 
 /*
  * SetPath defines the path that the movable entity should follow along
  */
 func (me *Movable) SetPath(path math.Path) {
-	pLen := len(path)
-	if pLen > 0 {
-		me.Pos = path[pLen-1]
-		if pLen > 1 {
-			me.hasReachedDestination = false
-			me.curPath = path[:pLen-1]
-			// the tail element of the path represents the starting point, it's
-			// also the position the entity is already located, so we don't want
-			// to send this position to the client
-			me.curPathIdx = pLen - 2
-		} else {
-			me.hasReachedDestination = true
-			me.curPath = math.Path{}
-			me.curPathIdx = -1
+
+	// empty the waypoint stack
+	for ; me.waypoints.Len() > 1; me.waypoints.Pop() {
+	}
+
+	// fill it with waypoints from the macro-path
+	for i := range path {
+		if i > 0 {
+			wp := path[i]
+			me.waypoints.Push(&wp)
 		}
 	}
+	me.hasReachedDestination = false
 }
 
-func (me *Movable) Path(maxLen int) math.Path {
-	count := me.curPathIdx + 1
-	if maxLen > 0 {
-		count = math.IMin(count, maxLen)
-	}
-
-	// allocate a new array and store the waypoints in reverse order
-	path := make(math.Path, 0)
-	for i, j := 0, me.curPathIdx; i < count; i, j = i+1, j-1 {
-		path = append(path, me.curPath[j])
+func (me *Movable) NextPos() math.Path {
+	path := math.Path{}
+	if next, exists := me.waypoints.Peek(); exists {
+		path = append(path, *next)
 	}
 	return path
 }
