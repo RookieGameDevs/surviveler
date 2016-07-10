@@ -45,6 +45,7 @@ type Entity interface {
 	State() EntityState
 	Position() math.Vec2
 	Update(dt time.Duration)
+	AddDamage(float64)
 }
 
 /*

@@ -36,8 +36,8 @@ type Player struct {
 	gamestate     game.GameState
 	buildPower    uint16
 	combatPower   uint16
-	totalHP       uint16
-	curHP         uint16
+	totalHP       float64
+	curHP         float64
 	components.Movable
 }
 
@@ -45,7 +45,7 @@ type Player struct {
  * NewPlayer creates a new player and set its initial position and speed
  */
 func NewPlayer(gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
-	speed float64, buildPower uint16, combatPower uint16, totalHP uint16) *Player {
+	speed float64, buildPower uint16, combatPower uint16, totalHP float64) *Player {
 	p := new(Player)
 	p.entityType = entityType
 	p.Movable = components.Movable{
@@ -244,4 +244,13 @@ func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{
 	p.actions.Push(&game.Action{actionType, actionData})
 	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
+}
+
+func (p *Player) AddDamage(damage float64) {
+	if damage >= p.curHP {
+		// Oops, someone just died.
+		// TODO: do something here.
+	} else {
+		p.curHP -= damage
+	}
 }

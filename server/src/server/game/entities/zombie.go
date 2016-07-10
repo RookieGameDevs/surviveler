@@ -27,7 +27,7 @@ const (
 	zombieRunLookingInterval = 200 * time.Millisecond
 	zombieDamageInterval     = 500 * time.Millisecond
 	zombieWalkSpeed          = 1.0
-	zombieRunSpeed           = 3.0
+	zombieRunSpeed           = 4.0
 	rageDistance             = 4.0
 	attackDistance           = 1.0
 )
@@ -37,23 +37,26 @@ type Zombie struct {
 	g           game.Game
 	curState    int // current state
 	combatPower uint8
-	totalHP     uint16
-	curHP       uint16
+	runSpeed    float64
+	walkSpeed   float64
+	totalHP     float64
+	curHP       float64
 	timeAcc     time.Duration
 	target      game.Entity
 	components.Movable
 }
 
-func NewZombie(g game.Game, pos math.Vec2, speed float64, combatPower uint8, totalHP uint16) *Zombie {
+func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
 	return &Zombie{
 		id:          game.InvalidId,
 		g:           g,
 		curState:    lookingState,
+		walkSpeed:   walkSpeed,
 		totalHP:     totalHP,
 		curHP:       totalHP,
 		combatPower: combatPower,
 		Movable: components.Movable{
-			Speed: speed,
+			Speed: walkSpeed,
 			Pos:   pos,
 		},
 	}
@@ -111,7 +114,7 @@ func (z *Zombie) walk(dt time.Duration) (state int) {
 		return
 	}
 
-	z.Speed = zombieWalkSpeed
+	z.Speed = z.walkSpeed
 	z.Movable.Update(dt)
 
 	return
@@ -226,4 +229,13 @@ func (z *Zombie) findTarget() (game.Entity, float32) {
 		},
 	)
 	return ent, dist
+}
+
+func (z *Zombie) AddDamage(damage float64) {
+	if damage >= z.curHP {
+		// Fuck yeah, zombie died.
+		// TODO: do something here.
+	} else {
+		z.curHP -= damage
+	}
 }
