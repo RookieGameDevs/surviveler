@@ -25,6 +25,12 @@ type Movable struct {
 	hasReachedDestination bool
 }
 
+/*
+ * nextPos computes the next position and returns it.
+ *
+ * It doesn't assign the position, so that this method can be used for
+ * actual movement as well as movement prediction.
+ */
 func (me *Movable) Update(dt time.Duration) {
 	// update position on the player path
 	if me.curPathIdx >= 0 && me.curPathIdx < len(me.curPath) {
@@ -36,18 +42,18 @@ func (me *Movable) Update(dt time.Duration) {
 
 		for {
 			// compute translation and direction vectors
-			t := dst.Sub(me.Pos)
-			b := t.Len()
-			dir := t.Normalize()
+			xlate := dst.Sub(me.Pos)
+			totalLen := xlate.Len()
+			direction := xlate.Normalize()
 
-			// compute new position
-			pos := me.Pos.Add(dir.Mul(distance))
-			a := pos.Sub(me.Pos).Len()
+			// compute new position after moving given distance in wanted direction
+			newPos := me.Pos.Add(direction.Mul(distance))
+			realLen := newPos.Sub(me.Pos).Len()
 
 			// check against edge-cases
-			isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
-
-			if a > b || isNan {
+			isNan := gomath.IsNaN(realLen) || gomath.IsNaN(totalLen) ||
+				gomath.IsNaN(direction.Len()) || gomath.Abs(realLen-totalLen) < 1e-3
+			if realLen > totalLen || isNan {
 				me.Pos = dst
 				me.curPathIdx--
 				if me.curPathIdx < 0 {
@@ -60,9 +66,9 @@ func (me *Movable) Update(dt time.Duration) {
 					break
 				}
 
-				distance = a - b
+				distance = realLen - totalLen
 			} else {
-				me.Pos = pos
+				me.Pos = newPos
 				break
 			}
 		}
