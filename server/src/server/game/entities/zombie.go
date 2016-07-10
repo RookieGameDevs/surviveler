@@ -61,6 +61,8 @@ func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8,
 			Pos:   pos,
 		},
 	}
+	z.Movable.Init()
+	return &z
 }
 
 func (z *Zombie) Id() uint32 {
@@ -207,7 +209,7 @@ func (z *Zombie) State() game.EntityState {
 		if !z.Movable.HasReachedDestination() {
 			moveActionData := game.MoveActionData{
 				Speed: z.Speed,
-				Path:  z.Movable.Path(maxWaypointsToSend),
+				Path:  z.Movable.NextPos(),
 			}
 			actionType = game.MovingAction
 			actionData = moveActionData

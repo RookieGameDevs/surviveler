@@ -23,11 +23,6 @@ const (
 )
 
 /*
- * Number of waypoints to send in movement action payloads.
- */
-const maxWaypointsToSend = 3
-
-/*
  * Player represents an entity that is controlled by a physical player. It
  * implements the Entity interface.
  */
@@ -60,6 +55,7 @@ func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityTyp
 		Pos:   spawn,
 		Speed: speed,
 	}
+	p.Movable.Init()
 	p.buildPower = buildPower
 	p.combatPower = combatPower
 	p.totalHP = totalHP
@@ -200,7 +196,7 @@ func (p *Player) State() game.EntityState {
 	case game.MovingAction:
 		actionData = game.MoveActionData{
 			Speed: p.Speed,
-			Path:  p.Movable.Path(maxWaypointsToSend),
+			Path:  p.Movable.NextPos(),
 		}
 	case game.BuildingAction:
 		actionData = game.BuildActionData{}
