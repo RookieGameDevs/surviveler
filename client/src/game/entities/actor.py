@@ -5,9 +5,9 @@ from game.components import Movable
 from game.components import Renderable
 from game.entities.entity import Entity
 from game.entities.health_bar import HealthBar
-from game.events import EntityIdle
-from game.events import EntityMove
-from game.events import EntityStatusChange
+from game.events import ActorIdle
+from game.events import ActorMove
+from game.events import ActorStatusChange
 from math import atan
 from math import copysign
 from math import pi
@@ -191,7 +191,7 @@ class Actor(Entity):
         self.health_bar.update(dt)
 
 
-@subscriber(EntityStatusChange)
+@subscriber(ActorStatusChange)
 def actor_health_change(evt):
     """Updates the number of hp of the actor.
     """
@@ -203,14 +203,14 @@ def actor_health_change(evt):
         actor.health = evt.new, actor.health[1]
 
 
-@subscriber(EntityIdle)
+@subscriber(ActorIdle)
 def actor_set_postition(evt):
     """Updates the character position
 
     Gets all the relevant data from the event.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.EntityIdle`
+    :type evt: :class:`game.events.ActorIdle`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     actor = evt.context.resolve_entity(evt.srv_id)
@@ -218,12 +218,12 @@ def actor_set_postition(evt):
         actor[Movable].position = evt.x, evt.y
 
 
-@subscriber(EntityMove)
+@subscriber(ActorMove)
 def character_set_movement(evt):
     """Set the move action in the actor.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.EntityMove`
+    :type evt: :class:`game.events.ActorMove`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     actor = evt.context.resolve_entity(evt.srv_id)

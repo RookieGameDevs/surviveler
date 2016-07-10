@@ -1,8 +1,8 @@
 from events import subscriber
 from game.entities.actor import Actor
 from game.entities.actor import ActorType
-from game.events import EntityDisappear
-from game.events import EntitySpawn
+from game.events import ActorDisappear
+from game.events import ActorSpawn
 import logging
 
 
@@ -10,6 +10,7 @@ LOG = logging.getLogger(__name__)
 
 
 class Character(Actor):
+    MEMBERS = {ActorType.grunt, ActorType.engineer}
     """Game entity which represents a character."""
     def __init__(self, resource, name, health, parent_node):
         """Constructor.
@@ -28,14 +29,14 @@ class Character(Actor):
         self.name = name
 
 
-@subscriber(EntitySpawn)
+@subscriber(ActorSpawn)
 def character_spawn(evt):
     """Add a character in the game.
 
     Gets all the relevant data from the event.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.EntitySpawn`
+    :type evt: :class:`game.events.ActorSpawn`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
@@ -46,15 +47,14 @@ def character_spawn(evt):
     # NOTE: check if the srv_id is exactly the player id received from the
     # server during the handshake. And avoid spawing the character.
     is_player = evt.srv_id == evt.context.player_id
+    is_character = evt.actor_type in Character.MEMBERS
 
-    if not entity_exists and not is_player:
-        # Search for the proper resource to use basing on the character type.
-        # FIXME: right now it defaults on zombies.
+    if not entity_exists and is_character and not is_player:
         entities = context.res_mgr.get('/entities')
         resource = context.res_mgr.get(
             entities.data['entities_map'].get(
-                ActorType(evt.entity_type).name,
-                '/enemies/zombie'
+                ActorType(evt.actor_type).name,
+                '/enemies/grunt'
             )
         )
 
@@ -69,14 +69,14 @@ def character_spawn(evt):
         context.server_entities_map[evt.srv_id] = character.e_id
 
 
-@subscriber(EntityDisappear)
+@subscriber(ActorDisappear)
 def character_disappear(evt):
     """Remove a character from the game.
 
     Gets all the relevant data from the event.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.EntityDisappear`
+    :type evt: :class:`game.events.ActorDisappear`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
