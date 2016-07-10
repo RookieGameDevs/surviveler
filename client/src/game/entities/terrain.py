@@ -1,5 +1,5 @@
-from game import Entity
 from game.components import Renderable
+from game.entities.entity import Entity
 from renderer import Rect
 from renderer import Texture
 from renderer import TextureParamFilter

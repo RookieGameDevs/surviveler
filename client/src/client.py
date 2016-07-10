@@ -1,13 +1,13 @@
 from context import Context
 from events import send_event
-from game import Map
-from game import Terrain
-from game import UI
-from game import process_gamestate
+from game.entities.actor import ActorType
+from game.entities.map import Map
+from game.entities.terrain import Terrain
 from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import PlayerJoin
-from game import EntityType
+from game.gamestate import process_gamestate
+from game.ui import UI
 from itertools import count
 from matlib import Vec
 from network import Message
@@ -73,7 +73,7 @@ class Client:
         ui_res = context.res_mgr.get('/ui')
         context.ui = UI(ui_res, self.renderer)
         context.player_name = player_name
-        context.player_type = EntityType(entity_type)
+        context.player_type = ActorType(entity_type)
         self.context = context
 
         # Client status variable

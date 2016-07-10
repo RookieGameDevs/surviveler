@@ -1,5 +1,5 @@
-from game import Entity
 from game.components import Renderable
+from game.entities.entity import Entity
 from matlib import Vec
 
 

@@ -1,10 +1,10 @@
 from events import send_event
 from events import subscriber
 from game.actions import place_building_template
-from game.building import BuildingType
-from game.character import EntityType
 from game.components import Renderable
-from game.entity import Entity
+from game.entities.actor import ActorType
+from game.entities.building import BuildingType
+from game.entities.entity import Entity
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import GameModeChange
@@ -108,7 +108,7 @@ def show_building_template(evt):
 
     if evt.mode == context.GameMode.building:
         # Check if the player has the proper type and toggle the game mode.
-        if context.player_type == EntityType.engineer:
+        if context.player_type == ActorType.engineer:
             prev, cur = context.toggle_game_mode(evt.mode)
             send_event(GameModeChange(prev, cur))
 

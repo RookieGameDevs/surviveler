@@ -5,7 +5,7 @@ from configparser import ConfigParser
 from contextlib import ContextDecorator
 from core import InputManager
 from functools import partial
-from game.character import EntityType
+from game.entities.actor import ActorType
 from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
@@ -98,7 +98,7 @@ def main(name, character, config):
     renderer.shutdown()
 
 
-class EntityTypeParamType(click.ParamType):
+class ActorTypeParamType(click.ParamType):
     """Custom click type for character type.
 
     NOTE: bad naming, I know.
@@ -107,12 +107,12 @@ class EntityTypeParamType(click.ParamType):
 
     def convert(self, value, param, ctx):
         try:
-            return EntityType(int(value))
+            return ActorType(int(value))
         except ValueError:
-            self.fail('{} is not a valid EntityType'.format(value))
+            self.fail('{} is not a valid ActorType'.format(value))
 
 
-ENTITY_TYPE = EntityTypeParamType()
+ACTOR_TYPE = ActorTypeParamType()
 
 
 @click.command()
@@ -121,8 +121,8 @@ ENTITY_TYPE = EntityTypeParamType()
     default='John Doe')
 @click.argument(
     'character',
-    type=ENTITY_TYPE,
-    default=EntityType.grunt)
+    type=ACTOR_TYPE,
+    default=ActorType.grunt)
 def bootstrap(name, character):
     config = ConfigParser()
     config.read(CONFIG_FILE)

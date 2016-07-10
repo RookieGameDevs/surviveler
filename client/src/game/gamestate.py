@@ -1,8 +1,8 @@
 from enum import IntEnum
 from enum import unique
 from events import send_event
-from game import BuildingType
-from game import EntityType
+from game.entities.building import BuildingType
+from game.entities.actor import ActorType
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
@@ -125,7 +125,7 @@ def handle_entity_spawn(gs_mgr):
     new_entities = set(new) - set(old)
     for ent in new_entities:
         data = new[ent]
-        entity_type = EntityType(data[MF.entity_type])
+        entity_type = ActorType(data[MF.entity_type])
         cur_hp = data[MF.cur_hp]
         evt = EntitySpawn(ent, entity_type, cur_hp)
         send_event(evt)
