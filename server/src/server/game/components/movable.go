@@ -23,6 +23,28 @@ type Movable struct {
 	curPath               math.Path // player path
 	curPathIdx            int       // index in the path
 	hasReachedDestination bool
+	waypoints             *math.VecStack
+	state                 movableState
+}
+
+type movableState int
+
+const (
+	NoGoal            movableState = iota // before a goal has been assigned
+	IncrementWayPoint                     // increment current waypoint
+	WaitingForPath                        // repathing is needed
+	ReachedGoal                           // final destination has been reached
+)
+
+func (me *Movable) init() {
+	me.waypoints = math.NewVecStack()
+	me.state = NoGoal
+}
+
+func (me *Movable) findMicroPath(wp math.Vec2) (path math.Path, found bool) {
+	// for now for simplicity, the micro path is the direct path to the next
+	// waypoint
+	return math.Path{wp}, true
 }
 
 /*
