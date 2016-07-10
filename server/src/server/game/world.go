@@ -149,3 +149,11 @@ func (w World) DumpGrid() {
 	}
 	log.Debug(buffer.String())
 }
+
+/*
+ * AddEntity add an entity on the underlying world representation
+ */
+func (w *World) AddEntity(ent Entity) {
+	t := w.TileFromWorldVec(ent.Position())
+	t.Entities = append(t.Entities, ent)
+}
