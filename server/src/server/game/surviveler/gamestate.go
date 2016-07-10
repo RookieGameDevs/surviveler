@@ -274,7 +274,7 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 func (gs *gamestate) AddZombie(org math.Vec2) {
 	et := game.ZombieEntity
 	if entityData := gs.EntityData(et); entityData == nil {
-		log.WithField("type", t).Panic("Can't create zombie, unsupported type")
+		log.WithField("type", et).Panic("Can't create zombie, unsupported type")
 	} else {
 		speed := entityData.Speed
 		combatPower := entityData.CombatPower
