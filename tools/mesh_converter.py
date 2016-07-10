@@ -77,7 +77,7 @@ def main(model, out):
     if n_count > 0:
         fmt |= VertexFormat.has_normal
     if t_count > 0:
-        fmt |= VertexFormat.has_uvs
+        fmt |= VertexFormat.has_uv
     if b_count > 0:
         fmt |= VertexFormat.has_joints
 
@@ -237,6 +237,11 @@ def main(model, out):
             if fmt & VertexFormat.has_normal:
                 nx, ny, nz = mesh.normals[v]
                 fp.write(pack('<fff', nx, ny, nz))
+
+            # UV
+            if fmt & VertexFormat.has_uv:
+                tx, ty, _ = mesh.texturecoords[0][v]
+                fp.write(pack('<ff', tx, ty))
 
             # joint data
             if fmt & VertexFormat.has_joints:
