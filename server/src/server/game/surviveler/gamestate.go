@@ -217,6 +217,22 @@ func (gs *gamestate) onPlayerRepair(event *events.Event) {
 }
 
 /*
+ * event handler for PlayerAttack events
+ */
+func (gs *gamestate) onPlayerAttack(event *events.Event) {
+	evt := event.Payload.(events.PlayerAttackEvent)
+	log.WithField("evt", evt).Info("Received PlayerAttack event")
+
+	if player := gs.getPlayer(evt.Id); player != nil {
+
+		if enemy := gs.getZombie(evt.EntityId); enemy != nil {
+			// set player action
+			player.Attack(enemy)
+		}
+	}
+}
+
+/*
  * fillMovementRequest fills up and sends a movement request
  */
 func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {

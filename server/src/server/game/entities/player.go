@@ -38,6 +38,7 @@ type Player struct {
 	combatPower   uint16
 	totalHP       float64
 	curHP         float64
+	target        game.Entity
 	components.Movable
 }
 
@@ -217,6 +218,11 @@ func (p *Player) Repair(b game.Building) {
 	p.moveAndAction(game.RepairingAction, game.RepairActionData{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
+}
+
+func (p *Player) Attack(e game.Entity) {
+	log.Debug("Player.Attack")
+	// TODO: we need to follow the entity
 }
 
 /*
