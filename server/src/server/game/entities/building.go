@@ -54,7 +54,7 @@ func (bb *BuildingBase) State() game.EntityState {
 	}
 }
 
-func (bb *BuildingBase) AddDamage(damage float64) {
+func (bb *BuildingBase) DealDamage(damage float64) {
 	if damage >= bb.curHP {
 		// Argh, someone destroyed the building.
 		// TODO: do something here.

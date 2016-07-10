@@ -246,7 +246,7 @@ func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }
 
-func (p *Player) AddDamage(damage float64) {
+func (p *Player) DealDamage(damage float64) {
 	if damage >= p.curHP {
 		// Oops, someone just died.
 		// TODO: do something here.
