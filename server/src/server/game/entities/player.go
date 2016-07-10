@@ -45,7 +45,7 @@ type Player struct {
  * NewPlayer creates a new player and set its initial position and speed
  */
 func NewPlayer(gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
-	speed float64, buildPower uint16, combatPower uint16, totalHP float64) *Player {
+	speed, totalHP float64, buildPower, combatPower uint16) *Player {
 	p := new(Player)
 	p.entityType = entityType
 	p.Movable = components.Movable{
