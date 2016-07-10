@@ -116,7 +116,7 @@ class EntityPick(Event):
         """Constructor.
 
         :param entity: The game entity the player clicked on
-        :type entity: :class:`game.entity.Entity`
+        :type entity: :class:`game.entities.entity.Entity`
         """
         self.entity = entity
 

@@ -111,7 +111,7 @@ class ActionType(IntEnum):
 
 
 @processor
-def handle_entity_spawn(gs_mgr):
+def handle_actor_spawn(gs_mgr):
     """Check for new entities and send the appropriate events.
 
     Check if there are new entities that were not in the previous gamestate.
@@ -132,7 +132,7 @@ def handle_entity_spawn(gs_mgr):
 
 
 @processor
-def handle_entity_disappear(gs_mgr):
+def handle_actor_disappear(gs_mgr):
     """Check for disappeared entities and send the appropriate events.
 
     Check if there are new entities that were not in the previous gamestate.
@@ -150,7 +150,7 @@ def handle_entity_disappear(gs_mgr):
 
 
 @processor
-def handle_entity_idle(gs_mgr):
+def handle_actor_idle(gs_mgr):
     """Handles entities in idle state and fires ActorIdle event for them.
 
     :param gs_mgr: the gs_mgr
@@ -165,7 +165,7 @@ def handle_entity_idle(gs_mgr):
 
 
 @processor
-def handle_entity_move(gs_mgr):
+def handle_actor_move(gs_mgr):
     """Handles moving entities and fires ActorMove event for them.
 
     :param gs_mgr: the gs_mgr
@@ -185,7 +185,7 @@ def handle_entity_move(gs_mgr):
 
 
 @processor
-def handle_entity_health(gs_mgr):
+def handle_actor_health(gs_mgr):
     """Check for entity health changes and send the appropriate event.
 
     :param gs_mgr: the gs_mgr
