@@ -27,27 +27,36 @@ const (
 	zombieRunLookingInterval = 200 * time.Millisecond
 	zombieDamageInterval     = 500 * time.Millisecond
 	zombieWalkSpeed          = 1.0
-	zombieRunSpeed           = 3.0
+	zombieRunSpeed           = 4.0
 	rageDistance             = 4.0
 	attackDistance           = 1.0
 )
 
 type Zombie struct {
-	id       uint32
-	g        game.Game
-	curState int // current state
-	timeAcc  time.Duration
-	target   game.Entity
+	id          uint32
+	g           game.Game
+	curState    int // current state
+	combatPower uint8
+	runSpeed    float64
+	walkSpeed   float64
+	totalHP     float64
+	curHP       float64
+	timeAcc     time.Duration
+	target      game.Entity
 	components.Movable
 }
 
-func NewZombie(g game.Game, pos math.Vec2) *Zombie {
+func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
 	return &Zombie{
-		id:       game.InvalidId,
-		g:        g,
-		curState: lookingState,
+		id:          game.InvalidId,
+		g:           g,
+		curState:    lookingState,
+		walkSpeed:   walkSpeed,
+		totalHP:     totalHP,
+		curHP:       totalHP,
+		combatPower: combatPower,
 		Movable: components.Movable{
-			Speed: zombieWalkSpeed,
+			Speed: walkSpeed,
 			Pos:   pos,
 		},
 	}
@@ -105,7 +114,7 @@ func (z *Zombie) walk(dt time.Duration) (state int) {
 		return
 	}
 
-	z.Speed = zombieWalkSpeed
+	z.Speed = z.walkSpeed
 	z.Movable.Update(dt)
 
 	return
@@ -145,7 +154,7 @@ func (z *Zombie) attack(dt time.Duration) (state int) {
 
 	if z.timeAcc >= zombieDamageInterval {
 		z.timeAcc -= zombieDamageInterval
-		// TODO: emit attacking events
+		z.target.DealDamage(float64(z.combatPower))
 	}
 
 	return
@@ -203,11 +212,12 @@ func (z *Zombie) State() game.EntityState {
 	}
 
 	return game.MobileEntityState{
-		Type:       game.ZombieEntity,
-		Xpos:       float32(z.Pos[0]),
-		Ypos:       float32(z.Pos[1]),
-		ActionType: actionType,
-		Action:     actionData,
+		Type:         game.ZombieEntity,
+		Xpos:         float32(z.Pos[0]),
+		Ypos:         float32(z.Pos[1]),
+		CurHitPoints: uint16(z.curHP),
+		ActionType:   actionType,
+		Action:       actionData,
 	}
 }
 
@@ -219,4 +229,13 @@ func (z *Zombie) findTarget() (game.Entity, float32) {
 		},
 	)
 	return ent, dist
+}
+
+func (z *Zombie) DealDamage(damage float64) {
+	if damage >= z.curHP {
+		// Fuck yeah, zombie died.
+		// TODO: do something here.
+	} else {
+		z.curHP -= damage
+	}
 }

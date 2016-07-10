@@ -112,7 +112,8 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	} else {
 		// instantiate player with settings from the resources pkg
 		p := entities.NewPlayer(gs, org, game.EntityType(evt.Type),
-			float64(entityData.Speed), uint16(entityData.BuildingPower))
+			float64(entityData.Speed), float64(entityData.TotalHP),
+			uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
 		p.SetId(evt.Id)
 		gs.AddEntity(p)
 	}
@@ -268,6 +269,18 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 		ent.SetId(id)
 	}
 	gs.entities[id] = ent
+}
+
+func (gs *gamestate) AddZombie(org math.Vec2) {
+	et := game.ZombieEntity
+	if entityData := gs.EntityData(et); entityData == nil {
+		log.WithField("type", t).Panic("Can't create zombie, unsupported type")
+	} else {
+		speed := entityData.Speed
+		combatPower := entityData.CombatPower
+		totHP := float64(entityData.TotalHP)
+		gs.AddEntity(entities.NewZombie(gs.game, org, speed, combatPower, totHP))
+	}
 }
 
 /*

@@ -10,6 +10,7 @@ from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
 from game.events import EntitySpawn
+from game.events import EntityStatusChange
 from game.events import TimeUpdate
 from network import MessageField as MF
 import logging
@@ -123,8 +124,10 @@ def handle_entity_spawn(gs_mgr):
     new, old = n[MF.entities], o.get(MF.entities, {})
     new_entities = set(new) - set(old)
     for ent in new_entities:
-        entity_type = EntityType(new[ent][MF.entity_type])
-        evt = EntitySpawn(ent, entity_type)
+        data = new[ent]
+        entity_type = EntityType(data[MF.entity_type])
+        cur_hp = data[MF.cur_hp]
+        evt = EntitySpawn(ent, entity_type, cur_hp)
         send_event(evt)
 
 
@@ -182,6 +185,25 @@ def handle_entity_move(gs_mgr):
 
 
 @processor
+def handle_entity_health(gs_mgr):
+    """Check for entity health changes and send the appropriate event.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: :class:`dict`
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.entities], o.get(MF.entities, {})
+    for e_id, entities in new.items():
+        if e_id in old:
+            new_hp = entities[MF.cur_hp]
+            old_hp = old[e_id][MF.cur_hp]
+            hp_changed = new_hp != old_hp
+            if hp_changed:
+                send_event(EntityStatusChange(e_id, old_hp, new_hp))
+
+
+@processor
 def handle_time(gs_mgr):
     """Handles time change and sends time update event.
 
@@ -209,9 +231,9 @@ def handle_buildings(selected, buildings, event):
         data = buildings[building]
         b_type = BuildingType(data[MF.building_type])
         pos = data[MF.x_pos], data[MF.y_pos]
-        progress = data[MF.cur_hp], data[MF.tot_hp]
+        cur_hp = data[MF.cur_hp]
         completed = data[MF.completed]
-        evt = event(building, b_type, pos, progress, completed)
+        evt = event(building, b_type, pos, cur_hp, completed)
         send_event(evt)
 
 

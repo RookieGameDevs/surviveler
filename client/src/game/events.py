@@ -6,12 +6,14 @@ class EntitySpawn(Event):
 
     Event emitted when a new entity is discovered in the gamestate.
     """
-    def __init__(self, srv_id, entity_type):
+    def __init__(self, srv_id, entity_type, cur_hp):
         self.srv_id = srv_id
         self.entity_type = entity_type
+        self.cur_hp = cur_hp
 
     def __str__(self):
-        return '<EntitySpawn({}, {})>'.format(self.srv_id, self.entity_type)
+        return '<EntitySpawn({}, {}, {})>'.format(
+            self.srv_id, self.entity_type, self.cur_hp)
 
 
 class EntityDisappear(Event):
@@ -26,16 +28,31 @@ class EntityDisappear(Event):
         return '<EntityDisappear({})>'.format(self.srv_id)
 
 
+class EntityStatusChange(Event):
+    """A building has different status
+
+    Event emitted when the amount of hp of a building changes.
+    """
+    def __init__(self, srv_id, old, new):
+        self.srv_id = srv_id
+        self.old = old
+        self.new = new
+
+    def __str__(self):
+        return '<EntityStatusChange({}, {}, {})>'.format(
+            self.srv_id, self.old, self.new)
+
+
 class BuildingSpawn(Event):
     """A building spawned on the scene.
 
     Event emitted when a new building is discovered in the gamestate.
     """
-    def __init__(self, srv_id, b_type, pos, progress, completed):
+    def __init__(self, srv_id, b_type, pos, cur_hp, completed):
         self.srv_id = srv_id
         self.b_type = b_type
         self.pos = pos
-        self.progress = progress
+        self.cur_hp = cur_hp
         self.completed = completed
 
     def __str__(self):
@@ -47,11 +64,11 @@ class BuildingDisappear(Event):
 
     Event emitted when a previously existing building does not exist anymore.
     """
-    def __init__(self, srv_id, b_type, pos, progress, completed):
+    def __init__(self, srv_id, b_type, pos, cur_hp, completed):
         self.srv_id = srv_id
         self.b_type = b_type
         self.pos = pos
-        self.progress = progress
+        self.cur_hp = cur_hp
         self.completed = completed
 
     def __str__(self):

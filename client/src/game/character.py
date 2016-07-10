@@ -8,11 +8,14 @@ from game.events import EntityDisappear
 from game.events import EntityIdle
 from game.events import EntityMove
 from game.events import EntitySpawn
+from game.events import EntityStatusChange
+from game.health_bar import HealthBar
 from math import atan
 from math import copysign
 from math import pi
 from matlib import Vec
 from renderer import Texture
+from renderer.scene import SceneNode
 from utils import to_scene
 import logging
 
@@ -36,7 +39,7 @@ class EntityType(IntEnum):
 class Character(Entity):
     """Game entity which represents a character."""
 
-    def __init__(self, resource, name, parent_node):
+    def __init__(self, resource, name, health, parent_node):
         """Constructor.
 
         :param resource: The character resource
@@ -45,9 +48,16 @@ class Character(Entity):
         :param name: Character's name.
         :type name: str
 
+        :param health: The current amount of hp and the total one
+        :type health: :class:`tuple`
+
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        # Health is going to be a property used to update only when necessary
+        # the health bar.
+        self._health = health
+
         shader = resource['shader']
         mesh = resource['model']
         texture = Texture.from_image(resource['texture'])
@@ -58,16 +68,29 @@ class Character(Entity):
             'tex': texture,
         }
 
+        # Initialize movable component
+        movable = Movable((0.0, 0.0))
+
+        # Setup the group node and add the health bar
+        # FIXME: I don't like the idea of saving the group node here. We need
+        # something better here.
+        self.group_node = SceneNode()
+        g_transform = self.group_node.transform
+        g_transform.translate(to_scene(*movable.position))
+        parent_node.add_child(self.group_node)
+
+        self.health_bar = HealthBar(
+            resource['health_bar'], health[0] / health[1], self.group_node,
+            resource.data.get('hb_y_offset'))
+
         # create components
         renderable = Renderable(
-            parent_node,
+            self.group_node,
             mesh,
             shader,
             params,
             textures=[texture],
             enable_light=True)
-
-        movable = Movable((0.0, 0.0))
 
         # initialize entity
         super().__init__(renderable, movable)
@@ -76,6 +99,27 @@ class Character(Entity):
         self.heading = 0.0
         # rotation speed = 2π / fps / desired_2π_rotation_time
         self.rot_speed = 2 * pi / 60 / 1.5
+
+    @property
+    def health(self):
+        """Returns the health of the character as a tuple current/total.
+
+        :returns: The health of the character
+        :rtype: :class:`tuple`
+        """
+        return self._health
+
+    @health.setter
+    def health(self, value):
+        """Sets the health of the character.
+
+        Propagate the modification to the buliding health bar.
+
+        :param value: The new health
+        :type value: :class:`tuple`
+        """
+        self._health = value
+        self.health_bar.value = value[0] / value[1]
 
     def orientate(self):
         """Orientate the character towards the current destination.
@@ -137,12 +181,20 @@ class Character(Entity):
         self[Movable].update(dt)
         x, y = self[Movable].position
 
+        # FIXME: I don't like the idea of saving the group node here. We need
+        # something better here.
+        g_t = self.group_node.transform
+        g_t.identity()
+        g_t.translate(to_scene(x, y))
+
         t = self[Renderable].transform
         t.identity()
-        t.translate(to_scene(x, y))
         t.rotate(Vec(0, 1, 0), -self.heading)
 
         self.orientate()
+
+        # Update the health bar
+        self.health_bar.update(dt)
 
 
 @subscriber(EntitySpawn)
@@ -175,10 +227,13 @@ def character_spawn(evt):
             )
         )
 
+        tot = resource.data['tot_hp']
+
         # Search for the entity name
         name = context.players_name_map.get(evt.srv_id, '')
         # Create the entity
-        character = Character(resource, name, context.scene.root)
+        character = Character(
+            resource, name, (evt.cur_hp, tot), context.scene.root)
         context.entities[character.e_id] = character
         context.server_entities_map[evt.srv_id] = character.e_id
 
@@ -198,6 +253,18 @@ def character_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+
+
+@subscriber(EntityStatusChange)
+def entity_health_change(evt):
+    """Updates the number of hp of the entity.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    if evt.srv_id in context.server_entities_map:
+        e_id = context.server_entities_map[evt.srv_id]
+        entity = context.entities[e_id]
+        entity.health = evt.new, entity.health[1]
 
 
 @subscriber(EntityIdle)

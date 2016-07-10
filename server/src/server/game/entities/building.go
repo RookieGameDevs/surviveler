@@ -50,8 +50,16 @@ func (bb *BuildingBase) State() game.EntityState {
 		Xpos:         float32(bb.pos[0]),
 		Ypos:         float32(bb.pos[1]),
 		CurHitPoints: uint16(bb.curHP),
-		TotHitPoints: uint16(bb.totalHP),
 		Completed:    bb.isBuilt,
+	}
+}
+
+func (bb *BuildingBase) DealDamage(damage float64) {
+	if damage >= bb.curHP {
+		// Argh, someone destroyed the building.
+		// TODO: do something here.
+	} else {
+		bb.curHP -= damage
 	}
 }
 

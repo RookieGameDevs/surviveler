@@ -8,7 +8,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
-	"server/game/entities"
 	"time"
 )
 
@@ -58,7 +57,7 @@ func (ai *AIDirector) summonZombie() {
 		"spawn": org,
 	}).Info("summoning zombie")
 
-	ai.game.State().AddEntity(entities.NewZombie(ai.game, org))
+	ai.game.State().AddZombie(org)
 }
 
 /*
