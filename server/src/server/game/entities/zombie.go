@@ -213,7 +213,6 @@ func (z *Zombie) State() game.EntityState {
 		Xpos:         float32(z.Pos[0]),
 		Ypos:         float32(z.Pos[1]),
 		CurHitPoints: uint16(z.curHP),
-		TotHitPoints: uint16(z.totalHP),
 		ActionType:   actionType,
 		Action:       actionData,
 	}

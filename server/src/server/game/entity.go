@@ -88,7 +88,6 @@ type MobileEntityState struct {
 	Xpos         float32
 	Ypos         float32
 	CurHitPoints uint16
-	TotHitPoints uint16
 	ActionType   ActionType
 	Action       interface{}
 }
@@ -101,6 +100,5 @@ type BuildingState struct {
 	Xpos         float32
 	Ypos         float32
 	CurHitPoints uint16
-	TotHitPoints uint16
 	Completed    bool
 }

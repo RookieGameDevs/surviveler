@@ -174,9 +174,11 @@ def building_spawn(evt):
             )
         )
 
+        tot = resource.data['tot_hp']
         # Create the building
         building = Building(
-            resource, evt.pos, evt.progress, evt.completed, context.scene.root)
+            resource, evt.pos, (evt.cur_hp, tot), evt.completed,
+            context.scene.root)
         context.entities[building.e_id] = building
         context.server_entities_map[evt.srv_id] = building.e_id
 

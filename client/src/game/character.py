@@ -227,10 +227,13 @@ def character_spawn(evt):
             )
         )
 
+        tot = resource.data['tot_hp']
+
         # Search for the entity name
         name = context.players_name_map.get(evt.srv_id, '')
         # Create the entity
-        character = Character(resource, name, evt.health, context.scene.root)
+        character = Character(
+            resource, name, (evt.cur_hp, tot), context.scene.root)
         context.entities[character.e_id] = character
         context.server_entities_map[evt.srv_id] = character.e_id
 

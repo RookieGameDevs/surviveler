@@ -126,8 +126,8 @@ def handle_entity_spawn(gs_mgr):
     for ent in new_entities:
         data = new[ent]
         entity_type = EntityType(data[MF.entity_type])
-        health = data[MF.cur_hp], data[MF.tot_hp]
-        evt = EntitySpawn(ent, entity_type, health)
+        cur_hp = data[MF.cur_hp]
+        evt = EntitySpawn(ent, entity_type, cur_hp)
         send_event(evt)
 
 
@@ -231,9 +231,9 @@ def handle_buildings(selected, buildings, event):
         data = buildings[building]
         b_type = BuildingType(data[MF.building_type])
         pos = data[MF.x_pos], data[MF.y_pos]
-        progress = data[MF.cur_hp], data[MF.tot_hp]
+        cur_hp = data[MF.cur_hp]
         completed = data[MF.completed]
-        evt = event(building, b_type, pos, progress, completed)
+        evt = event(building, b_type, pos, cur_hp, completed)
         send_event(evt)
 
 

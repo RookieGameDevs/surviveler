@@ -185,7 +185,6 @@ func (p *Player) State() game.EntityState {
 		Xpos:         float32(p.Pos[0]),
 		Ypos:         float32(p.Pos[1]),
 		CurHitPoints: uint16(p.curHP),
-		TotHitPoints: uint16(p.totalHP),
 		ActionType:   curAction.Type,
 		Action:       actionData,
 	}

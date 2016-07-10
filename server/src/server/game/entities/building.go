@@ -50,7 +50,6 @@ func (bb *BuildingBase) State() game.EntityState {
 		Xpos:         float32(bb.pos[0]),
 		Ypos:         float32(bb.pos[1]),
 		CurHitPoints: uint16(bb.curHP),
-		TotHitPoints: uint16(bb.totalHP),
 		Completed:    bb.isBuilt,
 	}
 }
