@@ -28,49 +28,48 @@ type Movable struct {
 /*
  * nextPos computes the next position and returns it.
  *
+ * It computes the position we would have by following given direction
+ * for a given amount of time, at given speed, starting from given position.
  * It doesn't assign the position, so that this method can be used for
  * actual movement as well as movement prediction.
  */
+func (me *Movable) nextPos(startPos, direction math.Vec2, speed float64, dt time.Duration) math.Vec2 {
+	// compute distance to be covered as time * speed
+	distance := dt.Seconds() * me.Speed
+	// compute new position after moving given distance in wanted direction
+	return startPos.Add(direction.Mul(distance))
+}
+
 func (me *Movable) Update(dt time.Duration) {
 	// update position on the player path
 	if me.curPathIdx >= 0 && me.curPathIdx < len(me.curPath) {
 		// get sub-destination (current path segment)
 		dst := me.curPath[me.curPathIdx]
 
-		// compute distance to be covered as time * speed
-		distance := dt.Seconds() * me.Speed
+		// compute translation and direction vectors
+		xlate := dst.Sub(me.Pos)
+		distToDest := xlate.Len()
+		direction := xlate.Normalize()
 
-		for {
-			// compute translation and direction vectors
-			xlate := dst.Sub(me.Pos)
-			totalLen := xlate.Len()
-			direction := xlate.Normalize()
+		// compute our next position, by moving in direction of the waypoint
+		newPos := me.nextPos(me.Pos, direction, me.Speed, dt)
 
-			// compute new position after moving given distance in wanted direction
-			newPos := me.Pos.Add(direction.Mul(distance))
-			realLen := newPos.Sub(me.Pos).Len()
+		// this is the distance we would travel to go there
+		distMove := newPos.Sub(me.Pos).Len()
 
-			// check against edge-cases
-			isNan := gomath.IsNaN(realLen) || gomath.IsNaN(totalLen) ||
-				gomath.IsNaN(direction.Len()) || gomath.Abs(realLen-totalLen) < 1e-3
-			if realLen > totalLen || isNan {
-				me.Pos = dst
-				me.curPathIdx--
-				if me.curPathIdx < 0 {
-					me.hasReachedDestination = true
-					break
-				}
-				dst = me.curPath[me.curPathIdx]
-
-				if isNan {
-					break
-				}
-
-				distance = realLen - totalLen
+		// check against edge-cases
+		isNan := gomath.IsNaN(distMove) || gomath.IsNaN(distToDest) ||
+			gomath.IsNaN(direction.Len()) || gomath.Abs(distMove-distToDest) < 1e-3
+		if distMove > distToDest || isNan {
+			me.Pos = dst
+			me.curPathIdx--
+			if me.curPathIdx < 0 {
+				me.hasReachedDestination = true
 			} else {
-				me.Pos = newPos
-				break
+				dst = me.curPath[me.curPathIdx]
 			}
+		} else {
+			me.Pos = newPos
 		}
 	} else {
 		me.hasReachedDestination = true
