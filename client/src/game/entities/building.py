@@ -3,7 +3,7 @@ from enum import unique
 from events import subscriber
 from game.components import Renderable
 from game.entities.entity import Entity
-from game.entities.health_bar import HealthBar
+from game.entities.widgets.health_bar import HealthBar
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange

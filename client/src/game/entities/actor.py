@@ -4,7 +4,7 @@ from events import subscriber
 from game.components import Movable
 from game.components import Renderable
 from game.entities.entity import Entity
-from game.entities.health_bar import HealthBar
+from game.entities.widgets.health_bar import HealthBar
 from game.events import ActorIdle
 from game.events import ActorMove
 from game.events import ActorStatusChange
