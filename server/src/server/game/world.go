@@ -30,17 +30,38 @@ type Grid []Tile
 /*
  * A Tile is a tile in a grid which implements Pather.
  *
- * It implements the fmt.GoStringer interface for commodity.
+ * It implements the BoundingBoxer interface and the fmt.GoStringer interface
+ * for commodity.
  */
 type Tile struct {
-	Kind     TileKind // kind of tile, each kind has its own cost
-	X, Y     int      // 2D coordinates
-	W        *World   // reference to the map this is tile is part of
-	Entities []Entity // Entities intersecting with this Tile
+	Kind     TileKind         // kind of tile, each kind has its own cost
+	X, Y     int              // 2D coordinates
+	W        *World           // reference to the map this is tile is part of
+	Entities []Entity         // Entities intersecting with this Tile
+	aabb     math.BoundingBox // pre-computed bounding box, as it won't ever change
+}
+
+func NewTile(kind TileKind, w *World, x, y int) Tile {
+	return Tile{
+		Kind: kind,
+		W:    w,
+		X:    x,
+		Y:    y,
+		aabb: math.BoundingBox{
+			MinX: w.GridScale*float64(x) - 0.25,
+			MaxX: w.GridScale*float64(x) + 0.25,
+			MinY: w.GridScale*float64(y) - 0.25,
+			MaxY: w.GridScale*float64(y) + 0.25,
+		},
+	}
 }
 
 func (t Tile) GoString() string {
 	return fmt.Sprintf("Tile{X: %d, Y: %d, Kind: %d}", t.X, t.Y, t.Kind)
+}
+
+func (t Tile) BoundingBox() math.BoundingBox {
+	return t.aabb
 }
 
 /*
@@ -71,7 +92,7 @@ func NewWorld(img image.Image, gridScale float64) (*World, error) {
 			} else {
 				kind = KindWalkable
 			}
-			w.Grid[x+y*w.GridWidth] = Tile{Kind: kind, W: &w, X: x, Y: y}
+			w.Grid[x+y*w.GridWidth] = NewTile(kind, &w, x, y)
 		}
 	}
 	return &w, nil
@@ -151,9 +172,36 @@ func (w World) DumpGrid() {
 }
 
 /*
- * AddEntity add an entity on the underlying world representation
+ * AddEntity adds an entity on the underlying world representation
  */
 func (w *World) AddEntity(ent Entity) {
 	t := w.TileFromWorldVec(ent.Position())
 	t.Entities = append(t.Entities, ent)
+}
+
+/*
+ * RemoveEntity removes an entity from the underlying world representation
+ */
+func (w *World) RemoveAddEntity(ent Entity) {
+	tileToRemove := w.TileFromWorldVec(ent.Position())
+	// create a new slice without this entity
+	newSlice := []Entity{}
+	for i, t := range t.Entities {
+		if t.Id() != ent.Id() {
+			newSlice = append(newSlice, t)
+		}
+	}
+	// replace the old slice
+	t.Entities = newSlice
+}
+
+/*
+ * UpdateEntity updates the entity position on the underlying world
+ * representation.
+ *
+ * This function should preferably be called only if the entity has moved
+ * in order to avoid useless computation of intersections
+ */
+func (w *World) UpdateEntity() {
+	// TODO: continue here!!
 }
