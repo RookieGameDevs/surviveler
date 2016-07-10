@@ -123,3 +123,7 @@ func (me *Movable) NextPos() math.Path {
 func (me *Movable) HasReachedDestination() bool {
 	return me.hasReachedDestination
 }
+
+func (me *Movable) BoundingBox() math.BoundingBox {
+	return math.NewBoundingBoxFromCircle(me.Pos, 0.5)
+}
