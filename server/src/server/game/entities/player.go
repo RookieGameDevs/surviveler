@@ -206,7 +206,7 @@ func (p *Player) State() game.EntityState {
 		actionData = game.BuildActionData{}
 	case game.RepairingAction:
 		actionData = game.RepairActionData{}
-	case game.IdleAction:
+	case game.IdleAction, WaitingForPathAction:
 		actionData = game.IdleActionData{}
 	case game.AttackAction:
 		dist := p.target.Position().Sub(p.Pos).Len()
