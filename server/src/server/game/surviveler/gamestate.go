@@ -332,6 +332,9 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 		ent.SetId(id)
 	}
 	gs.entities[id] = ent
+
+	// add the entity onto the world representation
+	gs.world.AddEntity(ent)
 }
 
 func (gs *gamestate) AddZombie(org math.Vec2) {
