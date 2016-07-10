@@ -3,6 +3,10 @@ from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
+from game.events import EntityPick
+from network.message import Message
+from network.message import MessageField as MF
+from network.message import MessageType
 import logging
 
 
@@ -61,3 +65,21 @@ def enemy_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+
+
+@subscriber(EntityPick)
+def enemy_click(evt):
+    """Remove an enemy from the game.
+
+    Gets all the relevant data from the event.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.ActorDisappear`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    if isinstance(evt.entity, Enemy):
+        msg = Message(MessageType.attack, {
+            MF.id: context.server_id(evt.entity.e_id),
+        })
+        context.msg_queue.append(msg)
