@@ -81,6 +81,7 @@ def main(model, out):
     if b_count > 0:
         fmt |= VertexFormat.has_joints
 
+    skeleton = {}
     if fmt & VertexFormat.has_joints:
         def mark_node(n, flag):
             skeleton_parts.setdefault(n.name, [False, n])
@@ -109,7 +110,6 @@ def main(model, out):
 
         # build up the skeleton starting from root and including only node
         # branches which are required
-        skeleton = {}
         joint_id = count()
 
         def add_to_skeleton(node):
