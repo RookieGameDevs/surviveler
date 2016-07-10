@@ -23,7 +23,9 @@ find_poses(struct Animation *anim, float time, size_t *r_key0, size_t *r_key1)
 static void
 joint_compute_rotation(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_rm)
 {
-	mat_ident(r_rm);
+	Qtr rot;
+	qtr_lerp(&p0->rot, &p1->rot, time, &rot);
+	*r_rm = mat_from_qtr(&rot);
 }
 
 static void
@@ -67,6 +69,8 @@ joint_compute_pose(
 	Mat *t = &transforms[joint_id];
 
 	if (!computed[joint_id]) {
+		struct Joint *joint = &anim->skeleton->joints[joint_id];
+
 		// lookup the previous and current joint poses
 		struct JointPose *p0 = &sp0->joint_poses[joint_id];
 		struct JointPose *p1 = &sp1->joint_poses[joint_id];
@@ -79,10 +83,11 @@ joint_compute_pose(
 		joint_compute_scale(p0, p1, time, &sm);
 		mat_mul(&tm, &rm, &tmp);
 		mat_mul(&tmp, &sm, t);
+		mat_mul(&joint->inv_bind_pose, t, &tmp);
+		*t = tmp;
 
 		// if the joint is not the root, pre-multiply the full parents
 		// transformation chain
-		struct Joint *joint = &anim->skeleton->joints[joint_id];
 		if (joint->parent != ROOT_NODE_ID) {
 			Mat *parent_t = joint_compute_pose(
 				anim,

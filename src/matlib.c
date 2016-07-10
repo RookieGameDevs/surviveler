@@ -257,27 +257,41 @@ mat_invert(Mat *m, Mat *out_m)
 Mat
 mat_from_qtr(const Qtr *q)
 {
-	float w = q->data[0], x = q->data[1], y = q->data[2], z = q->data[3];
-	float yy = y * y;
-	float xx = x * x;
-	float zz = z * z;
+	float wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
 
-	float m00 = 1.0f - 2.0f*yy - 2.0f*zz;
-	float m01 = 2.0f*x*y - 2.0f*z*w;
-	float m02 = 2.0f*x*z + 2.0f*y*w;
+	// calculate coefficients
+	x2 = q->data[1] + q->data[1];
+	y2 = q->data[2] + q->data[2];
+	z2 = q->data[3] + q->data[3];
+	xx = q->data[1] * x2;
+	xy = q->data[1] * y2;
+	xz = q->data[1] * z2;
+	yy = q->data[2] * y2;
+	yz = q->data[2] * z2;
+	zz = q->data[3] * z2;
+	wx = q->data[0] * x2;
+	wy = q->data[0] * y2;
+	wz = q->data[0] * z2;
+
+	float m00 = 1.0 - (yy + zz);
+	float m01 = xy + wz;
+	float m02 = xz - wy;
 	float m03 = 0;
 
-	float m10 = 2.0f*x*y + 2.0f*z*w;
-	float m11 = 1.0f - 2.0f*xx - 2.0f*zz;
-	float m12 = 2.0f*y*z - 2.0f*x*w;
+	float m10 = xy - wz;
+	float m11 = 1.0 - (xx + zz);
+	float m12 = yz + wx;
 	float m13 = 0;
 
-	float m20 = 2.0f*x*z - 2.0f*y*w;
-	float m21 = 2.0f*y*z + 2.0f*x*w;
-	float m22 = 1.0f - 2.0f*xx - 2.0f*yy;
+	float m20 = xz + wy;
+	float m21 = yz - wx;
+	float m22 = 1.0 - (xx + yy);
 	float m23 = 0;
 
-	float m30 = 0, m31 = 0, m32 = 0, m33 = 1;
+	float m30 = 0.0;
+	float m31 = 0.0;
+	float m32 = 0.0;
+	float m33 = 1;
 
 	Mat m = {{
 		m00, m01, m02, m03,
@@ -517,6 +531,16 @@ qtr_norm(Qtr *q)
 	q->data[1] /= n;
 	q->data[2] /= n;
 	q->data[3] /= n;
+}
+
+void
+qtr_lerp(const Qtr *a, const Qtr *b, float t, Qtr *r_q)
+{
+	Qtr at, bt;
+	qtr_mulf(a, 1 - t, &at);
+	qtr_mulf(b, t, &bt);
+	qtr_add(&at, &bt, r_q);
+	qtr_norm(r_q);
 }
 
 /******************************************************************************

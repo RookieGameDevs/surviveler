@@ -137,3 +137,6 @@ qtr_mul(const Qtr *a, const Qtr *b, Qtr *r_q);
 
 void
 qtr_norm(Qtr *a);
+
+void
+qtr_lerp(const Qtr *a, const Qtr *b, float t, Qtr *r_q);

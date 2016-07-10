@@ -358,10 +358,11 @@ mesh_new(struct MeshData *md)
 		offset += 4;
 
 		glEnableVertexAttribArray(VERTEX_ATTRIB_JOINT_WEIGHTS);
-		glVertexAttribIPointer(
+		glVertexAttribPointer(
 			VERTEX_ATTRIB_JOINT_WEIGHTS,
 			4,
 			GL_UNSIGNED_BYTE,
+			GL_TRUE,
 			md->vertex_size,
 			(void*)(offset)
 		);
