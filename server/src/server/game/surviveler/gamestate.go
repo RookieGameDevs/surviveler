@@ -174,10 +174,14 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 
 		// get the tile at building point coordinates
 		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
-		if tile.Building != nil {
-			log.WithField("tile", tile).
-				Error("There's already a building on this tile")
-			return
+
+		// check if we can build here
+		for _, ent := range tile.Entities {
+			if _, ok := ent.(game.Building); ok {
+				log.WithField("tile", tile).
+					Error("There's already a building on this tile")
+				return
+			}
 		}
 
 		// clip building center with tile center
@@ -187,7 +191,7 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 
 		// create the building, attach it to the tile
 		building := gs.createBuilding(game.EntityType(evt.Type), pos)
-		tile.Building = building
+		tile.Entities = append(tile.Entities, building)
 
 		// set player action
 		player.Build(building)
