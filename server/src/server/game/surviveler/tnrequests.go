@@ -33,6 +33,7 @@ const (
 	TnBuildId
 	TnRepairId
 	TnDestroyId
+	TnSummonZombieId
 )
 
 /*
@@ -67,6 +68,9 @@ type TnRepair struct {
 
 type TnDestroy struct {
 	Id uint32 // building id
+}
+
+type TnSummonZombie struct {
 }
 
 func (req *TnGameState) FromContext(c *cli.Context) error {
@@ -152,6 +156,11 @@ func (req *TnDestroy) FromContext(c *cli.Context) error {
 	} else {
 		req.Id = uint32(Id)
 	}
+	return nil
+}
+
+func (req *TnSummonZombie) FromContext(c *cli.Context) error {
+	fmt.Println("In TnSummonZombie")
 	return nil
 }
 
@@ -279,6 +288,18 @@ func (g *survivelerGame) registerTelnetHandlers() {
 		}
 		g.telnet.RegisterCommand(&cmd)
 	}()
+
+	func() {
+		// register 'summon' command
+		cmd := cli.Command{
+			Name:  "summon",
+			Usage: "summon a zombie in a random zombie spawn point",
+			Flags: []cli.Flag{},
+			Action: createHandler(
+				TelnetRequest{Type: TnSummonZombieId, Content: &TnSummonZombie{}}),
+		}
+		g.telnet.RegisterCommand(&cmd)
+	}()
 }
 
 /*
@@ -388,6 +409,10 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		}
 		// remove the building
 		g.state.RemoveEntity(destroy.Id)
+
+	case TnSummonZombieId:
+
+		g.ai.SummonZombie()
 
 	default:
 

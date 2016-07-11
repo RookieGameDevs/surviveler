@@ -7,6 +7,7 @@ package entities
 import (
 	"server/game"
 	"server/game/components"
+	"server/game/events"
 	"server/math"
 	"time"
 )
@@ -235,8 +236,10 @@ func (z *Zombie) findTarget() (game.Entity, float32) {
 
 func (z *Zombie) DealDamage(damage float64) (dead bool) {
 	if damage >= z.curHP {
-		// Fuck yeah, zombie died.
-		// TODO: do something here.
+		z.curHP = 0
+		z.g.PostEvent(events.NewEvent(
+			events.ZombieDeath,
+			events.ZombieDeathEvent{Id: z.id}))
 		dead = true
 	} else {
 		z.curHP -= damage

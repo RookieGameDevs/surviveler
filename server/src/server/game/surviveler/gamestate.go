@@ -246,6 +246,18 @@ func (gs *gamestate) onPlayerDeath(event *events.Event) {
 }
 
 /*
+ * event handler for EnemyDeath events
+ */
+func (gs *gamestate) onZombieDeath(event *events.Event) {
+	evt := event.Payload.(events.ZombieDeathEvent)
+	log.WithField("evt", evt).Info("Received ZombieDeath event")
+
+	if player := gs.getZombie(evt.Id); player != nil {
+		gs.RemoveEntity(evt.Id)
+	}
+}
+
+/*
  * fillMovementRequest fills up and sends a movement request
  */
 func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {

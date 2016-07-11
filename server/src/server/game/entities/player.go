@@ -5,6 +5,7 @@
 package entities
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
@@ -18,7 +19,7 @@ const (
 	WaitingForPathAction      = 1000 + iota
 	BuildPowerInductionPeriod = time.Second
 	PlayerAttackDistance      = 1
-	AttackPeriod              = time.Second
+	AttackPeriod              = 500 * time.Millisecond
 	PathFindPeriod            = time.Second
 )
 
@@ -106,8 +107,14 @@ func (p *Player) Update(dt time.Duration) {
 			dist := p.target.Position().Sub(p.Pos).Len()
 			if dist < PlayerAttackDistance {
 				if time.Since(p.lastAttack) >= AttackPeriod {
-					p.target.DealDamage(float64(p.combatPower))
-					p.lastAttack = time.Time{}
+					fmt.Println("diocane", time.Since(p.lastAttack), AttackPeriod)
+					if !p.target.DealDamage(float64(p.combatPower)) {
+						p.lastAttack = time.Now()
+					} else {
+						// pop current action to get ready for next update
+						next := p.actions.Pop()
+						log.WithField("action", next).Debug("next player action")
+					}
 				}
 			} else {
 				p.Movable.Update(dt)
@@ -273,7 +280,7 @@ func (p *Player) Attack(e game.Entity) {
 
 	// directly search for path
 	p.findPath(e.Position())
-	p.lastAttack = time.Time{}
+	p.lastAttack = time.Now()
 
 	// setup the actions in the stack
 	p.emptyActions()
