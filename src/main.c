@@ -1,6 +1,7 @@
 #include "anim.h"
 #include "matlib.h"
 #include "mesh.h"
+#include "shader.h"
 #include <GL/glew.h>
 #include <SDL.h>
 #include <stdbool.h>
@@ -9,8 +10,8 @@
 #define VIEWPORT_WIDTH  1024
 #define VIEWPORT_HEIGHT 768
 
-#define VERT_SHADER "data/default.vert"
-#define FRAG_SHADER "data/default.frag"
+#define MODEL_VERT "data/default.vert"
+#define MODEL_FRAG "data/default.frag"
 
 enum CameraType {
 	PERSPECTIVE,
@@ -51,7 +52,8 @@ static struct {
 	.rndr_mode = SOLID
 };
 
-static GLuint shader;
+// shaders
+static GLuint model_shader = 0;
 
 static GLenum
 has_glerror()
@@ -87,109 +89,10 @@ error:
 }
 
 static int
-load_shader()
+load_shaders()
 {
-	const char *files[2] = {
-		VERT_SHADER,
-		FRAG_SHADER
-	};
-	GLenum types[2] = {
-		GL_VERTEX_SHADER,
-		GL_FRAGMENT_SHADER
-	};
-	GLuint shaders[2];
-
-	GLuint prog = glCreateProgram();
-	if (!prog || has_glerror()) {
-		fprintf(stderr, "failed to create shader program\n");
-		return 0;
-	}
-
-	for (int i = 0; i < 2; i++) {
-		// open file for reading
-		FILE *fp = fopen(files[i], "r");
-		if (!fp) {
-			fprintf(stderr, "failed to open '%s'\n", files[i]);
-			return 0;
-		}
-
-		// read file size and allocate a buffer for its contents
-		fseek(fp, 0, SEEK_END);
-		size_t len = ftell(fp);
-		rewind(fp);
-		char *src = malloc(len + 1);
-		if (!src) {
-			fprintf(stderr, "not enough memory for '%s'\n", files[i]);
-			goto error;
-		}
-		src[len] = 0;  // NUL-terminator
-
-		// read the file
-		if (fread(src, 1, len, fp) != len) {
-			fprintf(stderr, "failed to read '%s'\n", files[i]);
-			goto error;
-		}
-
-		// create the shader
-		shaders[i] = glCreateShader(types[i]);
-		if (!shaders[i] || has_glerror()) {
-			fprintf(stderr, "failed to create shader object\n");
-			goto error;
-		}
-
-		// set source and compile it
-		glShaderSource(shaders[i], 1, (const char**)&src, NULL);
-		glCompileShader(shaders[i]);
-
-		int status;
-		glGetShaderiv(shaders[i], GL_COMPILE_STATUS, &status);
-		if (status == GL_FALSE || has_glerror()) {
-			int log_len;
-			glGetShaderiv(shaders[i], GL_INFO_LOG_LENGTH, &log_len);
-			char log[log_len];
-			glGetShaderInfoLog(shaders[i], log_len, NULL, log);
-			fprintf(
-				stderr,
-				"failed to compile %s: %s\n",
-				files[i], log
-			);
-			goto error;
-		}
-
-		// attach the shader to the program
-		glAttachShader(prog, shaders[i]);
-
-		free(src);
-		fclose(fp);
-		continue;
-
-error:
-		free(src);
-		fclose(fp);
-		return 0;
-	}
-
-	// link the program
-	glLinkProgram(prog);
-	if (has_glerror()) {
-		fprintf(stderr, "failed to link shader program\n");
-		return 0;
-	}
-
-	int status;
-	glGetProgramiv(prog, GL_LINK_STATUS, &status);
-	if (status == GL_FALSE) {
-		int log_len;
-		glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &log_len);
-		char log[log_len];
-		glGetProgramInfoLog(prog, log_len, NULL, log);
-		fprintf(stderr, "failed to link shader: %s\n", log);
-		return 0;
-	}
-
-	shader = prog;
-
-	return 1;
+	model_shader = shader_load_and_compile(MODEL_VERT, MODEL_FRAG);
+	return model_shader != 0;
 }
 
 static int
@@ -265,7 +168,7 @@ render()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// make the shader active
-	glUseProgram(shader);
+	glUseProgram(model_shader);
 	if (has_glerror()) {
 		fprintf(stderr, "failed to activate shader\n");
 		return 0;
@@ -274,20 +177,20 @@ render()
 	// set uniforms
 	int loc;
 
-	loc = glGetUniformLocation(shader, "projection");
+	loc = glGetUniformLocation(model_shader, "projection");
 	glUniformMatrix4fv(loc, 1, GL_TRUE, projection.data);
 
-	loc = glGetUniformLocation(shader, "modelview");
+	loc = glGetUniformLocation(model_shader, "modelview");
 	glUniformMatrix4fv(loc, 1, GL_TRUE, modelview.data);
 
-	loc = glGetUniformLocation(shader, "transform");
+	loc = glGetUniformLocation(model_shader, "transform");
 	glUniformMatrix4fv(loc, 1, GL_TRUE, transform.data);
 
-	loc = glGetUniformLocation(shader, "animate");
+	loc = glGetUniformLocation(model_shader, "animate");
 	glUniform1i(loc, controls.play_animation);
 
 	if (controls.play_animation && mesh_data->anim_count > 0) {
-		loc = glGetUniformLocation(shader, "joints");
+		loc = glGetUniformLocation(model_shader, "joints");
 		if (loc < 0) {
 			fprintf(stderr, "no 'joints' uniform defined\n");
 			return 0;
@@ -372,7 +275,7 @@ main(int argc, char *argv[])
 	if (!load_model(argv[1]))
 		return 0;
 
-	if (!load_shader())
+	if (!load_shaders())
 		return 0;
 
 	SDL_Event evt;
