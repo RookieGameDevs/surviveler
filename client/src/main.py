@@ -72,9 +72,10 @@ def setup_logging(config):
 
 
 class sdl2context(ContextDecorator):
+
     def __enter__(self):
         LOG.debug('Creating SDL context')
-        sdl.SDL_Init(sdl.SDL_INIT_VIDEO)
+        sdl.SDL_Init(sdl.SDL_INIT_VIDEO | sdl.SDL_INIT_AUDIO)
         return self
 
     def __exit__(self, *exc):

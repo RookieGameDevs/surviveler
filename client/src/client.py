@@ -21,6 +21,9 @@ from renderer import PerspCamera
 from renderer import Scene
 from utils import as_utf8
 from utils import tstamp
+from sdl2 import *
+from sdl2.ext.compat import byteify
+from sdl2.sdlmixer import *
 import logging
 
 
@@ -247,6 +250,25 @@ class Client:
         self.ping()
         self.join(self.context.player_name, self.context.player_type)
 
+        # Audio stuff
+        sound_file = 'sample.wav'
+
+        if Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024):
+            raise RuntimeError(
+                "Cannot open mixed audio: {}".format(Mix_GetError()))
+
+        if Mix_Init(0) != 0:
+            raise RuntimeError(
+                'Cannot initialize mixer: {}'.format(Mix_GetError()))
+
+        soundtrack = Mix_LoadMUS(byteify(sound_file, "utf-8"))
+
+        if soundtrack is None:
+            raise RuntimeError(
+                "Cannot open audio file: {}".format(Mix_GetError()))
+
+        Mix_PlayMusic(soundtrack, -1)
+
         while not self.exit:
             # Compute time delta
             dt = self.dt()
@@ -277,6 +299,8 @@ class Client:
 
             # Push messages in the proxy queue
             self.proxy.push()
+
+        Mix_CloseAudio()
 
     @message_handler(MT.pong)
     def pong(self, msg):
