@@ -191,7 +191,7 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 
 		// create the building, attach it to the tile
 		building := gs.createBuilding(game.EntityType(evt.Type), pos)
-		tile.Entities = append(tile.Entities, building)
+		gs.world.AddEntity(building)
 
 		// set player action
 		player.Build(building)
