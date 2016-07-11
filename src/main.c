@@ -33,12 +33,12 @@ static Mat modelview;
 // object transform matrix
 static Mat transform;
 
-// skeleton pose transform matrix palette
-static Mat *pose_transforms = NULL;
-
 // mesh to render
 static struct MeshData *mesh_data = NULL;
 static struct Mesh *mesh = NULL;
+
+// animation instance to play
+static struct AnimationInstance *anim_inst = NULL;
 
 // controls
 static struct {
@@ -50,9 +50,6 @@ static struct {
 	.cam_type = ORTHOGRAPHIC,
 	.rndr_mode = SOLID
 };
-
-// global animation timer
-static float time = 0.0f;
 
 static GLuint shader;
 
@@ -78,8 +75,8 @@ load_model(const char *filename)
 	if (!mesh)
 		goto error;
 
-	if (mesh_data->skeleton &&
-	    !(pose_transforms = malloc(sizeof(Mat) * mesh_data->skeleton->joint_count)))
+	if (mesh_data->anim_count > 0 &&
+	    !(anim_inst = anim_new_instance(&mesh_data->animations[0])))
 		goto error;
 
 	return 1;
@@ -243,8 +240,6 @@ setup()
 static int
 update(float dt)
 {
-	time += dt;
-
 	mat_ident(&modelview);
 	mat_lookat(
 		&modelview,
@@ -256,15 +251,9 @@ update(float dt)
 	mat_ident(&transform);
 
 	// play the animation
-	if (controls.play_animation) {
-		if (mesh_data->anim_count > 0) {
-			anim_compute_pose(
-				&mesh_data->animations[0],
-				time,
-				pose_transforms
-			);
-		}
-		printf("t = %.4fs\n", time);
+	if (controls.play_animation && anim_inst) {
+		anim_play(anim_inst, dt);
+		printf("t = %.4fs\n", anim_inst->time);
 	}
 
 	return 1;
@@ -307,7 +296,7 @@ render()
 			loc,
 			mesh_data->skeleton->joint_count,
 			GL_TRUE,
-			(float*)pose_transforms
+			(float*)anim_inst->skin_transforms
 		);
 	}
 
@@ -411,7 +400,7 @@ main(int argc, char *argv[])
 
 				case SDLK_SPACE:
 					controls.play_animation = !controls.play_animation;
-					time = 0.0f;
+					anim_inst->time = 0.0f;
 					break;
 				}
 			}

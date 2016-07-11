@@ -1,6 +1,7 @@
 #include "anim.h"
 #include <assert.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define ROOT_NODE_ID 255
@@ -56,7 +57,7 @@ joint_compute_translation(struct JointPose *p0, struct JointPose *p1, float time
  * for each traversed node will be stored in the provided array and the process
  * keeps track of already computed chains and re-uses them.
  */
-static Mat*
+static const Mat*
 joint_compute_pose(
 	struct Animation *anim,
 	struct SkeletonPose *sp0,
@@ -83,13 +84,11 @@ joint_compute_pose(
 		joint_compute_scale(p0, p1, time, &sm);
 		mat_mul(&tm, &rm, &tmp);
 		mat_mul(&tmp, &sm, t);
-		mat_mul(&joint->inv_bind_pose, t, &tmp);
-		*t = tmp;
 
-		// if the joint is not the root, pre-multiply the full parents
+		// if the joint is not the root, pre-multiply the full parent
 		// transformation chain
 		if (joint->parent != ROOT_NODE_ID) {
-			Mat *parent_t = joint_compute_pose(
+			const Mat *parent_t = joint_compute_pose(
 				anim,
 				sp0,
 				sp1,
@@ -97,7 +96,7 @@ joint_compute_pose(
 				computed
 			);
 			mat_mul(parent_t, t, &tmp);
-			memcpy(t, &tmp, sizeof(Mat));
+			*t = tmp;
 		}
 
 		computed[joint_id] = true;
@@ -106,19 +105,52 @@ joint_compute_pose(
 	return t;
 }
 
-void
-anim_compute_pose(struct Animation *anim, float absolute_time, Mat *transforms)
+struct AnimationInstance*
+anim_new_instance(struct Animation *anim)
 {
+	struct AnimationInstance *inst = malloc(sizeof(struct AnimationInstance));
+	if (!inst)
+		return NULL;
+
+	size_t n_joints = anim->skeleton->joint_count;
+	inst->joint_transforms = malloc(sizeof(Mat) * n_joints);
+	inst->skin_transforms = malloc(sizeof(Mat) * n_joints);
+	inst->processed_joints = malloc(sizeof(bool) * n_joints);
+	if (inst->joint_transforms == NULL ||
+	    inst->skin_transforms == NULL ||
+	    inst->processed_joints == NULL) {
+		anim_free_instance(inst);
+		return NULL;
+	}
+	inst->anim = anim;
+	inst->time = 0.0f;
+	return inst;
+}
+
+void
+anim_free_instance(struct AnimationInstance *inst)
+{
+	free(inst->joint_transforms);
+	free(inst->skin_transforms);
+	free(inst->processed_joints);
+	free(inst);
+}
+
+
+void
+anim_play(struct AnimationInstance *anim_inst, float dt)
+{
+	struct Animation *anim = anim_inst->anim;
 	int n_joints = anim->skeleton->joint_count;
 
-	// joint processing status flags
-	bool computed[n_joints];
-	memset(computed, 0, sizeof(bool) * n_joints);
+	// reset joint processing flags
+	memset(anim_inst->processed_joints, 0, sizeof(bool) * n_joints);
 
 	// compute the relative animation time in ticks, which default to 25
 	// frames (ticks) per second
+	anim_inst->time += dt;
 	float speed = anim->speed != 0 ? anim->speed : 25.0f;
-	float time_in_ticks = absolute_time * speed;
+	float time_in_ticks = anim_inst->time * speed;
 	float local_time = fmod(time_in_ticks, anim->duration);
 
 	// lookup the key poses indices for given timestamp
@@ -132,21 +164,30 @@ anim_compute_pose(struct Animation *anim, float absolute_time, Mat *transforms)
 	// lookup the key poses
 	struct SkeletonPose *sp0 = &anim->poses[key0], *sp1 = &anim->poses[key1];
 
-	// for each joint, compute its pose transformation matrix;
+	// for each joint, compute its local transformation matrix;
 	// the process is iterative and keeps track of which joints have already
 	// their transformations computed, in order to re-use them and skip
 	// their processing
 	for (int j = 0; j < n_joints; j++) {
-		if (!computed[j]) {
+		if (!anim_inst->processed_joints[j]) {
 			joint_compute_pose(
-				anim,       // animation
-				sp0,        // pose before t
-				sp1,        // pose after t
-				j,          // joint index
-				pose_time,  // exact pose time
-				transforms, // output transforms array
-				computed    // joint processing status array
+				anim,                        // animation
+				sp0,                         // pose before t
+				sp1,                         // pose after t
+				j,                           // joint index
+				pose_time,                   // exact pose time
+				anim_inst->joint_transforms, // output transforms array
+				anim_inst->processed_joints  // joint processing status array
 			);
 		}
+	}
+
+	// compute skinning matrices for each joint
+	for (int j = 0; j < n_joints; j++) {
+		mat_mul(
+			&anim_inst->joint_transforms[j],
+			&anim->skeleton->joints[j].inv_bind_pose,
+			&anim_inst->skin_transforms[j]
+		);
 	}
 }

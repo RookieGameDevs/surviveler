@@ -1,6 +1,7 @@
 #pragma once
 
 #include "matlib.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -51,9 +52,31 @@ struct Animation {
 	struct SkeletonPose *poses;   // poses
 };
 
+/**
+ * Animation playback instance.
+ */
+struct AnimationInstance {
+	struct Animation *anim;  // reference animation
+	float time;              // local clock
+	Mat *joint_transforms;   // local joint transformations
+	Mat *skin_transforms;    // final skinning transformations
+	bool *processed_joints;  // joint processing flags (private)
+};
 
 /**
- * Compute the transformation matrix palette for the given time instant.
+ * Create an instance of given animation.
+ */
+struct AnimationInstance*
+anim_new_instance(struct Animation *anim);
+
+/**
+ * Destroy animation instance.
  */
 void
-anim_compute_pose(struct Animation *anim, float time, Mat *transforms);
+anim_free_instance(struct AnimationInstance *inst);
+
+/**
+ * Advance the animation by given time delta
+ */
+void
+anim_play(struct AnimationInstance *anim_inst, float dt);

@@ -145,16 +145,7 @@ mesh_data_from_file(const char *filename)
 			assert(id < joint_count);
 
 			md->skeleton->joints[id].parent = *(uint8_t*)(data + offset + 1);
-			Mat bind_pose_mat;
-			memcpy(
-				bind_pose_mat.data,
-				data + offset + 2,
-				64
-			);
-			mat_invert(
-				&bind_pose_mat,
-				&md->skeleton->joints[id].inv_bind_pose
-			);
+			md->skeleton->joints[id].inv_bind_pose = *(Mat*)(data + offset + 2);
 			offset += JOINT_SIZE;
 		}
 	}
