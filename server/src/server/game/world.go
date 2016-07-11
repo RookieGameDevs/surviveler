@@ -172,27 +172,88 @@ func (w World) DumpGrid() {
 }
 
 /*
+ *
+ */
+func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
+	tiles := []*Tile{}
+
+	// exit now if the aabb is contained in the center tile
+	if center.BoundingBox().Contains(bb) {
+		return tiles
+	}
+
+	left := w.Tile(center.X-1, 0)
+	right := w.Tile(center.X+1, 0)
+	up := w.Tile(0, center.Y-1)
+	down := w.Tile(0, center.Y+1)
+
+	// intersection with horizontal and vertical neighbours
+	if left != nil && left.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, left)
+	} else {
+		left = nil
+	}
+	if right != nil && right.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, right)
+	} else {
+		right = nil
+	}
+	if up != nil && up.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, up)
+	} else {
+		up = nil
+	}
+	if down != nil && down.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, down)
+	} else {
+		down = nil
+	}
+
+	// intersection with diagonal neighbours
+	if left != nil && up != nil {
+		tiles = append(tiles, w.Tile(center.X-1, center.Y-1))
+	}
+	if left != nil && down != nil {
+		tiles = append(tiles, w.Tile(center.X-1, center.Y+1))
+	}
+	if right != nil && up != nil {
+		tiles = append(tiles, w.Tile(center.X+1, center.Y-1))
+	}
+	if right != nil && down != nil {
+		tiles = append(tiles, w.Tile(center.X+1, center.Y+1))
+	}
+	return tiles
+}
+
+/*
  * AddEntity adds an entity on the underlying world representation
  */
 func (w *World) AddEntity(ent Entity) {
-	t := w.TileFromWorldVec(ent.Position())
-	t.Entities = append(t.Entities, ent)
+	// retrieve the tile at entity center
+	tile := w.TileFromWorldVec(ent.Position())
+	tile.Entities = append(tile.Entities, ent)
+
+	// find neighbour tiles that intersect with the entity bounding box
+	for _, t := range w.IntersectingTiles(*tile, ent.BoundingBox()) {
+		// add the entity to each tile list
+		t.Entities = append(t.Entities, ent)
+	}
 }
 
 /*
  * RemoveEntity removes an entity from the underlying world representation
  */
 func (w *World) RemoveAddEntity(ent Entity) {
-	tileToRemove := w.TileFromWorldVec(ent.Position())
+	tile := w.TileFromWorldVec(ent.Position())
 	// create a new slice without this entity
 	newSlice := []Entity{}
-	for i, t := range t.Entities {
+	for _, t := range tile.Entities {
 		if t.Id() != ent.Id() {
 			newSlice = append(newSlice, t)
 		}
 	}
 	// replace the old slice
-	t.Entities = newSlice
+	tile.Entities = newSlice
 }
 
 /*
