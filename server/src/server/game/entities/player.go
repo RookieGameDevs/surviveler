@@ -210,7 +210,7 @@ func (p *Player) State() game.EntityState {
 			actionType = game.MovingAction
 			actionData = game.MoveActionData{
 				Speed: p.Speed,
-				Path:  p.Movable.Path(maxWaypointsToSend),
+				Path:  p.Movable.NextPos(),
 			}
 		} else {
 			actionType = game.IdleAction
