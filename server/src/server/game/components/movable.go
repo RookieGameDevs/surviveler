@@ -72,23 +72,22 @@ func (me *Movable) move(dt time.Duration) {
 		isNan := gomath.IsNaN(distMove) || gomath.IsNaN(distToDest) ||
 			gomath.IsNaN(direction.Len()) || gomath.Abs(distMove-distToDest) < 1e-3
 		if distMove > distToDest || isNan {
+			// we crossed the waypoint, or are really close
 			me.Pos = *wp
-			if _, exists := me.waypoints.Peek(); !exists {
-				//me.hasReachedDestination = true
-			} else {
+			if _, exists := me.waypoints.Peek(); exists {
 				me.waypoints.Pop()
 			}
 		} else {
+			// actual move
 			me.Pos = newPos
 		}
 	} else {
-		// no more waypoints!
+		// no more waypoints
 		me.hasReachedDestination = true
 	}
 }
 
 func (me *Movable) Update(dt time.Duration) {
-
 	// movement update
 	me.move(dt)
 }
@@ -97,9 +96,8 @@ func (me *Movable) Update(dt time.Duration) {
  * SetPath defines the path that the movable entity should follow along
  */
 func (me *Movable) SetPath(path math.Path) {
-
 	// empty the waypoint stack
-	for ; me.waypoints.Len() > 1; me.waypoints.Pop() {
+	for ; me.waypoints.Len() != 0; me.waypoints.Pop() {
 	}
 
 	// fill it with waypoints from the macro-path

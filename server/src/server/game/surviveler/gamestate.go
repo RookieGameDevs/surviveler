@@ -90,6 +90,7 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 			gsMsg.Entities[id] = ent.State()
 		}
 	}
+	//log.WithField("gs", *gsMsg).Debug()
 	return gsMsg
 }
 

@@ -66,7 +66,7 @@ func (s *VecStack) Peek() (value *Vec2, exists bool) {
 	return
 }
 
-// PeekN returns the N topmost item without removing them from the stack
+// PeekN returns at max the N topmost item without removing them from the stack
 func (s *VecStack) PeekN(n int) []*Vec2 {
 	var (
 		N   []*Vec2
