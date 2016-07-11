@@ -12,14 +12,17 @@ import (
 	"server/math"
 )
 
+type TileList []*Tile
+
 /*
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	Grid                          // the embedded map
-	GridWidth, GridHeight int     // grid dimensions
-	Width, Height         float64 // world dimensions
-	GridScale             float64 // the grid scale
+	Grid                                      // the embedded map
+	GridWidth, GridHeight int                 // grid dimensions
+	Width, Height         float64             // world dimensions
+	GridScale             float64             // the grid scale
+	Entities              map[uint32]TileList // map entities to the tiles to which it is attached
 }
 
 /*
@@ -79,6 +82,7 @@ func NewWorld(img image.Image, gridScale float64) (*World, error) {
 		Width:      float64(bounds.Max.X) / gridScale,
 		Height:     float64(bounds.Max.Y) / gridScale,
 		GridScale:  gridScale,
+		Entities:   make(map[uint32]TileList),
 	}
 	log.WithField("world", w).Info("Building world")
 
@@ -230,28 +234,45 @@ func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
  * AttachEntity attaches an entity on the underlying world representation
  */
 func (w *World) AttachEntity(ent Entity) {
-	// retrieve the tile containing entity center
-	tile := w.TileFromWorldVec(ent.Position())
-	tile.Entities[ent.Id()] = ent
+	// create tile list
+	tileList := make(TileList, 0, 1)
+	// this tile contains the entity center
+	center := w.TileFromWorldVec(ent.Position())
+	// append the 'center' tile
+	tileList = append(tileList, center)
+	// append the neighbour tile intersecting with the entity bounding box
+	tileList = append(tileList, w.IntersectingTiles(*center, ent.BoundingBox())...)
 
-	// find neighbour tiles that intersect with the entity bounding box
-	for _, t := range w.IntersectingTiles(*tile, ent.BoundingBox()) {
-		// attach entity to this tile
-		t.Entities[ent.Id()] = ent
-	}
+	// attach this entity to all those tiles
+	w.attachTo(ent, tileList...)
+
+	// add those links to the world (for fast query by entity id)
+	w.Entities[ent.Id()] = tileList
 }
 
 /*
  * DetachEntity detaches an entity from the underlying world representation
  */
 func (w *World) DetachEntity(ent Entity) {
-	// retrieve the tile containing entity center
-	tile := w.TileFromWorldVec(ent.Position())
-	delete(tile.Entities, ent.Id())
+	// retrieve tile list for this entity
+	tileList := w.Entities[ent.Id()]
+	// detach the entity from each of those tiles
+	w.detachFrom(ent, tileList...)
 
-	// find neighbour tiles that intersect with the entity bounding box
-	for _, t := range w.IntersectingTiles(*tile, ent.BoundingBox()) {
-		// detach entity from this tile
+	// clear the tile list for this entity
+	w.Entities[ent.Id()] = make(TileList, 0)
+}
+
+func (w *World) attachTo(ent Entity, tiles ...*Tile) {
+	// attach entity to those tiles
+	for _, t := range tiles {
+		t.Entities[ent.Id()] = ent
+	}
+}
+
+func (w *World) detachFrom(ent Entity, tiles ...*Tile) {
+	// detach entity from those tiles
+	for _, t := range tiles {
 		delete(t.Entities, ent.Id())
 	}
 }
@@ -263,6 +284,7 @@ func (w *World) DetachEntity(ent Entity) {
  * This function should preferably be called only if the entity has moved
  * in order to avoid useless computation of intersections
  */
-func (w *World) UpdateEntity() {
-	// TODO: continue here!!
+func (w *World) UpdateEntity(ent Entity) {
+	w.DetachEntity(ent)
+	w.AttachEntity(ent)
 }
