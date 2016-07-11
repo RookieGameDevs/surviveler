@@ -1,5 +1,6 @@
 from context import Context
 from events import subscriber
+from game.audio import play_fx
 from game.entities.actor import ActorType
 from game.entities.character import Character
 from game.events import ActorSpawn
@@ -68,3 +69,5 @@ def player_spawn(evt):
         player = Player(resource, name, (evt.cur_hp, tot), context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
+
+        play_fx('toilet_flush')

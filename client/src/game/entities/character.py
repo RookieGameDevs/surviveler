@@ -1,4 +1,5 @@
 from events import subscriber
+from game.audio import play_fx
 from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
@@ -12,6 +13,7 @@ LOG = logging.getLogger(__name__)
 class Character(Actor):
     MEMBERS = {ActorType.grunt, ActorType.engineer}
     """Game entity which represents a character."""
+
     def __init__(self, resource, name, health, parent_node):
         """Constructor.
 
@@ -84,3 +86,4 @@ def character_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+        play_fx('sinister')
