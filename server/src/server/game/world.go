@@ -43,10 +43,11 @@ type Tile struct {
 
 func NewTile(kind TileKind, w *World, x, y int) Tile {
 	return Tile{
-		Kind: kind,
-		W:    w,
-		X:    x,
-		Y:    y,
+		Kind:     kind,
+		W:        w,
+		X:        x,
+		Y:        y,
+		Entities: make(map[uint32]Entity),
 		aabb: math.BoundingBox{
 			MinX: w.GridScale*float64(x) - 0.25,
 			MaxX: w.GridScale*float64(x) + 0.25,
@@ -226,10 +227,10 @@ func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
 }
 
 /*
- * AddEntity adds an entity on the underlying world representation
+ * AttachEntity attaches an entity on the underlying world representation
  */
-func (w *World) AddEntity(ent Entity) {
-	// retrieve the tile at entity center
+func (w *World) AttachEntity(ent Entity) {
+	// retrieve the tile containing entity center
 	tile := w.TileFromWorldVec(ent.Position())
 	tile.Entities[ent.Id()] = ent
 
@@ -241,9 +242,10 @@ func (w *World) AddEntity(ent Entity) {
 }
 
 /*
- * RemoveEntity removes an entity from the underlying world representation
+ * DetachEntity detaches an entity from the underlying world representation
  */
-func (w *World) RemoveAddEntity(ent Entity) {
+func (w *World) DetachEntity(ent Entity) {
+	// retrieve the tile containing entity center
 	tile := w.TileFromWorldVec(ent.Position())
 	delete(tile.Entities, ent.Id())
 
