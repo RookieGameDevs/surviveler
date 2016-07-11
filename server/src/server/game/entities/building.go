@@ -7,6 +7,7 @@ package entities
 import (
 	log "github.com/Sirupsen/logrus"
 	"server/game"
+	"server/game/events"
 	"server/math"
 	"time"
 )
@@ -23,6 +24,7 @@ type BuildingBase struct {
 	requiredBP   uint16  // required build power to finish construction
 	curBP        uint16  // build power already induced into the construction
 	id           uint32
+	g            game.Game
 	pos          math.Vec2
 	buildingType game.EntityType
 	isBuilt      bool
@@ -56,8 +58,10 @@ func (bb *BuildingBase) State() game.EntityState {
 
 func (bb *BuildingBase) DealDamage(damage float64) (dead bool) {
 	if damage >= bb.curHP {
-		// Argh, someone destroyed the building.
-		// TODO: do something here.
+		bb.curHP = 0
+		bb.g.PostEvent(events.NewEvent(
+			events.BuildingDestroy,
+			events.BuildingDestroyEvent{Id: bb.id}))
 		dead = true
 	} else {
 		bb.curHP -= damage
@@ -97,10 +101,11 @@ type MgTurret struct {
 /*
  * NewMgTurret creates a new machine-gun turret
  */
-func NewMgTurret(pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewMgTurret(g game.Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           game.InvalidId,
+			g:            g,
 			pos:          pos,
 			totalHP:      float64(totHP),
 			curHP:        1,

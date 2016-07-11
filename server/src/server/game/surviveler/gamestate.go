@@ -258,6 +258,18 @@ func (gs *gamestate) onZombieDeath(event *events.Event) {
 }
 
 /*
+ * event handler for BuildingDestroy events
+ */
+func (gs *gamestate) onBuildingDestroy(event *events.Event) {
+	evt := event.Payload.(events.BuildingDestroyEvent)
+	log.WithField("evt", evt).Info("Received BuildingDestroy event")
+
+	if player := gs.getBuilding(evt.Id); player != nil {
+		gs.RemoveEntity(evt.Id)
+	}
+}
+
+/*
  * fillMovementRequest fills up and sends a movement request
  */
 func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
@@ -336,7 +348,7 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 	switch t {
 	case game.MgTurretBuilding:
 		data := gs.BuildingData(t)
-		building = entities.NewMgTurret(pos, data.TotHp, data.BuildingPowerRec)
+		building = entities.NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	default:
 		log.WithField("type", t).Panic("Can't create building, unsupported type")
 	}

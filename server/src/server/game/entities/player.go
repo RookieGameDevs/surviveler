@@ -5,7 +5,6 @@
 package entities
 
 import (
-	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
@@ -107,7 +106,6 @@ func (p *Player) Update(dt time.Duration) {
 			dist := p.target.Position().Sub(p.Pos).Len()
 			if dist < PlayerAttackDistance {
 				if time.Since(p.lastAttack) >= AttackPeriod {
-					fmt.Println("diocane", time.Since(p.lastAttack), AttackPeriod)
 					if !p.target.DealDamage(float64(p.combatPower)) {
 						p.lastAttack = time.Now()
 					} else {
