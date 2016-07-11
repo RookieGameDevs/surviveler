@@ -233,6 +233,19 @@ func (gs *gamestate) onPlayerAttack(event *events.Event) {
 }
 
 /*
+ * event handler for PlayerDeath events
+ */
+func (gs *gamestate) onPlayerDeath(event *events.Event) {
+	evt := event.Payload.(events.PlayerDeathEvent)
+	log.WithField("evt", evt).Info("Received PlayerDeath event")
+
+	if player := gs.getPlayer(evt.Id); player != nil {
+		gs.game.clients.Kick(evt.Id, "player got killed")
+		gs.RemoveEntity(evt.Id)
+	}
+}
+
+/*
  * fillMovementRequest fills up and sends a movement request
  */
 func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {

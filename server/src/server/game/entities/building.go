@@ -54,13 +54,15 @@ func (bb *BuildingBase) State() game.EntityState {
 	}
 }
 
-func (bb *BuildingBase) DealDamage(damage float64) {
+func (bb *BuildingBase) DealDamage(damage float64) (dead bool) {
 	if damage >= bb.curHP {
 		// Argh, someone destroyed the building.
 		// TODO: do something here.
+		dead = true
 	} else {
 		bb.curHP -= damage
 	}
+	return
 }
 
 func (bb *BuildingBase) addBuildPower(bp uint16) {

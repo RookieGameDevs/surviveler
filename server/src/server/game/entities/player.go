@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
+	"server/game/events"
 	"server/math"
 	"time"
 )
@@ -308,11 +309,15 @@ func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }
 
-func (p *Player) DealDamage(damage float64) {
+func (p *Player) DealDamage(damage float64) (dead bool) {
 	if damage >= p.curHP {
-		// Oops, someone just died.
-		// TODO: do something here.
+		p.curHP = 0
+		p.g.PostEvent(events.NewEvent(
+			events.PlayerDeath,
+			events.PlayerDeathEvent{Id: p.id}))
+		dead = true
 	} else {
 		p.curHP -= damage
 	}
+	return
 }

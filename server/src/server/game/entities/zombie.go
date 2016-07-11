@@ -154,7 +154,9 @@ func (z *Zombie) attack(dt time.Duration) (state int) {
 
 	if z.timeAcc >= zombieDamageInterval {
 		z.timeAcc -= zombieDamageInterval
-		z.target.DealDamage(float64(z.combatPower))
+		if z.target.DealDamage(float64(z.combatPower)) {
+			state = lookingState
+		}
 	}
 
 	return
@@ -231,11 +233,13 @@ func (z *Zombie) findTarget() (game.Entity, float32) {
 	return ent, dist
 }
 
-func (z *Zombie) DealDamage(damage float64) {
+func (z *Zombie) DealDamage(damage float64) (dead bool) {
 	if damage >= z.curHP {
 		// Fuck yeah, zombie died.
 		// TODO: do something here.
+		dead = true
 	} else {
 		z.curHP -= damage
 	}
+	return
 }

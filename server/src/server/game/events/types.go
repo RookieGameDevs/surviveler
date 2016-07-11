@@ -17,6 +17,7 @@ const (
 	PlayerBuild
 	PlayerRepair
 	PlayerAttack
+	PlayerDeath
 	PathReady
 )
 
@@ -50,6 +51,10 @@ type PlayerRepairEvent struct {
 type PlayerAttackEvent struct {
 	Id       uint32
 	EntityId uint32
+}
+
+type PlayerDeathEvent struct {
+	Id uint32
 }
 
 type PathReadyEvent struct {

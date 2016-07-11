@@ -129,9 +129,12 @@ func sendLeave(c *network.Conn, reason string) error {
 	log.WithField("leave", leave).Info("Client is kindly asked to leave")
 
 	// closes the connection, registry cleanup will be performed in OnClose
-	if !c.IsClosed() {
-		c.Close()
-	}
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		if !c.IsClosed() {
+			c.Close()
+		}
+	}()
 	return nil
 }
 
