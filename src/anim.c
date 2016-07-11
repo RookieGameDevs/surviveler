@@ -122,6 +122,7 @@ anim_new_instance(struct Animation *anim)
 		anim_free_instance(inst);
 		return NULL;
 	}
+
 	inst->anim = anim;
 	inst->time = 0.0f;
 	return inst;

@@ -12,6 +12,8 @@
 
 #define MODEL_VERT "data/default.vert"
 #define MODEL_FRAG "data/default.frag"
+#define JOINT_VERT "data/joint.vert"
+#define JOINT_FRAG "data/joint.frag"
 
 enum CameraType {
 	PERSPECTIVE,
@@ -34,8 +36,10 @@ static Mat modelview;
 // object transform matrix
 static Mat transform;
 
-// mesh to render
+// meshes
+static struct MeshData *joint_mesh_data = NULL;
 static struct MeshData *mesh_data = NULL;
+static struct Mesh *joint_mesh = NULL;
 static struct Mesh *mesh = NULL;
 
 // animation instance to play
@@ -54,45 +58,33 @@ static struct {
 
 // shaders
 static GLuint model_shader = 0;
-
-static GLenum
-has_glerror()
-{
-	GLenum error;
-	if ((error = glGetError()) != GL_NO_ERROR) {
-		fprintf(stderr, "OpenGL error: %d\n", error);
-		return 1;
-	}
-	return 0;
-}
+static GLuint joint_shader = 0;
 
 static int
-load_model(const char *filename)
+load_mesh(const char *filename, struct MeshData **md, struct Mesh **m)
 {
-	mesh_data = mesh_data_from_file(filename);
-	if (!mesh_data)
+	*md = NULL;
+	*m = NULL;
+
+	if(!(*md = mesh_data_from_file(filename)))
 		return 0;
 
-	mesh = mesh_new(mesh_data);
-	if (!mesh)
-		goto error;
+	if (!(*m = mesh_new(*md))) {
+		mesh_data_free(*md);
+		return 0;
+	}
 
-	if (mesh_data->anim_count > 0 &&
-	    !(anim_inst = anim_new_instance(&mesh_data->animations[0])))
-		goto error;
+	printf("loaded %s\n", filename);
 
 	return 1;
-
-error:
-	mesh_data_free(mesh_data);
-	return 0;
 }
 
 static int
 load_shaders()
 {
 	model_shader = shader_load_and_compile(MODEL_VERT, MODEL_FRAG);
-	return model_shader != 0;
+	joint_shader = shader_load_and_compile(JOINT_VERT, JOINT_FRAG);
+	return model_shader && joint_shader;
 }
 
 static int
@@ -123,19 +115,17 @@ setup()
 	glClearColor(0.3, 0.3, 0.3, 1.0);
 	glEnable(GL_DEPTH_TEST);
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	switch (controls.rndr_mode % RENDER_MODE_COUNT) {
 	case WIREFRAME:
-		glDisable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		break;
 	case SOLID:
-		glEnable(GL_CULL_FACE);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		break;
 	}
-
-	glCullFace(GL_BACK);
 
 	return 1;
 }
@@ -167,15 +157,36 @@ render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// make the shader active
-	glUseProgram(model_shader);
-	if (has_glerror()) {
-		fprintf(stderr, "failed to activate shader\n");
-		return 0;
+	int loc;
+
+	// draw skeleton joints
+	if (anim_inst && controls.play_animation) {
+		if (!shader_use(joint_shader))
+			return 0;
+
+		loc = glGetUniformLocation(joint_shader, "projection");
+		glUniformMatrix4fv(loc, 1, GL_TRUE, projection.data);
+
+		loc = glGetUniformLocation(joint_shader, "modelview");
+		glUniformMatrix4fv(loc, 1, GL_TRUE, modelview.data);
+
+		for (int j = 0; j < anim_inst->anim->skeleton->joint_count; j++) {
+			loc = glGetUniformLocation(joint_shader, "transform");
+			glUniformMatrix4fv(
+				loc,
+				1,
+				GL_TRUE,
+				anim_inst->joint_transforms[j].data
+			);
+
+			if (!mesh_render(joint_mesh))
+				return 0;
+		}
 	}
 
-	// set uniforms
-	int loc;
+	// update model shader uniforms
+	if (!shader_use(model_shader))
+		return 0;
 
 	loc = glGetUniformLocation(model_shader, "projection");
 	glUniformMatrix4fv(loc, 1, GL_TRUE, projection.data);
@@ -189,7 +200,7 @@ render()
 	loc = glGetUniformLocation(model_shader, "animate");
 	glUniform1i(loc, controls.play_animation);
 
-	if (controls.play_animation && mesh_data->anim_count > 0) {
+	if (controls.play_animation && anim_inst > 0) {
 		loc = glGetUniformLocation(model_shader, "joints");
 		if (loc < 0) {
 			fprintf(stderr, "no 'joints' uniform defined\n");
@@ -272,7 +283,15 @@ main(int argc, char *argv[])
 	if (!setup())
 		return 0;
 
-	if (!load_model(argv[1]))
+	// load mesh and create animation instance
+	if (!load_mesh(argv[1], &mesh_data, &mesh))
+		return 0;
+	if (mesh_data->anim_count > 0 &&
+	    !(anim_inst = anim_new_instance(&mesh_data->animations[0])))
+		return 0;
+
+	// load joint mesh
+	if (!load_mesh("data/joint.mesh", &joint_mesh_data, &joint_mesh))
 		return 0;
 
 	if (!load_shaders())
@@ -302,8 +321,10 @@ main(int argc, char *argv[])
 					break;
 
 				case SDLK_SPACE:
-					controls.play_animation = !controls.play_animation;
-					anim_inst->time = 0.0f;
+					if (anim_inst) {
+						controls.play_animation = !controls.play_animation;
+						anim_inst->time = 0.0f;
+					}
 					break;
 				}
 			}
@@ -323,6 +344,8 @@ main(int argc, char *argv[])
 
 	mesh_free(mesh);
 	mesh_data_free(mesh_data);
+	mesh_free(joint_mesh);
+	mesh_data_free(joint_mesh_data);
 
 	return 0;
 }

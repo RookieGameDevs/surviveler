@@ -105,6 +105,8 @@ shader_load_and_compile(const char *vert_shader, const char *frag_shader)
 
 #undef has_gl_error
 
+	printf("loaded shader program from %s %s\n", vert_shader, frag_shader);
+
 	return prog;
 
 error:
@@ -115,4 +117,22 @@ error:
 		glDeleteShader(sources[i]);
 	glDeleteProgram(prog);
 	return 0;
+}
+
+int
+shader_use(GLuint prog)
+{
+	GLenum gl_err;
+	glUseProgram(prog);
+	if ((gl_err = glGetError()) != GL_NO_ERROR) {
+		fprintf(
+			stderr,
+			"failed to make shader %d active\n"
+			"OpenGL error %d\n",
+			prog,
+			gl_err
+		);
+		return 0;
+	}
+	return 1;
 }

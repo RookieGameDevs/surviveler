@@ -4,3 +4,6 @@
 
 GLuint
 shader_load_and_compile(const char *vert_shader, const char *frag_shader);
+
+int
+shader_use(GLuint prog);
