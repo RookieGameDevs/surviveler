@@ -54,9 +54,15 @@ func (me *Movable) nextPos(startPos, direction math.Vec2, speed float64, dt time
 	return startPos.Add(direction.Mul(distance))
 }
 
-func (me *Movable) move(dt time.Duration) {
+/*
+ * Move updates the movable position regarding a time delta
+ *
+ * Move returns true if the position has actually been modified
+ */
+func (me *Movable) Move(dt time.Duration) bool {
 	// get next waypoint
 	if wp, exists := me.waypoints.Peek(); exists {
+
 		// compute translation and direction vectors
 		xlate := wp.Sub(me.Pos)
 		distToDest := xlate.Len()
@@ -81,15 +87,14 @@ func (me *Movable) move(dt time.Duration) {
 			// actual move
 			me.Pos = newPos
 		}
+		return true
+
 	} else {
+
 		// no more waypoints
 		me.hasReachedDestination = true
+		return false
 	}
-}
-
-func (me *Movable) Update(dt time.Duration) {
-	// movement update
-	me.move(dt)
 }
 
 /*
