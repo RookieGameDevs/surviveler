@@ -11,6 +11,11 @@ import (
 )
 
 /*
+ * Number of next waypoints to return in NextPos
+ */
+const maxNextPositions = 2
+
+/*
  * Movable is the *moving part* of an entity.
  *
  * This struct is meant to be used as a component of another higher-level entity,
@@ -68,8 +73,10 @@ func (me *Movable) move(dt time.Duration) {
 			gomath.IsNaN(direction.Len()) || gomath.Abs(distMove-distToDest) < 1e-3
 		if distMove > distToDest || isNan {
 			me.Pos = *wp
-			if next := me.waypoints.Pop(); next == nil {
-				me.hasReachedDestination = true
+			if _, exists := me.waypoints.Peek(); !exists {
+				//me.hasReachedDestination = true
+			} else {
+				me.waypoints.Pop()
 			}
 		} else {
 			me.Pos = newPos
@@ -107,8 +114,8 @@ func (me *Movable) SetPath(path math.Path) {
 
 func (me *Movable) NextPos() math.Path {
 	path := math.Path{}
-	if next, exists := me.waypoints.Peek(); exists {
-		path = append(path, *next)
+	for _, wp := range me.waypoints.PeekN(maxNextPositions) {
+		path = append(path, *wp)
 	}
 	return path
 }
