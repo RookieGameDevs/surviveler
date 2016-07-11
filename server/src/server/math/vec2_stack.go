@@ -55,7 +55,7 @@ func (s *VecStack) PopLast() (value *Vec2) {
 	return nil
 }
 
-// Peek returns the topmost without removing it from the stack
+// Peek returns the topmost item without removing it from the stack
 func (s *VecStack) Peek() (value *Vec2, exists bool) {
 	exists = false
 	if s.size > 0 {
@@ -64,6 +64,24 @@ func (s *VecStack) Peek() (value *Vec2, exists bool) {
 	}
 
 	return
+}
+
+// PeekN returns the N topmost item without removing them from the stack
+func (s *VecStack) PeekN(n int) []*Vec2 {
+	var (
+		N   []*Vec2
+		cur *item
+	)
+	N = make([]*Vec2, 0, n)
+	cur = s.top
+	for len(N) < n {
+		if cur == nil {
+			break
+		}
+		N = append(N, cur.value)
+		cur = cur.next
+	}
+	return N
 }
 
 func (s *VecStack) popLast(elem *item) *item {
