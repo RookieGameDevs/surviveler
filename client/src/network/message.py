@@ -20,6 +20,7 @@ class MessageType(IntEnum):
     move = 7
     build = 8
     repair = 9
+    attack = 10
 
 
 class MessageField(bytes, Enum):

@@ -111,7 +111,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 		return
 	} else {
 		// instantiate player with settings from the resources pkg
-		p := entities.NewPlayer(gs, org, game.EntityType(evt.Type),
+		p := entities.NewPlayer(gs.game, gs, org, game.EntityType(evt.Type),
 			float64(entityData.Speed), float64(entityData.TotalHP),
 			uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
 		p.SetId(evt.Id)
@@ -144,7 +144,7 @@ func (gs *gamestate) onPathReady(event *events.Event) {
 /*
  * event handler for PlayerMove events
  */
-func (gs *gamestate) OnPlayerMove(event *events.Event) {
+func (gs *gamestate) onPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMoveEvent)
 	log.WithField("evt", evt).Info("Received PlayerMove event")
 
@@ -212,6 +212,22 @@ func (gs *gamestate) onPlayerRepair(event *events.Event) {
 
 			// plan movement
 			gs.fillMovementRequest(player, building.Position())
+		}
+	}
+}
+
+/*
+ * event handler for PlayerAttack events
+ */
+func (gs *gamestate) onPlayerAttack(event *events.Event) {
+	evt := event.Payload.(events.PlayerAttackEvent)
+	log.WithField("evt", evt).Info("Received PlayerAttack event")
+
+	if player := gs.getPlayer(evt.Id); player != nil {
+
+		if enemy := gs.getZombie(evt.EntityId); enemy != nil {
+			// set player action
+			player.Attack(enemy)
 		}
 	}
 }

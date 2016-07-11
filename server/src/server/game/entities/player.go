@@ -16,6 +16,9 @@ import (
 const (
 	WaitingForPathAction      = 1000 + iota
 	BuildPowerInductionPeriod = time.Second
+	PlayerAttackDistance      = 1
+	AttackPeriod              = time.Second
+	PathFindPeriod            = time.Second
 )
 
 /*
@@ -32,19 +35,23 @@ type Player struct {
 	entityType    game.EntityType  // player type
 	actions       game.ActionStack // action stack
 	lastBPinduced time.Time        // time of last initiated BP induction
+	lastAttack    time.Time        // time of last initiated BP induction
+	lastPathFind  time.Time        // time of last initiated BP induction
 	curBuilding   game.Building    // building in construction
+	g             game.Game
 	gamestate     game.GameState
 	buildPower    uint16
 	combatPower   uint16
 	totalHP       float64
 	curHP         float64
+	target        game.Entity
 	components.Movable
 }
 
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
+func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
 	speed, totalHP float64, buildPower, combatPower uint16) *Player {
 	p := new(Player)
 	p.entityType = entityType
@@ -56,6 +63,7 @@ func NewPlayer(gamestate game.GameState, spawn math.Vec2, entityType game.Entity
 	p.combatPower = combatPower
 	p.totalHP = totalHP
 	p.curHP = totalHP
+	p.g = g
 	p.gamestate = gamestate
 	p.id = game.InvalidId
 	p.curBuilding = nil
@@ -92,6 +100,20 @@ func (p *Player) Update(dt time.Duration) {
 		case game.BuildingAction, game.RepairingAction:
 			// building/repairing actually end up being the same
 			p.induceBuildPower()
+
+		case game.AttackAction:
+			dist := p.target.Position().Sub(p.Pos).Len()
+			if dist < PlayerAttackDistance {
+				if time.Since(p.lastAttack) >= AttackPeriod {
+					p.target.DealDamage(float64(p.combatPower))
+					p.lastAttack = time.Time{}
+				}
+			} else {
+				p.Movable.Update(dt)
+				if time.Since(p.lastPathFind) > PathFindPeriod {
+					p.findPath(p.target.Position())
+				}
+			}
 		}
 	}
 }
@@ -161,11 +183,13 @@ func (p *Player) Id() uint32 {
 
 func (p *Player) State() game.EntityState {
 	var (
-		actionData interface{}  // action data to be sent
+		actionData interface{} // action data to be sent
+		actionType game.ActionType
 		curAction  *game.Action // action action from the stack
 	)
 
 	curAction, _ = p.actions.Peek()
+	actionType = curAction.Type
 	switch curAction.Type {
 	case game.MovingAction:
 		actionData = game.MoveActionData{
@@ -178,6 +202,18 @@ func (p *Player) State() game.EntityState {
 		actionData = game.RepairActionData{}
 	case game.IdleAction:
 		actionData = game.IdleActionData{}
+	case game.AttackAction:
+		dist := p.target.Position().Sub(p.Pos).Len()
+		if dist > PlayerAttackDistance {
+			actionType = game.MovingAction
+			actionData = game.MoveActionData{
+				Speed: p.Speed,
+				Path:  p.Movable.Path(maxWaypointsToSend),
+			}
+		} else {
+			actionType = game.IdleAction
+			actionData = game.IdleActionData{}
+		}
 	}
 
 	return game.MobileEntityState{
@@ -185,7 +221,7 @@ func (p *Player) State() game.EntityState {
 		Xpos:         float32(p.Pos[0]),
 		Ypos:         float32(p.Pos[1]),
 		CurHitPoints: uint16(p.curHP),
-		ActionType:   curAction.Type,
+		ActionType:   actionType,
 		Action:       actionData,
 	}
 }
@@ -217,6 +253,32 @@ func (p *Player) Repair(b game.Building) {
 	p.moveAndAction(game.RepairingAction, game.RepairActionData{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
+}
+
+func (p *Player) findPath(dst math.Vec2) {
+	log.Debug("Player.findPath: directly search for a path")
+	// directly search for path
+	path, _, found := p.g.Pathfinder().FindPath(p.Position(), dst)
+	if found == false {
+		return
+	}
+	// set the path if found
+	p.Movable.SetPath(path)
+	p.lastPathFind = time.Time{}
+}
+
+func (p *Player) Attack(e game.Entity) {
+	log.Debug("Player.Attack")
+
+	// directly search for path
+	p.findPath(e.Position())
+	p.lastAttack = time.Time{}
+
+	// setup the actions in the stack
+	p.emptyActions()
+	p.actions.Push(&game.Action{game.AttackAction, game.AttackActionData{}})
+	p.target = e
+
 }
 
 /*

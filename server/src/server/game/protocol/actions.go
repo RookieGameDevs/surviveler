@@ -63,3 +63,20 @@ func (self *Server) handleRepair(c *network.Conn, msg *messages.Message) error {
 			}))
 	return nil
 }
+
+/*
+ * handleAttack processes a AttackMsg and fires a PlayerAttack event
+ */
+func (self *Server) handleAttack(c *network.Conn, msg *messages.Message) error {
+	// decode payload into a attack message
+	attack := self.factory.DecodePayload(messages.AttackId, msg.Payload).(messages.AttackMsg)
+	log.WithField("msg", attack).Info("Attack message")
+
+	self.evtCb(
+		events.NewEvent(events.PlayerAttack,
+			events.PlayerAttackEvent{
+				Id:       c.GetUserData().(ClientData).Id,
+				EntityId: attack.Id,
+			}))
+	return nil
+}

@@ -74,7 +74,7 @@ class Context:
         :type srv_id: int
 
         :returns: The entity object
-        :rtype: :class:`game.entity.Entity`
+        :rtype: :class:`game.entities.entity.Entity`
         """
         return self.entities.get(self.server_entities_map.get(srv_id))
 
@@ -95,6 +95,9 @@ class Context:
 
         :param e_id: The local entity id
         :type e_id: int
+
+        :returns: The entity object
+        :rtype: :class:`game.entities.entity.Entity`
         """
         return self.entities.get(e_id)
 
@@ -121,7 +124,7 @@ class Context:
         :type pos: :class:`tuple`
 
         :returns: The entity picked
-        :rtype: :class:`game.entity.Entity` or None
+        :rtype: :class:`game.entities.entity.Entity` or None
         """
         n_pos = clamp_to_grid(pos[0], pos[1], self.scale_factor)
         for srv_id, e_id in self.server_entities_map.items():

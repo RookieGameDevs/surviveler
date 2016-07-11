@@ -1,34 +1,34 @@
 from events import Event
 
 
-class EntitySpawn(Event):
-    """An entity spawned on the scene.
+class ActorSpawn(Event):
+    """An actor spawned on the scene.
 
-    Event emitted when a new entity is discovered in the gamestate.
+    Event emitted when a new actor is discovered in the gamestate.
     """
-    def __init__(self, srv_id, entity_type, cur_hp):
+    def __init__(self, srv_id, actor_type, cur_hp):
         self.srv_id = srv_id
-        self.entity_type = entity_type
+        self.actor_type = actor_type
         self.cur_hp = cur_hp
 
     def __str__(self):
-        return '<EntitySpawn({}, {}, {})>'.format(
-            self.srv_id, self.entity_type, self.cur_hp)
+        return '<ActorSpawn({}, {}, {})>'.format(
+            self.srv_id, self.actor_type, self.cur_hp)
 
 
-class EntityDisappear(Event):
-    """An entity disappeared from the scene.
+class ActorDisappear(Event):
+    """An actor disappeared from the scene.
 
-    Event emitted when a previously existing entity does not exist anymore.
+    Event emitted when a previously existing actor does not exist anymore.
     """
     def __init__(self, srv_id):
         self.srv_id = srv_id
 
     def __str__(self):
-        return '<EntityDisappear({})>'.format(self.srv_id)
+        return '<ActorDisappear({})>'.format(self.srv_id)
 
 
-class EntityStatusChange(Event):
+class ActorStatusChange(Event):
     """A building has different status
 
     Event emitted when the amount of hp of a building changes.
@@ -39,7 +39,7 @@ class EntityStatusChange(Event):
         self.new = new
 
     def __str__(self):
-        return '<EntityStatusChange({}, {}, {})>'.format(
+        return '<ActorStatusChange({}, {}, {})>'.format(
             self.srv_id, self.old, self.new)
 
 
@@ -116,7 +116,7 @@ class EntityPick(Event):
         """Constructor.
 
         :param entity: The game entity the player clicked on
-        :type entity: :class:`game.entity.Entity`
+        :type entity: :class:`game.entities.entity.Entity`
         """
         self.entity = entity
 
@@ -124,15 +124,15 @@ class EntityPick(Event):
         return '<EntityPick({})>'.format(self.entity)
 
 
-class EntityIdle(Event):
-    """Entity is idle.
+class ActorIdle(Event):
+    """Actor is idle.
 
-    Event emitted when the entity is in idle state.
+    Event emitted when the actor is in idle state.
     """
     def __init__(self, srv_id, x, y):
         """Constructor.
 
-        :param srv_id: The server id of the entity.
+        :param srv_id: The server id of the actor.
         :type srv_id: int
 
         :param x: The position on x-axis.
@@ -145,10 +145,10 @@ class EntityIdle(Event):
         self.x, self.y = x, y
 
     def __str__(self):
-        return '<EntityIdle({}, {}, {})>'.format(self.srv_id, self.x, self.y)
+        return '<ActorIdle({}, {}, {})>'.format(self.srv_id, self.x, self.y)
 
 
-class EntityMove(Event):
+class ActorMove(Event):
     """Receved move action.
 
     Event emitted whenever the player is subject to a move action.
@@ -156,7 +156,7 @@ class EntityMove(Event):
     def __init__(self, srv_id, position, path, speed):
         """Constructor.
 
-        :param srv_id: The server id of the entity.
+        :param srv_id: The server id of the actor.
         :type srv_id: int
 
         :param position: The current position.
@@ -175,7 +175,7 @@ class EntityMove(Event):
         self.speed = speed
 
     def __str__(self):
-        return '<EntityMove({}, {}, {}, {})>'.format(
+        return '<ActorMove({}, {}, {}, {})>'.format(
             self.srv_id, self.position, self.path, self.speed)
 
 

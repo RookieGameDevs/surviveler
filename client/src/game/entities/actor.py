@@ -1,15 +1,13 @@
 from enum import IntEnum
 from enum import unique
 from events import subscriber
-from game import Entity
 from game.components import Movable
 from game.components import Renderable
-from game.events import EntityDisappear
-from game.events import EntityIdle
-from game.events import EntityMove
-from game.events import EntitySpawn
-from game.events import EntityStatusChange
-from game.health_bar import HealthBar
+from game.entities.entity import Entity
+from game.entities.widgets.health_bar import HealthBar
+from game.events import ActorIdle
+from game.events import ActorMove
+from game.events import ActorStatusChange
 from math import atan
 from math import copysign
 from math import pi
@@ -27,26 +25,23 @@ WHOLE_ANGLE = 2.0 * pi
 
 
 @unique
-class EntityType(IntEnum):
-    """Enumeration of the possible entities"""
+class ActorType(IntEnum):
+    """Enumeration of the possible actors"""
     grunt = 0
-    # TODO: enable these entity types when they will be available
+    # TODO: enable these actors types when they will be available
     # programmer = 1
     engineer = 2
     zombie = 3
 
 
-class Character(Entity):
-    """Game entity which represents a character."""
+class Actor(Entity):
+    """Game entity which represents an actor."""
 
-    def __init__(self, resource, name, health, parent_node):
+    def __init__(self, resource, health, parent_node):
         """Constructor.
 
         :param resource: The character resource
         :type resource: :class:`loaders.Resource`
-
-        :param name: Character's name.
-        :type name: str
 
         :param health: The current amount of hp and the total one
         :type health: :class:`tuple`
@@ -92,10 +87,9 @@ class Character(Entity):
             textures=[texture],
             enable_light=True)
 
-        # initialize entity
+        # initialize actor
         super().__init__(renderable, movable)
 
-        self.name = name
         self.heading = 0.0
         # rotation speed = 2π / fps / desired_2π_rotation_time
         self.rot_speed = 2 * pi / 60 / 1.5
@@ -156,7 +150,7 @@ class Character(Entity):
 
     @property
     def position(self):
-        """The position of the entity in world coordinates.
+        """The position of the actor in world coordinates.
 
         :returns: The position
         :rtype: :class:`tuple`
@@ -197,102 +191,44 @@ class Character(Entity):
         self.health_bar.update(dt)
 
 
-@subscriber(EntitySpawn)
-def character_spawn(evt):
-    """Add a character in the game.
-
-    Gets all the relevant data from the event.
-
-    :param evt: The event instance
-    :type evt: :class:`game.events.EntitySpawn`
-    """
-    LOG.debug('Event subscriber: {}'.format(evt))
-    context = evt.context
-
-    # Only instantiate the new character if it does not exist
-    entity_exists = context.resolve_entity(evt.srv_id)
-
-    # NOTE: check if the srv_id is exactly the player id received from the
-    # server during the handshake. And avoid spawing the character.
-    is_player = evt.srv_id == evt.context.player_id
-
-    if not entity_exists and not is_player:
-        # Search for the proper resource to use basing on the entity_type.
-        # FIXME: right now it defaults on zombies.
-        entities = context.res_mgr.get('/entities')
-        resource = context.res_mgr.get(
-            entities.data['entities_map'].get(
-                EntityType(evt.entity_type).name,
-                '/enemies/zombie'
-            )
-        )
-
-        tot = resource.data['tot_hp']
-
-        # Search for the entity name
-        name = context.players_name_map.get(evt.srv_id, '')
-        # Create the entity
-        character = Character(
-            resource, name, (evt.cur_hp, tot), context.scene.root)
-        context.entities[character.e_id] = character
-        context.server_entities_map[evt.srv_id] = character.e_id
-
-
-@subscriber(EntityDisappear)
-def character_disappear(evt):
-    """Remove a character from the game.
-
-    Gets all the relevant data from the event.
-
-    :param evt: The event instance
-    :type evt: :class:`game.events.EntityDisappear`
-    """
-    LOG.debug('Event subscriber: {}'.format(evt))
-    context = evt.context
-    if evt.srv_id in context.server_entities_map:
-        e_id = context.server_entities_map.pop(evt.srv_id)
-        character = context.entities.pop(e_id)
-        character.destroy()
-
-
-@subscriber(EntityStatusChange)
-def entity_health_change(evt):
-    """Updates the number of hp of the entity.
+@subscriber(ActorStatusChange)
+def actor_health_change(evt):
+    """Updates the number of hp of the actor.
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
     if evt.srv_id in context.server_entities_map:
         e_id = context.server_entities_map[evt.srv_id]
-        entity = context.entities[e_id]
-        entity.health = evt.new, entity.health[1]
+        actor = context.entities[e_id]
+        actor.health = evt.new, actor.health[1]
 
 
-@subscriber(EntityIdle)
-def character_set_position(evt):
+@subscriber(ActorIdle)
+def actor_set_postition(evt):
     """Updates the character position
 
     Gets all the relevant data from the event.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.EntityIdle`
+    :type evt: :class:`game.events.ActorIdle`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
-    entity = evt.context.resolve_entity(evt.srv_id)
-    if entity:
-        entity[Movable].position = evt.x, evt.y
+    actor = evt.context.resolve_entity(evt.srv_id)
+    if actor:
+        actor[Movable].position = evt.x, evt.y
 
 
-@subscriber(EntityMove)
+@subscriber(ActorMove)
 def character_set_movement(evt):
-    """Set the move action in the character entity.
+    """Set the move action in the actor.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.EntityMove`
+    :type evt: :class:`game.events.ActorMove`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
-    entity = evt.context.resolve_entity(evt.srv_id)
-    if entity:
-        entity[Movable].move(
+    actor = evt.context.resolve_entity(evt.srv_id)
+    if actor:
+        actor[Movable].move(
             position=evt.position,
             path=evt.path,
             speed=evt.speed)

@@ -1,13 +1,13 @@
 from enum import IntEnum
 from enum import unique
 from events import subscriber
-from game import Entity
 from game.components import Renderable
+from game.entities.entity import Entity
+from game.entities.widgets.health_bar import HealthBar
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
 from game.events import EntityPick
-from game.health_bar import HealthBar
 from matlib import Vec
 from network.message import Message
 from network.message import MessageField as MF

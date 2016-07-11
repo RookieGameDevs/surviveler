@@ -98,7 +98,7 @@ def entity_picked(context, entity):
     :type context: :class:`context.Context`
 
     :param entity: The entity picked
-    :type entity: :class:`game.entity.Entity`
+    :type entity: :class:`game.entities.entity.Entity`
     """
     send_event(EntityPick(entity))
 

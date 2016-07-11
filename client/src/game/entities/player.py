@@ -1,8 +1,8 @@
 from context import Context
 from events import subscriber
-from game import Character
-from game.character import EntityType
-from game.events import EntitySpawn
+from game.entities.actor import ActorType
+from game.entities.character import Character
+from game.events import ActorSpawn
 from utils import to_scene
 import logging
 
@@ -31,12 +31,12 @@ class Player(Character):
         context.camera.set_position(to_scene(x, y))
 
 
-@subscriber(EntitySpawn)
+@subscriber(ActorSpawn)
 def player_spawn(evt):
     """Instantiate and add the local player into the game.
 
     :param evt: The event instance
-    :type evt: :class:`game.events.EntitySpawn`
+    :type evt: :class:`game.events.ActorSpawn`
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
@@ -47,14 +47,15 @@ def player_spawn(evt):
     # NOTE: check if the srv_id is exactly the player id received from the
     # server during the handshake.
     is_player = evt.srv_id == evt.context.player_id
+    is_character = evt.actor_type in Character.MEMBERS
 
-    if not entity_exists and is_player:
-        # Search for the proper resource to use basing on the entity_type.
+    if not entity_exists and is_character and is_player:
+        # Search for the proper resource to use basing on the actor_type.
         # FIXME: right now it defaults on grunts.
         entities = context.res_mgr.get('/entities')
         resource = context.res_mgr.get(
             entities.data['entities_map'].get(
-                EntityType(evt.entity_type).name,
+                ActorType(evt.actor_type).name,
                 '/characters/grunt'
             )
         )

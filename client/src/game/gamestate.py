@@ -1,16 +1,16 @@
 from enum import IntEnum
 from enum import unique
 from events import send_event
-from game import BuildingType
-from game import EntityType
+from game.entities.building import BuildingType
+from game.entities.actor import ActorType
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
-from game.events import EntityDisappear
-from game.events import EntityIdle
-from game.events import EntityMove
-from game.events import EntitySpawn
-from game.events import EntityStatusChange
+from game.events import ActorDisappear
+from game.events import ActorIdle
+from game.events import ActorMove
+from game.events import ActorSpawn
+from game.events import ActorStatusChange
 from game.events import TimeUpdate
 from network import MessageField as MF
 import logging
@@ -111,7 +111,7 @@ class ActionType(IntEnum):
 
 
 @processor
-def handle_entity_spawn(gs_mgr):
+def handle_actor_spawn(gs_mgr):
     """Check for new entities and send the appropriate events.
 
     Check if there are new entities that were not in the previous gamestate.
@@ -125,14 +125,14 @@ def handle_entity_spawn(gs_mgr):
     new_entities = set(new) - set(old)
     for ent in new_entities:
         data = new[ent]
-        entity_type = EntityType(data[MF.entity_type])
+        actor_type = ActorType(data[MF.entity_type])
         cur_hp = data[MF.cur_hp]
-        evt = EntitySpawn(ent, entity_type, cur_hp)
+        evt = ActorSpawn(ent, actor_type, cur_hp)
         send_event(evt)
 
 
 @processor
-def handle_entity_disappear(gs_mgr):
+def handle_actor_disappear(gs_mgr):
     """Check for disappeared entities and send the appropriate events.
 
     Check if there are new entities that were not in the previous gamestate.
@@ -145,13 +145,13 @@ def handle_entity_disappear(gs_mgr):
     new, old = n[MF.entities], o.get(MF.entities, {})
     old_entities = set(old) - set(new)
     for ent in old_entities:
-        evt = EntityDisappear(ent)
+        evt = ActorDisappear(ent)
         send_event(evt)
 
 
 @processor
-def handle_entity_idle(gs_mgr):
-    """Handles entities in idle state and fires EntityIdle event for them.
+def handle_actor_idle(gs_mgr):
+    """Handles entities in idle state and fires ActorIdle event for them.
 
     :param gs_mgr: the gs_mgr
     :type gs_mgr: dict
@@ -160,13 +160,13 @@ def handle_entity_idle(gs_mgr):
         # Update the position of every idle entity
         if entity.get(MF.action_type, ActionType.idle) == ActionType.idle:
             x, y = entity[MF.x_pos], entity[MF.y_pos]
-            evt = EntityIdle(srv_id, x, y)
+            evt = ActorIdle(srv_id, x, y)
             send_event(evt)
 
 
 @processor
-def handle_entity_move(gs_mgr):
-    """Handles moving entities and fires EntityMove event for them.
+def handle_actor_move(gs_mgr):
+    """Handles moving entities and fires ActorMove event for them.
 
     :param gs_mgr: the gs_mgr
     :type gs_mgr: dict
@@ -177,7 +177,7 @@ def handle_entity_move(gs_mgr):
             position = entity[MF.x_pos], entity[MF.y_pos]
             path = action[MF.path]
 
-            send_event(EntityMove(
+            send_event(ActorMove(
                 srv_id,
                 position=position,
                 path=path,
@@ -185,7 +185,7 @@ def handle_entity_move(gs_mgr):
 
 
 @processor
-def handle_entity_health(gs_mgr):
+def handle_actor_health(gs_mgr):
     """Check for entity health changes and send the appropriate event.
 
     :param gs_mgr: the gs_mgr
@@ -200,7 +200,7 @@ def handle_entity_health(gs_mgr):
             old_hp = old[e_id][MF.cur_hp]
             hp_changed = new_hp != old_hp
             if hp_changed:
-                send_event(EntityStatusChange(e_id, old_hp, new_hp))
+                send_event(ActorStatusChange(e_id, old_hp, new_hp))
 
 
 @processor

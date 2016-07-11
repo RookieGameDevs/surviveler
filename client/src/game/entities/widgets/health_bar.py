@@ -1,6 +1,6 @@
 from context import Context
-from game import Entity
 from game.components import Renderable
+from game.entities.entity import Entity
 from math import pi
 from matlib import Vec
 from renderer import Rect

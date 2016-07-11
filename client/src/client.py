@@ -1,13 +1,13 @@
 from context import Context
 from events import send_event
-from game import Map
-from game import Terrain
-from game import UI
-from game import process_gamestate
+from game.entities.actor import ActorType
+from game.entities.map import Map
+from game.entities.terrain import Terrain
 from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import PlayerJoin
-from game import EntityType
+from game.gamestate import process_gamestate
+from game.ui import UI
 from itertools import count
 from matlib import Vec
 from network import Message
@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, entity_type, renderer, proxy, input_mgr, res_mgr, conf):
+    def __init__(self, player_name, actor_type, renderer, proxy, input_mgr, res_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
@@ -38,8 +38,8 @@ class Client:
         :param player_name: The player name
         :type player_name: str
 
-        :param entity_type: The player type
-        :type entity_type: int
+        :param actor_type: The player type
+        :type actor_type: int
 
         :param renderer: The rederer
         :type renderer: :class:`renderer.Renderer`
@@ -73,7 +73,7 @@ class Client:
         ui_res = context.res_mgr.get('/ui')
         context.ui = UI(ui_res, self.renderer)
         context.player_name = player_name
-        context.player_type = EntityType(entity_type)
+        context.player_type = ActorType(actor_type)
         self.context = context
 
         # Client status variable
@@ -221,14 +221,14 @@ class Client:
 
         self.proxy.enqueue(msg, callback)
 
-    def join(self, name, entity_type):
+    def join(self, name, actor_type):
         """Sends the join request to the server.
 
         :param name: Player name to join with.
         :type name: str
 
-        :param entity_type: Player type
-        :type entity_type: :enum:`game.player.PlayerType`
+        :param actor_type: Player type
+        :type actor_type: :enum:`game.player.PlayerType`
         """
         LOG.info('Trying to join server')
 
@@ -236,7 +236,7 @@ class Client:
             MT.join,
             {
                 MF.name: name,
-                MF.entity_type: entity_type
+                MF.entity_type: actor_type
             })
         self.proxy.enqueue(msg)
 
