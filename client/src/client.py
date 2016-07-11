@@ -267,6 +267,7 @@ class Client:
             raise RuntimeError(
                 "Cannot open audio file: {}".format(Mix_GetError()))
 
+        Mix_VolumeMusic(30)
         Mix_PlayMusic(soundtrack, -1)
 
         while not self.exit:
