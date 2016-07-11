@@ -44,6 +44,7 @@ type Zombie struct {
 	curHP       float64
 	timeAcc     time.Duration
 	target      game.Entity
+	world       *game.World
 	components.Movable
 }
 
@@ -56,6 +57,7 @@ func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8,
 		totalHP:     totalHP,
 		curHP:       totalHP,
 		combatPower: combatPower,
+		world:       g.State().World(),
 		Movable: components.Movable{
 			Speed: walkSpeed,
 			Pos:   pos,
@@ -118,7 +120,9 @@ func (z *Zombie) walk(dt time.Duration) (state int) {
 	}
 
 	z.Speed = z.walkSpeed
-	z.Movable.Update(dt)
+	if z.Movable.Move(dt) {
+		z.world.UpdateEntity(z)
+	}
 
 	return
 }
@@ -138,7 +142,9 @@ func (z *Zombie) run(dt time.Duration) (state int) {
 	}
 
 	z.Speed = zombieRunSpeed
-	z.Movable.Update(dt)
+	if z.Movable.Move(dt) {
+		z.world.UpdateEntity(z)
+	}
 
 	if z.target.Position().Sub(z.Pos).Len() <= attackDistance {
 		state = attackingState
