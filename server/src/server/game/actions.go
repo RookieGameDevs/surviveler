@@ -14,6 +14,7 @@ const (
 	MovingAction
 	BuildingAction
 	RepairingAction
+	AttackAction
 )
 
 /*
@@ -30,6 +31,11 @@ type BuildActionData struct{}
  * Repairing action payload
  */
 type RepairActionData struct{}
+
+/*
+ * Attack action payload
+ */
+type AttackActionData struct{}
 
 /*
  * Movement action payload

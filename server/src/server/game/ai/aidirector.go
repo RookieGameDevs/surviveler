@@ -16,7 +16,7 @@ import (
 const AIDirectorTickUpdate int = 20
 
 // FIXME: add a Zombie every N seconds
-const FrequencyAddZombie time.Duration = 5 * time.Second
+const FrequencyAddZombie time.Duration = 10 * time.Second
 
 /*
  * AIDirector is the system that manages the ingredients a game session
