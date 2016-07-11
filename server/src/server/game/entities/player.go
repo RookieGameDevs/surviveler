@@ -77,13 +77,14 @@ func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityTyp
  * Update updates the local state of the player
  */
 func (p *Player) Update(dt time.Duration) {
+	hasMoved := false
 	// peek the topmost stack action
 	if action, exist := p.actions.Peek(); exist {
 		switch action.Type {
 
 		case game.MovingAction:
 
-			p.Movable.Update(dt)
+			hasMoved = p.Movable.Move(dt)
 			if p.Movable.HasReachedDestination() {
 				// pop current action to get ready for next update
 				next := p.actions.Pop()
@@ -111,12 +112,15 @@ func (p *Player) Update(dt time.Duration) {
 					}
 				}
 			} else {
-				p.Movable.Update(dt)
+				hasMoved = p.Movable.Move(dt)
 				if time.Since(p.lastPathFind) > PathFindPeriod {
 					p.findPath(p.target.Position())
 				}
 			}
 		}
+	}
+	if hasMoved {
+		p.gamestate.World().UpdateEntity(p)
 	}
 }
 
