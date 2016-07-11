@@ -80,7 +80,7 @@ class sdl2context(ContextDecorator):
 
     def __exit__(self, *exc):
         LOG.debug('Quitting SDL context')
-        sdl.SDL_Quit()
+        sdl.SDL_Quit(sdl.SDL_INIT_AUDIO)
         return False
 
 
