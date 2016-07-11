@@ -29,6 +29,10 @@ func (b BoundingBox) SizeY() float64 {
 	return b.MaxY - b.MinY
 }
 
+func (b BoundingBox) Center() Vec2 {
+	return Vec2{0.5*b.MinX + b.MaxX, 0.5*b.MinY + b.MaxY}
+}
+
 // Returns true if o intersects this
 func (b BoundingBox) Intersects(o BoundingBox) bool {
 	return b.MinX < o.MaxX && b.MinY < o.MaxY &&
