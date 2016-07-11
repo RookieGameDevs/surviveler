@@ -34,11 +34,11 @@ type Grid []Tile
  * for commodity.
  */
 type Tile struct {
-	Kind     TileKind         // kind of tile, each kind has its own cost
-	X, Y     int              // 2D coordinates
-	W        *World           // reference to the map this is tile is part of
-	Entities []Entity         // Entities intersecting with this Tile
-	aabb     math.BoundingBox // pre-computed bounding box, as it won't ever change
+	Kind     TileKind          // kind of tile, each kind has its own cost
+	X, Y     int               // 2D coordinates
+	W        *World            // reference to the map this is tile is part of
+	Entities map[uint32]Entity // Entities intersecting with this Tile
+	aabb     math.BoundingBox  // pre-computed bounding box, as it won't ever change
 }
 
 func NewTile(kind TileKind, w *World, x, y int) Tile {
@@ -231,12 +231,12 @@ func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
 func (w *World) AddEntity(ent Entity) {
 	// retrieve the tile at entity center
 	tile := w.TileFromWorldVec(ent.Position())
-	tile.Entities = append(tile.Entities, ent)
+	tile.Entities[ent.Id()] = ent
 
 	// find neighbour tiles that intersect with the entity bounding box
 	for _, t := range w.IntersectingTiles(*tile, ent.BoundingBox()) {
-		// add the entity to each tile list
-		t.Entities = append(t.Entities, ent)
+		// attach entity to this tile
+		t.Entities[ent.Id()] = ent
 	}
 }
 
@@ -245,15 +245,13 @@ func (w *World) AddEntity(ent Entity) {
  */
 func (w *World) RemoveAddEntity(ent Entity) {
 	tile := w.TileFromWorldVec(ent.Position())
-	// create a new slice without this entity
-	newSlice := []Entity{}
-	for _, t := range tile.Entities {
-		if t.Id() != ent.Id() {
-			newSlice = append(newSlice, t)
-		}
+	delete(tile.Entities, ent.Id())
+
+	// find neighbour tiles that intersect with the entity bounding box
+	for _, t := range w.IntersectingTiles(*tile, ent.BoundingBox()) {
+		// detach entity from this tile
+		delete(t.Entities, ent.Id())
 	}
-	// replace the old slice
-	tile.Entities = newSlice
 }
 
 /*

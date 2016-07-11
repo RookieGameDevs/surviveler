@@ -191,7 +191,6 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 
 		// create the building, attach it to the tile
 		building := gs.createBuilding(game.EntityType(evt.Type), pos)
-		gs.world.AddEntity(building)
 
 		// set player action
 		player.Build(building)
@@ -334,7 +333,7 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 	gs.entities[id] = ent
 
 	// add the entity onto the world representation
-	gs.world.AddEntity(ent)
+	gs.world.AttachEntity(ent)
 }
 
 func (gs *gamestate) AddZombie(org math.Vec2) {
@@ -353,6 +352,7 @@ func (gs *gamestate) AddZombie(org math.Vec2) {
  * RemoveEntity removes an entity from the game state
  */
 func (gs *gamestate) RemoveEntity(id uint32) {
+	gs.world.DetachEntity(gs.entities[id])
 	delete(gs.entities, id)
 }
 
