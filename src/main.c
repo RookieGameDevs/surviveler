@@ -12,12 +12,17 @@
 #define VERT_SHADER "data/default.vert"
 #define FRAG_SHADER "data/default.frag"
 
-enum {
+enum CameraType {
 	PERSPECTIVE,
-	ORTHOGRAPHIC
+	ORTHOGRAPHIC,
+	CAMERA_TYPE_COUNT
 };
 
-static int projection_mode = ORTHOGRAPHIC;
+enum RenderMode {
+	WIREFRAME,
+	SOLID,
+	RENDER_MODE_COUNT
+};
 
 // modelview matrix
 static Mat projection;
@@ -35,8 +40,16 @@ static Mat *pose_transforms = NULL;
 static struct MeshData *mesh_data = NULL;
 static struct Mesh *mesh = NULL;
 
-// animation trigger
-static bool animate = false;
+// controls
+static struct {
+	bool play_animation;
+	enum CameraType cam_type;
+	enum RenderMode rndr_mode;
+} controls = {
+	.play_animation = false,
+	.cam_type = ORTHOGRAPHIC,
+	.rndr_mode = SOLID
+};
 
 // global animation timer
 static float time = 0.0f;
@@ -187,7 +200,7 @@ setup()
 {
 	float aspect = VIEWPORT_HEIGHT / (float)VIEWPORT_WIDTH;
 	float fov = 5.0;
-	if (projection_mode == PERSPECTIVE) {
+	if (controls.cam_type % CAMERA_TYPE_COUNT == PERSPECTIVE) {
 		mat_persp(
 			&projection,
 			fov * 10,
@@ -208,10 +221,20 @@ setup()
 	}
 
 	glClearColor(0.3, 0.3, 0.3, 1.0);
-
 	glEnable(GL_DEPTH_TEST);
 
-	glEnable(GL_CULL_FACE);
+
+	switch (controls.rndr_mode % RENDER_MODE_COUNT) {
+	case WIREFRAME:
+		glDisable(GL_CULL_FACE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		break;
+	case SOLID:
+		glEnable(GL_CULL_FACE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		break;
+	}
+
 	glCullFace(GL_BACK);
 
 	return 1;
@@ -233,7 +256,7 @@ update(float dt)
 	mat_ident(&transform);
 
 	// play the animation
-	if (animate) {
+	if (controls.play_animation) {
 		if (mesh_data->anim_count > 0) {
 			anim_compute_pose(
 				&mesh_data->animations[0],
@@ -272,9 +295,9 @@ render()
 	glUniformMatrix4fv(loc, 1, GL_TRUE, transform.data);
 
 	loc = glGetUniformLocation(shader, "animate");
-	glUniform1i(loc, animate);
+	glUniform1i(loc, controls.play_animation);
 
-	if (animate && mesh_data->anim_count > 0) {
+	if (controls.play_animation && mesh_data->anim_count > 0) {
 		loc = glGetUniformLocation(shader, "joints");
 		if (loc < 0) {
 			fprintf(stderr, "no 'joints' uniform defined\n");
@@ -377,15 +400,17 @@ main(int argc, char *argv[])
 					break;
 
 				case SDLK_p:
-					if (projection_mode == ORTHOGRAPHIC)
-						projection_mode = PERSPECTIVE;
-					else
-						projection_mode = ORTHOGRAPHIC;
+					controls.cam_type++;
+					run &= setup();
+					break;
+
+				case SDLK_r:
+					controls.rndr_mode++;
 					run &= setup();
 					break;
 
 				case SDLK_SPACE:
-					animate = !animate;
+					controls.play_animation = !controls.play_animation;
 					time = 0.0f;
 					break;
 				}
