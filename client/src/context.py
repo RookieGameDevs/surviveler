@@ -1,7 +1,6 @@
 from enum import Enum
 from enum import unique
-from utils import clamp_to_grid
-from utils import distance
+from utils import intersect
 
 
 class Context:
@@ -117,18 +116,30 @@ class Context:
             prev, self.game_mode = self.game_mode, mode
         return prev, self.game_mode
 
-    def pick_entity(self, pos):
+    def pick_entity(self, pos, ray):
         """Picks an entity and returns it.
 
-        :param pos: The position clicked
-        :type pos: :class:`tuple`
+        :param pos: The origin of the ray
+        :type pos: :class:`mathlib.Vec`
+
+        :param ray: The normalized ray vector
+        :type ray: :class:`mathlib.Vec`
 
         :returns: The entity picked
         :rtype: :class:`game.entities.entity.Entity` or None
         """
-        n_pos = clamp_to_grid(pos[0], pos[1], self.scale_factor)
-        for srv_id, e_id in self.server_entities_map.items():
-            e = self.entities[e_id]
-            if e.position and distance(n_pos, e.position) < 1 / (self.scale_factor * 2):
+        # This is the list of the entities, sorted by z-axis (reverse order)
+        entities = sorted(
+            [
+                self.entities[e_id]
+                for e_id in self.server_entities_map.values()
+                if self.entities[e_id].bounding_box
+            ],
+            key=lambda entity: entity.bounding_box[1].z, reverse=True)
+
+        # Check eventual intersections between the ray and the bounding boxes
+        for e in entities:
+            if intersect(pos, ray, e.bounding_box):
                 return e
+
         return None

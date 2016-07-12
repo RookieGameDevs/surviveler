@@ -83,6 +83,9 @@ class Building(Entity):
         # initialize entity
         super().__init__(renderable)
 
+        # FIXME: hardcoded bounding box
+        self._bounding_box = Vec(-0.5, 0, -0.5), Vec(0.5, 2, 0.5)
+
     @property
     def mesh(self):
         """Returns the appropriate mesh based on the building status.
@@ -124,6 +127,20 @@ class Building(Entity):
         :rtype: :class:`tuple`
         """
         return self._position
+
+    @property
+    def bounding_box(self):
+        """The bounding box of the entity.
+
+        The bounding box is represented by the smaller and bigger edge of the box
+        itself.
+
+        :returns: The bounding box of the actor
+        :rtype: :class:`tuple`
+        """
+        l, m = self._bounding_box
+        pos = self.position
+        return l + Vec(pos[0], 0, pos[1]), m + Vec(pos[0], 0, pos[1])
 
     def destroy(self):
         """Removes itself from the scene.

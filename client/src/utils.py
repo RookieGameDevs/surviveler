@@ -76,6 +76,64 @@ def to_world(x, y, z):
     return Vec(x, z, 0)
 
 
+def intersection(pos, ray, norm, d):
+    """Find the intersection between the ray and the playe defined by norm and
+    offset d from origin.
+
+    :param pos: The origin of the ray
+    :type pos: :class:`matlib.Vec`
+
+    :param ray: The ray
+    :type ray: :class:`matlib.Vec`
+
+    :param norm: The plane normal
+    :type norm: :class:`matlib.Vec`
+
+    :param d: The distance from origin
+    :type d: :class:`matlib.Vec`
+    """
+    t = -(pos.dot(norm) + d) / ray.dot(norm)
+    return pos + (ray * t)
+
+
+def intersect(pos, ray, bb):
+    """Check if the ray starting from position pos intersects the bounding box.
+
+    :param pos: The origin of the ray
+    :type pos: :class:`matlib.Vec`
+
+    :param ray: The ray
+    :type ray: :class:`matlib.Vec`
+
+    :param bb: The entity bounding box
+    :type bb: :class:`tuple`
+    """
+    # FIXME: please generalize me
+    l, m = bb
+    # front plane
+    p = intersection(pos, ray, Vec(0, 0, -1), m.z)
+    if l.x <= p.x <= m.x and l.y <= p.y <= m.y:
+        return True
+    # left plane
+    p = intersection(pos, ray, Vec(1, 0, 0), l.x)
+    if l.y <= p.y <= m.y and l.z <= p.z <= m.z:
+        return True
+    # right plane
+    p = intersection(pos, ray, Vec(-1, 0, 0), m.x)
+    if l.y <= p.y <= m.y and l.z <= p.z <= m.z:
+        return True
+    # top plane
+    p = intersection(pos, ray, Vec(0, -1, 0), m.y)
+    if l.x <= p.x <= m.x and l.z <= p.z <= m.z:
+        return True
+    # back plane
+    p = intersection(pos, ray, Vec(1, 0, 0), l.z)
+    if l.x <= p.x <= m.x and l.y <= p.y <= m.y:
+        return True
+
+    return False
+
+
 def clamp_to_grid(x, y, scale_factor):
     """Clamp x and y to the grid with scale factor scale_factor.
 
