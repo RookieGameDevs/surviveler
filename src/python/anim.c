@@ -1,28 +1,9 @@
-#ifdef WITH_PYTHON
-# include <Python.h>  // must be first
-#endif
+#include "common.h"
+#include <stdio.h>
 
-/**
- * Module definition.
- */
-static struct PyModuleDef module = {
-	PyModuleDef_HEAD_INIT,
-	"surrender.anim",
-	NULL,
-	-1,
-	NULL
-};
-
-/**
- * Module initialization function.
- */
-PyMODINIT_FUNC
-PyInit_anim(void)
+int
+register_anim(struct PyModuleDef *module)
 {
-
-	PyObject *m = PyModule_Create(&module);
-	if (!m)
-		raise_pyerror();
-
-	return m;
+	// TODO
+	return 1;
 }

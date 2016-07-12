@@ -15,6 +15,7 @@ libs = [
 
 sources = [
     'anim.c',
+    'surrender.c',
 ]
 
 module = Extension(
