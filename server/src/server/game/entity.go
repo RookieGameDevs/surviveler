@@ -45,7 +45,7 @@ type Entity interface {
 	State() EntityState
 	Position() math.Vec2
 	Update(dt time.Duration)
-	DealDamage(float64)
+	DealDamage(float64) bool
 }
 
 /*

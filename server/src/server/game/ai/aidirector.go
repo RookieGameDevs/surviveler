@@ -16,7 +16,7 @@ import (
 const AIDirectorTickUpdate int = 20
 
 // FIXME: add a Zombie every N seconds
-const FrequencyAddZombie time.Duration = 10 * time.Second
+const FrequencyAddZombie time.Duration = 30 * time.Second
 
 /*
  * AIDirector is the system that manages the ingredients a game session
@@ -48,7 +48,7 @@ func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
 	return ai
 }
 
-func (ai *AIDirector) summonZombie() {
+func (ai *AIDirector) SummonZombie() {
 	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
 	org := keypoints.Spawn.Enemies[rand.Intn(len(keypoints.Spawn.Enemies))]
@@ -83,7 +83,7 @@ func (ai *AIDirector) Update(curTime time.Time) {
 	// time)
 	freq := FrequencyAddZombie
 	if time.Since(ai.lastTime) > freq && ai.IsNight() {
-		ai.summonZombie()
+		ai.SummonZombie()
 		ai.lastTime = time.Now()
 	}
 }

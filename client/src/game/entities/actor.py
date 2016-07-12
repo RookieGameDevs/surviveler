@@ -161,7 +161,7 @@ class Actor(Entity):
         """Removes itself from the scene.
         """
         LOG.debug('Destroying character {}'.format(self.e_id))
-        node = self[Renderable].node
+        node = self.group_node
         node.parent.remove_child(node)
 
     def update(self, dt):

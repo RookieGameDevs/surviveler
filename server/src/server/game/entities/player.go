@@ -8,6 +8,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
+	"server/game/events"
 	"server/math"
 	"time"
 )
@@ -17,7 +18,7 @@ const (
 	WaitingForPathAction      = 1000 + iota
 	BuildPowerInductionPeriod = time.Second
 	PlayerAttackDistance      = 1
-	AttackPeriod              = time.Second
+	AttackPeriod              = 500 * time.Millisecond
 	PathFindPeriod            = time.Second
 )
 
@@ -105,8 +106,13 @@ func (p *Player) Update(dt time.Duration) {
 			dist := p.target.Position().Sub(p.Pos).Len()
 			if dist < PlayerAttackDistance {
 				if time.Since(p.lastAttack) >= AttackPeriod {
-					p.target.DealDamage(float64(p.combatPower))
-					p.lastAttack = time.Time{}
+					if !p.target.DealDamage(float64(p.combatPower)) {
+						p.lastAttack = time.Now()
+					} else {
+						// pop current action to get ready for next update
+						next := p.actions.Pop()
+						log.WithField("action", next).Debug("next player action")
+					}
 				}
 			} else {
 				p.Movable.Update(dt)
@@ -272,7 +278,7 @@ func (p *Player) Attack(e game.Entity) {
 
 	// directly search for path
 	p.findPath(e.Position())
-	p.lastAttack = time.Time{}
+	p.lastAttack = time.Now()
 
 	// setup the actions in the stack
 	p.emptyActions()
@@ -308,11 +314,15 @@ func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }
 
-func (p *Player) DealDamage(damage float64) {
+func (p *Player) DealDamage(damage float64) (dead bool) {
 	if damage >= p.curHP {
-		// Oops, someone just died.
-		// TODO: do something here.
+		p.curHP = 0
+		p.g.PostEvent(events.NewEvent(
+			events.PlayerDeath,
+			events.PlayerDeathEvent{Id: p.id}))
+		dead = true
 	} else {
 		p.curHP -= damage
 	}
+	return
 }

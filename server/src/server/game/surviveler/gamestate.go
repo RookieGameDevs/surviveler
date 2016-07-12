@@ -233,6 +233,49 @@ func (gs *gamestate) onPlayerAttack(event *events.Event) {
 }
 
 /*
+ * event handler for PlayerDeath events
+ */
+func (gs *gamestate) onPlayerDeath(event *events.Event) {
+	evt := event.Payload.(events.PlayerDeathEvent)
+	log.WithField("evt", evt).Info("Received PlayerDeath event")
+
+	// TODO: we should keep track of what is happening and maybe mark the
+	// entity as dead and then remove it later.
+	if player := gs.getPlayer(evt.Id); player != nil {
+		gs.game.clients.Disconnect(evt.Id, "player got killed")
+		gs.RemoveEntity(evt.Id)
+	}
+}
+
+/*
+ * event handler for EnemyDeath events
+ */
+func (gs *gamestate) onZombieDeath(event *events.Event) {
+	evt := event.Payload.(events.ZombieDeathEvent)
+	log.WithField("evt", evt).Info("Received ZombieDeath event")
+
+	// TODO: we should keep track of what is happening and maybe mark the
+	// entity as dead and then remove it later.
+	if zombie := gs.getZombie(evt.Id); zombie != nil {
+		gs.RemoveEntity(evt.Id)
+	}
+}
+
+/*
+ * event handler for BuildingDestroy events
+ */
+func (gs *gamestate) onBuildingDestroy(event *events.Event) {
+	evt := event.Payload.(events.BuildingDestroyEvent)
+	log.WithField("evt", evt).Info("Received BuildingDestroy event")
+
+	// TODO: we should keep track of what is happening and maybe mark the
+	// entity as dead and then remove it later.
+	if building := gs.getBuilding(evt.Id); building != nil {
+		gs.RemoveEntity(evt.Id)
+	}
+}
+
+/*
  * fillMovementRequest fills up and sends a movement request
  */
 func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
@@ -311,7 +354,7 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 	switch t {
 	case game.MgTurretBuilding:
 		data := gs.BuildingData(t)
-		building = entities.NewMgTurret(pos, data.TotHp, data.BuildingPowerRec)
+		building = entities.NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	default:
 		log.WithField("type", t).Panic("Can't create building, unsupported type")
 	}
