@@ -185,7 +185,7 @@ def building_spawn(evt):
 
         # TODO: Change the walkable matrix here!
 
-        play_fx('hammer')
+        play_fx('crafting', 2)
 
 
 @subscriber(BuildingDisappear)

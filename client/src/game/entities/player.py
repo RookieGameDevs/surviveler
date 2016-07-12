@@ -70,4 +70,4 @@ def player_spawn(evt):
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
 
-        play_fx('toilet_flush')
+        play_fx('toilet_flush', 1)
