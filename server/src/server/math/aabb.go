@@ -21,6 +21,15 @@ func NewBoundingBoxFromCircle(center Vec2, radius float64) BoundingBox {
 	x, y := center.Elem()
 	return BoundingBox{x - radius, x + radius, y - radius, y + radius}
 }
+
+func (b BoundingBox) TopLeft() Vec2 {
+	return Vec2{b.MinX, b.MinY}
+}
+
+func (b BoundingBox) BottomRight() Vec2 {
+	return Vec2{b.MaxX, b.MaxY}
+}
+
 func (b BoundingBox) SizeX() float64 {
 	return b.MaxX - b.MinX
 }
