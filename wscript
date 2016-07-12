@@ -4,12 +4,18 @@ import sys
 def options(opt):
     opt.load('compiler_c')
     opt.load('compiler_cxx')
+
     opt.add_option(
         '--build-type',
         action='store',
         choices=['release', 'debug'],
         default='debug',
         help='build type (release or debug)')
+
+    opt.add_option(
+        '--with-python',
+        action='store_true',
+        help='build python extension')
 
 
 def configure(cfg):
@@ -26,6 +32,10 @@ def configure(cfg):
     else:
         cfg.env.append_unique('CFLAGS', '-O3')
 
+    # find Python
+    if cfg.options.with_python:
+        cfg.find_program('python3', var='PYTHON')
+
     # find SDL2
     cfg.check_cfg(
         path='sdl2-config',
@@ -38,24 +48,6 @@ def configure(cfg):
         package='glew',
         args='--libs --cflags',
         uselib_store='glew')
-
-    # find SDL_ttf (version2)
-    # cfg.check_cfg(
-    #     package='SDL2_ttf',
-    #     args='--libs --cflags',
-    #     uselib_store='sdl2_ttf')
-
-    # find GLib
-    # cfg.check_cfg(
-    #     package='glib-2.0',
-    #     args='--libs --cflags',
-    #     uselib_store='glib')
-
-    # find assimp
-    # cfg.check_cfg(
-    #     package='assimp',
-    #     args='--libs --cflags',
-    #     uselib_store='assimp')
 
     if sys.platform.startswith('linux'):
         # find libm (standard C math library)
@@ -74,18 +66,15 @@ def configure(cfg):
 
 
 def build(bld):
+    # build library
     libs = [
         'sdl',
         'glew',
-        # 'sdl2_ttf',
-        # 'glib',
-        # 'assimp',
-        # 'bullet',
     ]
     kwargs = {
-        'features': 'c cprogram',
-        'target': 'demo',
-        'source': bld.path.ant_glob('src/**/*.c'),
+        'features': 'c cshlib',
+        'target': 'surrender',
+        'source': bld.path.ant_glob('src/**/*.c', excl=['**/python', 'main.c']),
         'uselib': libs,
     }
 
@@ -96,6 +85,21 @@ def build(bld):
         ])
     elif sys.platform.startswith('darwin'):
         kwargs['framework'] = ['OpenGL', 'Accelerate']
-
-
     bld(**kwargs)
+
+    # build demo executable
+    bld.program(
+        target='demo',
+        source=[bld.path.find_node('src/main.c')],
+        uselib=libs,
+        rpath=[bld.bldnode.abspath()],
+        use=['surrender'])
+
+    # build python extension
+    if bld.env.PYTHON:
+        setup_script = bld.path.find_node('src/python/setup.py')
+        bld(
+            rule='${PYTHON} setup.py build',
+            source=setup_script,
+            uselib=['surrender'] + bld.path.ant_glob('src/python/*.c'),
+            cwd=setup_script.parent.abspath())
