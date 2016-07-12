@@ -227,3 +227,36 @@ func (w *World) UpdateEntity(ent Entity) {
 	w.DetachEntity(ent)
 	w.AttachEntity(ent)
 }
+
+/*
+ * SpatialQuery returns the set of entities intersecting with given aabb
+ *
+ * The query is performed on the underlying grid representation from the world, by
+ * first retrieving the tiles that intersect with the provided bounding box.
+ * As each tile has an always-updated list of entities that intersect with itself,
+ * the result of the spatial query is the set of those entities.
+ *
+ * Important Note: if the query is performed by passing the bounding box of an entity,
+ * the returned set will contain this entity.
+ */
+func (w *World) SpatialQuery(bb math.BoundingBox) *EntitySet {
+	// set to contain all the entities around, though not necessarily colliding
+	allEntities := NewEntitySet()
+
+	// loop on the intersecting tiles
+	for _, it := range w.IntersectingTiles(bb) {
+		// add all the entities attached to this tile
+		allEntities.Union(&it.Entities)
+	}
+
+	colliding := NewEntitySet()
+	// filter out the non-colliding entities
+	allEntities.Each(func(ent Entity) bool {
+		if ent.BoundingBox().Intersects(bb) {
+			colliding.Add(ent)
+		}
+		return true
+	})
+
+	return colliding
+}

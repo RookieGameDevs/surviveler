@@ -60,15 +60,6 @@ func (me *Movable) futurePos(startPos, direction math.Vec2, speed float64, dt ti
 	return startPos.Add(direction.Mul(distance))
 }
 
-func (me *Movable) collisionsCheck(dt time.Duration, pos math.Vec2) *game.EntitySet {
-	set := me.world.SpatialQuery(me.BoundingBox())
-	if !set.Contains(me.ent) {
-		panic("collision check failed to find ourselves... :-(")
-	}
-	set.Remove(me.ent)
-	return set
-}
-
 /*
  * Move updates the movable position regarding a time delta
  *
@@ -85,6 +76,8 @@ func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
 
 		// compute our next position, by moving in direction of the waypoint
 		newPos := me.futurePos(me.Pos, direction, me.Speed, dt)
+
+		me.collisionsCheck(dt, newPos)
 
 		// this is the distance we would travel to go there
 		distMove := newPos.Sub(me.Pos).Len()
