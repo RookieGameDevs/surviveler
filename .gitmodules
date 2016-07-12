@@ -22,3 +22,6 @@
 [submodule "go-yaml"]
 	path = server/src/server/vendor/gopkg.in/yaml.v2
 	url = git@github.com:go-yaml/yaml.git
+[submodule "client/src/surrender"]
+	path = client/src/surrender
+	url = git@bitbucket.org:V0idExp/surrender.git
