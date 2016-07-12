@@ -24,27 +24,38 @@ find_poses(struct Animation *anim, float time, size_t *r_key0, size_t *r_key1)
 static void
 joint_compute_rotation(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_rm)
 {
+	/* FIXME: fix interpolation
 	Qtr rot;
 	qtr_lerp(&p0->rot, &p1->rot, time, &rot);
 	*r_rm = mat_from_qtr(&rot);
+	*/
+	*r_rm = mat_from_qtr(&p0->rot);
 }
 
 static void
 joint_compute_scale(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_sm)
 {
+	/* FIXME: uncomment after fixing rotation
 	Vec scale;
 	vec_lerp(&p0->scale, &p1->scale, time, &scale);
 	mat_ident(r_sm);
 	mat_scalev(r_sm, &scale);
+	*/
+	mat_ident(r_sm);
+	mat_scalev(r_sm, &p0->scale);
 }
 
 static void
 joint_compute_translation(struct JointPose *p0, struct JointPose *p1, float time, Mat *r_tm)
 {
+	/* FIXME: uncomment after fixing rotation
 	Vec trans;
 	vec_lerp(&p0->trans, &p1->trans, time, &trans);
 	mat_ident(r_tm);
 	mat_translatev(r_tm, &trans);
+	*/
+	mat_ident(r_tm);
+	mat_translatev(r_tm, &p0->trans);
 }
 
 /**
