@@ -59,7 +59,6 @@ class Actor(Entity):
 
         # shader params
         params = {
-            'color_diffuse': Vec(0.2, 0.2, 0.2, 1),
             'tex': texture,
         }
 
