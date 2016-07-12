@@ -38,8 +38,8 @@ type Grid []Tile
  */
 type Tile struct {
 	Kind     TileKind          // kind of tile, each kind has its own cost
-	X, Y     int               // 2D coordinates
-	W        *World            // reference to the map this is tile is part of
+	X, Y     int               // tile position in 'grid' coordinates
+	W        *World            // reference to the map this tile is part of
 	Entities map[uint32]Entity // Entities intersecting with this Tile
 	aabb     math.BoundingBox  // pre-computed bounding box, as it won't ever change
 }
@@ -52,10 +52,10 @@ func NewTile(kind TileKind, w *World, x, y int) Tile {
 		Y:        y,
 		Entities: make(map[uint32]Entity),
 		aabb: math.BoundingBox{
-			MinX: w.GridScale*float64(x) - 0.25,
-			MaxX: w.GridScale*float64(x) + 0.25,
-			MinY: w.GridScale*float64(y) - 0.25,
-			MaxY: w.GridScale*float64(y) + 0.25,
+			MinX: float64(x)/w.GridScale - 0.25,
+			MaxX: float64(x)/w.GridScale + 0.25,
+			MinY: float64(y)/w.GridScale - 0.25,
+			MaxY: float64(y)/w.GridScale + 0.25,
 		},
 	}
 }
@@ -187,10 +187,10 @@ func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
 		return tiles
 	}
 
-	left := w.Tile(center.X-1, 0)
-	right := w.Tile(center.X+1, 0)
-	up := w.Tile(0, center.Y-1)
-	down := w.Tile(0, center.Y+1)
+	left := w.Tile(center.X-1, center.Y)
+	right := w.Tile(center.X+1, center.Y)
+	up := w.Tile(center.X, center.Y-1)
+	down := w.Tile(center.X, center.Y+1)
 
 	// intersection with horizontal and vertical neighbours
 	if left != nil && left.BoundingBox().Intersects(bb) {
@@ -285,6 +285,7 @@ func (w *World) detachFrom(ent Entity, tiles ...*Tile) {
  * in order to avoid useless computation of intersections
  */
 func (w *World) UpdateEntity(ent Entity) {
+	// simply detach and re-attach it
 	w.DetachEntity(ent)
 	w.AttachEntity(ent)
 }
