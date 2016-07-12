@@ -1,6 +1,6 @@
 from context import Context
 from events import send_event
-from game.audio import play_music
+from game.audio import AudioManager
 from game.entities.actor import ActorType
 from game.entities.map import Map
 from game.entities.terrain import Terrain
@@ -64,6 +64,7 @@ class Client:
         context = Context(conf)
         context.input_mgr = input_mgr
         context.res_mgr = res_mgr
+        context.audio_mgr = AudioManager()
         map_res = res_mgr.get('/map')
         context.matrix = map_res['matrix']
         context.scale_factor = map_res.data['scale_factor']
@@ -248,7 +249,7 @@ class Client:
         self.ping()
         self.join(self.context.player_name, self.context.player_type)
 
-        play_music('sunset', volume=80)
+        self.context.audio_mgr.play_music('sunset', volume=80)
 
         while not self.exit:
             # Compute time delta

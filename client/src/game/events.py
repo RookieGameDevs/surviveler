@@ -212,8 +212,23 @@ class CharacterBuildingStart(Event):
 
     Event emitted when a character started building.
     """
+    def __init__(self, srv_id):
+        self.srv_id = srv_id
+
     def __str__(self):
-        return '<CharacterBuildingStart()>'
+        return '<CharacterBuildingStart({})>'.format(self.srv_id)
+
+
+class CharacterBuildingStop(Event):
+    """Character stopped building.
+
+    Event emitted when a character stopped building.
+    """
+    def __init__(self, srv_id):
+        self.srv_id = srv_id
+
+    def __str__(self):
+        return '<CharacterBuildingStop({})>'.format(self.srv_id)
 
 
 class PlayerJoin(CharacterJoin):

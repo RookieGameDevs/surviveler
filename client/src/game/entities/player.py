@@ -1,6 +1,5 @@
 from context import Context
 from events import subscriber
-from game.audio import play_fx
 from game.entities.actor import ActorType
 from game.entities.character import Character
 from game.events import ActorSpawn
@@ -73,5 +72,6 @@ def player_spawn(evt):
 
 @subscriber(ActorSpawn)
 def player_spawn_sound(evt):
+    # TODO: add documentation
     LOG.debug('Event subscriber: {}'.format(evt))
-    play_fx('toilet_flush')
+    evt.context.audio_mgr.play_fx('toilet_flush')
