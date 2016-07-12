@@ -16,6 +16,13 @@ VERSION = VERSION_MINOR << 4 | VERSION_MAJOR
 
 MAX_JOINTS_PER_VERTEX = 4
 
+IDENTITY_MATRIX = [
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
+]
+
 
 class VertexFormat(object):
 
@@ -120,7 +127,7 @@ def main(model, out):
                 transform = (
                     bones_by_name[node.name].offsetmatrix
                     if node.name in bones_by_name
-                    else node.transformation)
+                    else IDENTITY_MATRIX)
                 skeleton[node.name] = (
                     next(joint_id),  # joint id
                     parent_id,  # parent id
