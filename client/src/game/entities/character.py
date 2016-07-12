@@ -4,6 +4,7 @@ from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
+from game.events import CharacterBuildingStart
 import logging
 
 
@@ -86,4 +87,9 @@ def character_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
-        play_fx('sinister')
+
+
+@subscriber(CharacterBuildingStart)
+def character_building_start(evt):
+    LOG.debug('Event subscriber: {}'.format(evt))
+    play_fx('crafting')

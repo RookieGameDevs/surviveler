@@ -69,7 +69,7 @@ def play_music(music_name, loops=-1, volume=None):
     assert ret != -1, 'Cannot play music "{}"'.format(music_name)
 
 
-def play_fx(sound_name, loops=1):
+def play_fx(sound_name, loops=0):
     """Plays a preloaded sound effect using the first available channel.
 
     :param: sound_name: The sound name (without extension).

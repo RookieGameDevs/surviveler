@@ -207,6 +207,15 @@ class CharacterLeave(Event):
             self.srv_id, self.name, self.reason)
 
 
+class CharacterBuildingStart(Event):
+    """Character started building.
+
+    Event emitted when a character started building.
+    """
+    def __str__(self):
+        return '<CharacterBuildingStart()>'
+
+
 class PlayerJoin(CharacterJoin):
     """Local player joined.
 

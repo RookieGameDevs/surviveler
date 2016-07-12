@@ -4,7 +4,6 @@ from events import subscriber
 from game.components import Renderable
 from game.entities.entity import Entity
 from game.entities.widgets.health_bar import HealthBar
-from game.audio import play_fx
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
@@ -182,10 +181,6 @@ def building_spawn(evt):
             context.scene.root)
         context.entities[building.e_id] = building
         context.server_entities_map[evt.srv_id] = building.e_id
-
-        # TODO: Change the walkable matrix here!
-
-        play_fx('crafting', 2)
 
 
 @subscriber(BuildingDisappear)

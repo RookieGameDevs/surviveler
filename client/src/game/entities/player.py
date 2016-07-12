@@ -70,4 +70,8 @@ def player_spawn(evt):
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
 
-        play_fx('toilet_flush', 1)
+
+@subscriber(ActorSpawn)
+def player_spawn_sound(evt):
+    LOG.debug('Event subscriber: {}'.format(evt))
+    play_fx('toilet_flush')
