@@ -32,9 +32,15 @@ def configure(cfg):
     else:
         cfg.env.append_unique('CFLAGS', '-O3')
 
+    cfg.env.with_python = cfg.options.with_python
+
     # find Python
     if cfg.options.with_python:
-        cfg.find_program('python3', var='PYTHON')
+        cfg.check_cfg(
+            path='python3-config',
+            args='--cflags',
+            package='',
+            uselib_store='python')
 
     # find SDL2
     cfg.check_cfg(
@@ -96,10 +102,9 @@ def build(bld):
         use=['surrender'])
 
     # build python extension
-    if bld.env.PYTHON:
-        setup_script = bld.path.find_node('src/python/setup.py')
-        bld(
-            rule='${PYTHON} setup.py build',
-            source=setup_script,
-            uselib=['surrender'] + bld.path.ant_glob('src/python/*.c'),
-            cwd=setup_script.parent.abspath())
+    if bld.env.with_python:
+        bld.shlib(
+            target='python/surrender',
+            source=bld.path.ant_glob('src/python/*.c'),
+            includes=['src/python'],
+            uselib=['python'])
