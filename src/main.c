@@ -172,11 +172,13 @@ render()
 
 		for (int j = 0; j < anim_inst->anim->skeleton->joint_count; j++) {
 			loc = glGetUniformLocation(joint_shader, "transform");
+			Mat joint_transform;
+			mat_mul(&transform, &anim_inst->joint_transforms[j], &joint_transform);
 			glUniformMatrix4fv(
 				loc,
 				1,
 				GL_TRUE,
-				anim_inst->joint_transforms[j].data
+				joint_transform.data
 			);
 
 			if (!mesh_render(joint_mesh))
