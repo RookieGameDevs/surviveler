@@ -23,10 +23,9 @@ const maxNextWaypoints = 2
  * alongside it
  */
 type Movable struct {
-	Pos                   math.Vec2 // current position
-	Speed                 float64   // speed
-	hasReachedDestination bool
-	waypoints             *math.VecStack
+	Pos       math.Vec2 // current position
+	Speed     float64   // speed
+	waypoints *math.VecStack
 }
 
 func (me *Movable) Init() {
@@ -90,9 +89,6 @@ func (me *Movable) Move(dt time.Duration) bool {
 		return true
 
 	} else {
-
-		// no more waypoints
-		me.hasReachedDestination = true
 		return false
 	}
 }
@@ -110,7 +106,6 @@ func (me *Movable) SetPath(path math.Path) {
 		wp := path[i]
 		me.waypoints.Push(&wp)
 	}
-	me.hasReachedDestination = false
 }
 
 func (me *Movable) NextWaypoints() math.Path {
@@ -122,7 +117,7 @@ func (me *Movable) NextWaypoints() math.Path {
 }
 
 func (me *Movable) HasReachedDestination() bool {
-	return me.hasReachedDestination
+	return me.waypoints.Len() == 0
 }
 
 func (me *Movable) BoundingBox() math.BoundingBox {
