@@ -1,8 +1,9 @@
 #pragma once
 
 #include "anim.h"
-#include <stddef.h>
+#include "matlib.h"
 #include <GL/glew.h>
+#include <stddef.h>
 
 enum VertexAttrib {
 	VERTEX_ATTRIB_POSITION,
@@ -22,6 +23,7 @@ struct MeshData {
 	struct Skeleton *skeleton;
 	size_t anim_count;
 	struct Animation *animations;
+	Mat transform;
 };
 
 

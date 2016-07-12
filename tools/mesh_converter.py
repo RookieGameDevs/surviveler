@@ -3,6 +3,7 @@
 """Model import tool which converts model data into native binary format."""
 
 from collections import defaultdict
+from itertools import chain
 from itertools import count
 from struct import pack
 import argparse
@@ -218,7 +219,7 @@ def main(model, out):
     with open(out, 'wb') as fp:
         # write header
         header = pack(
-            '<bhLLBB',
+            '<bhLLBH',
             VERSION,
             fmt,
             v_count,
@@ -226,6 +227,10 @@ def main(model, out):
             len(skeleton),
             a_count)
         fp.write(header)
+
+        # write root transformation
+        for val in chain.from_iterable(scene.rootnode.transformation):
+            fp.write(pack('<f', val))
 
         # write vertices
         for v in range(v_count):

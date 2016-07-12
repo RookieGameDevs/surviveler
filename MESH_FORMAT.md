@@ -14,12 +14,12 @@ The data within a `.mesh` file is stored in contigous sections as following:
 
   |Section        |Size            |Offset                          |
   |---------------|----------------|--------------------------------|
-  |Header         |13              |0                               |
-  |Vertex data    |`vcount * vsize`|13                              |
-  |Index data     |`icount * 4`    |13 + `vdata`                    |
-  |Joint data     |`jcount * 66`   |13 + `vdata` + `idata`          |
-  |Animation data |`acount * asize`|13 + `vdata` + `idata` + `jdata`|
-  |Strings        |variable        |13 + `vdata` + `idata` + `adata`|
+  |Header         |78              |0                               |
+  |Vertex data    |`vcount * vsize`|78                              |
+  |Index data     |`icount * 4`    |78 + `vdata`                    |
+  |Joint data     |`jcount * 66`   |78 + `vdata` + `idata`          |
+  |Animation data |`acount * asize`|78 + `vdata` + `idata` + `jdata`|
+  |Strings        |variable        |78 + `vdata` + `idata` + `adata`|
 
 Data sections are tightly-packed with no padding between them.
 
@@ -39,7 +39,8 @@ following:
 |Vertex count     |unsigned int|4   |3     |
 |Index count      |unsigned int|4   |7     |
 |Joint count      |unsigned int|1   |11    |
-|Animations count |unsigned int|1   |12    |
+|Animations count |unsigned int|2   |12    |
+|Root transform   |float       |64  |14    |
 
 ### Version
 MESH version, expressed as `(MINOR,MAJOR)` nibbles.

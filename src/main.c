@@ -141,7 +141,7 @@ update(float dt)
 		0, 1, 0  // up
 	);
 
-	mat_ident(&transform);
+	transform = mesh_data->transform;
 
 	// play the animation
 	if (controls.play_animation && anim_inst) {

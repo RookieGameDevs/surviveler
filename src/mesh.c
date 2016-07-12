@@ -12,7 +12,7 @@
 #define VERSION_MINOR 0
 #define MESH_VERSION (VERSION_MINOR << 4 | VERSION_MAJOR)
 
-#define HEADER_SIZE 13
+#define HEADER_SIZE 78
 #define POSITION_ATTRIB_SIZE 12
 #define NORMAL_ATTRIB_SIZE 12
 #define UV_ATTRIB_SIZE 8
@@ -22,12 +22,13 @@
 #define ANIM_SIZE  16
 #define POSE_SIZE  41
 
-#define VERSION_FIELD uint8_t,  0
-#define FORMAT_FIELD  uint16_t, 1
-#define VCOUNT_FIELD  uint32_t, 3
-#define ICOUNT_FIELD  uint32_t, 7
-#define JCOUNT_FIELD  uint8_t,  11
-#define ACOUNT_FIELD  uint8_t,  12
+#define VERSION_FIELD   uint8_t,  0
+#define FORMAT_FIELD    uint16_t, 1
+#define VCOUNT_FIELD    uint32_t, 3
+#define ICOUNT_FIELD    uint32_t, 7
+#define JCOUNT_FIELD    uint8_t,  11
+#define ACOUNT_FIELD    uint16_t, 12
+#define TRANSFORM_FIELD Mat,      14
 
 #define invoke(macro, ...) macro(__VA_ARGS__)
 #define cast(data, type, offset) (*(type*)(((char*)data) + offset))
@@ -90,6 +91,9 @@ mesh_data_from_file(const char *filename)
 		fprintf(stderr, "No indices provided\n");
 		goto error;
 	}
+
+	// parse root transformation
+	md->transform = get_field(data, TRANSFORM_FIELD);
 
 	// compute vertex entry size based on the attributes specified in format
 	// field
