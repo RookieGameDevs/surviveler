@@ -257,47 +257,12 @@ mat_invert(Mat *m, Mat *out_m)
 Mat
 mat_from_qtr(const Qtr *q)
 {
-	float wx, wy, wz, xx, yy, yz, xy, xz, zz, x2, y2, z2;
-
-	// calculate coefficients
-	x2 = q->data[1] + q->data[1];
-	y2 = q->data[2] + q->data[2];
-	z2 = q->data[3] + q->data[3];
-	xx = q->data[1] * x2;
-	xy = q->data[1] * y2;
-	xz = q->data[1] * z2;
-	yy = q->data[2] * y2;
-	yz = q->data[2] * z2;
-	zz = q->data[3] * z2;
-	wx = q->data[0] * x2;
-	wy = q->data[0] * y2;
-	wz = q->data[0] * z2;
-
-	float m00 = 1.0 - (yy + zz);
-	float m01 = xy + wz;
-	float m02 = xz - wy;
-	float m03 = 0;
-
-	float m10 = xy - wz;
-	float m11 = 1.0 - (xx + zz);
-	float m12 = yz + wx;
-	float m13 = 0;
-
-	float m20 = xz + wy;
-	float m21 = yz - wx;
-	float m22 = 1.0 - (xx + yy);
-	float m23 = 0;
-
-	float m30 = 0.0;
-	float m31 = 0.0;
-	float m32 = 0.0;
-	float m33 = 1;
-
+	float w = q->data[0], x = q->data[1], y = q->data[2], z = q->data[3];
 	Mat m = {{
-		m00, m01, m02, m03,
-		m10, m11, m12, m13,
-		m20, m21, m22, m23,
-		m30, m31, m32, m33
+		1.0 - 2.0 * (y * y + z * z), 2.0 * (x * y - z * w),       2.0 * (x * z + y * w),       0.0,
+		2.0 * (x * y + z * w),       1.0 - 2.0 * (x * x + z * z), 2.0 * (y * z - x * w),       0.0,
+		2.0 * (x * z - y * w),       2.0 * (y * z + x * w),       1.0 - 2.0 * (x * x + y * y), 0.0,
+		0.0,                         0.0,                         0.0,                         1.0
 	}};
 	return m;
 }
