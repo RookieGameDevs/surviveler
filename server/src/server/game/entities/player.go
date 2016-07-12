@@ -41,7 +41,7 @@ type Player struct {
 	totalHP       float64
 	curHP         float64
 	target        game.Entity
-	components.Movable
+	*components.Movable
 }
 
 /*
@@ -61,11 +61,9 @@ func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityTyp
 		actions:     *game.NewActionStack(),
 		Movable:     components.NewMovable(spawn, speed),
 	}
-
 	// place an idle action as the bottommost item of the action stack item.
 	// This should never be removed as the player should remain idle if he
 	// has nothing better to do
-	p.actions = *game.NewActionStack()
 	p.actions.Push(&game.Action{game.IdleAction, game.IdleActionData{}})
 	return p
 }

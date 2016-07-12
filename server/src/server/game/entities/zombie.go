@@ -45,11 +45,11 @@ type Zombie struct {
 	timeAcc     time.Duration
 	target      game.Entity
 	world       *game.World
-	components.Movable
+	*components.Movable
 }
 
 func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
-	z := &Zombie{
+	return &Zombie{
 		id:          game.InvalidId,
 		g:           g,
 		curState:    lookingState,
@@ -58,12 +58,8 @@ func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8,
 		curHP:       totalHP,
 		combatPower: combatPower,
 		world:       g.State().World(),
-		Movable: components.Movable{
-			Speed: walkSpeed,
-			Pos:   pos,
-		},
+		Movable:     components.NewMovable(pos, walkSpeed),
 	}
-	return &z
 }
 
 func (z *Zombie) Id() uint32 {

@@ -28,8 +28,15 @@ type Movable struct {
 	waypoints *math.VecStack
 }
 
-func (me *Movable) Init() {
-	me.waypoints = math.NewVecStack()
+/*
+ * NewMovable constructs a new movable
+ */
+func NewMovable(pos math.Vec2, speed float64) *Movable {
+	return &Movable{
+		Pos:       pos,
+		Speed:     speed,
+		waypoints: math.NewVecStack(),
+	}
 }
 
 func (me *Movable) findMicroPath(wp math.Vec2) (path math.Path, found bool) {
@@ -39,14 +46,14 @@ func (me *Movable) findMicroPath(wp math.Vec2) (path math.Path, found bool) {
 }
 
 /*
- * nextPos computes the next position and returns it.
+ * futurePos computes a future position.
  *
  * It computes the position we would have by following given direction
  * for a given amount of time, at given speed, starting from given position.
  * It doesn't assign the position, so that this method can be used for
  * actual movement as well as movement prediction.
  */
-func (me *Movable) nextPos(startPos, direction math.Vec2, speed float64, dt time.Duration) math.Vec2 {
+func (me *Movable) futurePos(startPos, direction math.Vec2, speed float64, dt time.Duration) math.Vec2 {
 	// compute distance to be covered as time * speed
 	distance := dt.Seconds() * me.Speed
 	// compute new position after moving given distance in wanted direction
@@ -67,7 +74,7 @@ func (me *Movable) collisionsCheck(dt time.Duration, pos math.Vec2) *game.Entity
  *
  * Move returns true if the position has actually been modified
  */
-func (me *Movable) Move(dt time.Duration) bool {
+func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
 	// get next waypoint
 	if wp, exists := me.waypoints.Peek(); exists {
 
@@ -77,7 +84,7 @@ func (me *Movable) Move(dt time.Duration) bool {
 		direction := xlate.Normalize()
 
 		// compute our next position, by moving in direction of the waypoint
-		newPos := me.nextPos(me.Pos, direction, me.Speed, dt)
+		newPos := me.futurePos(me.Pos, direction, me.Speed, dt)
 
 		// this is the distance we would travel to go there
 		distMove := newPos.Sub(me.Pos).Len()
@@ -95,15 +102,15 @@ func (me *Movable) Move(dt time.Duration) bool {
 			// actual move
 			me.Pos = newPos
 		}
-		return true
-
-	} else {
-		return false
+		hasMoved = true
 	}
+	return
 }
 
 /*
- * SetPath defines the path that the movable entity should follow along
+ * SetPath sets the path that the movable entity should follow along
+ *
+ * It replaces and cancel the current path, if any.
  */
 func (me *Movable) SetPath(path math.Path) {
 	// empty the waypoint stack
