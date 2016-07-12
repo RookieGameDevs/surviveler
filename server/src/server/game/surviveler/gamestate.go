@@ -239,8 +239,10 @@ func (gs *gamestate) onPlayerDeath(event *events.Event) {
 	evt := event.Payload.(events.PlayerDeathEvent)
 	log.WithField("evt", evt).Info("Received PlayerDeath event")
 
+	// TODO: we should keep track of what is happening and maybe mark the
+	// entity as dead and then remove it later.
 	if player := gs.getPlayer(evt.Id); player != nil {
-		gs.game.clients.Kick(evt.Id, "player got killed")
+		gs.game.clients.Disconnect(evt.Id, "player got killed")
 		gs.RemoveEntity(evt.Id)
 	}
 }
@@ -252,7 +254,9 @@ func (gs *gamestate) onZombieDeath(event *events.Event) {
 	evt := event.Payload.(events.ZombieDeathEvent)
 	log.WithField("evt", evt).Info("Received ZombieDeath event")
 
-	if player := gs.getZombie(evt.Id); player != nil {
+	// TODO: we should keep track of what is happening and maybe mark the
+	// entity as dead and then remove it later.
+	if zombie := gs.getZombie(evt.Id); zombie != nil {
 		gs.RemoveEntity(evt.Id)
 	}
 }
@@ -264,7 +268,9 @@ func (gs *gamestate) onBuildingDestroy(event *events.Event) {
 	evt := event.Payload.(events.BuildingDestroyEvent)
 	log.WithField("evt", evt).Info("Received BuildingDestroy event")
 
-	if player := gs.getBuilding(evt.Id); player != nil {
+	// TODO: we should keep track of what is happening and maybe mark the
+	// entity as dead and then remove it later.
+	if building := gs.getBuilding(evt.Id); building != nil {
 		gs.RemoveEntity(evt.Id)
 	}
 }
