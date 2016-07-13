@@ -12,6 +12,8 @@ import (
 	"math"
 )
 
+//go:generate go-gencon -type Vec2 -cont Stack -name VecStack
+
 // Vec2 is a 2-element vector.
 //
 // It implements the Value interface, and thus can be read from and written to

@@ -243,7 +243,7 @@ def character_set_movement(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     actor = evt.context.resolve_entity(evt.srv_id)
-    if actor:
+    if actor and evt.path:
         actor[Movable].move(
             position=evt.position,
             path=evt.path,

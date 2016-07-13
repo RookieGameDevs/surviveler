@@ -46,6 +46,7 @@ type Entity interface {
 	Position() math.Vec2
 	Update(dt time.Duration)
 	DealDamage(float64) bool
+	math.BoundingBoxer
 }
 
 /*

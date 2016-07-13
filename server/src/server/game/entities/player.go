@@ -23,11 +23,6 @@ const (
 )
 
 /*
- * Number of waypoints to send in movement action payloads.
- */
-const maxWaypointsToSend = 3
-
-/*
  * Player represents an entity that is controlled by a physical player. It
  * implements the Entity interface.
  */
@@ -60,6 +55,7 @@ func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityTyp
 		Pos:   spawn,
 		Speed: speed,
 	}
+	p.Movable.Init()
 	p.buildPower = buildPower
 	p.combatPower = combatPower
 	p.totalHP = totalHP
@@ -81,13 +77,14 @@ func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityTyp
  * Update updates the local state of the player
  */
 func (p *Player) Update(dt time.Duration) {
+	hasMoved := false
 	// peek the topmost stack action
 	if action, exist := p.actions.Peek(); exist {
 		switch action.Type {
 
 		case game.MovingAction:
 
-			p.Movable.Update(dt)
+			hasMoved = p.Movable.Move(dt)
 			if p.Movable.HasReachedDestination() {
 				// pop current action to get ready for next update
 				next := p.actions.Pop()
@@ -115,12 +112,15 @@ func (p *Player) Update(dt time.Duration) {
 					}
 				}
 			} else {
-				p.Movable.Update(dt)
+				hasMoved = p.Movable.Move(dt)
 				if time.Since(p.lastPathFind) > PathFindPeriod {
 					p.findPath(p.target.Position())
 				}
 			}
 		}
+	}
+	if hasMoved {
+		p.gamestate.World().UpdateEntity(p)
 	}
 }
 
@@ -200,13 +200,13 @@ func (p *Player) State() game.EntityState {
 	case game.MovingAction:
 		actionData = game.MoveActionData{
 			Speed: p.Speed,
-			Path:  p.Movable.Path(maxWaypointsToSend),
+			Path:  p.Movable.NextPos(),
 		}
 	case game.BuildingAction:
 		actionData = game.BuildActionData{}
 	case game.RepairingAction:
 		actionData = game.RepairActionData{}
-	case game.IdleAction:
+	case game.IdleAction, WaitingForPathAction:
 		actionData = game.IdleActionData{}
 	case game.AttackAction:
 		dist := p.target.Position().Sub(p.Pos).Len()
@@ -214,7 +214,7 @@ func (p *Player) State() game.EntityState {
 			actionType = game.MovingAction
 			actionData = game.MoveActionData{
 				Speed: p.Speed,
-				Path:  p.Movable.Path(maxWaypointsToSend),
+				Path:  p.Movable.NextPos(),
 			}
 		} else {
 			actionType = game.IdleAction

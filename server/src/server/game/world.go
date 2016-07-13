@@ -16,31 +16,11 @@ import (
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	Grid                          // the embedded map
-	GridWidth, GridHeight int     // grid dimensions
-	Width, Height         float64 // world dimensions
-	GridScale             float64 // the grid scale
-}
-
-/*
- * Grid is a two dimensional grid of tiles
- */
-type Grid []Tile
-
-/*
- * A Tile is a tile in a grid which implements Pather.
- *
- * It implements the fmt.GoStringer interface for commodity.
- */
-type Tile struct {
-	Kind     TileKind // kind of tile, each kind has its own cost
-	X, Y     int      // 2D coordinates
-	W        *World   // reference to the map this is tile is part of
-	Building          // may contain a building
-}
-
-func (t Tile) GoString() string {
-	return fmt.Sprintf("Tile{X: %d, Y: %d, Kind: %d}", t.X, t.Y, t.Kind)
+	Grid                                      // the embedded map
+	GridWidth, GridHeight int                 // grid dimensions
+	Width, Height         float64             // world dimensions
+	GridScale             float64             // the grid scale
+	Entities              map[uint32]TileList // map entities to the tiles to which it is attached
 }
 
 /*
@@ -57,6 +37,7 @@ func NewWorld(img image.Image, gridScale float64) (*World, error) {
 		Width:      float64(bounds.Max.X) / gridScale,
 		Height:     float64(bounds.Max.Y) / gridScale,
 		GridScale:  gridScale,
+		Entities:   make(map[uint32]TileList),
 	}
 	log.WithField("world", w).Info("Building world")
 
@@ -71,24 +52,11 @@ func NewWorld(img image.Image, gridScale float64) (*World, error) {
 			} else {
 				kind = KindWalkable
 			}
-			w.Grid[x+y*w.GridWidth] = Tile{Kind: kind, W: &w, X: x, Y: y}
+			w.Grid[x+y*w.GridWidth] = NewTile(kind, &w, x, y)
 		}
 	}
 	return &w, nil
 }
-
-type TileKind int
-
-// walkability bit
-const (
-	KindNotWalkable TileKind = 0 // non-walkability
-	KindWalkable             = 1 // walkability
-)
-
-// actual tile kinds (bit 0 is set with walkability mask)
-const (
-	KindTurret TileKind = 0x10 | KindNotWalkable
-)
 
 /*
  * Tile gets the tile at the given coordinates in the grid.
@@ -148,4 +116,118 @@ func (w World) DumpGrid() {
 		buffer.WriteString("\n")
 	}
 	log.Debug(buffer.String())
+}
+
+/*
+ *
+ */
+func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
+	tiles := []*Tile{}
+
+	// exit now if the aabb is contained in the center tile
+	if center.BoundingBox().Contains(bb) {
+		return tiles
+	}
+
+	left := w.Tile(center.X-1, center.Y)
+	right := w.Tile(center.X+1, center.Y)
+	up := w.Tile(center.X, center.Y-1)
+	down := w.Tile(center.X, center.Y+1)
+
+	// intersection with horizontal and vertical neighbours
+	if left != nil && left.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, left)
+	} else {
+		left = nil
+	}
+	if right != nil && right.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, right)
+	} else {
+		right = nil
+	}
+	if up != nil && up.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, up)
+	} else {
+		up = nil
+	}
+	if down != nil && down.BoundingBox().Intersects(bb) {
+		tiles = append(tiles, down)
+	} else {
+		down = nil
+	}
+
+	// intersection with diagonal neighbours
+	if left != nil && up != nil {
+		tiles = append(tiles, w.Tile(center.X-1, center.Y-1))
+	}
+	if left != nil && down != nil {
+		tiles = append(tiles, w.Tile(center.X-1, center.Y+1))
+	}
+	if right != nil && up != nil {
+		tiles = append(tiles, w.Tile(center.X+1, center.Y-1))
+	}
+	if right != nil && down != nil {
+		tiles = append(tiles, w.Tile(center.X+1, center.Y+1))
+	}
+	return tiles
+}
+
+/*
+ * AttachEntity attaches an entity on the underlying world representation
+ */
+func (w *World) AttachEntity(ent Entity) {
+	// create tile list
+	tileList := make(TileList, 0, 1)
+	// this tile contains the entity center
+	center := w.TileFromWorldVec(ent.Position())
+	// append the 'center' tile
+	tileList = append(tileList, center)
+	// append the neighbour tile intersecting with the entity bounding box
+	tileList = append(tileList, w.IntersectingTiles(*center, ent.BoundingBox())...)
+
+	// attach this entity to all those tiles
+	w.attachTo(ent, tileList...)
+
+	// add those links to the world (for fast query by entity id)
+	w.Entities[ent.Id()] = tileList
+}
+
+/*
+ * DetachEntity detaches an entity from the underlying world representation
+ */
+func (w *World) DetachEntity(ent Entity) {
+	// retrieve tile list for this entity
+	tileList := w.Entities[ent.Id()]
+	// detach the entity from each of those tiles
+	w.detachFrom(ent, tileList...)
+
+	// clear the tile list for this entity
+	w.Entities[ent.Id()] = make(TileList, 0)
+}
+
+func (w *World) attachTo(ent Entity, tiles ...*Tile) {
+	// attach entity to those tiles
+	for _, t := range tiles {
+		t.Entities[ent.Id()] = ent
+	}
+}
+
+func (w *World) detachFrom(ent Entity, tiles ...*Tile) {
+	// detach entity from those tiles
+	for _, t := range tiles {
+		delete(t.Entities, ent.Id())
+	}
+}
+
+/*
+ * UpdateEntity updates the entity position on the underlying world
+ * representation.
+ *
+ * This function should preferably be called only if the entity has moved
+ * in order to avoid useless computation of intersections
+ */
+func (w *World) UpdateEntity(ent Entity) {
+	// simply detach and re-attach it
+	w.DetachEntity(ent)
+	w.AttachEntity(ent)
 }

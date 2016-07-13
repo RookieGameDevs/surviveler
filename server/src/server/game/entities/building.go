@@ -46,6 +46,11 @@ func (bb *BuildingBase) Position() math.Vec2 {
 	return bb.pos
 }
 
+func (bb *BuildingBase) BoundingBox() math.BoundingBox {
+	x, y := bb.pos.Elem()
+	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
+}
+
 func (bb *BuildingBase) State() game.EntityState {
 	return game.BuildingState{
 		Type:         bb.buildingType,

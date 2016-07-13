@@ -88,7 +88,8 @@ class Movable(Component):
         """
         # compute new direction
         self.speed = speed
-        self.next_position, self.path = path[0], path[1:]
+        self.next_position = path[0]
+        self.path = path[1:] if len(path) > 1 else []
         self._position = position
 
     def partial_movement(self, distance, position, next_position, path):
