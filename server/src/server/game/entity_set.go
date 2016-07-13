@@ -34,3 +34,21 @@ func (s *EntitySet) Contains(i Entity) bool {
 func (s *EntitySet) Remove(i Entity) {
 	delete(s.set, i)
 }
+
+// Each runs a function for each element.
+//
+// If f() returns null, Each stops the iteration immeditely
+func (s EntitySet) Each(f func(Entity) bool) {
+	for i, _ := range s.set {
+		if !f(i) {
+			return
+		}
+	}
+}
+
+// Union adds all element from another set
+func (s *EntitySet) Union(other *EntitySet) {
+	for i, _ := range other.set {
+		s.set[i] = struct{}{}
+	}
+}
