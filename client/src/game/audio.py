@@ -31,6 +31,10 @@ class AudioManager:
         """Constructor. """
 
         # FIXME: audio file loading should happen using the resource manager
+        # NOTE: right now these resources does not have the resource structure
+        # and the mixer is feeded with every file into the directories: using
+        # the resource manager will avoid problems and will permit to have a
+        # more elastic way to interact with sounds.
         self.sounds = {}
         for filename in os.listdir(FX_ROOT):
             name, ext = os.path.splitext(filename)
