@@ -23,6 +23,9 @@ typedef struct _PyAnimationObject {
 typedef struct _PyAnimationInstanceObject {
 	PyObject_HEAD
 	struct AnimationInstance *inst;
+	size_t joint_count;
+	PyObject *joint_transforms;
+	PyObject *skin_transforms;
 	PyAnimationObject *ref;
 } PyAnimationInstanceObject;
 

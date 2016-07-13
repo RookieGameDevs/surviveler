@@ -1,4 +1,5 @@
 #include "common.h"
+#include <structmember.h>
 
 static int
 py_animation_instance_init(PyObject *self, PyObject *args, PyObject *kwargs);
@@ -14,6 +15,17 @@ static PyMethodDef py_animation_instance_methods[] = {
 	  "Advance the animation by given time delta." },
 	{ NULL }
 };
+
+static PyMemberDef py_animation_instance_members[] = {
+	{ "joint_count", T_INT, offsetof(PyAnimationInstanceObject, joint_count), READONLY,
+	  "Number of joints." },
+	{ "joint_transforms", T_OBJECT, offsetof(PyAnimationInstanceObject, joint_transforms), READONLY,
+	  "Joint transformations array." },
+	{ "skin_transforms", T_OBJECT, offsetof(PyAnimationInstanceObject, skin_transforms), READONLY,
+	  "Skin transformations array." },
+	{ NULL },
+};
+
 
 PyTypeObject py_animation_instance_type = {
 	{ PyObject_HEAD_INIT(NULL) },
@@ -37,10 +49,11 @@ PyTypeObject py_animation_instance_type = {
 	.tp_hash = NULL,
 	.tp_call = NULL,
 	.tp_str = NULL,
-	.tp_getattro = NULL,
-	.tp_setattro = NULL,
+	.tp_getattro = PyObject_GenericGetAttr,
+	.tp_setattro = PyObject_GenericSetAttr,
 	.tp_flags = Py_TPFLAGS_DEFAULT,
 	.tp_methods = py_animation_instance_methods,
+	.tp_members = py_animation_instance_members,
 	.tp_getset = NULL
 };
 
@@ -67,8 +80,23 @@ py_animation_instance_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 	Py_INCREF(anim_o);
 
-	((PyAnimationInstanceObject*)self)->ref = anim_o;
-	((PyAnimationInstanceObject*)self)->inst = inst;
+	PyAnimationInstanceObject *inst_o = (PyAnimationInstanceObject*)self;
+	inst_o->joint_count = inst->anim->skeleton->joint_count;
+	inst_o->joint_transforms = PyList_New(inst_o->joint_count);
+	inst_o->skin_transforms = PyList_New(inst_o->joint_count);
+	inst_o->ref = anim_o;
+	inst_o->inst = inst;
+
+	for (size_t j = 0; j < inst_o->joint_count; j++) {
+		PyMatObject *j_mat = PyObject_New(PyMatObject, &py_mat_type);
+		mat_ident(&j_mat->mat);
+		PyList_SetItem(inst_o->joint_transforms, j, (PyObject*)j_mat);
+
+		PyMatObject *s_mat = PyObject_New(PyMatObject, &py_mat_type);
+		mat_ident(&s_mat->mat);
+		PyList_SetItem(inst_o->skin_transforms, j, (PyObject*)s_mat);
+	}
+
 	return 0;
 }
 
@@ -91,12 +119,26 @@ py_animation_instance_play(PyObject *self, PyObject *args)
 		);
 		return NULL;
 	}
-	if (!anim_play(((PyAnimationInstanceObject*)self)->inst, dt)) {
+
+	PyAnimationInstanceObject *inst_o = (PyAnimationInstanceObject*)self;
+	struct AnimationInstance *inst = inst_o->inst;
+	if (!anim_play(inst, dt)) {
 		PyErr_SetString(
 			PyExc_ValueError,
 			"animation play failed"
 		);
 		return NULL;
+	}
+
+	size_t joint_count = inst->anim->skeleton->joint_count;
+
+	// update matrices
+	for (size_t j = 0; j < joint_count; j++) {
+		PyMatObject *j_mat = (PyMatObject*)PyList_GetItem(inst_o->joint_transforms, j);
+		j_mat->mat = inst->joint_transforms[j];
+
+		PyMatObject *s_mat = (PyMatObject*)PyList_GetItem(inst_o->skin_transforms, j);
+		s_mat->mat = inst->skin_transforms[j];
 	}
 	Py_RETURN_NONE;
 }
