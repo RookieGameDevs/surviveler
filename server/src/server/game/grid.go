@@ -49,10 +49,10 @@ func NewTile(kind TileKind, w *World, x, y int) Tile {
 		Y:        y,
 		Entities: make(map[uint32]Entity),
 		aabb: math.BoundingBox{
-			MinX: float64(x)/w.GridScale - 0.25,
-			MaxX: float64(x)/w.GridScale + 0.25,
-			MinY: float64(y)/w.GridScale - 0.25,
-			MaxY: float64(y)/w.GridScale + 0.25,
+			MinX: (float64(x) - 0.5) / w.GridScale,
+			MaxX: (float64(x) + 0.5) / w.GridScale,
+			MinY: (float64(y) - 0.5) / w.GridScale,
+			MaxY: (float64(y) + 0.5) / w.GridScale,
 		},
 	}
 }
