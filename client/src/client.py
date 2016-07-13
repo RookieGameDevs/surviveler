@@ -30,13 +30,10 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
+    def __init__(self, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
-
-        :param player_name: The player name
-        :type player_name: str
 
         :param character: The character name
         :type character: str
@@ -71,7 +68,6 @@ class Client:
         # Setup the player
         c_res = res_mgr.get('/characters')
         c_data = c_res.data['map'][character]
-        context.player_name = player_name
         context.character_name = c_data['name']
         context.character_type = ActorType[c_data['type']]
         context.character_avatar = c_data['avatar']
@@ -267,7 +263,7 @@ class Client:
         """
 
         self.ping()
-        self.join(self.context.player_name, self.context.character_type)
+        self.join(self.context.character_name, self.context.character_type)
 
         self.context.audio_mgr.play_music('sunset')
 
@@ -329,10 +325,11 @@ class Client:
         self.context.player_id = srv_id
         self.context.players_name_map[srv_id] = msg.data[MF.id]
         LOG.info('Joined the party with name "{}" and  ID {}'.format(
-            self.context.player_name, self.context.player_id))
+            self.context.character_name, self.context.player_id))
 
         # Send the proper events for the joined local player
-        send_event(PlayerJoin(self.context.player_id, self.context.player_name))
+        send_event(PlayerJoin(
+            self.context.player_id, self.context.character_name))
 
         for srv_id, name in msg.data[MF.players].items():
             if srv_id != self.context.player_id:
@@ -348,11 +345,11 @@ class Client:
         :param msg: the message to be processed
         :type msg: :class:`message.Message`
         """
-        player_name = as_utf8(msg.data[MF.name])
+        character_name = as_utf8(msg.data[MF.name])
         srv_id = msg.data[MF.id]
         if srv_id != self.context.player_id:
-            self.context.players_name_map[srv_id] = player_name
-            send_event(CharacterJoin(srv_id, player_name))
+            self.context.players_name_map[srv_id] = character_name
+            send_event(CharacterJoin(srv_id, character_name))
 
     @message_handler(MT.leave)
     def handle_leave(self, msg):

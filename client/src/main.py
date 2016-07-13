@@ -99,7 +99,7 @@ class sdl2context(ContextDecorator):
 
 
 @sdl2context()
-def main(name, character, config):
+def main(character, config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])
     proxy = MessageProxy(conn)
@@ -108,7 +108,7 @@ def main(name, character, config):
     audio_mgr = AudioManager(config['Sound'])
 
     client = Client(
-        name, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, config)
+        character, renderer, proxy, input_mgr, res_mgr, audio_mgr, config)
 
     client.start()
     renderer.shutdown()
@@ -116,19 +116,16 @@ def main(name, character, config):
 
 @click.command()
 @click.argument(
-    'player_name',
-    default='John Doe')
-@click.argument(
     'character',
     default='ivan')
-def bootstrap(player_name, character):
+def bootstrap(character):
     config = ConfigParser()
     config.read(CONFIG_FILE)
     setup_logging(config['Logging'])
 
     LOG.debug('Loaded config file {}'.format(CONFIG_FILE))
 
-    main(player_name, character, config)
+    main(character, config)
 
 
 if __name__ == '__main__':
