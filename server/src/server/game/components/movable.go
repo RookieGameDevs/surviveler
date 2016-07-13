@@ -66,36 +66,44 @@ func (me *Movable) futurePos(startPos, direction math.Vec2, speed float64, dt ti
  * Move returns true if the position has actually been modified
  */
 func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
-	// get next waypoint
-	if wp, exists := me.waypoints.Peek(); exists {
+	// update position on the player path
+	if dst, exists := me.waypoints.Peek(); exists {
+		// compute distance to be covered as time * speed
+		distance := dt.Seconds() * me.Speed
 
-		// compute translation and direction vectors
-		xlate := wp.Sub(me.Pos)
-		distToDest := xlate.Len()
-		direction := xlate.Normalize()
+		for {
+			// compute translation and direction vectors
+			t := dst.Sub(me.Pos)
+			b := t.Len()
+			dir := t.Normalize()
 
-		// compute our next position, by moving in direction of the waypoint
-		newPos := me.futurePos(me.Pos, direction, me.Speed, dt)
+			// compute new position
+			pos := me.Pos.Add(dir.Mul(distance))
+			a := pos.Sub(me.Pos).Len()
 
-		me.collisionsCheck(dt, newPos)
+			// check against edge-cases
+			isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
 
-		// this is the distance we would travel to go there
-		distMove := newPos.Sub(me.Pos).Len()
+			hasMoved = true
+			if a > b || isNan {
+				me.Pos = *dst
+				if _, exists = me.waypoints.Peek(); exists {
+					me.waypoints.Pop()
+					break
+				} else {
+					break
+				}
 
-		// check against edge-cases
-		isNan := gomath.IsNaN(distMove) || gomath.IsNaN(distToDest) ||
-			gomath.IsNaN(direction.Len()) || gomath.Abs(distMove-distToDest) < 1e-3
-		if distMove > distToDest || isNan {
-			// we crossed the waypoint, or are really close
-			me.Pos = *wp
-			if _, exists := me.waypoints.Peek(); exists {
-				me.waypoints.Pop()
+				if isNan {
+					break
+				}
+
+				distance = a - b
+			} else {
+				me.Pos = pos
+				break
 			}
-		} else {
-			// actual move
-			me.Pos = newPos
 		}
-		hasMoved = true
 	}
 	return
 }
