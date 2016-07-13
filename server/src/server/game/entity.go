@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+//go:generate go-gencon -type Entity -cont Set -name EntitySet
+
 /*
  * Enumeration of possible entity types.
  */
