@@ -41,14 +41,15 @@ enum {
 	HAS_JOINTS    = 1 << 3
 };
 
-static const char*
-get_string(char *data, size_t max_size, int index)
+static char*
+get_string(char *data, size_t max_size, int index, size_t *len)
 {
 	size_t off = 0, count = 0;
 	while (off < max_size) {
+		*len = strnlen(data, max_size);
 		if (count == index)
 			return data + off;
-		off = strnlen(data, max_size) + 1;
+		off = *len + 1;
 		count++;
 	}
 	return NULL;
@@ -223,11 +224,16 @@ mesh_data_from_file(const char *filename)
 
 		// lookup animation names
 		for (size_t a = 0; a < md->anim_count; a++) {
-			md->animations[a].name = get_string(
+			size_t len;
+			char *name = get_string(
 				data + offset,
 				data_size - offset,
-				anim_name_indices[a]
+				anim_name_indices[a],
+				&len
 			);
+			md->animations[a].name = malloc(len + 1);
+			strncpy(md->animations[a].name, name, len);
+			md->animations[a].name[len] = 0;  // nul terminator
 		}
 	}
 

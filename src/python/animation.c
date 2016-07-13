@@ -15,7 +15,7 @@ static PyMethodDef py_animation_methods[] = {
 
 PyTypeObject py_animation_type = {
 	{ PyObject_HEAD_INIT(NULL) },
-	.tp_name = "surplay.Animation",
+	.tp_name = "surrender.Animation",
 	.tp_doc = "Animation class.",
 	.tp_basicsize = sizeof(PyAnimationObject),
 	.tp_itemsize = 0,
@@ -45,7 +45,8 @@ PyTypeObject py_animation_type = {
 static void
 py_animation_free(PyObject *self)
 {
-	// TODO
+	PyAnimationObject *anim_o = (PyAnimationObject*)self;
+	Py_DECREF(anim_o->container);
 }
 
 static PyObject*
