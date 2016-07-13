@@ -36,6 +36,7 @@ type Player struct {
 	curBuilding   game.Building    // building in construction
 	g             game.Game
 	gamestate     game.GameState
+	world         *game.World
 	buildPower    uint16
 	combatPower   uint16
 	totalHP       float64
@@ -47,7 +48,7 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
+func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
 	speed, totalHP float64, buildPower, combatPower uint16) *Player {
 	p := &Player{
 		entityType:  entityType,
@@ -57,6 +58,7 @@ func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityTyp
 		curHP:       totalHP,
 		g:           g,
 		gamestate:   g.State(),
+		world:       g.State().World(),
 		id:          game.InvalidId,
 		actions:     *game.NewActionStack(),
 		Movable:     components.NewMovable(spawn, speed),
