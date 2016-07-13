@@ -93,12 +93,14 @@ def build(bld):
         kwargs['framework'] = ['OpenGL', 'Accelerate']
     bld(**kwargs)
 
+    rpath = bld.bldnode.abspath()
+
     # build demo executable
     bld.program(
         target='demo',
         source=[bld.path.find_node('src/main.c')],
         uselib=libs,
-        rpath=[bld.bldnode.abspath()],
+        rpath=[rpath],
         use=['surrender'])
 
     # build python extension
@@ -107,4 +109,6 @@ def build(bld):
             target='python/surrender',
             source=bld.path.ant_glob('src/python/*.c'),
             includes=['src/python'],
+            use=['surrender'],
+            rpath=[rpath],
             uselib=['python'])

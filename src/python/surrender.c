@@ -1,7 +1,10 @@
 #include "common.h"
 
 extern int
-register_anim(struct PyModuleDef *module);
+register_anim(PyObject *module);
+
+extern int
+register_mesh(PyObject *module);
 
 struct PyModuleDef surrender_module = {
 	PyModuleDef_HEAD_INIT,
@@ -22,7 +25,8 @@ PyInit_surrender(void)
 	if (!m)
 		fprintf(stderr, "Failed to create module\n");
 
-	register_anim(&surrender_module);
+	register_anim(m);
+	register_mesh(m);
 
 	return m;
 }

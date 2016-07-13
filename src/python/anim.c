@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int
-register_anim(struct PyModuleDef *module)
+register_anim(PyObject *module)
 {
 	// TODO
 	return 1;
