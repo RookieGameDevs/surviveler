@@ -1,33 +1,31 @@
 #include "common.h"
 #include <mesh.h>
 
-static PyObject*
-py_mesh_data_from_file(PyObject *unused, PyObject *filename_o);
+static int
+py_mesh_init(PyObject *self, PyObject *args, PyObject *kwargs);
 
 static void
-py_mesh_data_free(PyObject *self);
+py_mesh_free(PyObject *self);
 
-typedef struct _PyMeshDataObject {
-	PyObject_HEAD
-	struct MeshData *mesh_data;
-} PyMeshDataObject;
+static PyObject*
+py_mesh_render(PyObject *self);
 
-static PyMethodDef py_mesh_data_methods[] = {
-	{ "from_file", (PyCFunction)py_mesh_data_from_file, METH_O | METH_STATIC,
-	  "Load mesh data from file." },
+static PyMethodDef py_mesh_methods[] = {
+	{ "render", (PyCFunction)py_mesh_render, METH_NOARGS,
+	  "Render the mesh." },
 	{ NULL }
 };
 
-static PyTypeObject py_mesh_data_type = {
+PyTypeObject py_mesh_type = {
 	{ PyObject_HEAD_INIT(NULL) },
-	.tp_name = "surrender.MeshData",
-	.tp_doc = "Mesh data container.",
-	.tp_basicsize = sizeof(PyMeshDataObject),
+	.tp_name = "surrender.Mesh",
+	.tp_doc = "Mesh class.",
+	.tp_basicsize = sizeof(PyMeshObject),
 	.tp_itemsize = 0,
 	.tp_alloc = PyType_GenericAlloc,
-	.tp_dealloc = py_mesh_data_free,
+	.tp_dealloc = py_mesh_free,
 	.tp_new = PyType_GenericNew,
-	.tp_init = NULL,
+	.tp_init = py_mesh_init,
 	.tp_print = NULL,
 	.tp_getattr = NULL,
 	.tp_setattr = NULL,
@@ -43,43 +41,63 @@ static PyTypeObject py_mesh_data_type = {
 	.tp_getattro = NULL,
 	.tp_setattro = NULL,
 	.tp_flags = Py_TPFLAGS_DEFAULT,
-	.tp_methods = py_mesh_data_methods,
+	.tp_methods = py_mesh_methods,
 	.tp_getset = NULL
 };
 
-static PyObject*
-py_mesh_data_from_file(PyObject *__unused, PyObject *filename_o)
+static int
+py_mesh_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	if (!PyUnicode_Check(filename_o)) {
+	PyObject *md_o;
+	if (!PyArg_ParseTuple(args, "O", &md_o) ||
+	    !PyObject_TypeCheck(md_o, &py_mesh_data_type)) {
 		PyErr_SetString(
 			PyExc_ValueError,
-			"expected a filename string"
+			"expected a MeshData object"
 		);
-		return NULL;
+		return -1;
 	}
 
-	PyMeshDataObject *result = PyObject_New(PyMeshDataObject, &py_mesh_data_type);
-	result->mesh_data = mesh_data_from_file((char*)PyUnicode_1BYTE_DATA(filename_o));
-	if (!result->mesh_data) {
-		Py_DECREF(result);
-		Py_RETURN_NONE;
+	struct MeshData *md = ((PyMeshDataObject*)md_o)->mesh_data;
+	struct Mesh *mesh = mesh_new(md);
+	if (!mesh) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"Mesh object creation failed"
+		);
+		return -1;
 	}
-	return (PyObject*)result;
+
+	((PyMeshObject*)self)->mesh = mesh;
+	return 0;
 }
 
 static void
-py_mesh_data_free(PyObject *self)
+py_mesh_free(PyObject *self)
 {
-	PyMeshDataObject *md_o = (PyMeshDataObject*)self;
-	mesh_data_free(md_o->mesh_data);
+	PyMeshObject *md_o = (PyMeshObject*)self;
+	mesh_free(md_o->mesh);
+}
+
+static PyObject*
+py_mesh_render(PyObject *self)
+{
+	if (!mesh_render(((PyMeshObject*)self)->mesh)) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"Mesh object creation failed"
+		);
+		return NULL;
+	}
+	Py_RETURN_NONE;
 }
 
 int
 register_mesh(PyObject *module)
 {
-	// register MeshData type
-	if (PyType_Ready(&py_mesh_data_type) < 0 ||
-	    PyModule_AddObject(module, "MeshData", (PyObject*)&py_mesh_data_type) < 0)
+	// register Mesh type
+	if (PyType_Ready(&py_mesh_type) < 0 ||
+	    PyModule_AddObject(module, "Mesh", (PyObject*)&py_mesh_type) < 0)
 		raise_pyerror();
 
 	return 1;

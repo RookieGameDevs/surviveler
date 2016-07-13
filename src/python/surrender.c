@@ -4,6 +4,9 @@ extern int
 register_anim(PyObject *module);
 
 extern int
+register_mesh_data(PyObject *module);
+
+extern int
 register_mesh(PyObject *module);
 
 struct PyModuleDef surrender_module = {
@@ -26,6 +29,7 @@ PyInit_surrender(void)
 		fprintf(stderr, "Failed to create module\n");
 
 	register_anim(m);
+	register_mesh_data(m);
 	register_mesh(m);
 
 	return m;
