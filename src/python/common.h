@@ -18,9 +18,16 @@ typedef struct _PyAnimationObject {
 	PyMeshDataObject *container;
 } PyAnimationObject;
 
+typedef struct _PyAnimationInstanceObject {
+	PyObject_HEAD
+	struct AnimationInstance *inst;
+	PyAnimationObject *ref;
+} PyAnimationInstanceObject;
+
 extern PyTypeObject py_mesh_data_type;
 extern PyTypeObject py_mesh_type;
 extern PyTypeObject py_animation_type;
+extern PyTypeObject py_animation_instance_type;
 
 char*
 strfmt(const char *fmt, ...);

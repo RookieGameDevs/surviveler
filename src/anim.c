@@ -149,7 +149,7 @@ anim_free_instance(struct AnimationInstance *inst)
 }
 
 
-void
+int
 anim_play(struct AnimationInstance *anim_inst, float dt)
 {
 	struct Animation *anim = anim_inst->anim;
@@ -202,4 +202,6 @@ anim_play(struct AnimationInstance *anim_inst, float dt)
 			&anim_inst->skin_transforms[j]
 		);
 	}
+
+	return 1;
 }

@@ -1,13 +1,16 @@
 #include "common.h"
 
 extern int
-register_anim(PyObject *module);
+register_animation(PyObject *module);
 
 extern int
 register_mesh_data(PyObject *module);
 
 extern int
 register_mesh(PyObject *module);
+
+int
+register_animation_instance(PyObject *module);
 
 struct PyModuleDef surrender_module = {
 	PyModuleDef_HEAD_INIT,
@@ -31,6 +34,7 @@ PyInit_surrender(void)
 	register_animation(m);
 	register_mesh_data(m);
 	register_mesh(m);
+	register_animation_instance(m);
 
 	return m;
 }

@@ -78,5 +78,5 @@ anim_free_instance(struct AnimationInstance *inst);
 /**
  * Advance the animation by given time delta
  */
-void
+int
 anim_play(struct AnimationInstance *anim_inst, float dt);

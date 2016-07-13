@@ -4,12 +4,7 @@
 static void
 py_animation_free(PyObject *self);
 
-static PyObject*
-py_animation_play(PyObject *self, PyObject *args);
-
 static PyMethodDef py_animation_methods[] = {
-	{ "play", (PyCFunction)py_animation_play, METH_VARARGS,
-	  "Advance the animation by given time delta." },
 	{ NULL }
 };
 
@@ -47,13 +42,6 @@ py_animation_free(PyObject *self)
 {
 	PyAnimationObject *anim_o = (PyAnimationObject*)self;
 	Py_DECREF(anim_o->container);
-}
-
-static PyObject*
-py_animation_play(PyObject *self, PyObject *args)
-{
-	// TODO
-	Py_RETURN_NONE;
 }
 
 int
