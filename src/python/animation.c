@@ -1,5 +1,4 @@
 #include "common.h"
-#include <anim.h>
 
 static void
 py_animation_free(PyObject *self);

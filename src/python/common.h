@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Python.h>  // must be first
+#include <mesh.h>
+#include <anim.h>
 
 typedef struct _PyMeshDataObject {
 	PyObject_HEAD
@@ -24,10 +26,23 @@ typedef struct _PyAnimationInstanceObject {
 	PyAnimationObject *ref;
 } PyAnimationInstanceObject;
 
+typedef struct _PyVecObject {
+	PyObject_HEAD
+	Vec vec;
+} PyVecObject;
+
+typedef struct _PyMatObject {
+	PyObject_HEAD
+	Mat mat;
+} PyMatObject;
+
 extern PyTypeObject py_mesh_data_type;
 extern PyTypeObject py_mesh_type;
 extern PyTypeObject py_animation_type;
 extern PyTypeObject py_animation_instance_type;
+extern PyTypeObject py_animation_instance_type;
+extern PyTypeObject py_vec_type;
+extern PyTypeObject py_mat_type;
 
 char*
 strfmt(const char *fmt, ...);

@@ -1,5 +1,4 @@
 #include "common.h"
-#include <mesh.h>
 
 static int
 py_mesh_init(PyObject *self, PyObject *args, PyObject *kwargs);

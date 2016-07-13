@@ -1,5 +1,4 @@
 #include "common.h"
-#include <anim.h>
 
 static int
 py_animation_instance_init(PyObject *self, PyObject *args, PyObject *kwargs);

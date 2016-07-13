@@ -13,6 +13,9 @@ register_mesh(PyObject *module);
 extern int
 register_animation_instance(PyObject *module);
 
+extern int
+register_matlib(PyObject *module);
+
 static PyObject*
 py_surrender_init(void);
 
@@ -66,6 +69,7 @@ PyInit_surrender(void)
 	if (!m)
 		fprintf(stderr, "Failed to create module\n");
 
+	register_matlib(m);
 	register_animation(m);
 	register_mesh_data(m);
 	register_mesh(m);
