@@ -1,5 +1,6 @@
 from context import Context
 from events import send_event
+from game.actions import ray_cast
 from game.entities.actor import ActorType
 from game.entities.map import Map
 from game.entities.terrain import Terrain
@@ -79,7 +80,7 @@ class Client:
 
         # Setup scene, camera, terrain and map
         context.scene = self.setup_scene(context)
-        context.camera = self.setup_camera(context)
+        context.camera, context.ratio = self.setup_camera(context)
         context.terrain = self.setup_terrain(context)
         context.map = self.setup_map(context)
 
@@ -159,8 +160,8 @@ class Client:
         :param context: Game context.
         :type context: :class:`context.Context`
 
-        :returns: The camera
-        :rtype: :class:`renderer.camera.Camera`
+        :returns: The camera and the ratio
+        :rtype: :class:`tuple`
         """
         # Aspect ratio
         aspect = self.renderer.height / float(self.renderer.width)
@@ -172,7 +173,16 @@ class Client:
             500)
 
         camera.look_at(eye=Vec(0, 20, 10), center=Vec(0, 0, 0))
-        return camera
+
+        renderer_conf = context.conf['Renderer']
+        w = renderer_conf.getint('width')
+        h = renderer_conf.getint('height')
+
+        p1 = ray_cast(0, 0, w, h, camera)
+        p2 = ray_cast(w, 0, w, h, camera)
+
+        ratio = (p1 - p2).mag() / w
+        return camera, ratio
 
     @property
     def syncing(self):

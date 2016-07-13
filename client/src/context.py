@@ -36,6 +36,7 @@ class Context:
         self.scale_factor = 1
         self.scene = None
         self.camera = None
+        self.ratio = None
         self.terrain = None
         self.ui = None
 

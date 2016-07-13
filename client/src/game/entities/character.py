@@ -1,3 +1,4 @@
+from context import Context
 from events import subscriber
 from game.entities.actor import Actor
 from game.entities.actor import ActorType
@@ -5,10 +6,70 @@ from game.events import ActorDisappear
 from game.events import ActorSpawn
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
+from matlib import Vec
+from renderer import Font
+from renderer import TextNode
 import logging
+import math
 
 
 LOG = logging.getLogger(__name__)
+
+
+class Label:
+    """Object representing an on screen player label."""
+
+    def __init__(self, resource, name, parent_node):
+        """Constructor.
+
+        :param resource: The label resource
+        :type resource: :class:`loaders.Resource`
+
+        :param name: The player name
+        :type name: :class:`str`
+
+        :param parent_node: The parent node
+        :type parent_node: :class:`renderer.SceneNode`
+        """
+        context = Context.get_instance()
+
+        self.font = Font(resource['font'], 14)
+        self.shader = resource['font_shader']
+        self.color = Vec(0.7, 0.7, 0.7)
+
+        self.name_node = parent_node.add_child(TextNode(
+            self.font,
+            self.shader,
+            name,
+            self.color))
+
+        ratio = context.ratio
+
+        text_w = self.name_node.width
+        self.translation = Vec(-text_w * ratio * 0.5, 3.5, 0)
+        self.scale = Vec(ratio, ratio, ratio)
+
+        self.name_node.transform.translate(self.translation)
+        self.name_node.transform.rotate(Vec(1, 0, 0), math.pi / 2)
+        self.name_node.transform.scale(self.scale)
+
+    def update(self):
+        """Update the rotation of the label to always be pointing to the camera.
+        """
+        context = Context.get_instance()
+        c_pos = context.camera.position
+        direction = Vec(c_pos.x, c_pos.y, c_pos.z, 1)
+        direction.norm()
+        z_axis = Vec(0, 0, 1)
+
+        # Find the angle between the camera and the health bar, then rotate it.
+        # NOTE: also scaling and tranlsation are applied here.
+        angle = math.acos(z_axis.dot(direction))
+        t = self.name_node.transform
+        t.identity()
+        t.translate(self.translation)
+        t.rotate(Vec(1, 0, 0), angle)
+        t.scale(self.scale)
 
 
 class Character(Actor):
@@ -30,6 +91,11 @@ class Character(Actor):
         super().__init__(resource, health, parent_node)
 
         self.name = name
+        self.name_node = Label(resource, name, self.group_node)
+
+    def update(self, dt):
+        super().update(dt)
+        self.name_node.update()
 
 
 @subscriber(ActorSpawn)
