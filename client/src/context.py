@@ -31,6 +31,7 @@ class Context:
         self.conf = conf
         self.input_mgr = None
         self.res_mgr = None
+        self.audio_mgr = None
         self.matrix = None
         self.scale_factor = 1
         self.scene = None

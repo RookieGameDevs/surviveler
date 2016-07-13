@@ -1,16 +1,18 @@
 from enum import IntEnum
 from enum import unique
 from events import send_event
-from game.entities.building import BuildingType
 from game.entities.actor import ActorType
-from game.events import BuildingDisappear
-from game.events import BuildingSpawn
-from game.events import BuildingStatusChange
+from game.entities.building import BuildingType
 from game.events import ActorDisappear
 from game.events import ActorIdle
 from game.events import ActorMove
 from game.events import ActorSpawn
 from game.events import ActorStatusChange
+from game.events import BuildingDisappear
+from game.events import BuildingSpawn
+from game.events import BuildingStatusChange
+from game.events import CharacterBuildingStart
+from game.events import CharacterBuildingStop
 from game.events import TimeUpdate
 from network import MessageField as MF
 import logging
@@ -108,6 +110,9 @@ class ActionType(IntEnum):
     """Enum of the various possible ActionType"""
     idle = 0
     move = 1
+    build = 2
+    repair = 3
+    attack = 4
 
 
 @processor
@@ -182,6 +187,39 @@ def handle_actor_move(gs_mgr):
                 position=position,
                 path=path,
                 speed=action[MF.speed]))
+
+
+@processor
+def handle_character_start_building(gs_mgr):
+    """Handles building entities and fires CharacterBuildingStart event for them.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: dict
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.entities], o.get(MF.entities, {})
+    for e_id, entity in new.items():
+        if entity[MF.action_type] in {ActionType.build, ActionType.repair}:
+            if e_id not in old or old[e_id][MF.action_type] not in {ActionType.build, ActionType.repair}:
+                send_event(CharacterBuildingStart(e_id))
+
+
+@processor
+def handle_character_stop_building(gs_mgr):
+    """Handles entities that stopped building and fires CharacterBuildingStop
+    event for them.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: dict
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.entities], o.get(MF.entities, {})
+    for e_id, entity in old.items():
+        if entity[MF.action_type] in {ActionType.build, ActionType.repair}:
+            if e_id not in new or new[e_id][MF.action_type] not in {ActionType.build, ActionType.repair}:
+                send_event(CharacterBuildingStop(e_id))
 
 
 @processor

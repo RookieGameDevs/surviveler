@@ -3,6 +3,8 @@ from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
+from game.events import CharacterBuildingStart
+from game.events import CharacterBuildingStop
 import logging
 
 
@@ -12,6 +14,7 @@ LOG = logging.getLogger(__name__)
 class Character(Actor):
     MEMBERS = {ActorType.grunt, ActorType.engineer}
     """Game entity which represents a character."""
+
     def __init__(self, resource, name, health, parent_node):
         """Constructor.
 
@@ -84,3 +87,17 @@ def character_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+
+
+@subscriber(CharacterBuildingStart)
+def character_building_start(evt):
+    # TODO: add documentation
+    LOG.debug('Event subscriber: {}'.format(evt))
+    evt.context.audio_mgr.play_fx('crafting', loops=-1, key=evt.srv_id)
+
+
+@subscriber(CharacterBuildingStop)
+def character_building_stop(evt):
+    # TODO: add documentation
+    LOG.debug('Event subscriber: {}'.format(evt))
+    evt.context.audio_mgr.stop_fx(key=evt.srv_id)

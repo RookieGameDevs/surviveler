@@ -68,3 +68,10 @@ def player_spawn(evt):
         player = Player(resource, name, (evt.cur_hp, tot), context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
+
+
+@subscriber(ActorSpawn)
+def player_spawn_sound(evt):
+    # TODO: add documentation
+    LOG.debug('Event subscriber: {}'.format(evt))
+    evt.context.audio_mgr.play_fx('toilet_flush')

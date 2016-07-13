@@ -199,8 +199,6 @@ def building_spawn(evt):
         context.entities[building.e_id] = building
         context.server_entities_map[evt.srv_id] = building.e_id
 
-        # TODO: Change the walkable matrix here!
-
 
 @subscriber(BuildingDisappear)
 def building_disappear(evt):

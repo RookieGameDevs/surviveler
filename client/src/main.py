@@ -5,11 +5,13 @@ from configparser import ConfigParser
 from contextlib import ContextDecorator
 from core import InputManager
 from functools import partial
+from game.audio import AudioManager
 from game.entities.actor import ActorType
 from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
 from renderer import Renderer
+from sdl2 import sdlmixer
 import click
 import game.actions  # noqa
 import logging
@@ -72,12 +74,26 @@ def setup_logging(config):
 
 
 class sdl2context(ContextDecorator):
+
     def __enter__(self):
         LOG.debug('Creating SDL context')
-        sdl.SDL_Init(sdl.SDL_INIT_VIDEO)
+        sdl.SDL_Init(sdl.SDL_INIT_VIDEO | sdl.SDL_INIT_AUDIO)
+
+        LOG.debug('Initializing SDL mixer')
+        if sdlmixer.Mix_OpenAudio(44100, sdlmixer.MIX_DEFAULT_FORMAT, 2, 1024):
+            raise RuntimeError(
+                'Cannot open mixed audio: {}'.format(sdlmixer.Mix_GetError()))
+
+        if sdlmixer.Mix_Init(0) == -1:
+            raise RuntimeError(
+                'Cannot initialize mixer: {}'.format(sdlmixer.Mix_GetError()))
+
         return self
 
     def __exit__(self, *exc):
+        LOG.debug('Quitting SDL mixer')
+        sdlmixer.Mix_Quit()
+
         LOG.debug('Quitting SDL context')
         sdl.SDL_Quit()
         return False
@@ -90,9 +106,10 @@ def main(name, character, config):
     proxy = MessageProxy(conn)
     input_mgr = InputManager()
     res_mgr = ResourceManager(config['Game'])
+    audio_mgr = AudioManager(config['Sound'])
 
     client = Client(
-        name, character, renderer, proxy, input_mgr, res_mgr, config)
+        name, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, config)
 
     client.start()
     renderer.shutdown()
