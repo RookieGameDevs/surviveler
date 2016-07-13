@@ -200,7 +200,7 @@ func (p *Player) State() game.EntityState {
 	case game.MovingAction:
 		actionData = game.MoveActionData{
 			Speed: p.Speed,
-			Path:  p.Movable.NextPos(),
+			Path:  p.Movable.NextWaypoints(),
 		}
 	case game.BuildingAction:
 		actionData = game.BuildActionData{}
@@ -214,7 +214,7 @@ func (p *Player) State() game.EntityState {
 			actionType = game.MovingAction
 			actionData = game.MoveActionData{
 				Speed: p.Speed,
-				Path:  p.Movable.NextPos(),
+				Path:  p.Movable.NextWaypoints(),
 			}
 		} else {
 			actionType = game.IdleAction

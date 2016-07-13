@@ -11,9 +11,9 @@ import (
 )
 
 /*
- * Number of next waypoints to return in NextPos
+ * Number of next waypoints to return in NextWaypoints
  */
-const maxNextPositions = 2
+const maxNextWaypoints = 2
 
 /*
  * Movable is the *moving part* of an entity.
@@ -113,9 +113,9 @@ func (me *Movable) SetPath(path math.Path) {
 	me.hasReachedDestination = false
 }
 
-func (me *Movable) NextPos() math.Path {
+func (me *Movable) NextWaypoints() math.Path {
 	path := math.Path{}
-	for _, wp := range me.waypoints.PeekN(maxNextPositions) {
+	for _, wp := range me.waypoints.PeekN(maxNextWaypoints) {
 		path = append(path, *wp)
 	}
 	return path
