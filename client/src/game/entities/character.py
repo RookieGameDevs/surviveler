@@ -35,7 +35,7 @@ class Label:
 
         self.font = Font(resource['font'], 14)
         self.shader = resource['font_shader']
-        self.color = Vec(0.7, 0.7, 0.7)
+        self.color = Vec(0.7, 0.7, 0.7, 0)
 
         self.name_node = parent_node.add_child(TextNode(
             self.font,
@@ -130,7 +130,7 @@ def character_spawn(evt):
         tot = resource.data['tot_hp']
 
         # Search for the character name
-        name = context.players_name_map.get(evt.srv_id, '')
+        name = context.players_name_map[evt.srv_id]
         # Create the character
         character = Character(
             resource, name, (evt.cur_hp, tot), context.scene.root)

@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import Enum
 from enum import unique
 from utils import intersect
@@ -50,7 +51,7 @@ class Context:
         self.character_name = None
         self.character_type = None
         self.character_avatar = None
-        self.players_name_map = {}
+        self.players_name_map = defaultdict(lambda: '-')
 
         self.msg_queue = []
 

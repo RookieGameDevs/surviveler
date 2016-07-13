@@ -59,9 +59,12 @@ class RenderOp:
     """
 
     def __init__(
-            self, shader, shader_params, mesh, textures=None,
+            self, key, shader, shader_params, mesh, textures=None,
             polygon_mode=PolygonMode.fill):
         """Constructor.
+
+        :param key: The key for indexing purpose
+        :type key: :class:`float`
 
         :param shader: Shader to use for rendering.
         :type shader: :class:`renderer.shader.Shader`
@@ -79,6 +82,7 @@ class RenderOp:
         :param polygon_mode: Polygon rasterization mode to use during rendering.
         :type polygon_mode: :enum:`renderer.renderer.PolygonMode`
         """
+        self.key = key
         self.mesh = mesh
         self.shader = shader
         self.shader_params = shader_params
@@ -187,11 +191,11 @@ class Renderer:
         """Present updated buffers to screen."""
 
         def sort_key(op):
-            return (op.shader.prog, op.mesh.vao)
+            return (op.key, op.shader.prog)
 
         polygon_mode = PolygonMode.fill
 
-        for op in sorted(self.render_queue, key=sort_key):
+        for op in sorted(self.render_queue, key=sort_key, reverse=True):
             # perform actual rendering
             with ExitStack() as stack:
                 for tex_unit, tex in enumerate(op.textures):

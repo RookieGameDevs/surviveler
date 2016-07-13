@@ -82,5 +82,7 @@ class TextNode(SceneNode):
             'projection': ctx.projection,
         }
 
+        v = (ctx.view * transform) * Vec(0, 0, 0, 1)
+
         ctx.renderer.add_render_op(RenderOp(
-            self.shader, params, self._rect, textures=[self._texture]))
+            v.z, self.shader, params, self._rect, textures=[self._texture]))
