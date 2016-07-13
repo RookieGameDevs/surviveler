@@ -20,8 +20,17 @@ FX_ROOT = os.path.join(AUDIO_ROOT, 'fx')
 
 
 class AudioManager:
-    # TODO: add documentation
+    """Audio manager.
+
+    Wraps SDL_Mixer functionalites into an object, keeping track of the various
+    sounds playing to give the caller a chance to play/stop effects when some
+    event is occurring.
+    """
+
     def __init__(self):
+        """Constructor. """
+
+        # FIXME: audio file loading should happen using the resource manager
         self.sounds = {}
         for filename in os.listdir(FX_ROOT):
             name, ext = os.path.splitext(filename)
@@ -44,14 +53,14 @@ class AudioManager:
         """Play a soundtrack.
 
         :param: music_name: The music name (without extension).
-        :type music_name: str
+        :type music_name: :class:`str`
 
         :param loops: Number of times to play through the music.
                     -1 (default) plays the music forever.
-        :type loops: int
+        :type loops: :class:`int`
 
         :param volume: Set music volume (0-127).
-        :type volume: int.
+        :type volume: :class:`int`
         """
         if volume:
             Mix_VolumeMusic(volume)
@@ -62,13 +71,13 @@ class AudioManager:
         """Plays a preloaded sound effect using the first available channel.
 
         :param: sound_name: The sound name (without extension).
-        :type sound_name: str
+        :type sound_name: :class:`str`
 
         :param loops: Number of times to play through the sound.
-        :type loops: int
+        :type loops: :class:`int`
 
         :param key: The key to be used to identify the sound
-        :type key: int
+        :type key: :class:`int`
         """
         channel = Mix_PlayChannel(-1, self.sounds[sound_name], loops)
         if channel == -1:
@@ -77,7 +86,11 @@ class AudioManager:
             self.sound_map[key] = channel
 
     def stop_fx(self, key):
-        """TODO: add documentation here"""
+        """Stops a currently playing fx using the key to find teh proper channel.
+
+        :param key: The key to be used to identify the sound
+        :type key: :class:`int`
+        """
         channel = self.sound_map.pop(key, None)
         if channel is not None:
             Mix_HaltChannel(channel)
