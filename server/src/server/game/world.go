@@ -262,9 +262,10 @@ func (w *World) AABBSpatialQuery(bb math.BoundingBox) *EntitySet {
 }
 
 /*
- * EntitySpatialQuery returns the set of entities intersecting with another
+ * EntitySpatialQuery returns the set of entities intersecting with another.
  *
- * see AABBSpatialQuery
+ * see AABBSpatialQuery. Given Entity is removed from the set of entity
+ * returned.
  */
 func (w *World) EntitySpatialQuery(ent Entity) *EntitySet {
 	set := w.AABBSpatialQuery(ent.BoundingBox())
