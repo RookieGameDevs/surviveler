@@ -27,8 +27,10 @@ class AudioManager:
     event is occurring.
     """
 
-    def __init__(self):
+    def __init__(self, config):
         """Constructor. """
+
+        self.volume = config.getint('Volume')
 
         # FIXME: audio file loading should happen using the resource manager
         # NOTE: right now these resources does not have the resource structure
@@ -66,8 +68,9 @@ class AudioManager:
         :param volume: Set music volume (0-127).
         :type volume: :class:`int`
         """
-        if volume:
-            Mix_VolumeMusic(volume)
+        if not volume:
+            volume = self.volume
+        Mix_VolumeMusic(volume)
         if Mix_PlayMusic(self.musics[music_name], loops) == -1:
             LOG.error('Cannot play music "{}"'.format(music_name))
 

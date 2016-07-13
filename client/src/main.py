@@ -5,6 +5,7 @@ from configparser import ConfigParser
 from contextlib import ContextDecorator
 from core import InputManager
 from functools import partial
+from game.audio import AudioManager
 from game.entities.actor import ActorType
 from loaders import ResourceManager
 from network import Connection
@@ -110,9 +111,10 @@ def main(name, character, config):
     proxy = MessageProxy(conn)
     input_mgr = InputManager()
     res_mgr = ResourceManager(config['Game'])
+    audio_mgr = AudioManager(config['Sound'])
 
     client = Client(
-        name, character, renderer, proxy, input_mgr, res_mgr, config)
+        name, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, config)
 
     client.start()
     renderer.shutdown()

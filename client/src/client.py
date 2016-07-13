@@ -1,6 +1,5 @@
 from context import Context
 from events import send_event
-from game.audio import AudioManager
 from game.entities.actor import ActorType
 from game.entities.map import Map
 from game.entities.terrain import Terrain
@@ -31,7 +30,7 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, actor_type, renderer, proxy, input_mgr, res_mgr, conf):
+    def __init__(self, player_name, actor_type, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
@@ -54,6 +53,9 @@ class Client:
         :param res_mgr: The resource manager
         :type res_mgr: :class:`loader.ResourceManager`
 
+        :param audio_mgr: The audio manager
+        :type audio_mgr: :class:`game.audio.AudioManager`
+
         :param conf: Configuration
         :type conf: mapping
         """
@@ -64,7 +66,7 @@ class Client:
         context = Context(conf)
         context.input_mgr = input_mgr
         context.res_mgr = res_mgr
-        context.audio_mgr = AudioManager()
+        context.audio_mgr = audio_mgr
         map_res = res_mgr.get('/map')
         context.matrix = map_res['matrix']
         context.scale_factor = map_res.data['scale_factor']
@@ -249,7 +251,7 @@ class Client:
         self.ping()
         self.join(self.context.player_name, self.context.player_type)
 
-        self.context.audio_mgr.play_music('sunset', volume=80)
+        self.context.audio_mgr.play_music('sunset')
 
         while not self.exit:
             # Compute time delta
