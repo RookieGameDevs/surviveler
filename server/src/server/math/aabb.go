@@ -53,3 +53,11 @@ func (b BoundingBox) Contains(o BoundingBox) bool {
 	return b.MinX <= o.MinX && b.MinY <= o.MinY &&
 		b.MaxX >= o.MaxX && b.MaxY >= o.MaxY
 }
+
+// Xlate performs a translation of the bounding box
+func (b *BoundingBox) Xlate(v Vec2) {
+	min := Vec2{b.MinX, b.MinY}
+	max := Vec2{b.MaxX, b.MaxY}
+	b.MinX, b.MinY = min.Add(v).Elem()
+	b.MaxX, b.MaxY = max.Add(v).Elem()
+}
