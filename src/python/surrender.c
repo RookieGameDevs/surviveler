@@ -28,7 +28,7 @@ PyInit_surrender(void)
 	if (!m)
 		fprintf(stderr, "Failed to create module\n");
 
-	register_anim(m);
+	register_animation(m);
 	register_mesh_data(m);
 	register_mesh(m);
 
