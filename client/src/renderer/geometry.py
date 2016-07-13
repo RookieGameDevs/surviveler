@@ -9,7 +9,8 @@ class GeometryNode(SceneNode):
     """A node for attaching static geometry (mesh) to the scene."""
 
     def __init__(
-            self, mesh, shader, params=None, textures=None, enable_light=False):
+            self, mesh, shader, params=None, textures=None, enable_light=False,
+            animation=None):
         """Constructor.
 
         :param mesh: Instance of the mesh to render.
@@ -36,6 +37,16 @@ class GeometryNode(SceneNode):
         self.params = params or {}
         self.textures = textures or []
         self.enable_light = enable_light
+        self.anim_inst = animation
+        self._animate = False
+
+    @property
+    def animate(self):
+        return self._animate
+
+    @animate.setter
+    def animate(self, value):
+        self._animate = value
 
     def render(self, ctx, transform):
         self.params['transform'] = transform
@@ -51,6 +62,11 @@ class GeometryNode(SceneNode):
                 ])
             })
 
+        if self.animate and self.anim_inst:
+            self.params['animate'] = 1
+            self.params['joints[0]'] = self.anim_inst.skin_transforms
+
+        # compute absolute Z value of the node center for proper rendering order
         v = (ctx.view * transform) * Vec(0, 0, 0, 1)
 
         # schedule the node rendering

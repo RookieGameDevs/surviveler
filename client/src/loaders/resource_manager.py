@@ -369,3 +369,29 @@ def load_bitmap(manager, fp, cwd):
         for x in range(size[0]):
             matrix[y].append(1 if img_data[y * size[0] + x] else 0)
     return matrix
+
+
+@ResourceManager.resource_handler('.mesh')
+def load_mesh_data(manager, fp, cwd):
+    """Loader for bitmaps.
+
+    :param manager: The resource manager
+    :type manager: :class:`loaders.ResourceManager`
+
+    :param fp: The file pointer
+    :type fp: File
+
+    :param cwd: The current working directory
+    :type cwd: str
+
+    :returns: Simply the bytes read from file
+    :rtype: :class:`sdl2.SDL_RWops.`
+    """
+    from surrender import MeshData
+    from surrender import Mesh
+    md = MeshData.from_buffer(fp.read())
+    mesh = Mesh(md)
+    return {
+        'mesh_data': md,
+        'mesh': mesh,
+    }

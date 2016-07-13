@@ -11,7 +11,7 @@ class Renderable(Component):
 
     def __init__(
             self, parent_node, mesh, shader, params=None, textures=None,
-            enable_light=False):
+            enable_light=False, animation=None):
         """Constructor.
 
         :param parent_node: Parent node of the new game node.
@@ -33,13 +33,14 @@ class Renderable(Component):
         :param enable_light: Enable lighting for the renderable.
         :type enable_light: bool
         """
-        self.entity = None
+        self.animation = animation
         self.node = GeometryNode(
             mesh,
             shader,
             params=params,
             textures=textures,
-            enable_light=enable_light)
+            enable_light=enable_light,
+            animation=animation)
         parent_node.add_child(self.node)
 
     @property
@@ -49,3 +50,11 @@ class Renderable(Component):
     @transform.setter
     def transform(self, value):
         self.node.transform = value
+
+    @property
+    def animate(self):
+        return self.node.animate
+
+    @animate.setter
+    def animate(self, value):
+        self.node.animate = value
