@@ -363,14 +363,14 @@ class Client:
         """
         srv_id = msg.data[MF.id]
         reason = msg.data[MF.reason]
-        if srv_id == self.context.player_id:
+        if not self.context.player_id or srv_id == self.context.player_id:
             LOG.info('Local player disconnected')
             self.exit = True
         else:
             LOG.info('Player "{}" disconnected'.format(srv_id))
             char = self.context.resolve_entity(srv_id)
             # Remove the name from the player names map map
-            del self.context.players_name_map[srv_id]
+            self.context.players_name_map.pop(srv_id)
             send_event(CharacterLeave(srv_id, char.name, reason))
 
     @message_handler(MT.gamestate)

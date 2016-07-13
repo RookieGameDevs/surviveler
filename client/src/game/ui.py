@@ -166,17 +166,17 @@ class UI:
 
         avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
 
+        # avatar
+        self.avatar = Avatar(avatar_res, avatar)
+        self.scene.root.add_child(self.avatar.node)
+        self.transform(self.avatar.node, 0, 0)
+
         # healthbar
         self.health_bar = HealthBar(
             resource['health_bar'],
             avatar_res.data['width'], resource['health_bar'].data['height'])
         self.scene.root.add_child(self.health_bar.node)
         self.transform(self.health_bar.node, 0, avatar_res.data['width'] + 5)
-
-        # avatar
-        self.avatar = Avatar(avatar_res, avatar)
-        self.scene.root.add_child(self.avatar.node)
-        self.transform(self.avatar.node, 0, 0)
 
     def transform(self, node, x, y):
         """Transform the UI scene node from screen space to scene space.
