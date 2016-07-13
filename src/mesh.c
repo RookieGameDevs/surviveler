@@ -41,8 +41,8 @@ enum {
 	HAS_JOINTS    = 1 << 3
 };
 
-static char*
-get_string(char *data, size_t max_size, int index, size_t *len)
+static const char*
+get_string(const char *data, size_t max_size, int index, size_t *len)
 {
 	size_t off = 0, count = 0;
 	while (off < max_size) {
@@ -58,14 +58,27 @@ get_string(char *data, size_t max_size, int index, size_t *len)
 struct MeshData*
 mesh_data_from_file(const char *filename)
 {
-	struct MeshData *md = NULL;
-	size_t *anim_name_indices = NULL;
-
 	// read file contents into a buffer
 	char *data = NULL;
 	size_t data_size = 0;
 	if ((data_size = file_read(filename, &data)) == 0)
 		return NULL;
+
+	// load mesh data
+	struct MeshData *md = mesh_data_from_buffer(data, data_size);
+
+	// cleanup
+	free(data);
+
+	return md;
+}
+
+
+struct MeshData*
+mesh_data_from_buffer(const char *data, size_t data_size)
+{
+	struct MeshData *md = NULL;
+	size_t *anim_name_indices = NULL;
 
 	// check header and version
 	if (data_size < HEADER_SIZE ||
@@ -225,7 +238,7 @@ mesh_data_from_file(const char *filename)
 		// lookup animation names
 		for (size_t a = 0; a < md->anim_count; a++) {
 			size_t len;
-			char *name = get_string(
+			const char *name = get_string(
 				data + offset,
 				data_size - offset,
 				anim_name_indices[a],
@@ -239,7 +252,6 @@ mesh_data_from_file(const char *filename)
 
 cleanup:
 	free(anim_name_indices);
-	free(data);
 	return md;
 
 error:

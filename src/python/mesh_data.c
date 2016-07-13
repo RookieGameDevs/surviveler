@@ -3,7 +3,10 @@
 #include <string.h>
 
 static PyObject*
-py_mesh_data_from_file(PyObject *unused, PyObject *filename_o);
+py_mesh_data_from_file(PyObject *unused, PyObject *arg);
+
+static PyObject*
+py_mesh_data_from_buffer(PyObject *unused, PyObject *arg);
 
 static void
 py_mesh_data_free(PyObject *self);
@@ -17,6 +20,8 @@ py_mesh_data_get_animation_names(PyObject *self);
 static PyMethodDef py_mesh_data_methods[] = {
 	{ "from_file", (PyCFunction)py_mesh_data_from_file, METH_O | METH_STATIC,
 	  "Load mesh data from file." },
+	{ "from_buffer", (PyCFunction)py_mesh_data_from_buffer, METH_O | METH_STATIC,
+	  "Load mesh data from buffer object." },
 	{ "get_animation", (PyCFunction)py_mesh_data_get_animation, METH_O,
 	  "Retrieve animation by name." },
 	{ "get_animation_names", (PyCFunction)py_mesh_data_get_animation_names, METH_NOARGS,
@@ -54,9 +59,9 @@ PyTypeObject py_mesh_data_type = {
 };
 
 static PyObject*
-py_mesh_data_from_file(PyObject *__unused, PyObject *filename_o)
+py_mesh_data_from_file(PyObject *__unused, PyObject *arg)
 {
-	if (!PyUnicode_Check(filename_o)) {
+	if (!PyUnicode_Check(arg)) {
 		PyErr_SetString(
 			PyExc_ValueError,
 			"expected a filename string"
@@ -64,13 +69,50 @@ py_mesh_data_from_file(PyObject *__unused, PyObject *filename_o)
 		return NULL;
 	}
 
-	PyMeshDataObject *result = PyObject_New(PyMeshDataObject, &py_mesh_data_type);
-	result->mesh_data = mesh_data_from_file((char*)PyUnicode_1BYTE_DATA(filename_o));
-	if (!result->mesh_data) {
-		Py_DECREF(result);
-		Py_RETURN_NONE;
+	struct MeshData *md = mesh_data_from_file((char*)PyUnicode_1BYTE_DATA(arg));
+	if (!md) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"Mesh data object creation failed"
+		);
+		return NULL;
 	}
-	return (PyObject*)result;
+
+	PyMeshDataObject *md_o = PyObject_New(PyMeshDataObject, &py_mesh_data_type);
+	md_o->mesh_data = md;
+	return (PyObject*)md_o;
+}
+
+static PyObject*
+py_mesh_data_from_buffer(PyObject *unused, PyObject *arg)
+{
+	Py_buffer buf;
+	if (!PyObject_CheckBuffer(arg)) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"expected a buffer-like object"
+		);
+		return NULL;
+	} else if (PyObject_GetBuffer(arg, &buf, PyBUF_SIMPLE) < 0) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"failed to acquire buffer object"
+		);
+		return NULL;
+	}
+
+	struct MeshData *md = mesh_data_from_buffer(buf.buf, buf.len);
+	if (!md) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"Mesh data object creation failed"
+		);
+		return NULL;
+	}
+
+	PyMeshDataObject *md_o = PyObject_New(PyMeshDataObject, &py_mesh_data_type);
+	md_o->mesh_data = md;
+	return (PyObject*)md_o;
 }
 
 static PyObject*

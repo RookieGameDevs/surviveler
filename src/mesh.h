@@ -37,6 +37,9 @@ struct Mesh {
 struct MeshData*
 mesh_data_from_file(const char *filename);
 
+struct MeshData*
+mesh_data_from_buffer(const char *data, size_t data_size);
+
 void
 mesh_data_free(struct MeshData *md);
 
