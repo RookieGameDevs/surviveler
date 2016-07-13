@@ -1,6 +1,7 @@
 from context import Context
 from datetime import datetime
 from events import subscriber
+from game.events import ActorStatusChange
 from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import GameModeChange
@@ -8,10 +9,75 @@ from game.events import TimeUpdate
 from math import pi
 from matlib import Vec
 from renderer import Font
+from renderer import GeometryNode
 from renderer import OrthoCamera
+from renderer import Rect
 from renderer import Scene
 from renderer import SceneNode
 from renderer import TextNode
+import logging
+
+
+LOG = logging.getLogger(__name__)
+
+
+class HealthBar:
+    """User interface healthbar.
+    """
+    def __init__(self, width, height, resource):
+        """Constructor.
+
+        :param width: The width of the healthbar
+        :type width: :class:`float`
+
+        :param height: The height of the healthbar
+        :type height: :class:`float`
+
+        :param resource: The resource for the healthbar
+        :type resource: :class:`loaders.Resource`
+        """
+        self._value = 1
+        self.w = width
+        self.h = height
+
+        mesh = resource.userdata.get('mesh')
+        if not mesh:
+            mesh = Rect(self.w, self.h)
+            resource.userdata['mesh'] = mesh
+
+        shader = resource['shader']
+
+        params = {
+            'width': float(self.w),
+            'value': self._value,
+            'bg_color': Vec(0, 0, 0, 1),
+            'fg_color': Vec(0.2, 0.4, 1, 1),
+        }
+
+        self.node = GeometryNode(
+            mesh,
+            shader,
+            params=params,
+            enable_light=False)
+
+    @property
+    def value(self):
+        """Returns the value [0,1] of that is currently displayed.
+
+        :returns: The value of the health bar
+        :rtype: :class:`float`
+        """
+        return self._value
+
+    @value.setter
+    def value(self, v):
+        """Sets the value [0,1] to be displayed.
+
+        :param v: The value of the health bar
+        :type v: :class:`float`
+        """
+        self._value = v
+        self.node.params['value'] = v
 
 
 class UI:
@@ -69,6 +135,15 @@ class UI:
             '--:--',
             self.log_color))
         self.transform(self.clock, self.w * 0.5, 0)
+
+        # healthbar
+        self.health_bar = HealthBar(
+            self.w, resource['health_bar'].data['height'],
+            resource['health_bar'])
+        self.scene.root.add_child(self.health_bar.node)
+        self.transform(
+            self.health_bar.node,
+            0, self.h - resource['health_bar'].data['height'])
 
     def transform(self, node, x, y):
         """Transform the UI scene node from screen space to scene space.
@@ -171,3 +246,17 @@ def show_gamemode(evt):
         context.ui.set_mode(evt.cur)
     else:
         context.ui.set_mode(context.GameMode.default)
+
+
+@subscriber(ActorStatusChange)
+def player_health_change(evt):
+    """Updates the number of hp of the actor.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    srv_id = evt.srv_id
+    if srv_id == context.player_id and srv_id in context.server_entities_map:
+        e_id = context.server_entities_map[evt.srv_id]
+        actor = context.entities[e_id]
+        actor.health = evt.new, actor.health[1]
+        context.ui.health_bar.value = evt.new / actor.health[1]

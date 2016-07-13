@@ -45,7 +45,7 @@ class HealthBar(Entity):
 
         params = {
             'width': float(self.w),
-            'value': value * self.w,
+            'value': value,
             'bg_color': Vec(0, 0, 0, 1),
             'fg_color': Vec(0.2, 0.4, 1, 1),
         }
@@ -80,7 +80,7 @@ class HealthBar(Entity):
         :type v: :class:`float`
         """
         self._value = v
-        self[Renderable].node.params['value'] = v * self.w
+        self[Renderable].node.params['value'] = v
 
     def destroy(self):
         """Removes itself from the scene.
