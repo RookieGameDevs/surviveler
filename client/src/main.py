@@ -10,6 +10,7 @@ from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
 from renderer import Renderer
+from sdl2 import sdlmixer
 import click
 import game.actions  # noqa
 import logging
@@ -84,7 +85,25 @@ class sdl2context(ContextDecorator):
         return False
 
 
+class sdlmixercontext(ContextDecorator):
+
+    def __enter__(self):
+        LOG.debug('Initializing SDL mixer')
+        if sdlmixer.Mix_OpenAudio(44100, sdlmixer.MIX_DEFAULT_FORMAT, 2, 1024):
+            raise RuntimeError(
+                'Cannot open mixed audio: {}'.format(sdlmixer.Mix_GetError()))
+
+        if sdlmixer.Mix_Init(0) == -1:
+            raise RuntimeError(
+                'Cannot initialize mixer: {}'.format(sdlmixer.Mix_GetError()))
+
+    def __exit__(self, *exc):
+        LOG.debug('Quitting SDL mixer')
+        sdlmixer.Mix_quit()
+
+
 @sdl2context()
+@sdlmixercontext()
 def main(name, character, config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])

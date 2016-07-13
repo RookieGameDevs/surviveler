@@ -1,11 +1,8 @@
 from sdl2.ext.compat import byteify
-from sdl2.sdlmixer import MIX_DEFAULT_FORMAT
 from sdl2.sdlmixer import Mix_GetError
 from sdl2.sdlmixer import Mix_HaltChannel
-from sdl2.sdlmixer import Mix_Init
 from sdl2.sdlmixer import Mix_LoadMUS
 from sdl2.sdlmixer import Mix_LoadWAV
-from sdl2.sdlmixer import Mix_OpenAudio
 from sdl2.sdlmixer import Mix_PlayChannel
 from sdl2.sdlmixer import Mix_PlayMusic
 from sdl2.sdlmixer import Mix_VolumeMusic
@@ -25,18 +22,6 @@ FX_ROOT = os.path.join(AUDIO_ROOT, 'fx')
 class AudioManager:
     # TODO: add documentation
     def __init__(self):
-        # Audio setup
-        if Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024):
-            raise RuntimeError(
-                'Cannot open mixed audio: {}'.format(Mix_GetError()))
-
-        initted = Mix_Init(0)
-        if initted == -1:
-            raise RuntimeError(
-                'Cannot initialize mixer: {}'.format(Mix_GetError()))
-
-        # Scan and preload sound effects
-        # TODO: load using the resource manager
         self.sounds = {}
         for filename in os.listdir(FX_ROOT):
             name, ext = os.path.splitext(filename)
