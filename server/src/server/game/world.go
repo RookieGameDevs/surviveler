@@ -229,7 +229,7 @@ func (w *World) UpdateEntity(ent Entity) {
 }
 
 /*
- * SpatialQuery returns the set of entities intersecting with given aabb
+ * AABBSpatialQuery returns the set of entities intersecting with given aabb
  *
  * The query is performed on the underlying grid representation from the world, by
  * first retrieving the tiles that intersect with the provided bounding box.
@@ -239,7 +239,7 @@ func (w *World) UpdateEntity(ent Entity) {
  * Important Note: if the query is performed by passing the bounding box of an entity,
  * the returned set will contain this entity.
  */
-func (w *World) SpatialQuery(bb math.BoundingBox) *EntitySet {
+func (w *World) AABBSpatialQuery(bb math.BoundingBox) *EntitySet {
 	// set to contain all the entities around, though not necessarily colliding
 	allEntities := NewEntitySet()
 
@@ -259,4 +259,18 @@ func (w *World) SpatialQuery(bb math.BoundingBox) *EntitySet {
 	})
 
 	return colliding
+}
+
+/*
+ * EntitySpatialQuery returns the set of entities intersecting with another
+ *
+ * see AABBSpatialQuery
+ */
+func (w *World) EntitySpatialQuery(ent Entity) *EntitySet {
+	set := w.AABBSpatialQuery(ent.BoundingBox())
+	if !set.Contains(ent) {
+		panic("EntitySpatialQuery should have find the requesting entity... :-(")
+	}
+	set.Remove(ent)
+	return set
 }
