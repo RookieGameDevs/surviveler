@@ -1,8 +1,4 @@
-#include "anim.h"
-#include "matlib.h"
-#include "mesh.h"
-#include "shader.h"
-#include <GL/glew.h>
+#include "surrender.h"
 #include <SDL.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -269,15 +265,7 @@ main(int argc, char *argv[])
 		return 1;
 	}
 
-	// initialize GLEW
-	glewExperimental = GL_TRUE;
-	if (glewInit()) {
-		fprintf(stderr, "failed to initialize GLEW");
-		return 1;
-	}
-	// clear any error flags which might have been left by GLEW
-	// initialization routine
-	glGetError();
+	surrender_init();
 
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 	printf("GLSL version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
@@ -348,6 +336,8 @@ main(int argc, char *argv[])
 	mesh_data_free(mesh_data);
 	mesh_free(joint_mesh);
 	mesh_data_free(joint_mesh_data);
+
+	surrender_shutdown();
 
 	return 0;
 }
