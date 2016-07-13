@@ -90,6 +90,9 @@ class Actor(Entity):
         # initialize actor
         super().__init__(renderable, movable)
 
+        # FIXME: hardcoded bounding box
+        self._bounding_box = Vec(-0.5, 0, -0.5), Vec(0.5, 2, 0.5)
+
         self.heading = 0.0
         # rotation speed = 2π / fps / desired_2π_rotation_time
         self.rot_speed = 2 * pi / 60 / 1.5
@@ -114,6 +117,29 @@ class Actor(Entity):
         """
         self._health = value
         self.health_bar.value = value[0] / value[1]
+
+    @property
+    def position(self):
+        """The position of the actor in world coordinates.
+
+        :returns: The position
+        :rtype: :class:`tuple`
+        """
+        return self[Movable].position
+
+    @property
+    def bounding_box(self):
+        """The bounding box of the entity.
+
+        The bounding box is represented by the smaller and bigger edge of the box
+        itself.
+
+        :returns: The bounding box of the actor
+        :rtype: :class:`tuple`
+        """
+        l, m = self._bounding_box
+        pos = self.position
+        return l + Vec(pos[0], 0, pos[1]), m + Vec(pos[0], 0, pos[1])
 
     def orientate(self):
         """Orientate the character towards the current destination.
@@ -147,15 +173,6 @@ class Actor(Entity):
                 self.heading = -WHOLE_ANGLE + self.heading
             if self.heading < -WHOLE_ANGLE / 2:
                 self.heading = WHOLE_ANGLE + self.heading
-
-    @property
-    def position(self):
-        """The position of the actor in world coordinates.
-
-        :returns: The position
-        :rtype: :class:`tuple`
-        """
-        return self[Movable].position
 
     def destroy(self):
         """Removes itself from the scene.

@@ -115,17 +115,22 @@ def handle_mouse_click(evt):
         w = int(renderer_conf['width'])
         h = int(renderer_conf['height'])
 
+        x, y = evt.x, evt.y
         camera = context.camera
-        target = ray_cast(evt.x, evt.y, w, h, camera)
+
+        target = ray_cast(x, y, w, h, camera)
         world_pos = to_world(target.x, target.y, target.z)
         LOG.debug('World pos: {}'.format(world_pos))
-
         pos = world_pos.x, world_pos.y
+
         if context.game_mode == context.GameMode.default:
-            entity = context.pick_entity(pos)
+            c_pos, ray = camera.trace_ray(x, y, w, h)
+            entity = context.pick_entity(c_pos, ray)
             if entity:
+                # step 1 - try to pick entities
                 entity_picked(context, entity)
             else:
+                # step 2 - just find the destination and start a movement
                 start_move_action(context, pos)
         elif context.game_mode == context.GameMode.building:
             start_build_action(context, pos)

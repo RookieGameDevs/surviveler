@@ -51,3 +51,16 @@ class Entity(ABC):
         :rtype: None
         """
         return None
+
+    @property
+    def bounding_box(self):
+        """The bounding box of the entity.
+
+        The bounding box is represented by the smaller and bigger edge of the box
+        itself.
+
+        :returns: The bounding box of the entity or None, if there's no clickable
+            bounding box
+        :rtype: :class:`tuple`
+        """
+        return None
