@@ -1,9 +1,9 @@
 from context import Context
-from datetime import datetime
+# from datetime import datetime
 from events import subscriber
 from game.events import ActorStatusChange
-from game.events import CharacterJoin
-from game.events import CharacterLeave
+# from game.events import CharacterJoin
+# from game.events import CharacterLeave
 from game.events import GameModeChange
 from game.events import TimeUpdate
 from math import pi
@@ -13,8 +13,9 @@ from renderer import GeometryNode
 from renderer import OrthoCamera
 from renderer import Rect
 from renderer import Scene
-from renderer import SceneNode
+# from renderer import SceneNode
 from renderer import TextNode
+from renderer import Texture
 import logging
 
 
@@ -24,7 +25,7 @@ LOG = logging.getLogger(__name__)
 class HealthBar:
     """User interface healthbar.
     """
-    def __init__(self, width, height, resource):
+    def __init__(self, resource, width, height):
         """Constructor.
 
         :param width: The width of the healthbar
@@ -80,13 +81,39 @@ class HealthBar:
         self.node.params['value'] = v
 
 
+class Avatar:
+    """TODO: add documentation.
+    """
+
+    def __init__(self, resource, ref):
+        self.w = resource.data['width']
+        self.h = resource.data['height']
+
+        mesh = Rect(self.w, self.h)
+        texture = Texture.from_image(resource[ref])
+        shader = resource['shader']
+
+        params = {
+            'tex': texture,
+            'width': self.w,
+            'height': self.h,
+        }
+
+        self.node = GeometryNode(
+            mesh,
+            shader,
+            params=params,
+            textures=[texture],
+            enable_light=False)
+
+
 class UI:
     """User interface.
 
     This class encapsulates the user interface creation and management.
     """
 
-    def __init__(self, resource, renderer):
+    def __init__(self, resource, player_data, renderer):
         """Constructor.
 
         :param resource: The ui resource
@@ -104,46 +131,52 @@ class UI:
             +self.h / 2, -self.h / 2,
             0, 1)
 
+        self.font = Font(resource['font'], 14)
+        self.shader = resource['shader']
+        self.color = Vec(0.7, 0.7, 0.7)
+
         # log
-        self.log_line_height = 18
-        self.log_height = 0
-        self.log_color = Vec(0.7, 0.7, 0.7)
-        self.log_font = Font(resource['font'], 14)
-        self.log_shader = resource['shader']
-        self.log_node = self.scene.root.add_child(SceneNode())
+        # self.log_line_height = 18
+        # self.log_height = 0
+        # self.log_node = self.scene.root.add_child(SceneNode())
 
         # Mode node
         self.game_mode_node = self.scene.root.add_child(TextNode(
-            self.log_font,
-            self.log_shader,
+            self.font,
+            self.shader,
             Context.GameMode.default.value,
-            self.log_color))
+            self.color))
         self.transform(self.game_mode_node, self.w * 0.85, 20)
 
         # FPS counter
         self.fps_counter_node = self.scene.root.add_child(TextNode(
-            self.log_font,
-            self.log_shader,
+            self.font,
+            self.shader,
             'FPS',
-            self.log_color))
+            self.color))
         self.transform(self.fps_counter_node, self.w * 0.85, 0)
 
         # clock
         self.clock = self.scene.root.add_child(TextNode(
-            self.log_font,
-            self.log_shader,
+            self.font,
+            self.shader,
             '--:--',
-            self.log_color))
+            self.color))
         self.transform(self.clock, self.w * 0.5, 0)
+
+        avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
 
         # healthbar
         self.health_bar = HealthBar(
-            self.w, resource['health_bar'].data['height'],
-            resource['health_bar'])
+            resource['health_bar'],
+            avatar_res.data['width'], resource['health_bar'].data['height'])
         self.scene.root.add_child(self.health_bar.node)
-        self.transform(
-            self.health_bar.node,
-            0, self.h - resource['health_bar'].data['height'])
+        self.transform(self.health_bar.node, 0, avatar_res.data['width'] + 5)
+
+        # avatar
+        self.avatar = Avatar(avatar_res, avatar)
+        self.scene.root.add_child(self.avatar.node)
+        self.transform(self.avatar.node, 0, 0)
 
     def transform(self, node, x, y):
         """Transform the UI scene node from screen space to scene space.
@@ -190,46 +223,46 @@ class UI:
         """
         self.clock.text = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
 
-    def log(self, msg):
-        """Log a message on screen console.
+    # def log(self, msg):
+    #     """Log a message on screen console.
 
-        :param msg: Message to log.
-        :type msg: str
-        """
-        if self.log_height >= self.w - self.log_line_height:
-            self.log_node.children = []
+    #     :param msg: Message to log.
+    #     :type msg: str
+    #     """
+    #     if self.log_height >= self.w - self.log_line_height:
+    #         self.log_node.children = []
 
-        txt = self.log_node.add_child(TextNode(
-            self.log_font,
-            self.log_shader,
-            msg,
-            self.log_color))
-        self.transform(txt, 0, self.log_height)
+    #     txt = self.log_node.add_child(TextNode(
+    #         self.log_font,
+    #         self.log_shader,
+    #         msg,
+    #         self.log_color))
+    #     self.transform(txt, 0, self.log_height)
 
-        self.log_height += self.log_line_height
+    #     self.log_height += self.log_line_height
 
     def render(self):
         """Render the user interface."""
         self.scene.render(self.renderer, self.camera)
 
 
-@subscriber(CharacterJoin)
-def log_join(evt):
-    """Logs the name and ID of the joined character to UI console."""
-    if evt.name:
-        evt.context.ui.log('[{}] {} joined with ID {}'.format(
-            datetime.now().time().replace(microsecond=0).isoformat(),
-            evt.name,
-            evt.srv_id))
-
-
-@subscriber(CharacterLeave)
-def log_leave(evt):
-    """Logs the name of the character which just left the party."""
-    evt.context.ui.log('[{}] {} left the game:'.format(
-        datetime.now().time().replace(microsecond=0).isoformat(),
-        evt.name,
-        evt.reason or 'disconnected'))
+# @subscriber(CharacterJoin)
+# def log_join(evt):
+#     """Logs the name and ID of the joined character to UI console."""
+#     if evt.name:
+#         evt.context.ui.log('[{}] {} joined with ID {}'.format(
+#             datetime.now().time().replace(microsecond=0).isoformat(),
+#             evt.name,
+#             evt.srv_id))
+#
+#
+# @subscriber(CharacterLeave)
+# def log_leave(evt):
+#     """Logs the name of the character which just left the party."""
+#     evt.context.ui.log('[{}] {} left the game:'.format(
+#         datetime.now().time().replace(microsecond=0).isoformat(),
+#         evt.name,
+#         evt.reason or 'disconnected'))
 
 
 @subscriber(TimeUpdate)

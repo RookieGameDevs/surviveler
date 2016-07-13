@@ -45,8 +45,10 @@ class Context:
 
         # Local player entity information
         self.player_name = None
-        self.player_type = None
         self.player_id = None
+        self.character_name = None
+        self.character_type = None
+        self.character_avatar = None
         self.players_name_map = {}
 
         self.msg_queue = []

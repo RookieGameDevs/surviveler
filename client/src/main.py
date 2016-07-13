@@ -6,7 +6,6 @@ from contextlib import ContextDecorator
 from core import InputManager
 from functools import partial
 from game.audio import AudioManager
-from game.entities.actor import ActorType
 from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
@@ -115,39 +114,21 @@ def main(name, character, config):
     renderer.shutdown()
 
 
-class ActorTypeParamType(click.ParamType):
-    """Custom click type for character type.
-
-    NOTE: bad naming, I know.
-    """
-    name = 'entity_type'
-
-    def convert(self, value, param, ctx):
-        try:
-            return ActorType(int(value))
-        except ValueError:
-            self.fail('{} is not a valid ActorType'.format(value))
-
-
-ACTOR_TYPE = ActorTypeParamType()
-
-
 @click.command()
 @click.argument(
-    'name',
+    'player_name',
     default='John Doe')
 @click.argument(
     'character',
-    type=ACTOR_TYPE,
-    default=ActorType.grunt)
-def bootstrap(name, character):
+    default='ivan')
+def bootstrap(player_name, character):
     config = ConfigParser()
     config.read(CONFIG_FILE)
     setup_logging(config['Logging'])
 
     LOG.debug('Loaded config file {}'.format(CONFIG_FILE))
 
-    main(name, character, config)
+    main(player_name, character, config)
 
 
 if __name__ == '__main__':

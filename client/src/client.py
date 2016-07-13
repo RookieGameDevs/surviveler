@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, actor_type, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
+    def __init__(self, player_name, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
@@ -38,8 +38,8 @@ class Client:
         :param player_name: The player name
         :type player_name: str
 
-        :param actor_type: The player type
-        :type actor_type: int
+        :param character: The character name
+        :type character: str
 
         :param renderer: The rederer
         :type renderer: :class:`renderer.Renderer`
@@ -67,17 +67,35 @@ class Client:
         context.input_mgr = input_mgr
         context.res_mgr = res_mgr
         context.audio_mgr = audio_mgr
+
+        # Setup the player
+        c_res = res_mgr.get('/characters')
+        c_data = c_res.data['map'][character]
+        context.player_name = player_name
+        context.character_name = c_data['name']
+        context.character_type = ActorType[c_data['type']]
+        context.character_avatar = c_data['avatar']
+
+        # Setup the level matrix
         map_res = res_mgr.get('/map')
         context.matrix = map_res['matrix']
         context.scale_factor = map_res.data['scale_factor']
+
+        # Setup scene, camera, terrain and map
         context.scene = self.setup_scene(context)
         context.camera = self.setup_camera(context)
         context.terrain = self.setup_terrain(context)
         context.map = self.setup_map(context)
+
+        # Setup UI
         ui_res = context.res_mgr.get('/ui')
-        context.ui = UI(ui_res, self.renderer)
-        context.player_name = player_name
-        context.player_type = ActorType(actor_type)
+        player_data = {
+            'name': context.character_name,
+            'type': context.character_type,
+            'avatar': context.character_avatar,
+            'avatar_res': c_res['avatar'],
+        }
+        context.ui = UI(ui_res, player_data, self.renderer)
         self.context = context
 
         # Client status variable
@@ -249,7 +267,7 @@ class Client:
         """
 
         self.ping()
-        self.join(self.context.player_name, self.context.player_type)
+        self.join(self.context.player_name, self.context.character_type)
 
         self.context.audio_mgr.play_music('sunset')
 
