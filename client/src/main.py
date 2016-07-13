@@ -78,17 +78,7 @@ class sdl2context(ContextDecorator):
     def __enter__(self):
         LOG.debug('Creating SDL context')
         sdl.SDL_Init(sdl.SDL_INIT_VIDEO | sdl.SDL_INIT_AUDIO)
-        return self
 
-    def __exit__(self, *exc):
-        LOG.debug('Quitting SDL context')
-        sdl.SDL_Quit(sdl.SDL_INIT_AUDIO)
-        return False
-
-
-class sdlmixercontext(ContextDecorator):
-
-    def __enter__(self):
         LOG.debug('Initializing SDL mixer')
         if sdlmixer.Mix_OpenAudio(44100, sdlmixer.MIX_DEFAULT_FORMAT, 2, 1024):
             raise RuntimeError(
@@ -98,13 +88,18 @@ class sdlmixercontext(ContextDecorator):
             raise RuntimeError(
                 'Cannot initialize mixer: {}'.format(sdlmixer.Mix_GetError()))
 
+        return self
+
     def __exit__(self, *exc):
         LOG.debug('Quitting SDL mixer')
-        sdlmixer.Mix_quit()
+        sdlmixer.Mix_Quit()
+
+        LOG.debug('Quitting SDL context')
+        sdl.SDL_Quit()
+        return False
 
 
 @sdl2context()
-@sdlmixercontext()
 def main(name, character, config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])
