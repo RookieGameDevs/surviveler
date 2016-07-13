@@ -81,13 +81,42 @@ func (p *Player) Update(dt time.Duration) {
 
 		case game.MovingAction:
 
-			hasMoved = p.Movable.Move(dt)
-			if p.Movable.HasReachedDestination() {
-				// pop current action to get ready for next update
-				next := p.actions.Pop()
-				log.WithField("action", next).Debug("next player action")
-			}
+			// check if moving would create a collision
+			nextPos := p.Movable.ComputeMove(p.Pos, dt)
+			nextBB := math.NewBoundingBoxFromCircle(nextPos, 0.5)
+			colliding := p.world.AABBSpatialQuery(nextBB)
+			colliding.Remove(p)
 
+			log.Debug("next move collisions:")
+			var done bool
+
+			// by design moving action can't be the last one
+			nextAction := p.actions.PeekN(2)[1]
+
+			colliding.Each(func(e game.Entity) bool {
+				if nextAction.Type == game.BuildingAction {
+					log.WithField("ent", e).Debug("collision with")
+					if e == p.curBuilding {
+						// we are colliding with the building we wanna build,
+						// stop moving
+						p.actions.Pop()
+						// do not check other collisions
+						done = true
+						//return false
+					}
+				}
+				return true
+			})
+
+			if !done {
+				hasMoved = p.Movable.Move(dt)
+				if p.Movable.HasReachedDestination() {
+					// pop current action to get ready for next update
+					next := p.actions.Pop()
+					log.WithField("action", next).Debug("next player action")
+				}
+
+			}
 		case WaitingForPathAction:
 
 			log.Debug("player is waiting for a path")
