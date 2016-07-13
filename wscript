@@ -80,7 +80,7 @@ def build(bld):
     kwargs = {
         'features': 'c cshlib',
         'target': 'surrender',
-        'source': bld.path.ant_glob('src/**/*.c', excl=['**/python', 'main.c']),
+        'source': bld.path.ant_glob('src/**/*.c', excl=['**/python', 'src/main.c']),
         'uselib': libs,
     }
 
