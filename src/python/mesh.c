@@ -4,6 +4,9 @@
 static PyObject*
 py_mesh_data_from_file(PyObject *unused, PyObject *filename_o);
 
+static void
+py_mesh_data_free(PyObject *self);
+
 typedef struct _PyMeshDataObject {
 	PyObject_HEAD
 	struct MeshData *mesh_data;
@@ -22,7 +25,7 @@ static PyTypeObject py_mesh_data_type = {
 	.tp_basicsize = sizeof(PyMeshDataObject),
 	.tp_itemsize = 0,
 	.tp_alloc = PyType_GenericAlloc,
-	.tp_dealloc = NULL,
+	.tp_dealloc = py_mesh_data_free,
 	.tp_new = PyType_GenericNew,
 	.tp_init = NULL,
 	.tp_print = NULL,
@@ -62,6 +65,13 @@ py_mesh_data_from_file(PyObject *__unused, PyObject *filename_o)
 		Py_RETURN_NONE;
 	}
 	return (PyObject*)result;
+}
+
+static void
+py_mesh_data_free(PyObject *self)
+{
+	PyMeshDataObject *md_o = (PyMeshDataObject*)self;
+	mesh_data_free(md_o->mesh_data);
 }
 
 int
