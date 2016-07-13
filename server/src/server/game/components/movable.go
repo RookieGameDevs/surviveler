@@ -45,19 +45,30 @@ func (me *Movable) findMicroPath(wp math.Vec2) (path math.Path, found bool) {
 	return math.Path{wp}, true
 }
 
-/*
- * futurePos computes a future position.
- *
- * It computes the position we would have by following given direction
- * for a given amount of time, at given speed, starting from given position.
- * It doesn't assign the position, so that this method can be used for
- * actual movement as well as movement prediction.
- */
-func (me *Movable) futurePos(startPos, direction math.Vec2, speed float64, dt time.Duration) math.Vec2 {
-	// compute distance to be covered as time * speed
-	distance := dt.Seconds() * me.Speed
-	// compute new position after moving given distance in wanted direction
-	return startPos.Add(direction.Mul(distance))
+func (me Movable) ComputeMove(org math.Vec2, dt time.Duration) math.Vec2 {
+	// update position on the player path
+	if dst, exists := me.waypoints.Peek(); exists {
+		// compute distance to be covered as time * speed
+		distance := dt.Seconds() * me.Speed
+		// compute translation and direction vectors
+		t := dst.Sub(org)
+		b := t.Len()
+		dir := t.Normalize()
+
+		// compute next position
+		pos := org.Add(dir.Mul(distance))
+		a := pos.Sub(org).Len()
+
+		// check against edge-cases
+		isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
+
+		if a > b || isNan {
+			return *dst
+		} else {
+			return pos
+		}
+	}
+	return org
 }
 
 /*
