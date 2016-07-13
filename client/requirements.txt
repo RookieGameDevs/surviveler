@@ -3,7 +3,6 @@ click==6.6
 flake8==2.5.4
 IPy==0.83
 line-profiler==1.0
-matlib==0.1
 mccabe==0.4.0
 msgpack-python==0.4.7
 numpy==1.11.0
