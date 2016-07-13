@@ -49,7 +49,7 @@ type Zombie struct {
 }
 
 func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
-	z := Zombie{
+	z := &Zombie{
 		id:          game.InvalidId,
 		g:           g,
 		curState:    lookingState,
@@ -63,7 +63,6 @@ func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8,
 			Pos:   pos,
 		},
 	}
-	z.Movable.Init()
 	return &z
 }
 

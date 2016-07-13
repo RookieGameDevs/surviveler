@@ -53,6 +53,15 @@ func (me *Movable) nextPos(startPos, direction math.Vec2, speed float64, dt time
 	return startPos.Add(direction.Mul(distance))
 }
 
+func (me *Movable) collisionsCheck(dt time.Duration, pos math.Vec2) *game.EntitySet {
+	set := me.world.SpatialQuery(me.BoundingBox())
+	if !set.Contains(me.ent) {
+		panic("collision check failed to find ourselves... :-(")
+	}
+	set.Remove(me.ent)
+	return set
+}
+
 /*
  * Move updates the movable position regarding a time delta
  *

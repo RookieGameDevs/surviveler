@@ -49,21 +49,18 @@ type Player struct {
  */
 func NewPlayer(g game.Game, gamestate game.GameState, spawn math.Vec2, entityType game.EntityType,
 	speed, totalHP float64, buildPower, combatPower uint16) *Player {
-	p := new(Player)
-	p.entityType = entityType
-	p.Movable = components.Movable{
-		Pos:   spawn,
-		Speed: speed,
+	p := &Player{
+		entityType:  entityType,
+		buildPower:  buildPower,
+		combatPower: combatPower,
+		totalHP:     totalHP,
+		curHP:       totalHP,
+		g:           g,
+		gamestate:   g.State(),
+		id:          game.InvalidId,
+		actions:     *game.NewActionStack(),
+		Movable:     components.NewMovable(spawn, speed),
 	}
-	p.Movable.Init()
-	p.buildPower = buildPower
-	p.combatPower = combatPower
-	p.totalHP = totalHP
-	p.curHP = totalHP
-	p.g = g
-	p.gamestate = gamestate
-	p.id = game.InvalidId
-	p.curBuilding = nil
 
 	// place an idle action as the bottommost item of the action stack item.
 	// This should never be removed as the player should remain idle if he
