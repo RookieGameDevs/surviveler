@@ -34,11 +34,11 @@ const (
  * for commodity.
  */
 type Tile struct {
-	Kind     TileKind          // kind of tile, each kind has its own cost
-	X, Y     int               // tile position in 'grid' coordinates
-	W        *World            // reference to the map this tile is part of
-	Entities map[uint32]Entity // Entities intersecting with this Tile
-	aabb     math.BoundingBox  // pre-computed bounding box, as it won't ever change
+	Kind     TileKind         // kind of tile, each kind has its own cost
+	X, Y     int              // tile position in 'grid' coordinates
+	W        *World           // reference to the map this tile is part of
+	Entities EntitySet        // Entities intersecting with this Tile
+	aabb     math.BoundingBox // pre-computed bounding box, as it won't ever change
 }
 
 func NewTile(kind TileKind, w *World, x, y int) Tile {
@@ -47,7 +47,7 @@ func NewTile(kind TileKind, w *World, x, y int) Tile {
 		W:        w,
 		X:        x,
 		Y:        y,
-		Entities: make(map[uint32]Entity),
+		Entities: *NewEntitySet(),
 		aabb: math.BoundingBox{
 			MinX: (float64(x) - 0.5) / w.GridScale,
 			MaxX: (float64(x) + 0.5) / w.GridScale,

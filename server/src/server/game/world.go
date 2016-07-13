@@ -204,14 +204,14 @@ func (w *World) DetachEntity(ent Entity) {
 func (w *World) attachTo(ent Entity, tiles ...*Tile) {
 	// attach entity to those tiles
 	for _, t := range tiles {
-		t.Entities[ent.Id()] = ent
+		t.Entities.Add(ent)
 	}
 }
 
 func (w *World) detachFrom(ent Entity, tiles ...*Tile) {
 	// detach entity from those tiles
 	for _, t := range tiles {
-		delete(t.Entities, ent.Id())
+		t.Entities.Remove(ent)
 	}
 }
 

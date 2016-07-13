@@ -176,13 +176,14 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
 
 		// check if we can build here
-		for _, ent := range tile.Entities {
+		tile.Entities.Each(func(ent game.Entity) bool {
 			if _, ok := ent.(game.Building); ok {
 				log.WithField("tile", tile).
 					Error("There's already a building on this tile")
-				return
+				return false
 			}
-		}
+			return true
+		})
 
 		// clip building center with tile center
 		pos := math.FromInts(tile.X, tile.Y).
