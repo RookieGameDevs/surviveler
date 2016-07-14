@@ -56,18 +56,29 @@ python src/matlib/setup.py install
 ```
 
 ## Manual installation of `surrender` package
-To install C renderer, ensure the Python interpreter used is virtualenv one
-and do the following:
+To install C renderer, install these dependencies first:
+
+  * `GLEW`
+  * `AssImp` (mesh converter dependency)
+
+Build the renderer with Python wrappers (ensure the correct Python environment
+is set):
 
 ```
 cd src/surrender
-./waf --configure --with-python
+./waf configure --with-python
 ./waf
-cp build/python/libsurrender.so ${CLIENT_DIR}/lib/python3.5/site-packages/surrender.so
 ```
 
-The `${CLIENT_DIR}` is expected to be the absolute path to `surviveler/client`
-directory.
+Install the resulting library in local Python distribution site-packages folder:
+
+`cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (Linux)
+`cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (OSX)
+
+*NOTE*: On Mac OS X the final file name must have `.so` extension!
+
+The `${VIRTUALENV}` is expected to be the absolute path to local Python
+environment.
 
 ## Running the application in the fish shell
 From within the virtualenv:
