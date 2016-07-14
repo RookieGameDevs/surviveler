@@ -1,9 +1,6 @@
 from context import Context
-# from datetime import datetime
 from events import subscriber
 from game.events import ActorStatusChange
-# from game.events import CharacterJoin
-# from game.events import CharacterLeave
 from game.events import GameModeChange
 from game.events import TimeUpdate
 from math import pi
@@ -13,7 +10,6 @@ from renderer import GeometryNode
 from renderer import OrthoCamera
 from renderer import Rect
 from renderer import Scene
-# from renderer import SceneNode
 from renderer import TextNode
 from renderer import Texture
 import logging
@@ -135,11 +131,6 @@ class UI:
         self.shader = resource['shader']
         self.color = Vec(0.7, 0.7, 0.7)
 
-        # log
-        # self.log_line_height = 18
-        # self.log_height = 0
-        # self.log_node = self.scene.root.add_child(SceneNode())
-
         # Mode node
         self.game_mode_node = self.scene.root.add_child(TextNode(
             self.font,
@@ -223,46 +214,9 @@ class UI:
         """
         self.clock.text = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
 
-    # def log(self, msg):
-    #     """Log a message on screen console.
-
-    #     :param msg: Message to log.
-    #     :type msg: str
-    #     """
-    #     if self.log_height >= self.w - self.log_line_height:
-    #         self.log_node.children = []
-
-    #     txt = self.log_node.add_child(TextNode(
-    #         self.log_font,
-    #         self.log_shader,
-    #         msg,
-    #         self.log_color))
-    #     self.transform(txt, 0, self.log_height)
-
-    #     self.log_height += self.log_line_height
-
     def render(self):
         """Render the user interface."""
         self.scene.render(self.renderer, self.camera)
-
-
-# @subscriber(CharacterJoin)
-# def log_join(evt):
-#     """Logs the name and ID of the joined character to UI console."""
-#     if evt.name:
-#         evt.context.ui.log('[{}] {} joined with ID {}'.format(
-#             datetime.now().time().replace(microsecond=0).isoformat(),
-#             evt.name,
-#             evt.srv_id))
-#
-#
-# @subscriber(CharacterLeave)
-# def log_leave(evt):
-#     """Logs the name of the character which just left the party."""
-#     evt.context.ui.log('[{}] {} left the game:'.format(
-#         datetime.now().time().replace(microsecond=0).isoformat(),
-#         evt.name,
-#         evt.reason or 'disconnected'))
 
 
 @subscriber(TimeUpdate)
