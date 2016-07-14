@@ -1,16 +1,13 @@
 from events import subscriber
-from game.components import Renderable
 from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
 from game.events import ActorStatusChange
 from game.events import EntityPick
-from matlib import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
-from math import pi
 import logging
 
 
@@ -21,12 +18,6 @@ class Enemy(Actor):
     """Game entity which represents an enemy.
     """
     MEMBERS = {ActorType.zombie}
-
-    def update(self, dt):
-        self.transform.identity()
-        self.transform.rotate(Vec(0, 1, 0), pi)
-        super().update(dt)
-        self[Renderable].transform.scale(Vec(0.011, 0.011, 0.011))
 
 
 @subscriber(ActorSpawn)
@@ -56,7 +47,7 @@ def enemy_spawn(evt):
         tot = resource.data['tot_hp']
 
         # Create the character
-        character = Enemy(resource, (evt.cur_hp, tot), context.scene.root)
+        character = Enemy(resource, evt.actor_type, (evt.cur_hp, tot), context.scene.root)
         context.entities[character.e_id] = character
         context.server_entities_map[evt.srv_id] = character.e_id
 

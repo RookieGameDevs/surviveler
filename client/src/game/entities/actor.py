@@ -57,7 +57,15 @@ class AnimationType(str, Enum):
 class Actor(Entity):
     """Game entity which represents an actor."""
 
-    def __init__(self, resource, health, parent_node):
+    # *FIXME* *FIXME* *FIXME*
+    # REFACTOR THIS!!!
+    TRANSFORMS = {
+        ActorType.grunt: (pi, 0.2),
+        ActorType.zombie: (pi, 0.01),
+        ActorType.engineer: (pi, 0.11),
+    }
+
+    def __init__(self, resource, actor_type, health, parent_node):
         """Constructor.
 
         :param resource: The character resource
@@ -69,6 +77,8 @@ class Actor(Entity):
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        self.actor_type = actor_type
+
         # Health is going to be a property used to update only when necessary
         # the health bar.
         self._health = health
@@ -253,10 +263,13 @@ class Actor(Entity):
         g_t.identity()
         g_t.translate(to_scene(x, y))
 
+        rot, scale = self.TRANSFORMS[self.actor_type]
         t = self[Renderable].transform
         t.identity()
         t *= self.transform
+        t.rotate(Vec(0, 1, 0), rot)  # FIXME
         t.rotate(Vec(0, 1, 0), -self.heading)
+        t.scale(Vec(scale, scale, scale))
 
         self.orientate()
 
