@@ -17,6 +17,7 @@ class SceneRenderContext:
         self._camera = cam
         self._modelview_t = cam.modelview
         self._projection_t = cam.projection
+        self._view = cam.projection * cam.modelview
 
     @property
     def renderer(self):
@@ -37,6 +38,11 @@ class SceneRenderContext:
     def projection(self):
         """Computed projection transformation matrix."""
         return self._projection_t
+
+    @property
+    def view(self):
+        """Combined projection and model view matrix."""
+        return self._view
 
 
 class Scene:

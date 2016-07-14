@@ -63,7 +63,7 @@ def player_spawn(evt):
         tot = resource.data['tot_hp']
 
         # Search for the player name
-        name = context.players_name_map[evt.srv_id]
+        name = context.character_name
         # Create the player
         player = Player(resource, name, (evt.cur_hp, tot), context.scene.root)
         context.entities[player.e_id] = player

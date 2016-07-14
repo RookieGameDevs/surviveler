@@ -6,7 +6,6 @@ from contextlib import ContextDecorator
 from core import InputManager
 from functools import partial
 from game.audio import AudioManager
-from game.entities.actor import ActorType
 from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
@@ -100,7 +99,7 @@ class sdl2context(ContextDecorator):
 
 
 @sdl2context()
-def main(name, character, config):
+def main(character, config):
     renderer = Renderer(config['Renderer'])
     conn = Connection(config['Network'])
     proxy = MessageProxy(conn)
@@ -109,45 +108,24 @@ def main(name, character, config):
     audio_mgr = AudioManager(config['Sound'])
 
     client = Client(
-        name, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, config)
+        character, renderer, proxy, input_mgr, res_mgr, audio_mgr, config)
 
     client.start()
     renderer.shutdown()
 
 
-class ActorTypeParamType(click.ParamType):
-    """Custom click type for character type.
-
-    NOTE: bad naming, I know.
-    """
-    name = 'entity_type'
-
-    def convert(self, value, param, ctx):
-        try:
-            return ActorType(int(value))
-        except ValueError:
-            self.fail('{} is not a valid ActorType'.format(value))
-
-
-ACTOR_TYPE = ActorTypeParamType()
-
-
 @click.command()
 @click.argument(
-    'name',
-    default='John Doe')
-@click.argument(
     'character',
-    type=ACTOR_TYPE,
-    default=ActorType.grunt)
-def bootstrap(name, character):
+    default='ivan')
+def bootstrap(character):
     config = ConfigParser()
     config.read(CONFIG_FILE)
     setup_logging(config['Logging'])
 
     LOG.debug('Loaded config file {}'.format(CONFIG_FILE))
 
-    main(name, character, config)
+    main(character, config)
 
 
 if __name__ == '__main__':

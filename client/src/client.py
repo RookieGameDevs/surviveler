@@ -1,5 +1,6 @@
 from context import Context
 from events import send_event
+from game.actions import ray_cast
 from game.entities.actor import ActorType
 from game.entities.map import Map
 from game.entities.terrain import Terrain
@@ -30,16 +31,13 @@ LOG = logging.getLogger(__name__)
 class Client:
     """Client."""
 
-    def __init__(self, player_name, actor_type, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
+    def __init__(self, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
         """Constructor.
 
         Just passes the arguments to the _Client constructor.
 
-        :param player_name: The player name
-        :type player_name: str
-
-        :param actor_type: The player type
-        :type actor_type: int
+        :param character: The character name
+        :type character: str
 
         :param renderer: The rederer
         :type renderer: :class:`renderer.Renderer`
@@ -67,17 +65,34 @@ class Client:
         context.input_mgr = input_mgr
         context.res_mgr = res_mgr
         context.audio_mgr = audio_mgr
+
+        # Setup the player
+        c_res = res_mgr.get('/characters')
+        c_data = c_res.data['map'][character]
+        context.character_name = c_data['name']
+        context.character_type = ActorType[c_data['type']]
+        context.character_avatar = c_data['avatar']
+
+        # Setup the level matrix
         map_res = res_mgr.get('/map')
         context.matrix = map_res['matrix']
         context.scale_factor = map_res.data['scale_factor']
+
+        # Setup scene, camera, terrain and map
         context.scene = self.setup_scene(context)
-        context.camera = self.setup_camera(context)
+        context.camera, context.ratio = self.setup_camera(context)
         context.terrain = self.setup_terrain(context)
         context.map = self.setup_map(context)
+
+        # Setup UI
         ui_res = context.res_mgr.get('/ui')
-        context.ui = UI(ui_res, self.renderer)
-        context.player_name = player_name
-        context.player_type = ActorType(actor_type)
+        player_data = {
+            'name': context.character_name,
+            'type': context.character_type,
+            'avatar': context.character_avatar,
+            'avatar_res': c_res['avatar'],
+        }
+        context.ui = UI(ui_res, player_data, self.renderer)
         self.context = context
 
         # Client status variable
@@ -145,8 +160,8 @@ class Client:
         :param context: Game context.
         :type context: :class:`context.Context`
 
-        :returns: The camera
-        :rtype: :class:`renderer.camera.Camera`
+        :returns: The camera and the ratio
+        :rtype: :class:`tuple`
         """
         # Aspect ratio
         aspect = self.renderer.height / float(self.renderer.width)
@@ -158,7 +173,16 @@ class Client:
             500)
 
         camera.look_at(eye=Vec(0, 20, 10), center=Vec(0, 0, 0))
-        return camera
+
+        renderer_conf = context.conf['Renderer']
+        w = renderer_conf.getint('width')
+        h = renderer_conf.getint('height')
+
+        p1 = ray_cast(0, 0, w, h, camera)
+        p2 = ray_cast(w, 0, w, h, camera)
+
+        ratio = (p1 - p2).mag() / w
+        return camera, ratio
 
     @property
     def syncing(self):
@@ -249,7 +273,7 @@ class Client:
         """
 
         self.ping()
-        self.join(self.context.player_name, self.context.player_type)
+        self.join(self.context.character_name, self.context.character_type)
 
         self.context.audio_mgr.play_music('sunset')
 
@@ -311,10 +335,11 @@ class Client:
         self.context.player_id = srv_id
         self.context.players_name_map[srv_id] = msg.data[MF.id]
         LOG.info('Joined the party with name "{}" and  ID {}'.format(
-            self.context.player_name, self.context.player_id))
+            self.context.character_name, self.context.player_id))
 
         # Send the proper events for the joined local player
-        send_event(PlayerJoin(self.context.player_id, self.context.player_name))
+        send_event(PlayerJoin(
+            self.context.player_id, self.context.character_name))
 
         for srv_id, name in msg.data[MF.players].items():
             if srv_id != self.context.player_id:
@@ -330,11 +355,11 @@ class Client:
         :param msg: the message to be processed
         :type msg: :class:`message.Message`
         """
-        player_name = as_utf8(msg.data[MF.name])
+        character_name = as_utf8(msg.data[MF.name])
         srv_id = msg.data[MF.id]
         if srv_id != self.context.player_id:
-            self.context.players_name_map[srv_id] = player_name
-            send_event(CharacterJoin(srv_id, player_name))
+            self.context.players_name_map[srv_id] = character_name
+            send_event(CharacterJoin(srv_id, character_name))
 
     @message_handler(MT.leave)
     def handle_leave(self, msg):
@@ -345,14 +370,14 @@ class Client:
         """
         srv_id = msg.data[MF.id]
         reason = msg.data[MF.reason]
-        if srv_id == self.context.player_id:
+        if not self.context.player_id or srv_id == self.context.player_id:
             LOG.info('Local player disconnected')
             self.exit = True
         else:
             LOG.info('Player "{}" disconnected'.format(srv_id))
             char = self.context.resolve_entity(srv_id)
             # Remove the name from the player names map map
-            del self.context.players_name_map[srv_id]
+            self.context.players_name_map.pop(srv_id)
             send_event(CharacterLeave(srv_id, char.name, reason))
 
     @message_handler(MT.gamestate)

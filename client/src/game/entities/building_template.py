@@ -108,7 +108,7 @@ def show_building_template(evt):
 
     if evt.mode == context.GameMode.building:
         # Check if the player has the proper type and toggle the game mode.
-        if context.player_type == ActorType.engineer:
+        if context.character_type == ActorType.engineer:
             prev, cur = context.toggle_game_mode(evt.mode)
             send_event(GameModeChange(prev, cur))
 

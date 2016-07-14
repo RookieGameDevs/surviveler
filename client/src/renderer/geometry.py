@@ -2,6 +2,7 @@ from itertools import chain
 from renderer.light import LIGHT_SOURCES
 from renderer.renderer import RenderOp
 from renderer.scene import SceneNode
+from matlib import Vec
 
 
 class GeometryNode(SceneNode):
@@ -50,8 +51,11 @@ class GeometryNode(SceneNode):
                 ])
             })
 
+        v = (ctx.view * transform) * Vec(0, 0, 0, 1)
+
         # schedule the node rendering
         ctx.renderer.add_render_op(RenderOp(
+            v.z,
             self.shader,
             self.params,
             self.mesh,

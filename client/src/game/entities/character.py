@@ -1,3 +1,4 @@
+from context import Context
 from events import subscriber
 from game.entities.actor import Actor
 from game.entities.actor import ActorType
@@ -5,10 +6,101 @@ from game.events import ActorDisappear
 from game.events import ActorSpawn
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
+from game.events import CharacterJoin
+from matlib import Vec
+from renderer import Font
+from renderer import TextNode
 import logging
+import math
 
 
 LOG = logging.getLogger(__name__)
+
+
+class Label:
+    """Object representing an on screen player label."""
+
+    def __init__(self, resource, name, parent_node):
+        """Constructor.
+
+        :param resource: The label resource
+        :type resource: :class:`loaders.Resource`
+
+        :param name: The player name
+        :type name: :class:`str`
+
+        :param parent_node: The parent node
+        :type parent_node: :class:`renderer.SceneNode`
+        """
+        context = Context.get_instance()
+
+        self.font = Font(resource['font'], 14)
+        self.shader = resource['font_shader']
+        self.color = Vec(0.7, 0.7, 0.7, 0)
+
+        self.node = parent_node.add_child(TextNode(
+            self.font,
+            self.shader,
+            name,
+            self.color))
+
+        self.ratio = context.ratio
+        text_w = self.node.width
+        self.translation = Vec(-text_w * context.ratio * 0.5, 3.5, 0)
+        self.scale = Vec(context.ratio, context.ratio, context.ratio)
+
+        t = self.node.transform
+        t.translate(self.translation)
+        t.rotate(Vec(1, 0, 0), math.pi / 2)
+        t.scale(self.scale)
+
+    @property
+    def text(self):
+        """Returns the label text.
+
+        :returns: The label text
+        :rtype: :class:`str`
+        """
+        return self.node.text
+
+    @text.setter
+    def text(self, text):
+        """Sets the label text.
+
+        Also the transform is updated properly.
+
+        :param text: The new text to be displayed
+        :type text: :class:`str`
+        """
+        self.node.text = text
+
+        text_w = self.node.width
+        self.translation = Vec(-text_w * self.ratio * 0.5, 3.5, 0)
+        self.scale = Vec(self.ratio, self.ratio, self.ratio)
+
+        t = self.node.transform
+        t.identity()
+        t.translate(self.translation)
+        t.rotate(Vec(1, 0, 0), math.pi / 2)
+        t.scale(self.scale)
+
+    def update(self):
+        """Update the rotation of the label to always be pointing to the camera.
+        """
+        context = Context.get_instance()
+        c_pos = context.camera.position
+        direction = Vec(c_pos.x, c_pos.y, c_pos.z, 1)
+        direction.norm()
+        z_axis = Vec(0, 0, 1)
+
+        # Find the angle between the camera and the health bar, then rotate it.
+        # NOTE: also scaling and tranlsation are applied here.
+        angle = math.acos(z_axis.dot(direction))
+        t = self.node.transform
+        t.identity()
+        t.translate(self.translation)
+        t.rotate(Vec(1, 0, 0), angle)
+        t.scale(self.scale)
 
 
 class Character(Actor):
@@ -29,7 +121,21 @@ class Character(Actor):
         """
         super().__init__(resource, health, parent_node)
 
-        self.name = name
+        self._name = name
+        self.name_node = Label(resource, name, self.group_node)
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+        self.name_node.text = name
+
+    def update(self, dt):
+        super().update(dt)
+        self.name_node.update()
 
 
 @subscriber(ActorSpawn)
@@ -64,7 +170,7 @@ def character_spawn(evt):
         tot = resource.data['tot_hp']
 
         # Search for the character name
-        name = context.players_name_map.get(evt.srv_id, '')
+        name = context.players_name_map[evt.srv_id]
         # Create the character
         character = Character(
             resource, name, (evt.cur_hp, tot), context.scene.root)
@@ -87,6 +193,20 @@ def character_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+
+
+@subscriber(CharacterJoin)
+def set_character_name(evt):
+    """Update the name of the character.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.CharacterJoin`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    entity = context.resolve_entity(evt.srv_id)
+    if entity:
+        entity.name = evt.name
 
 
 @subscriber(CharacterBuildingStart)

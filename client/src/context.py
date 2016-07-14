@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import Enum
 from enum import unique
 from utils import intersect
@@ -36,6 +37,7 @@ class Context:
         self.scale_factor = 1
         self.scene = None
         self.camera = None
+        self.ratio = None
         self.terrain = None
         self.ui = None
 
@@ -45,9 +47,11 @@ class Context:
 
         # Local player entity information
         self.player_name = None
-        self.player_type = None
         self.player_id = None
-        self.players_name_map = {}
+        self.character_name = None
+        self.character_type = None
+        self.character_avatar = None
+        self.players_name_map = defaultdict(lambda: '-')
 
         self.msg_queue = []
 
