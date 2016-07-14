@@ -111,7 +111,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 		return
 	} else {
 		// instantiate player with settings from the resources pkg
-		p := entities.NewPlayer(gs.game, gs, org, game.EntityType(evt.Type),
+		p := entities.NewPlayer(gs.game, org, game.EntityType(evt.Type),
 			float64(entityData.Speed), float64(entityData.TotalHP),
 			uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
 		p.SetId(evt.Id)
@@ -175,13 +175,21 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		// get the tile at building point coordinates
 		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
 
-		// check if we can build here
-		for _, ent := range tile.Entities {
-			if _, ok := ent.(game.Building); ok {
-				log.WithField("tile", tile).
-					Error("There's already a building on this tile")
-				return
-			}
+		// tile must be walkable
+		if tile.IsWalkable() {
+			// check if we can build here
+			tile.Entities.Each(func(ent game.Entity) bool {
+				if _, ok := ent.(game.Building); ok {
+					log.WithField("tile", tile).
+						Error("There's already a building on this tile")
+					return false
+				}
+				return true
+			})
+		} else {
+			log.WithField("tile", tile).
+				Error("Tile is not walkable: can't build")
+			return
 		}
 
 		// clip building center with tile center

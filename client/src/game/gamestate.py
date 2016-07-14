@@ -176,16 +176,21 @@ def handle_actor_move(gs_mgr):
     :param gs_mgr: the gs_mgr
     :type gs_mgr: dict
     """
-    for srv_id, entity in gamestate_entities(gs_mgr):
-        if entity.get(MF.action_type, None) == ActionType.move:
+    new, old = gs_mgr.get(2)
+    if not old:
+        return
+    new_entities = new.get(MF.entities, {})
+    old_entities = old.get(MF.entities, {})
+    for srv_id, entity in old_entities.items():
+        if entity[MF.action_type] == ActionType.move and srv_id in new_entities:
             action = entity[MF.action]
             position = entity[MF.x_pos], entity[MF.y_pos]
-            path = action[MF.path]
-
+            new_entity = new_entities[srv_id]
+            new_position = new_entity[MF.x_pos], new_entity[MF.y_pos]
             send_event(ActorMove(
                 srv_id,
                 position=position,
-                path=path,
+                path=[new_position],
                 speed=action[MF.speed]))
 
 

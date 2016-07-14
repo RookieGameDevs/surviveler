@@ -119,22 +119,24 @@ func (w World) DumpGrid() {
 }
 
 /*
- *
+ * IntersectingTiles returns the list of Tile intersecting with an AABB
  */
-func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
-	tiles := []*Tile{}
-
-	// exit now if the aabb is contained in the center tile
+func (w World) IntersectingTiles(bb math.BoundingBox) []*Tile {
+	// first thing: we need the tile that contains the center of the aabb
+	center := w.TileFromWorldVec(bb.Center())
+	tiles := []*Tile{center}
 	if center.BoundingBox().Contains(bb) {
+		// exit now if the aabb is contained in the center tile
 		return tiles
 	}
 
+	// get the 4 'direct' neighbours
 	left := w.Tile(center.X-1, center.Y)
 	right := w.Tile(center.X+1, center.Y)
 	up := w.Tile(center.X, center.Y-1)
 	down := w.Tile(center.X, center.Y+1)
 
-	// intersection with horizontal and vertical neighbours
+	// intersection with horizontal and vertical neighbour tiles
 	if left != nil && left.BoundingBox().Intersects(bb) {
 		tiles = append(tiles, left)
 	} else {
@@ -156,7 +158,7 @@ func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
 		down = nil
 	}
 
-	// intersection with diagonal neighbours
+	// intersection with diagonal neighbour tiles
 	if left != nil && up != nil {
 		tiles = append(tiles, w.Tile(center.X-1, center.Y-1))
 	}
@@ -176,14 +178,8 @@ func (w World) IntersectingTiles(center Tile, bb math.BoundingBox) []*Tile {
  * AttachEntity attaches an entity on the underlying world representation
  */
 func (w *World) AttachEntity(ent Entity) {
-	// create tile list
-	tileList := make(TileList, 0, 1)
-	// this tile contains the entity center
-	center := w.TileFromWorldVec(ent.Position())
-	// append the 'center' tile
-	tileList = append(tileList, center)
-	// append the neighbour tile intersecting with the entity bounding box
-	tileList = append(tileList, w.IntersectingTiles(*center, ent.BoundingBox())...)
+	// retrieve list of tiles intersecting with the entity aabb
+	tileList := w.IntersectingTiles(ent.BoundingBox())
 
 	// attach this entity to all those tiles
 	w.attachTo(ent, tileList...)
@@ -208,14 +204,14 @@ func (w *World) DetachEntity(ent Entity) {
 func (w *World) attachTo(ent Entity, tiles ...*Tile) {
 	// attach entity to those tiles
 	for _, t := range tiles {
-		t.Entities[ent.Id()] = ent
+		t.Entities.Add(ent)
 	}
 }
 
 func (w *World) detachFrom(ent Entity, tiles ...*Tile) {
 	// detach entity from those tiles
 	for _, t := range tiles {
-		delete(t.Entities, ent.Id())
+		t.Entities.Remove(ent)
 	}
 }
 
@@ -230,4 +226,52 @@ func (w *World) UpdateEntity(ent Entity) {
 	// simply detach and re-attach it
 	w.DetachEntity(ent)
 	w.AttachEntity(ent)
+}
+
+/*
+ * AABBSpatialQuery returns the set of entities intersecting with given aabb
+ *
+ * The query is performed on the underlying grid representation from the world, by
+ * first retrieving the tiles that intersect with the provided bounding box.
+ * As each tile has an always-updated list of entities that intersect with itself,
+ * the result of the spatial query is the set of those entities.
+ *
+ * Important Note: if the query is performed by passing the bounding box of an entity,
+ * the returned set will contain this entity.
+ */
+func (w *World) AABBSpatialQuery(bb math.BoundingBox) *EntitySet {
+	// set to contain all the entities around, though not necessarily colliding
+	allEntities := NewEntitySet()
+
+	// loop on the intersecting tiles
+	for _, it := range w.IntersectingTiles(bb) {
+		// add all the entities attached to this tile
+		allEntities.Union(&it.Entities)
+	}
+
+	colliding := NewEntitySet()
+	// filter out the non-colliding entities
+	allEntities.Each(func(ent Entity) bool {
+		if ent.BoundingBox().Intersects(bb) {
+			colliding.Add(ent)
+		}
+		return true
+	})
+
+	return colliding
+}
+
+/*
+ * EntitySpatialQuery returns the set of entities intersecting with another.
+ *
+ * see AABBSpatialQuery. Given Entity is removed from the set of entity
+ * returned.
+ */
+func (w *World) EntitySpatialQuery(ent Entity) *EntitySet {
+	set := w.AABBSpatialQuery(ent.BoundingBox())
+	if !set.Contains(ent) {
+		panic("EntitySpatialQuery should have find the requesting entity... :-(")
+	}
+	set.Remove(ent)
+	return set
 }

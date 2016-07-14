@@ -67,6 +67,24 @@ func (s *ActionStack) Peek() (value *Action, exists bool) {
 	return
 }
 
+// PeekN returns at max the N topmost item without removing them from the stack
+func (s *ActionStack) PeekN(n int) []*Action {
+	var (
+		N   []*Action
+		cur *item
+	)
+	N = make([]*Action, 0, n)
+	cur = s.top
+	for len(N) < n {
+		if cur == nil {
+			break
+		}
+		N = append(N, cur.value)
+		cur = cur.next
+	}
+	return N
+}
+
 func (s *ActionStack) popLast(elem *item) *item {
 	if elem == nil {
 		return nil
