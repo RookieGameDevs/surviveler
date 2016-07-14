@@ -170,11 +170,12 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 
 	// initialize animations (if there's a skeleton)
 	md->anim_count = get_field(data, ACOUNT_FIELD);
-	anim_name_indices = malloc(sizeof(size_t) * md->anim_count);
 	if (md->skeleton && md->anim_count > 0) {
-		md->animations = malloc(sizeof(struct Animation));
+		anim_name_indices = malloc(sizeof(size_t) * md->anim_count);
+		md->animations = malloc(sizeof(struct Animation) * md->anim_count);
+
 		for (size_t a = 0; a < md->anim_count; a++) {
-			struct Animation *anim = md->animations + a;
+			struct Animation *anim = &md->animations[a];
 			anim_name_indices[a] = *(uint32_t*)(data + offset);
 			anim->skeleton = md->skeleton;
 			anim->duration = *(float*)(data + offset + 4);
