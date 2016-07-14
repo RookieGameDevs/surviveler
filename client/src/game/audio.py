@@ -60,7 +60,6 @@ class AudioManager:
         # more elastic way to interact with sounds.
         self.sounds = {}
         for filename in os.listdir(FX_ROOT):
-            print(filename)
             name, ext = os.path.splitext(filename)
             filepath = os.path.join(FX_ROOT, filename)
             event_sound_list = []
