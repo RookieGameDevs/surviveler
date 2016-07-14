@@ -93,8 +93,6 @@ class Actor(Entity):
         self._bounding_box = Vec(-0.5, 0, -0.5), Vec(0.5, 2, 0.5)
 
         self.heading = 0.0
-        # rotation speed = 2π / fps / desired_2π_rotation_time
-        self.rot_speed = 2 * pi / 60 / 1.5
 
     @property
     def health(self):
@@ -159,13 +157,15 @@ class Actor(Entity):
                 abs_delta = WHOLE_ANGLE - abs(delta)
                 delta = -delta
 
-            if abs_delta < self.rot_speed * 2:
+            # tweak speed (XXX: make it more rational)
+            rot_speed = abs_delta * 2 * pi / 40
+            if abs_delta < rot_speed * 2:
                 # Rotation is complete within a small error.
                 # Force it to the exact value:
                 self.heading = target_heading
                 return
 
-            self.heading += copysign(1, delta) * self.rot_speed
+            self.heading += copysign(1, delta) * rot_speed
 
             # normalize angle to be in (-pi, pi)
             if self.heading >= WHOLE_ANGLE / 2:
