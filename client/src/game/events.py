@@ -21,11 +21,12 @@ class ActorDisappear(Event):
 
     Event emitted when a previously existing actor does not exist anymore.
     """
-    def __init__(self, srv_id):
+    def __init__(self, srv_id, actor_type):
         self.srv_id = srv_id
+        self.actor_type = actor_type
 
     def __str__(self):
-        return '<ActorDisappear({})>'.format(self.srv_id)
+        return '<ActorDisappear({}, {})>'.format(self.srv_id, self.actor_type)
 
 
 class ActorStatusChange(Event):

@@ -150,7 +150,7 @@ def handle_actor_disappear(gs_mgr):
     new, old = n[MF.entities], o.get(MF.entities, {})
     old_entities = set(old) - set(new)
     for ent in old_entities:
-        evt = ActorDisappear(ent)
+        evt = ActorDisappear(ent, old[ent][MF.entity_type])
         send_event(evt)
 
 

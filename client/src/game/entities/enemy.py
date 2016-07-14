@@ -63,10 +63,19 @@ def enemy_disappear(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
-    if evt.srv_id in context.server_entities_map:
+    is_zombie = evt.actor_type in Enemy.MEMBERS
+    if evt.srv_id in context.server_entities_map and is_zombie:
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+
+
+@subscriber(ActorDisappear)
+def enemy_death_sound(evt):
+    # TODO: add documentation
+    is_zombie = evt.actor_type in Enemy.MEMBERS
+    if is_zombie:
+        evt.context.audio_mgr.play_fx('zombie_death')
 
 
 @subscriber(EntityPick)
@@ -89,13 +98,11 @@ def enemy_click(evt):
 
 @subscriber(ActorStatusChange)
 def fight_sounds(evt):
-    """Play character or zombie attack sounds based on who's loosing hp.
+    """Play zombie attack sounds.
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
-    if evt.srv_id in context.server_entities_map:
+    is_zombie = evt.actor_type in Enemy.MEMBERS
+    if evt.srv_id in context.server_entities_map and is_zombie:
         if evt.new < evt.old:
-            if evt.actor_type in Enemy.MEMBERS:
-                evt.context.audio_mgr.play_fx('punch')
-            else:
-                evt.context.audio_mgr.play_fx('zombie_attack')
+            evt.context.audio_mgr.play_fx('punch')

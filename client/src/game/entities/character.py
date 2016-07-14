@@ -4,6 +4,7 @@ from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
+from game.events import ActorStatusChange
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
 from game.events import CharacterJoin
@@ -190,14 +191,31 @@ def character_disappear(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
-    if evt.srv_id in context.server_entities_map:
+    is_character = evt.actor_type in Character.MEMBERS
+    if evt.srv_id in context.server_entities_map and is_character:
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
-        if type(character) is Character:
-            evt.context.audio_mgr.play_fx('player_death')
-        else:
-            evt.context.audio_mgr.play_fx('zombie_death')
         character.destroy()
+
+
+@subscriber(ActorDisappear)
+def character_death_sound(evt):
+    # TODO: add documentation
+    is_character = evt.actor_type in Character.MEMBERS
+    if is_character:
+        evt.context.audio_mgr.play_fx('player_death')
+
+
+@subscriber(ActorStatusChange)
+def character_get_hit_sound(evt):
+    """Play character attack sounds.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    is_character = evt.actor_type in Character.MEMBERS
+    if evt.srv_id in context.server_entities_map and is_character:
+        if evt.new < evt.old:
+            evt.context.audio_mgr.play_fx('zombie_attack')
 
 
 @subscriber(CharacterJoin)
