@@ -10,6 +10,7 @@ from matlib import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
+from math import pi
 import logging
 
 
@@ -22,8 +23,10 @@ class Enemy(Actor):
     MEMBERS = {ActorType.zombie}
 
     def update(self, dt):
+        self.transform.identity()
+        self.transform.rotate(Vec(0, 1, 0), pi)
         super().update(dt)
-        self[Renderable].transform.scale(Vec(0.031, 0.031, 0.031))
+        self[Renderable].transform.scale(Vec(0.011, 0.011, 0.011))
 
 
 @subscriber(ActorSpawn)
