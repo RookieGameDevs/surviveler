@@ -15,8 +15,9 @@ LOG = logging.getLogger(__name__)
 
 
 class Enemy(Actor):
+    """Game entity which represents an enemy.
+    """
     MEMBERS = {ActorType.zombie}
-    """Game entity which represents an enemy."""
 
 
 @subscriber(ActorSpawn)
