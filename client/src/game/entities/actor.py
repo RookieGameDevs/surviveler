@@ -1,3 +1,4 @@
+from enum import Enum
 from enum import IntEnum
 from enum import unique
 from events import subscriber
@@ -24,9 +25,6 @@ LOG = logging.getLogger(__name__)
 
 WHOLE_ANGLE = 2.0 * pi
 
-WALK_ANIM_NAME = 'anim0'
-ACTION_ANIM_NAME = 'anim1'
-
 
 @unique
 class ActorType(IntEnum):
@@ -35,6 +33,13 @@ class ActorType(IntEnum):
     programmer = 1
     engineer = 2
     zombie = 3
+
+
+class AnimationType(str, Enum):
+    """Enum of animation types."""
+    walk = 'anim0'
+    action = 'anim1'
+    run = 'anim2'
 
 
 class Actor(Entity):
@@ -63,12 +68,12 @@ class Actor(Entity):
         # root transformation to apply to the mesh
         self.transform = md.transform
 
-        walk_anim = md.animations.get(WALK_ANIM_NAME)
+        walk_anim = md.animations.get(AnimationType.walk)
         if walk_anim:
             walk_anim = AnimationInstance(walk_anim)
         self.current_anim = self.walk_anim = walk_anim
 
-        action_anim = md.animations.get(ACTION_ANIM_NAME)
+        action_anim = md.animations.get(AnimationType.action)
         if action_anim:
             action_anim = AnimationInstance(action_anim)
         self.action_anim = action_anim
