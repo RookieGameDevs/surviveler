@@ -89,6 +89,7 @@ func (p *Player) Update(dt time.Duration) {
 			// nothing to do
 
 		case game.BuildingAction, game.RepairingAction:
+
 			// building/repairing actually end up being the same
 			p.induceBuildPower()
 
@@ -113,7 +114,9 @@ func (p *Player) Update(dt time.Duration) {
 			}
 		}
 	}
+
 	if p.posDirty {
+		// update entity position only if needed
 		p.gamestate.World().UpdateEntity(p)
 		p.posDirty = true
 	}
@@ -124,7 +127,6 @@ func (p *Player) onMoveAction(dt time.Duration) {
 	nextPos := p.Movable.ComputeMove(p.Pos, dt)
 	nextBB := math.NewBoundingBoxFromCircle(nextPos, 0.5)
 	colliding := p.world.AABBSpatialQuery(nextBB)
-	colliding.Remove(p)
 
 	var curActionEnded bool
 
@@ -132,22 +134,30 @@ func (p *Player) onMoveAction(dt time.Duration) {
 	nextAction := p.actions.PeekN(2)[1]
 
 	colliding.Each(func(e game.Entity) bool {
+
+		if e == p {
+			// it's just me... pass
+			return true
+		}
+
 		switch nextAction.Type {
 		case game.BuildingAction, game.RepairingAction:
 			if e == p.curBuilding {
 				log.WithField("ent", e).Debug("collision with target building")
 				// we are colliding with the building we wanna build/repair
-				// stop moving
+				// current action has terminated
 				p.actions.Pop()
-				// do not check other collisions
+				// do not check for other collisions
 				curActionEnded = true
-				//return false
+				return false
 			}
 		}
 		return true
 	})
 
 	if !curActionEnded {
+
+		// perform the actual move
 		p.posDirty = p.Movable.Move(dt)
 		if p.Movable.HasReachedDestination() {
 			// pop current action to get ready for next update

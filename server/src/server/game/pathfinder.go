@@ -21,11 +21,11 @@ func NewPathfinder(game Game) *Pathfinder {
 }
 
 /*
- * FindPath searches for the best path to reach a destination.
+ * FindPath searches for the best path to reach a destination in the whole grid.
  *
  * The search is performed with the A* algorithm, running on a matrix-shaped
  * graph representing the world. The grid is scaled to achieve a better
- * resolution
+ * resolution.
  */
 func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64, found bool) {
 	world := pf.game.State().World()
@@ -43,7 +43,7 @@ func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64,
 	}
 
 	// perform A*
-	rawPath, dist, found := astar.Path(porg, pdst)
+	rawPath, _, found := astar.Path(porg, pdst)
 	if !found {
 		return
 	}
@@ -80,9 +80,5 @@ func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64,
 		}
 		last = pt
 	}
-	log.WithFields(log.Fields{
-		"raw path length":      len(rawPath),
-		"smoothed path length": len(path)}).
-		Debug("Path smoothing result")
 	return
 }
