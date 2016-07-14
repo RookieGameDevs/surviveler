@@ -64,3 +64,7 @@ func (t Tile) GoString() string {
 func (t Tile) BoundingBox() math.BoundingBox {
 	return t.aabb
 }
+
+func (t Tile) IsWalkable() bool {
+	return t.Kind == KindWalkable
+}
