@@ -60,13 +60,15 @@ class AudioManager:
 
             self.sounds[name] = []
             for sound_filepath in event_sound_list:
-                self.sounds[name].append(Mix_LoadWAV(
-                    byteify(sound_filepath, 'utf-8')))
+                LOG.info('Loading sound {}'.format(sound_filepath))
+                self.sounds[name].append((sound_filepath, Mix_LoadWAV(
+                    byteify(sound_filepath, 'utf-8'))))
 
         self.musics = {}
         for filename in os.listdir(MUSIC_ROOT):
             name, ext = os.path.splitext(filename)
             filepath = os.path.join(MUSIC_ROOT, filename)
+            LOG.info('Loading music {}'.format(filepath))
             self.musics[name] = Mix_LoadMUS(byteify(filepath, 'utf-8'))
             if self.musics[name] is None:
                 raise RuntimeError(
@@ -107,10 +109,11 @@ class AudioManager:
         :type key: :class:`int`
         """
         sounds = self.sounds[sound_name]
-        sound = rand_choice(sounds)
+        filepath, sound = rand_choice(sounds)
         channel = Mix_PlayChannel(-1, sound, loops)
         if channel == -1:
-            LOG.error('Cannot play sound "{}"'.format(sound_name))
+            LOG.error('Cannot play sound "{}: {}"'.format(
+                sound_name, filepath))
         elif key is not None:
             self.sound_map[key] = channel
 
