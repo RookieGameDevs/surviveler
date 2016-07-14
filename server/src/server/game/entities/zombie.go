@@ -210,7 +210,6 @@ func (z *Zombie) State() game.EntityState {
 		if !z.Movable.HasReachedDestination() {
 			moveActionData := game.MoveActionData{
 				Speed: z.Speed,
-				Path:  z.Movable.NextWaypoints(),
 			}
 			actionType = game.MovingAction
 			actionData = moveActionData

@@ -4,8 +4,6 @@
  */
 package game
 
-import "server/math"
-
 type ActionType uint16
 
 // gamestate action types
@@ -42,7 +40,6 @@ type AttackActionData struct{}
  */
 type MoveActionData struct {
 	Speed float64
-	Path  []math.Vec2
 }
 
 /*
