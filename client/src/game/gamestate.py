@@ -13,6 +13,7 @@ from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
+from game.events import ObjectSpawn
 from game.events import TimeUpdate
 from network import MessageField as MF
 import logging
@@ -113,6 +114,7 @@ class ActionType(IntEnum):
     build = 2
     repair = 3
     attack = 4
+    drinking = 5
 
 
 @processor
@@ -332,3 +334,21 @@ def handle_building_health(gs_mgr):
             if hp_changed or status_changed:
                 send_event(BuildingStatusChange(
                     b_id, old_hp, new_hp, building[MF.completed]))
+
+
+@processor
+def handle_object_spawn(gs_mgr):
+    """Check for new static objects and place them on the scene.
+
+    :param gs_mgr: the gs_mgr
+    :type gs_mgr: :class:`dict`
+    """
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.objects], o.get(MF.objects, {})
+    for o_id, obj in new.items():
+        if o_id not in old:
+            obj_type = obj[MF.object_type]
+            pos = obj[MF.x_pos], obj[MF.y_pos]
+            operated_by = obj[MF.operated_by]
+            send_event(ObjectSpawn(o_id, obj_type, pos, operated_by))

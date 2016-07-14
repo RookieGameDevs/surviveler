@@ -274,3 +274,33 @@ class GameModeToggle(Event):
 
     def __str__(self):
         return '<GameModeToggle({})>'.format(self.mode)
+
+
+class ObjectSpawn(Event):
+    """Static object spawn.
+
+    Event emitted when a new static object appear.
+    """
+    def __init__(self, srv_id, obj_type, pos, operated_by):
+        """Constructor.
+
+        :param srv_id: The server id
+        :type srv_id: :class:`int`
+
+        :param obj_type: The object type
+        :type obj_type: :class:`int`
+
+        :param pos: The object position
+        :type pos: :class:`tuple`
+
+        :param operated_by: The id of the entity that is operating the server
+        :type operated_by: :class:`int`
+        """
+        self.srv_id = srv_id
+        self.obj_type = obj_type
+        self.pos = pos
+        self.operated_by = operated_by
+
+    def __str__(self):
+        return '<ObjectSpawn({}, {}, {}, {})>'.format(
+            self.srv_id, self.obj_type, self.pos, self.operated_by)

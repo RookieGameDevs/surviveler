@@ -1,58 +1,8 @@
 from game.components import Renderable
 from game.entities.entity import Entity
-from math import pi
+from game.entities.map_object import MapObject
 from matlib import Vec
 from renderer import Texture
-from utils import to_scene
-
-
-Y_AXIS = Vec(0, 1, 0)
-
-
-class MapObject(Entity):
-    """Static object on the map."""
-
-    def __init__(self, resource, parameters, parent_node):
-        """Constructor.
-
-        :param resource: Resource containing the object data.
-        :type resource: :class:`resource_manager.Resource`
-
-        :param parameters: Parameters for the object.
-        :type parameters: :class:`dict`
-
-        :param parent_node: Node to attach the object to.
-        :type parent_node: :class:`renderer.scene.SceneNode`
-        """
-        mesh = resource['model']
-        shader = resource['shader']
-        texture = Texture.from_image(resource['texture'])
-
-        # shader params
-        params = {
-            'tex': texture,
-        }
-
-        renderable = Renderable(
-            parent_node,
-            mesh,
-            shader,
-            params,
-            textures=[texture],
-            enable_light=True)
-
-        super().__init__(renderable)
-
-        self[Renderable].transform.translate(
-            to_scene(*parameters['pos']))
-
-        if 'rotation' in parameters:
-            self[Renderable].transform.rotate(
-                Y_AXIS, parameters['rotation'] * pi / 180)
-
-    def update(self, dt):
-        # NOTE: nothing to do
-        pass
 
 
 class Map(Entity):
@@ -92,8 +42,16 @@ class Map(Entity):
 
         # Initialize static objects
         for obj in resource.data['objects']:
-            self.objects.append(
+            self.add_object(
                 MapObject(resource[obj['ref']], obj, self[Renderable].node))
+
+    def add_object(self, obj):
+        """Add a static object to the map.
+
+        :param obj: The object to be added
+        :type obj: :class:`game.entitites.map_object.MapObject`
+        """
+        self.objects.append(obj)
 
     def update(self, dt):
         # NOTE: nothing to do

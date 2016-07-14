@@ -38,6 +38,7 @@ class Context:
         self.scene = None
         self.camera = None
         self.ratio = None
+        self.map = None
         self.terrain = None
         self.ui = None
 
