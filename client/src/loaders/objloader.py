@@ -106,7 +106,7 @@ def load_obj(fp):
 
             uv_idx = face_items[1]
             if uv_idx >= 0:
-                uvs.append(tmp_uvs[uv_idx])
+                uvs.extend(tmp_uvs[uv_idx])
 
             norm_idx = face_items[2]
             if norm_idx >= 0:

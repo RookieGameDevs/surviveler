@@ -67,19 +67,19 @@ class Map(Entity):
         :param parent_node: Node to attach the map to.
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
-        mesh = resource['mesh']
-        shader = resource['walls_shader']
-
+        shader = resource['shader']
+        mesh = resource['walls_mesh']
+        texture = Texture.from_image(resource['walls_texture'])
+        # shader params
         params = {
-            'color_ambient': Vec(0.4, 0.4, 0.4, 1),
-            'color_diffuse': Vec(0.8, 0.8, 0.8, 1),
-            'color_specular': Vec(1, 1, 1, 1),
+            'tex': texture,
         }
         renderable = Renderable(
             parent_node,
             mesh,
             shader,
             params,
+            textures=[texture],
             enable_light=True)
 
         super().__init__(renderable)

@@ -74,4 +74,6 @@ def player_spawn(evt):
 def player_spawn_sound(evt):
     # TODO: add documentation
     LOG.debug('Event subscriber: {}'.format(evt))
-    evt.context.audio_mgr.play_fx('toilet_flush')
+    is_player = evt.srv_id == evt.context.player_id
+    if is_player:
+        evt.context.audio_mgr.play_fx('toilet_flush')

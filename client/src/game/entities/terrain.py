@@ -1,8 +1,7 @@
 from game.components import Renderable
 from game.entities.entity import Entity
-from renderer import Rect
+from matlib import Vec
 from renderer import Texture
-from renderer import TextureParamFilter
 
 
 class Terrain(Entity):
@@ -17,47 +16,27 @@ class Terrain(Entity):
         :param parent_node: Parent node to attach the terrain entity to.
         :type param_node: subclass of :class:`renderer.SceneNode`
         """
-        scale_factor = resource.data['scale_factor']
-        matrix = resource['matrix']
-        shader = resource['terrain_shader']
-
-        w, h = len(matrix[0]), len(matrix)
-        rect = Rect(w / scale_factor, h / scale_factor)
-
-        texture = self.prepare_walkable_matrix(matrix)
-
-        renderable = Renderable(parent_node, rect, shader, textures=[texture])
-        renderable.node.params['tex'] = texture
+        shader = resource['shader']
+        mesh = resource['floor_mesh']
+        texture = Texture.from_image(resource['floor_texture'])
+        # shader params
+        params = {
+            'tex': texture,
+        }
+        renderable = Renderable(
+            parent_node,
+            mesh,
+            shader,
+            params,
+            textures=[texture],
+            enable_light=True)
 
         super().__init__(renderable)
+
+        # FIXME: this offset here is due to the calculation of the walkable
+        # matrix that adds one more walkable line on top of the scenario.
+        self[Renderable].transform.translate(Vec(0.0, 0.0, 1.0))
 
     def update(self, dt):
         # NOTE: nothing to do here
         pass
-
-    def set_walkable_state(self, matrix):
-        """Set the current matrix as terrain.
-
-        :param matrix: The matrix to be used
-        :type matrix: :class:`list`
-        """
-        texture = self.prepare_walkable_matrix(matrix)
-        node = self[Renderable].node
-        node.params['tex'] = texture
-        node.textures = [texture]
-
-    def prepare_walkable_matrix(self, matrix):
-        """Prepare the debug terrain texture using the source matrix.
-
-        :param matrix: The source matrix of walkable areas
-        :type matrix: :class:`list`
-
-        :returns: The walkable debug terrain
-        :rtype: :class:`renderer.Texture`
-        """
-        texture = Texture.from_matrix(matrix)
-        texture.set_param(TextureParamFilter(
-            TextureParamFilter.Type.magnify,
-            TextureParamFilter.Mode.nearest))
-
-        return texture
