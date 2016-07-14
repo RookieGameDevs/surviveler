@@ -59,7 +59,7 @@ PyTypeObject py_mesh_data_type = {
 };
 
 static PyObject*
-py_mesh_data_from_file(PyObject *__unused, PyObject *arg)
+py_mesh_data_from_file(PyObject *unused, PyObject *arg)
 {
 	if (!PyUnicode_Check(arg)) {
 		PyErr_SetString(

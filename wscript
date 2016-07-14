@@ -36,9 +36,14 @@ def configure(cfg):
 
     # find Python
     if cfg.options.with_python:
+
+        args = '--cflags'
+        if sys.platform.startswith('darwin'):
+            args = args + ' --ldflags'
+
         cfg.check_cfg(
             path='python3-config',
-            args='--cflags',
+            args=args,
             package='',
             uselib_store='python')
 
@@ -72,26 +77,27 @@ def configure(cfg):
 
 
 def build(bld):
-    # build library
-    libs = [
+    # compute platform-specific dependencies
+    deps = [
         'sdl',
         'glew',
     ]
-    kwargs = {
-        'features': 'c cshlib',
-        'target': 'surrender',
-        'source': bld.path.ant_glob('src/**/*.c', excl=['**/python', 'src/main.c']),
-        'uselib': libs,
-    }
+    kwargs = {}
 
     if sys.platform.startswith('linux'):
-        libs.extend([
+        deps.extend([
             'libm',
             'cblas',
         ])
     elif sys.platform.startswith('darwin'):
         kwargs['framework'] = ['OpenGL', 'Accelerate']
-    bld(**kwargs)
+
+    # build library
+    bld.shlib(
+        target='surrender',
+        source=bld.path.ant_glob('src/**/*.c', excl=['**/python', 'src/main.c']),
+        uselib=deps,
+        **kwargs)
 
     rpath = bld.bldnode.abspath()
 
@@ -99,9 +105,10 @@ def build(bld):
     bld.program(
         target='demo',
         source=[bld.path.find_node('src/main.c')],
-        uselib=libs,
+        uselib=deps,
         rpath=[rpath],
-        use=['surrender'])
+        use=['surrender'],
+        **kwargs)
 
     # build python extension
     if bld.env.with_python:
@@ -111,4 +118,5 @@ def build(bld):
             includes=['src/python'],
             use=['surrender'],
             rpath=[rpath],
-            uselib=['python'])
+            uselib=['python'],
+            **kwargs)

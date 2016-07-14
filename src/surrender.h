@@ -2,7 +2,6 @@
 
 /* OpenGL headeres */
 #include <GL/glew.h>
-#include <GL/gl.h>
 
 /* Project headers */
 #include "anim.h"
