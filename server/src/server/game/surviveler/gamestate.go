@@ -175,15 +175,22 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		// get the tile at building point coordinates
 		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
 
-		// check if we can build here
-		tile.Entities.Each(func(ent game.Entity) bool {
-			if _, ok := ent.(game.Building); ok {
-				log.WithField("tile", tile).
-					Error("There's already a building on this tile")
-				return false
-			}
-			return true
-		})
+		// tile must be walkable
+		if tile.IsWalkable() {
+			// check if we can build here
+			tile.Entities.Each(func(ent game.Entity) bool {
+				if _, ok := ent.(game.Building); ok {
+					log.WithField("tile", tile).
+						Error("There's already a building on this tile")
+					return false
+				}
+				return true
+			})
+		} else {
+			log.WithField("tile", tile).
+				Error("Tile is not walkable: can't build")
+			return
+		}
 
 		// clip building center with tile center
 		pos := math.FromInts(tile.X, tile.Y).
