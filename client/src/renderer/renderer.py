@@ -29,6 +29,7 @@ from exceptions import SDLError
 from utils import as_utf8
 import logging
 import sdl2 as sdl
+import surrender
 
 
 LOG = logging.getLogger(__name__)
@@ -146,6 +147,8 @@ class Renderer:
         LOG.info('GLSL version: {}'.format(
             as_utf8(glGetString(GL_SHADING_LANGUAGE_VERSION))))
 
+        surrender.init()
+
         self._width = width
         self._height = height
         self.gl_setup(width, height)
@@ -220,5 +223,6 @@ class Renderer:
 
         Destroys the OpenGL context and the window associated with the renderer.
         """
+        surrender.shutdown()
         sdl.SDL_GL_DeleteContext(self.gl_ctx)
         sdl.SDL_DestroyWindow(self.window)

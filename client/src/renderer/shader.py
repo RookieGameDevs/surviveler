@@ -96,12 +96,12 @@ UNIFORM_DEFAULTS = {
 
 
 UNIFORM_SETTERS = {
-    GL_FLOAT_MAT4: lambda i, v: glUniformMatrix4fv(i, 1, True, v),
-    GL_FLOAT_VEC3: lambda i, v: glUniform3fv(i, 1, v),
-    GL_FLOAT_VEC4: lambda i, v: glUniform4fv(i, 1, v),
-    GL_SAMPLER_2D: lambda i, v: glUniform1i(i, v),
-    GL_INT: lambda i, v: glUniform1i(i, v),
-    GL_FLOAT: lambda i, v: glUniform1f(i, v),
+    GL_FLOAT_MAT4: lambda i, s, v: glUniformMatrix4fv(i, s, True, v),
+    GL_FLOAT_VEC3: lambda i, s, v: glUniform3fv(i, s, v),
+    GL_FLOAT_VEC4: lambda i, s, v: glUniform4fv(i, s, v),
+    GL_SAMPLER_2D: lambda i, s, v: glUniform1i(i, v),
+    GL_INT: lambda i, s, v: glUniform1i(i, v),
+    GL_FLOAT: lambda i, s, v: glUniform1f(i, v),
 }
 
 
@@ -350,9 +350,15 @@ class Shader:
         for uniform in self.uniforms.values():
             u_type = uniform['type']
             u_loc = uniform['loc']
+            u_size = uniform['size']
             u_value = uniform['value']
-            gl_value = UNIFORM_CONVERTERS[u_type](u_value)
-            UNIFORM_SETTERS[u_type](u_loc, gl_value)
+            if isinstance(u_value, list):
+                gl_value = bytearray()
+                for val in u_value:
+                    gl_value.extend(UNIFORM_CONVERTERS[u_type](val))
+            else:
+                gl_value = UNIFORM_CONVERTERS[u_type](u_value)
+            UNIFORM_SETTERS[u_type](u_loc, u_size, gl_value)
 
         # setup uniform blocks
         for block in self.uniform_blocks.values():

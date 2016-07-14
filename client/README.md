@@ -46,6 +46,40 @@ Then this command will do the trick.
 
     pip install -r requirements.txt
 
+
+## Manual installation of `matlib` package
+To install C math library, ensure the Python interpreter used is virtualenv one
+and do the following:
+
+```
+python src/matlib/setup.py install
+```
+
+## Manual installation of `surrender` package
+To install C renderer, install these dependencies first:
+
+  * `GLEW`
+  * `AssImp` (mesh converter dependency)
+
+Build the renderer with Python wrappers (ensure the correct Python environment
+is set):
+
+```
+cd src/surrender
+./waf configure --with-python
+./waf
+```
+
+Install the resulting library in local Python distribution site-packages folder:
+
+`cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (Linux)
+`cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (OSX)
+
+*NOTE*: On Mac OS X the final file name must have `.so` extension!
+
+The `${VIRTUALENV}` is expected to be the absolute path to local Python
+environment.
+
 ## Running the application in the fish shell
 From within the virtualenv:
 
