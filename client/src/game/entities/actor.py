@@ -14,6 +14,7 @@ from math import pi
 from matlib import Vec
 from renderer import Texture
 from renderer.scene import SceneNode
+from surrender import AnimationInstance
 from utils import to_scene
 import logging
 
@@ -54,6 +55,15 @@ class Actor(Entity):
 
         shader = resource['shader']
         mesh = resource['model']['mesh']
+
+        # instantiate animations
+        md = resource['model']['mesh_data']
+        anim_list = md.get_animation_names()
+        if anim_list:
+            self.anim_inst = AnimationInstance(md.get_animation(anim_list[0]))
+        else:
+            self.anim_inst = None
+
         texture = Texture.from_image(resource['texture'])
 
         # shader params
@@ -83,7 +93,11 @@ class Actor(Entity):
             shader,
             params,
             textures=[texture],
-            enable_light=True)
+            enable_light=True,
+            animation=self.anim_inst)
+
+        # by default, start with playing animation
+        renderable.animate = True
 
         # initialize actor
         super().__init__(renderable, movable)
@@ -204,6 +218,10 @@ class Actor(Entity):
 
         # Update the health bar
         self.health_bar.update(dt)
+
+        # play animation
+        if self.anim_inst:
+            self.anim_inst.play(dt)
 
 
 @subscriber(ActorStatusChange)
