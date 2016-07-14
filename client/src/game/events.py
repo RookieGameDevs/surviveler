@@ -21,11 +21,12 @@ class ActorDisappear(Event):
 
     Event emitted when a previously existing actor does not exist anymore.
     """
-    def __init__(self, srv_id):
+    def __init__(self, srv_id, actor_type):
         self.srv_id = srv_id
+        self.actor_type = actor_type
 
     def __str__(self):
-        return '<ActorDisappear({})>'.format(self.srv_id)
+        return '<ActorDisappear({}, {})>'.format(self.srv_id, self.actor_type)
 
 
 class ActorStatusChange(Event):
@@ -33,14 +34,16 @@ class ActorStatusChange(Event):
 
     Event emitted when the amount of hp of a building changes.
     """
-    def __init__(self, srv_id, old, new):
+
+    def __init__(self, srv_id, actor_type, old, new):
         self.srv_id = srv_id
+        self.actor_type = actor_type
         self.old = old
         self.new = new
 
     def __str__(self):
-        return '<ActorStatusChange({}, {}, {})>'.format(
-            self.srv_id, self.old, self.new)
+        return '<ActorStatusChange({}, {}, {}, {})>'.format(
+            self.srv_id, self.actor_type, self.old, self.new)
 
 
 class BuildingSpawn(Event):
@@ -48,6 +51,7 @@ class BuildingSpawn(Event):
 
     Event emitted when a new building is discovered in the gamestate.
     """
+
     def __init__(self, srv_id, b_type, pos, cur_hp, completed):
         self.srv_id = srv_id
         self.b_type = b_type

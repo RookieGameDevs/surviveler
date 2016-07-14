@@ -3,6 +3,7 @@ from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
+from game.events import ActorStatusChange
 from game.events import EntityPick
 from network.message import Message
 from network.message import MessageField as MF
@@ -14,8 +15,9 @@ LOG = logging.getLogger(__name__)
 
 
 class Enemy(Actor):
+    """Game entity which represents an enemy.
+    """
     MEMBERS = {ActorType.zombie}
-    """Game entity which represents an enemy."""
 
 
 @subscriber(ActorSpawn)
@@ -61,10 +63,19 @@ def enemy_disappear(evt):
     """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
-    if evt.srv_id in context.server_entities_map:
+    is_zombie = evt.actor_type in Enemy.MEMBERS
+    if evt.srv_id in context.server_entities_map and is_zombie:
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+
+
+@subscriber(ActorDisappear)
+def enemy_death_sound(evt):
+    # TODO: add documentation
+    is_zombie = evt.actor_type in Enemy.MEMBERS
+    if is_zombie:
+        evt.context.audio_mgr.play_fx('zombie_death')
 
 
 @subscriber(EntityPick)
@@ -83,3 +94,15 @@ def enemy_click(evt):
             MF.id: context.server_id(evt.entity.e_id),
         })
         context.msg_queue.append(msg)
+
+
+@subscriber(ActorStatusChange)
+def fight_sounds(evt):
+    """Play zombie attack sounds.
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    is_zombie = evt.actor_type in Enemy.MEMBERS
+    if evt.srv_id in context.server_entities_map and is_zombie:
+        if evt.new < evt.old:
+            evt.context.audio_mgr.play_fx('punch')

@@ -1,3 +1,9 @@
+"""Implements audio system: music and sounds.
+
+Files supported:
+    * format: WAV, AIFF
+    * bit depth: 16 bit
+"""
 from sdl2.ext.compat import byteify
 from sdl2.sdlmixer import Mix_GetError
 from sdl2.sdlmixer import Mix_HaltChannel
@@ -6,6 +12,7 @@ from sdl2.sdlmixer import Mix_LoadWAV
 from sdl2.sdlmixer import Mix_PlayChannel
 from sdl2.sdlmixer import Mix_PlayMusic
 from sdl2.sdlmixer import Mix_VolumeMusic
+from random import choice as rand_choice
 import logging
 import os
 
@@ -25,10 +32,24 @@ class AudioManager:
     Wraps SDL_Mixer functionalites into an object, keeping track of the various
     sounds playing to give the caller a chance to play/stop effects when some
     event is occurring.
+
+    Directory example:
+
+        audio_root/
+            fx/
+                foo.aif
+                bar.wav
+                spam/
+                    egg1.aif
+                    egg2.aif
+                    spam.aif
+            music/
+                mymusic.aif
     """
 
     def __init__(self, config):
-        """Constructor. """
+        """Loads audio files.
+        """
 
         self.volume = config.getint('Volume')
 
@@ -41,12 +62,32 @@ class AudioManager:
         for filename in os.listdir(FX_ROOT):
             name, ext = os.path.splitext(filename)
             filepath = os.path.join(FX_ROOT, filename)
-            self.sounds[name] = Mix_LoadWAV(byteify(filepath, 'utf-8'))
+            event_sound_list = []
+            if os.path.isdir(filepath):
+                # We have more sounds for the same name
+                for subfile in os.listdir(filepath):
+                    subname, subext = os.path.splitext(subfile)
+                    if subext not in ('.aif', '.wav'):
+                        continue
+                    subfilepath = os.path.join(filepath, subfile)
+                    event_sound_list.append(subfilepath)
+            else:
+                if ext not in ('.aif', '.wav'):
+                    continue
+                # We have only 1 sound for this name
+                event_sound_list = [filepath]
+
+            self.sounds[name] = []
+            for sound_filepath in event_sound_list:
+                LOG.info('Loading sound {}'.format(sound_filepath))
+                self.sounds[name].append((sound_filepath, Mix_LoadWAV(
+                    byteify(sound_filepath, 'utf-8'))))
 
         self.musics = {}
         for filename in os.listdir(MUSIC_ROOT):
             name, ext = os.path.splitext(filename)
             filepath = os.path.join(MUSIC_ROOT, filename)
+            LOG.info('Loading music {}'.format(filepath))
             self.musics[name] = Mix_LoadMUS(byteify(filepath, 'utf-8'))
             if self.musics[name] is None:
                 raise RuntimeError(
@@ -86,9 +127,12 @@ class AudioManager:
         :param key: The key to be used to identify the sound
         :type key: :class:`int`
         """
-        channel = Mix_PlayChannel(-1, self.sounds[sound_name], loops)
+        sounds = self.sounds[sound_name]
+        filepath, sound = rand_choice(sounds)
+        channel = Mix_PlayChannel(-1, sound, loops)
         if channel == -1:
-            LOG.error('Cannot play sound "{}"'.format(sound_name))
+            LOG.error('Cannot play sound "{}: {}"'.format(
+                sound_name, filepath))
         elif key is not None:
             self.sound_map[key] = channel
 

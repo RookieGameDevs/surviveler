@@ -305,7 +305,7 @@ func (p *Player) findPath(dst math.Vec2) {
 	}
 	// set the path if found
 	p.Movable.SetPath(path)
-	p.lastPathFind = time.Time{}
+	p.lastPathFind = time.Now()
 }
 
 func (p *Player) Attack(e game.Entity) {
@@ -313,7 +313,7 @@ func (p *Player) Attack(e game.Entity) {
 
 	// directly search for path
 	p.findPath(e.Position())
-	p.lastAttack = time.Now()
+	p.lastAttack = time.Time{}
 
 	// setup the actions in the stack
 	p.emptyActions()
