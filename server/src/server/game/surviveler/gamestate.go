@@ -64,8 +64,11 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 		return err
 	}
 
-	obj := entities.NewObject(gs.game, gs, math.Vec2{10.0, 10.0}, game.CoffeeMachineObject)
-	gs.AddEntity(obj)
+	for _, objdata := range gs.gameData.mapData.UsableObjects {
+		obj := entities.NewObject(gs.game, gs, objdata.Pos, game.CoffeeMachineObject)
+		gs.AddEntity(obj)
+	}
+
 	// precompute constant, translation from corner to center of tile
 	txCenter = math.Vec2{1.0, 1.0}.Div(2.0 * gs.world.GridScale)
 	return nil

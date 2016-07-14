@@ -25,7 +25,7 @@ func NewObject(g game.Game, gamestate game.GameState, pos math.Vec2, objectType 
 	obj.pos = pos
 	obj.objectType = objectType
 	obj.id = game.InvalidId
-	obj.operatedBy = game.InvalidId
+	obj.operatedBy = nil
 
 	return obj
 }
@@ -43,11 +43,17 @@ func (obj *Object) Type() game.EntityType {
 }
 
 func (obj *Object) State() game.EntityState {
+	var operatedById uint32
+	if obj.operatedBy == nil {
+		operatedById = game.InvalidId
+	} else {
+		operatedById = obj.operatedBy.Id()
+	}
 	return game.ObjectState{
 		Type:       obj.objectType,
 		Xpos:       float32(obj.pos[0]),
 		Ypos:       float32(obj.pos[1]),
-		OperatedBy: game.InvalidId,
+		OperatedBy: operatedById,
 	}
 }
 
@@ -73,10 +79,12 @@ func (obj *Object) OperatedBy() game.Entity {
 	return obj.operatedBy
 }
 
-func (obj *Object) Operate(ent *game.Entity) bool {
-	if obj.operatedBy != game.InvalidId {
-		return false
+func (obj *Object) Operate(ent game.Entity) (res bool) {
+	res = true
+	if obj.operatedBy != nil {
+		res = false
 	} else {
 		obj.operatedBy = ent
 	}
+	return
 }
