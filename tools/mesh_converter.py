@@ -10,6 +10,7 @@ import argparse
 import os
 import pyassimp
 
+
 VERSION_MAJOR = 1
 VERSION_MINOR = 0
 VERSION = VERSION_MINOR << 4 | VERSION_MAJOR
@@ -152,10 +153,12 @@ def main(model, out):
 
                 bindings_count = len(vertex_bone_ids[v_id])
                 if bindings_count > MAX_JOINTS_PER_VERTEX:
-                    raise DataFormatError('vertex {} exceeds max joint bindings count {}/{}'.format(
-                        v_id,
-                        bindings_count,
-                        MAX_JOINTS_PER_VERTEX))
+                    msg = 'vertex {} exceeds max joint bindings count {}/{}'.format(
+                        v_id, bindings_count, MAX_JOINTS_PER_VERTEX)
+                    print(msg)
+                    vertex_bone_ids[v_id] = vertex_bone_ids[v_id][:MAX_JOINTS_PER_VERTEX]
+                    vertex_bone_weights[v_id] = vertex_bone_weights[v_id][:MAX_JOINTS_PER_VERTEX]
+                    continue
 
     animations = {}
     for i, anim in enumerate(scene.animations):
