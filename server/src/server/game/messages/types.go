@@ -42,6 +42,7 @@ type GameStateMsg struct {
 	Time      int16
 	Entities  map[uint32]interface{}
 	Buildings map[uint32]interface{}
+	Objects   map[uint32]interface{}
 }
 
 /*

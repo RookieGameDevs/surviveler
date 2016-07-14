@@ -33,6 +33,13 @@ const (
 	MgTurretBuilding EntityType = iota
 )
 
+/*
+ * Object type identifiers.
+ */
+const (
+	CoffeeMachineObject EntityType = iota
+)
+
 const (
 	InvalidId uint32 = gomath.MaxUint32
 )
@@ -80,6 +87,17 @@ type Building interface {
 }
 
 /*
+ * Object is the interface implemented by building objects.
+ *
+ * Object are entities and thus implement the Entity interface
+ */
+type Object interface {
+	Entity
+
+	OperatedBy() Entity
+}
+
+/*
  * EntityState represents a snapshot of an entity state
  */
 type EntityState interface{}
@@ -105,4 +123,14 @@ type BuildingState struct {
 	Ypos         float32
 	CurHitPoints uint16
 	Completed    bool
+}
+
+/*
+ * ObjectState represents a snapshot of an usable object
+ */
+type ObjectState struct {
+	Type       EntityType
+	Xpos       float32
+	Ypos       float32
+	OperatedBy uint32
 }

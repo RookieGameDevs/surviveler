@@ -64,6 +64,8 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 		return err
 	}
 
+	obj := entities.NewObject(gs.game, gs, math.Vec2{10.0, 10.0}, game.CoffeeMachineObject)
+	gs.AddEntity(obj)
 	// precompute constant, translation from corner to center of tile
 	txCenter = math.Vec2{1.0, 1.0}.Div(2.0 * gs.world.GridScale)
 	return nil
@@ -81,9 +83,12 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 	// to ease client reception, we separate mobile entities and buildings
 	gsMsg.Entities = make(map[uint32]interface{})
 	gsMsg.Buildings = make(map[uint32]interface{})
+	gsMsg.Objects = make(map[uint32]interface{})
 
 	for id, ent := range gs.entities {
 		switch ent.(type) {
+		case game.Object:
+			gsMsg.Objects[id] = ent.State()
 		case game.Building:
 			gsMsg.Buildings[id] = ent.State()
 		default:
