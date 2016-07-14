@@ -43,13 +43,13 @@ def traverse_children(node, op):
 
 
 def traverse_scene(scene, op):
-
+    op(scene.rootnode)
     traverse_children(scene.rootnode, op)
 
 
 def traverse_parents(scene, node, op):
     op(node)
-    if node.parent != scene.rootnode:
+    if node.parent != scene:
         traverse_parents(scene, node.parent, op)
 
 
@@ -123,7 +123,10 @@ def main(model, out):
         def add_to_skeleton(node):
             is_part = skeleton_parts[node.name][0]
             if is_part:
-                parent_id = skeleton.get(node.parent.name, [255])[0]
+                if node == scene.rootnode:
+                    parent_id = 255
+                else:
+                    parent_id = skeleton[node.parent.name][0]
                 transform = (
                     bones_by_name[node.name].offsetmatrix
                     if node.name in bones_by_name
