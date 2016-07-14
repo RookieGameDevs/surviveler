@@ -7,7 +7,6 @@ package game
 import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/beefsack/go-astar"
-	gomath "math"
 	"server/math"
 )
 
@@ -86,109 +85,4 @@ func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64,
 		"smoothed path length": len(path)}).
 		Debug("Path smoothing result")
 	return
-}
-
-/*
- * PathNeighbors returns a slice containing the neighbors
- */
-func (t *Tile) PathNeighbors() []astar.Pather {
-	w := t.W
-	neighbors := make([]astar.Pather, 0, 8)
-
-	// up
-	upw, leftw, rightw, downw := false, false, false, false
-	if up := w.Tile(t.X, t.Y-1); up != nil {
-		if up.Kind == KindWalkable {
-			upw = true
-			neighbors = append(neighbors, up)
-		}
-	}
-	// left
-	if left := w.Tile(t.X-1, t.Y); left != nil {
-		if left.Kind == KindWalkable {
-			leftw = true
-			neighbors = append(neighbors, left)
-		}
-	}
-	// down
-	if down := w.Tile(t.X, t.Y+1); down != nil {
-		if down.Kind == KindWalkable {
-			downw = true
-			neighbors = append(neighbors, down)
-		}
-	}
-	// right
-	if right := w.Tile(t.X+1, t.Y); right != nil {
-		if right.Kind == KindWalkable {
-			rightw = true
-			neighbors = append(neighbors, right)
-		}
-	}
-
-	// up left
-	if upleft := w.Tile(t.X-1, t.Y-1); upleft != nil {
-		if upleft.Kind == KindWalkable && upw && leftw {
-			neighbors = append(neighbors, upleft)
-		}
-	}
-
-	// down left
-	if downleft := w.Tile(t.X-1, t.Y+1); downleft != nil {
-		if downleft.Kind == KindWalkable && downw && leftw {
-			neighbors = append(neighbors, downleft)
-		}
-	}
-
-	// up right
-	if upright := w.Tile(t.X+1, t.Y-1); upright != nil {
-		if upright.Kind == KindWalkable && upw && rightw {
-			neighbors = append(neighbors, upright)
-		}
-	}
-
-	// down right
-	if downright := w.Tile(t.X+1, t.Y+1); downright != nil {
-		if downright.Kind == KindWalkable && downw && rightw {
-			neighbors = append(neighbors, downright)
-		}
-	}
-	return neighbors
-}
-
-/*
- * costFromKind returns the cost associated with a kind of tile
- */
-func costFromKind(kind TileKind) float64 {
-	switch kind {
-	case KindWalkable:
-		return 10.0
-	case KindNotWalkable:
-		return 1000000.0
-	}
-	log.WithField("kind", kind).Panic("TileKind not implemented")
-	return 0.0
-}
-
-/*
- * PathNeighborCost returns the exact movement cost to reach a neighbor tile
- */
-func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
-	to_ := to.(*Tile)
-	cf := costFromKind(to_.Kind)
-
-	if t.X == to_.X || t.Y == to_.Y {
-		// same axis, return the movement cost
-		return cf
-	} else {
-		// diagonal
-		return gomath.Sqrt2 * cf
-	}
-}
-
-/*
- * PathEstimatedCost estimates the movement cost required to reach a tile
- */
-func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
-	n := to.(*Tile)
-	return gomath.Abs(float64(n.X-t.X)) + gomath.Abs(float64(n.Y-t.Y))
 }
