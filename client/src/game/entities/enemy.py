@@ -3,6 +3,7 @@ from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
+from game.events import ActorStatusChange
 from game.events import EntityPick
 from network.message import Message
 from network.message import MessageField as MF
@@ -83,3 +84,14 @@ def enemy_click(evt):
             MF.id: context.server_id(evt.entity.e_id),
         })
         context.msg_queue.append(msg)
+
+
+@subscriber(ActorStatusChange)
+def enemy_hit_by_player_fx(evt):
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    print(evt.__dict__)
+    if evt.srv_id in context.server_entities_map:
+        if evt.actor_type in Enemy.MEMBERS:
+            if evt.new < evt.old:
+                evt.context.audio_mgr.play_fx('punch')

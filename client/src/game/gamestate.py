@@ -242,8 +242,9 @@ def handle_actor_health(gs_mgr):
             new_hp = entities[MF.cur_hp]
             old_hp = old[e_id][MF.cur_hp]
             hp_changed = new_hp != old_hp
+            actor_type = ActorType(entities[MF.entity_type])
             if hp_changed:
-                send_event(ActorStatusChange(e_id, old_hp, new_hp))
+                send_event(ActorStatusChange(e_id, actor_type, old_hp, new_hp))
 
 
 @processor
