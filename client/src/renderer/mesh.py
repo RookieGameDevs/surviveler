@@ -93,12 +93,14 @@ class Mesh:
             vertex_data = np.append(vertex_data, np.array(uvs, np.float32))
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, vertex_data.nbytes, vertex_data, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, vertex_data.nbytes,
+                     vertex_data, GL_STATIC_DRAW)
 
         # initialize index buffer
         index_data = np.array(indices, np.uint32)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_data.nbytes, index_data, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_data.nbytes,
+                     index_data, GL_STATIC_DRAW)
 
         # specify first attribute as vertex data
         glEnableVertexAttribArray(0)

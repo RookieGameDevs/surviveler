@@ -124,7 +124,8 @@ def show_building_template(evt):
         )
 
         matrix, scale_factor = context.matrix, context.scale_factor
-        building_template = BuildingTemplate(resource, matrix, scale_factor, context.scene.root)
+        building_template = BuildingTemplate(
+            resource, matrix, scale_factor, context.scene.root)
 
         context.building_type = building_type
         context.building_template = building_template
@@ -147,7 +148,6 @@ def set_cell_unwalkable(evt):
     x, y = to_matrix(evt.pos[0], evt.pos[1], context.scale_factor)
     if in_matrix(context.matrix, x, y):
         context.matrix[y][x] = False
-        context.terrain.set_walkable_state(context.matrix)
 
 
 @subscriber(BuildingDisappear)
@@ -157,4 +157,3 @@ def set_cell_walkable(evt):
     x, y = to_matrix(evt.pos[0], evt.pos[1], context.scale_factor)
     if in_matrix(context.matrix, x, y):
         context.matrix[y][x] = True
-        context.terrain.set_walkable_state(context.matrix)
