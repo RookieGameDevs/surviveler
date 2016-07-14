@@ -1,6 +1,7 @@
 #include "common.h"
 #include <mesh.h>
 #include <string.h>
+#include <structmember.h>
 
 static PyObject*
 py_mesh_data_from_file(PyObject *unused, PyObject *arg);
@@ -11,22 +12,20 @@ py_mesh_data_from_buffer(PyObject *unused, PyObject *arg);
 static void
 py_mesh_data_free(PyObject *self);
 
-static PyObject*
-py_mesh_data_get_animation(PyObject *self, PyObject *name);
-
-static PyObject*
-py_mesh_data_get_animation_names(PyObject *self);
-
 static PyMethodDef py_mesh_data_methods[] = {
 	{ "from_file", (PyCFunction)py_mesh_data_from_file, METH_O | METH_STATIC,
 	  "Load mesh data from file." },
 	{ "from_buffer", (PyCFunction)py_mesh_data_from_buffer, METH_O | METH_STATIC,
 	  "Load mesh data from buffer object." },
-	{ "get_animation", (PyCFunction)py_mesh_data_get_animation, METH_O,
-	  "Retrieve animation by name." },
-	{ "get_animation_names", (PyCFunction)py_mesh_data_get_animation_names, METH_NOARGS,
-	  "Retrieve the list of available animation names." },
 	{ NULL }
+};
+
+static PyMemberDef py_mesh_data_members[] = {
+	{ "transform", T_OBJECT, offsetof(PyMeshDataObject, transform), READONLY,
+	  "Root transform." },
+	{ "animations", T_OBJECT, offsetof(PyMeshDataObject, animations), READONLY,
+	  "List of animations." },
+	{ NULL },
 };
 
 PyTypeObject py_mesh_data_type = {
@@ -55,8 +54,34 @@ PyTypeObject py_mesh_data_type = {
 	.tp_setattro = NULL,
 	.tp_flags = Py_TPFLAGS_DEFAULT,
 	.tp_methods = py_mesh_data_methods,
+	.tp_members = py_mesh_data_members,
 	.tp_getset = NULL
 };
+
+static PyObject*
+make_object(struct MeshData *md)
+{
+	PyMeshDataObject *md_o = PyObject_New(PyMeshDataObject, &py_mesh_data_type);
+	md_o->mesh_data = md;
+
+	// setup animations dict
+	md_o->animations = PyDict_New();
+	for (size_t i = 0; i < md->anim_count; i++) {
+		PyAnimationObject *anim_o = PyObject_New(PyAnimationObject, &py_animation_type);
+		anim_o->anim = &md->animations[i];
+		anim_o->container = md_o;
+
+		PyDict_SetItemString(md_o->animations, md->animations[i].name, (PyObject*)anim_o);
+
+		Py_INCREF(md_o);
+	}
+
+	// initialize transform attribute
+	md_o->transform = PyObject_New(PyMatObject, &py_mat_type);
+	md_o->transform->mat = md->transform;
+
+	return (PyObject*)md_o;
+}
 
 static PyObject*
 py_mesh_data_from_file(PyObject *unused, PyObject *arg)
@@ -78,9 +103,7 @@ py_mesh_data_from_file(PyObject *unused, PyObject *arg)
 		return NULL;
 	}
 
-	PyMeshDataObject *md_o = PyObject_New(PyMeshDataObject, &py_mesh_data_type);
-	md_o->mesh_data = md;
-	return (PyObject*)md_o;
+	return make_object(md);
 }
 
 static PyObject*
@@ -110,59 +133,7 @@ py_mesh_data_from_buffer(PyObject *unused, PyObject *arg)
 		return NULL;
 	}
 
-	PyMeshDataObject *md_o = PyObject_New(PyMeshDataObject, &py_mesh_data_type);
-	md_o->mesh_data = md;
-	return (PyObject*)md_o;
-}
-
-static PyObject*
-py_mesh_data_get_animation(PyObject *self, PyObject *name_o)
-{
-	if (!PyUnicode_Check(name_o)) {
-		PyErr_SetString(
-			PyExc_ValueError,
-			"expected animation name string"
-		);
-		return NULL;
-	}
-
-	struct MeshData *md = ((PyMeshDataObject*)self)->mesh_data;
-	const char *name = (char*)PyUnicode_1BYTE_DATA(name_o);
-	struct Animation *anim = NULL;
-	for (size_t i = 0; i < md->anim_count; i++) {
-		if (strcmp(md->animations[i].name, name) == 0) {
-			anim = &md->animations[i];
-			break;
-		}
-	}
-
-	if (!anim) {
-		char *errmsg = strfmt("animation '%s' not found", name);
-		PyErr_SetString(
-			PyExc_ValueError,
-			errmsg
-		);
-		free(errmsg);
-		return NULL;
-	}
-
-	PyAnimationObject *obj = PyObject_New(PyAnimationObject, &py_animation_type);
-	obj->anim = anim;
-	obj->container = (PyMeshDataObject*)self;
-	Py_INCREF(self);
-
-	return (PyObject*)obj;
-}
-
-static PyObject*
-py_mesh_data_get_animation_names(PyObject *self)
-{
-	struct MeshData *md = ((PyMeshDataObject*)self)->mesh_data;
-	PyObject *list = PyList_New(md->anim_count);
-	for (size_t i = 0; i < md->anim_count; i++) {
-		PyList_SetItem(list, i, PyUnicode_FromString(md->animations[i].name));
-	}
-	return list;
+	return make_object(md);
 }
 
 static void

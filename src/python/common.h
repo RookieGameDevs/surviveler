@@ -4,9 +4,21 @@
 #include <mesh.h>
 #include <anim.h>
 
+typedef struct _PyVecObject {
+	PyObject_HEAD
+	Vec vec;
+} PyVecObject;
+
+typedef struct _PyMatObject {
+	PyObject_HEAD
+	Mat mat;
+} PyMatObject;
+
 typedef struct _PyMeshDataObject {
 	PyObject_HEAD
 	struct MeshData *mesh_data;
+	PyMatObject *transform;
+	PyObject *animations;
 } PyMeshDataObject;
 
 typedef struct _PyMeshObject {
@@ -28,16 +40,6 @@ typedef struct _PyAnimationInstanceObject {
 	PyObject *skin_transforms;
 	PyAnimationObject *ref;
 } PyAnimationInstanceObject;
-
-typedef struct _PyVecObject {
-	PyObject_HEAD
-	Vec vec;
-} PyVecObject;
-
-typedef struct _PyMatObject {
-	PyObject_HEAD
-	Mat mat;
-} PyMatObject;
 
 extern PyTypeObject py_mesh_data_type;
 extern PyTypeObject py_mesh_type;
