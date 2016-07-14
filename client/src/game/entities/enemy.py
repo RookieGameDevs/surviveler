@@ -1,10 +1,12 @@
 from events import subscriber
+from game.components import Renderable
 from game.entities.actor import Actor
 from game.entities.actor import ActorType
 from game.events import ActorDisappear
 from game.events import ActorSpawn
 from game.events import ActorStatusChange
 from game.events import EntityPick
+from matlib import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
@@ -18,6 +20,10 @@ class Enemy(Actor):
     """Game entity which represents an enemy.
     """
     MEMBERS = {ActorType.zombie}
+
+    def update(self, dt):
+        super().update(dt)
+        self[Renderable].transform.scale(Vec(0.031, 0.031, 0.031))
 
 
 @subscriber(ActorSpawn)

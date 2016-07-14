@@ -24,6 +24,9 @@ LOG = logging.getLogger(__name__)
 
 WHOLE_ANGLE = 2.0 * pi
 
+WALK_ANIM_NAME = 'anim0'
+ACTION_ANIM_NAME = 'anim1'
+
 
 @unique
 class ActorType(IntEnum):
@@ -55,14 +58,20 @@ class Actor(Entity):
 
         shader = resource['shader']
         mesh = resource['model']['mesh']
-
-        # instantiate animations
         md = resource['model']['mesh_data']
-        anim_list = md.get_animation_names()
-        if anim_list:
-            self.anim_inst = AnimationInstance(md.get_animation(anim_list[0]))
-        else:
-            self.anim_inst = None
+
+        # root transformation to apply to the mesh
+        self.transform = md.transform
+
+        walk_anim = md.animations.get(WALK_ANIM_NAME)
+        if walk_anim:
+            walk_anim = AnimationInstance(walk_anim)
+        self.current_anim = self.walk_anim = walk_anim
+
+        action_anim = md.animations.get(ACTION_ANIM_NAME)
+        if action_anim:
+            action_anim = AnimationInstance(action_anim)
+        self.action_anim = action_anim
 
         texture = Texture.from_image(resource['texture'])
 
@@ -94,7 +103,7 @@ class Actor(Entity):
             params,
             textures=[texture],
             enable_light=True,
-            animation=self.anim_inst)
+            animation=self.current_anim)
 
         # by default, start with playing animation
         renderable.animate = True
@@ -212,6 +221,7 @@ class Actor(Entity):
 
         t = self[Renderable].transform
         t.identity()
+        t *= self.transform
         t.rotate(Vec(0, 1, 0), -self.heading)
 
         self.orientate()
@@ -220,8 +230,8 @@ class Actor(Entity):
         self.health_bar.update(dt)
 
         # play animation
-        if self.anim_inst:
-            self.anim_inst.play(dt)
+        if self.current_anim:
+            self.current_anim.play(dt)
 
 
 @subscriber(ActorStatusChange)

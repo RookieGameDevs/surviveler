@@ -33,7 +33,6 @@ class Renderable(Component):
         :param enable_light: Enable lighting for the renderable.
         :type enable_light: bool
         """
-        self.animation = animation
         self.node = GeometryNode(
             mesh,
             shader,
@@ -58,3 +57,11 @@ class Renderable(Component):
     @animate.setter
     def animate(self, value):
         self.node.animate = value
+
+    @property
+    def animation(self):
+        return self.node.anim_inst
+
+    @animation.setter
+    def animation(self, anim_inst):
+        self.node.anim_inst = anim_inst
