@@ -6,6 +6,7 @@ from game.events import ActorDisappear
 from game.events import ActorSpawn
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
+from game.events import CharacterJoin
 from matlib import Vec
 from renderer import Font
 from renderer import TextNode
@@ -37,21 +38,51 @@ class Label:
         self.shader = resource['font_shader']
         self.color = Vec(0.7, 0.7, 0.7, 0)
 
-        self.name_node = parent_node.add_child(TextNode(
+        self.node = parent_node.add_child(TextNode(
             self.font,
             self.shader,
             name,
             self.color))
 
-        ratio = context.ratio
+        self.ratio = context.ratio
+        text_w = self.node.width
+        self.translation = Vec(-text_w * context.ratio * 0.5, 3.5, 0)
+        self.scale = Vec(context.ratio, context.ratio, context.ratio)
 
-        text_w = self.name_node.width
-        self.translation = Vec(-text_w * ratio * 0.5, 3.5, 0)
-        self.scale = Vec(ratio, ratio, ratio)
+        t = self.node.transform
+        t.translate(self.translation)
+        t.rotate(Vec(1, 0, 0), math.pi / 2)
+        t.scale(self.scale)
 
-        self.name_node.transform.translate(self.translation)
-        self.name_node.transform.rotate(Vec(1, 0, 0), math.pi / 2)
-        self.name_node.transform.scale(self.scale)
+    @property
+    def text(self):
+        """Returns the label text.
+
+        :returns: The label text
+        :rtype: :class:`str`
+        """
+        return self.node.text
+
+    @text.setter
+    def text(self, text):
+        """Sets the label text.
+
+        Also the transform is updated properly.
+
+        :param text: The new text to be displayed
+        :type text: :class:`str`
+        """
+        self.node.text = text
+
+        text_w = self.node.width
+        self.translation = Vec(-text_w * self.ratio * 0.5, 3.5, 0)
+        self.scale = Vec(self.ratio, self.ratio, self.ratio)
+
+        t = self.node.transform
+        t.identity()
+        t.translate(self.translation)
+        t.rotate(Vec(1, 0, 0), math.pi / 2)
+        t.scale(self.scale)
 
     def update(self):
         """Update the rotation of the label to always be pointing to the camera.
@@ -65,7 +96,7 @@ class Label:
         # Find the angle between the camera and the health bar, then rotate it.
         # NOTE: also scaling and tranlsation are applied here.
         angle = math.acos(z_axis.dot(direction))
-        t = self.name_node.transform
+        t = self.node.transform
         t.identity()
         t.translate(self.translation)
         t.rotate(Vec(1, 0, 0), angle)
@@ -90,8 +121,17 @@ class Character(Actor):
         """
         super().__init__(resource, health, parent_node)
 
-        self.name = name
+        self._name = name
         self.name_node = Label(resource, name, self.group_node)
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+        self.name_node.text = name
 
     def update(self, dt):
         super().update(dt)
@@ -153,6 +193,20 @@ def character_disappear(evt):
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
         character.destroy()
+
+
+@subscriber(CharacterJoin)
+def set_character_name(evt):
+    """Update the name of the character.
+
+    :param evt: The event instance
+    :type evt: :class:`game.events.CharacterJoin`
+    """
+    LOG.debug('Event subscriber: {}'.format(evt))
+    context = evt.context
+    entity = context.resolve_entity(evt.srv_id)
+    if entity:
+        entity.name = evt.name
 
 
 @subscriber(CharacterBuildingStart)
