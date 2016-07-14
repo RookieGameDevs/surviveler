@@ -252,6 +252,25 @@ func (gs *gamestate) onPlayerAttack(event *events.Event) {
 }
 
 /*
+ * event handler for PlayerUse events
+ */
+func (gs *gamestate) onPlayerOperate(event *events.Event) {
+	evt := event.Payload.(events.PlayerOperateEvent)
+	log.WithField("evt", evt).Info("Received PlayerOperate event")
+
+	if player := gs.getPlayer(evt.Id); player != nil {
+
+		if object := gs.getObject(evt.EntityId); object != nil {
+			// set player action
+			player.Operate(object)
+
+			// plan movement
+			gs.fillMovementRequest(player, object.Position())
+		}
+	}
+}
+
+/*
  * event handler for PlayerDeath events
  */
 func (gs *gamestate) onPlayerDeath(event *events.Event) {

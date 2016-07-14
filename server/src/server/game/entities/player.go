@@ -27,22 +27,23 @@ const (
  * implements the Entity interface.
  */
 type Player struct {
-	id            uint32
-	entityType    game.EntityType  // player type
-	actions       game.ActionStack // action stack
-	lastBPinduced time.Time        // time of last initiated BP induction
-	lastAttack    time.Time        // time of last initiated BP induction
-	lastPathFind  time.Time        // time of last initiated BP induction
-	curBuilding   game.Building    // building in construction
-	g             game.Game
-	gamestate     game.GameState
-	world         *game.World
-	buildPower    uint16
-	combatPower   uint16
-	totalHP       float64
-	curHP         float64
-	target        game.Entity
-	posDirty      bool
+	id              uint32
+	entityType      game.EntityType  // player type
+	actions         game.ActionStack // action stack
+	lastBPinduced   time.Time        // time of last initiated BP induction
+	lastAttack      time.Time        // time of last attack
+	lastPathFind    time.Time        // time of last path find
+	lastCoffeeDrink time.Time        // time of last coffee drink
+	curBuilding     game.Building    // building in construction
+	g               game.Game
+	gamestate       game.GameState
+	world           *game.World
+	buildPower      uint16
+	combatPower     uint16
+	totalHP         float64
+	curHP           float64
+	target          game.Entity
+	posDirty        bool
 	*components.Movable
 }
 
@@ -330,6 +331,16 @@ func (p *Player) Attack(e game.Entity) {
 	p.actions.Push(&game.Action{game.AttackAction, game.AttackActionData{}})
 	p.target = e
 
+}
+
+func (p *Player) Operate(e game.Entity) {
+	log.Debug("Player.Operate")
+	switch e.Type() {
+	case game.CoffeeMachineObject:
+		p.moveAndAction(game.DrinkCoffeeAction, game.DrinkCoffeeActionData{})
+		p.target = e
+		p.lastCoffeeDrink = time.Time{}
+	}
 }
 
 /*

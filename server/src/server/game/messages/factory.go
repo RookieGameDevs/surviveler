@@ -50,6 +50,7 @@ func (mf Factory) registerMsgTypes() {
 	mf.registerMsgType(LeaveId, LeaveMsg{})
 	mf.registerMsgType(RepairId, RepairMsg{})
 	mf.registerMsgType(AttackId, AttackMsg{})
+	mf.registerMsgType(OperateId, OperateMsg{})
 }
 
 /*

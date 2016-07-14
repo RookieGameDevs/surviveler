@@ -19,6 +19,7 @@ const (
 	BuildId
 	RepairId
 	AttackId
+	OperateId
 )
 
 /*
@@ -74,6 +75,13 @@ type RepairMsg struct {
  */
 type AttackMsg struct {
 	Id uint32 // id of the entity to attack
+}
+
+/*
+ * player initiated an operate action. Client -> server message
+ */
+type OperateMsg struct {
+	Id uint32 // id of the entity to operate
 }
 
 /*

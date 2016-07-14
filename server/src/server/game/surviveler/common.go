@@ -71,6 +71,18 @@ func (gs *gamestate) getZombie(id uint32) (z *entities.Zombie) {
 }
 
 /*
+ * getObject returns the Object associated to given id.
+ *
+ * It returns nil in case of error
+ */
+func (gs *gamestate) getObject(id uint32) (z *entities.Object) {
+	if e, ok := gs.entities[id]; ok {
+		z, ok = e.(*entities.Object)
+	}
+	return
+}
+
+/*
  * getBuilding returns the Building associated to given id.
  *
  * It returns nil in case of error

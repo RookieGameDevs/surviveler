@@ -165,6 +165,11 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			log.WithError(err).Error("Couldn't handle Attack")
 			return false
 		}
+	case messages.OperateId:
+		if err := srv.handleOperate(c, msg); err != nil {
+			log.WithError(err).Error("Couldn't handle Operate")
+			return false
+		}
 	default:
 		// forward it
 		srv.msgCb(msg, clientData.Id)
