@@ -53,7 +53,7 @@ class Actor(Entity):
         self._health = health
 
         shader = resource['shader']
-        mesh = resource['model']
+        mesh = resource['model']['mesh']
         texture = Texture.from_image(resource['texture'])
 
         # shader params
