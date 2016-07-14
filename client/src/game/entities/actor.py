@@ -6,6 +6,7 @@ from game.components import Movable
 from game.components import Renderable
 from game.entities.entity import Entity
 from game.entities.widgets.health_bar import HealthBar
+from game.events import ActorActionChange
 from game.events import ActorIdle
 from game.events import ActorMove
 from game.events import ActorStatusChange
@@ -33,6 +34,17 @@ class ActorType(IntEnum):
     programmer = 1
     engineer = 2
     zombie = 3
+
+
+@unique
+class ActionType(IntEnum):
+    """Enum of the various possible ActionType"""
+    idle = 0
+    move = 1
+    build = 2
+    repair = 3
+    attack = 4
+    drinking = 5
 
 
 class AnimationType(str, Enum):
@@ -207,6 +219,23 @@ class Actor(Entity):
         node = self.group_node
         node.parent.remove_child(node)
 
+    def set_action(self, action_type):
+        """Sets current player action.
+
+        :param action_type: Action to set.
+        :type action_type: :class:`game.entities.actor.ActionType`
+        """
+        if (action_type == ActionType.attack or
+                action_type == ActionType.build or
+                action_type == ActionType.repair):
+            self.current_anim = self.action_anim
+        elif action_type == ActionType.move:
+            self.current_anim = self.walk_anim
+        else:
+            self.current_anim = None
+
+        self[Renderable].animation = self.current_anim
+
     def update(self, dt):
         """Update the character.
 
@@ -237,6 +266,26 @@ class Actor(Entity):
         # play animation
         if self.current_anim:
             self.current_anim.play(dt)
+
+
+def lookup_entity(evt):
+    """Looks up the entity associated with given event.
+
+    :param evt: Event object.
+    :type evt: :class:`events.Event`
+    """
+    context = evt.context
+    if evt.srv_id in context.server_entities_map:
+        e_id = context.server_entities_map[evt.srv_id]
+        return context.entities[e_id]
+
+
+@subscriber(ActorActionChange)
+def actor_action_change(evt):
+    """Updates actor action."""
+    actor = lookup_entity(evt)
+    if actor:
+        actor.set_action(evt.new)
 
 
 @subscriber(ActorStatusChange)
