@@ -1,3 +1,9 @@
+"""Implements audio system: music and sounds.
+
+Files supported:
+    * format: WAV, AIFF
+    * bit depth: 16 bit
+"""
 from sdl2.ext.compat import byteify
 from sdl2.sdlmixer import Mix_GetError
 from sdl2.sdlmixer import Mix_HaltChannel
@@ -26,10 +32,24 @@ class AudioManager:
     Wraps SDL_Mixer functionalites into an object, keeping track of the various
     sounds playing to give the caller a chance to play/stop effects when some
     event is occurring.
+
+    Directory example:
+
+        audio_root/
+            fx/
+                foo.aif
+                bar.wav
+                spam/
+                    egg1.aif
+                    egg2.aif
+                    spam.aif
+            music/
+                mymusic.aif
     """
 
     def __init__(self, config):
-        """Constructor. """
+        """Loads audio files.
+        """
 
         self.volume = config.getint('Volume')
 
