@@ -720,8 +720,7 @@ register_matlib(PyObject *parent)
 	if (PyType_Ready(&py_mat_type) < 0 || PyModule_AddObject(matlib, "Mat", (PyObject*)&py_mat_type) < 0)
 		raise_pyerror();
 
-	PyObject *dict = PyModule_GetDict(parent);
-	PyDict_SetItemString(dict, "matlib", matlib);
+	PyModule_AddObject(parent, "matlib", matlib);
 
 	return 1;
 }
