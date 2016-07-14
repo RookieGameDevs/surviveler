@@ -88,11 +88,14 @@ def enemy_click(evt):
 
 
 @subscriber(ActorStatusChange)
-def enemy_hit_by_player_fx(evt):
+def fight_sounds(evt):
+    """Play character or zombie attack sounds based on who's loosing hp.
+    """
     LOG.debug('Event subscriber: {}'.format(evt))
     context = evt.context
-    print(evt.__dict__)
     if evt.srv_id in context.server_entities_map:
-        if evt.actor_type in Enemy.MEMBERS:
-            if evt.new < evt.old:
+        if evt.new < evt.old:
+            if evt.actor_type in Enemy.MEMBERS:
                 evt.context.audio_mgr.play_fx('punch')
+            else:
+                evt.context.audio_mgr.play_fx('zombie_attack')

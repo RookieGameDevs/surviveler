@@ -193,6 +193,10 @@ def character_disappear(evt):
     if evt.srv_id in context.server_entities_map:
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
+        if type(character) is Character:
+            evt.context.audio_mgr.play_fx('player_death')
+        else:
+            evt.context.audio_mgr.play_fx('zombie_death')
         character.destroy()
 
 
