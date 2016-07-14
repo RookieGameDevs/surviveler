@@ -46,6 +46,29 @@ Then this command will do the trick.
 
     pip install -r requirements.txt
 
+
+## Manual installation of `matlib` package
+To install C math library, ensure the Python interpreter used is virtualenv one
+and do the following:
+
+```
+python src/matlib/setup.py install
+```
+
+## Manual installation of `surrender` package
+To install C renderer, ensure the Python interpreter used is virtualenv one
+and do the following:
+
+```
+cd src/surrender
+./waf --configure --with-python
+./waf
+cp build/python/libsurrender.so ${CLIENT_DIR}/lib/python3.5/site-packages/surrender.so
+```
+
+The `${CLIENT_DIR}` is expected to be the absolute path to `surviveler/client`
+directory.
+
 ## Running the application in the fish shell
 From within the virtualenv:
 
