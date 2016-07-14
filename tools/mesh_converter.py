@@ -67,7 +67,7 @@ def find_root(nodes):
 def load_animations(scene, skeleton, counter):
     animations = {}
     for i, anim in enumerate(scene.animations):
-        name = 'animation{}'.format(next(counter))
+        name = 'anim{}'.format(next(counter))
 
         if len(anim.channels) == 0 or len(anim.channels[0].positionkeys) == 0:
             raise DataFormatError('animation "{}" has no keyframes'.format(name))
@@ -120,7 +120,11 @@ def load_animations(scene, skeleton, counter):
         for t in timestamps:
             skeleton_pose = []
             for node_name, timeline in node_timelines.iteritems():
-                joint_id = skeleton[node_name][0]
+                try:
+                    joint_id = skeleton[node_name][0]
+                except KeyError:
+                    raise DataFormatError(
+                        'animation "{}" skeleton does not match reference one'.format(name))
                 pos, rot, scale = timeline[t]
                 skeleton_pose.append((joint_id, pos, rot, scale))
 
@@ -227,7 +231,6 @@ def main(mesh, out, anims=None):
     n_count = len(mesh.normals)
     t_count = len(mesh.texturecoords)
     b_count = len(mesh.bones)
-    a_count = len(scene.animations)
 
     if n_count > 0:
         fmt |= VertexFormat.has_normal
@@ -238,7 +241,9 @@ def main(mesh, out, anims=None):
 
     if fmt & VertexFormat.has_joints:
         skeleton, vertex_bone_ids, vertex_bone_weights = load_skeleton(scene)
-        animations = load_animations(scene, skeleton, anim_counter)
+        for anim_file in anims or []:
+            anim_scene = pyassimp.load(anim_file)
+            animations.update(load_animations(anim_scene, skeleton, anim_counter))
         strings = {s: i for i, s in enumerate(animations.iterkeys())}
 
     with open(out, 'wb') as fp:
@@ -250,7 +255,7 @@ def main(mesh, out, anims=None):
             v_count,
             v_count,
             len(skeleton),
-            a_count)
+            len(animations))
         fp.write(header)
 
         # write root transformation
@@ -297,7 +302,6 @@ def main(mesh, out, anims=None):
 
         # write animations
         for name, (timestamps, poses, duration, tickspersecond) in animations.iteritems():
-
             # header
             fp.write(pack(
                 '<LffL',
@@ -348,11 +352,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Converter to native binary format.')
     parser.add_argument('--mesh', type=str, required=True, help='Mesh file')
     parser.add_argument('--anims', type=str, nargs='+', help='Animation file')
-    parser.add_argument('out', type=str, help='Destination file')
+    parser.add_argument('-o', type=str, help='Output filename')
 
     args = parser.parse_args()
 
     try:
-        main(args.mesh, args.out, anims=args.anims or None)
+        main(args.mesh, args.o, anims=args.anims or None)
     except DataFormatError as err:
         print 'Conversion failed: {}'.format(err)
