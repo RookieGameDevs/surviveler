@@ -30,7 +30,8 @@ const (
  * Building type identifiers.
  */
 const (
-	MgTurretBuilding EntityType = iota
+	BarricadeBuilding EntityType = iota
+	MgTurretBuilding
 )
 
 /*

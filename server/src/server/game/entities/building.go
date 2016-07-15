@@ -100,6 +100,55 @@ type BuildingUpdater interface {
 }
 
 /*
+ * Barricade is a simple barricade building
+ *
+ * It implements the Building interface
+ */
+type Barricade struct {
+	BuildingBase
+}
+
+/*
+ * NewBarricade creates a new barricade
+ */
+func NewBarricade(g game.Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+	return &MgTurret{
+		BuildingBase{
+			id:           game.InvalidId,
+			g:            g,
+			pos:          pos,
+			totalHP:      float64(totHP),
+			curHP:        1,
+			requiredBP:   reqBP,
+			curBP:        0,
+			buildingType: game.MgTurretBuilding,
+		},
+	}
+}
+
+func (mg *Barricade) Update(dt time.Duration) {
+}
+
+/*
+ * AddBuildPower adds a given quantity of build power into the building.
+ *
+ * Build Power is induced by construction or reparation.
+ */
+func (mg *Barricade) AddBuildPower(bp uint16) {
+	mg.addBuildPower(bp)
+}
+
+/*
+ * IsBuilt indicates if the building is totally constructed.
+ *
+ * For the case of a building with shooting ability (eg a turret), this
+ * implies the building is active and can shoot
+ */
+func (mg *Barricade) IsBuilt() bool {
+	return mg.isBuilt
+}
+
+/*
  * MgTurret is a machine-gun turret building
  *
  * It implements the Building interface

@@ -114,12 +114,12 @@ def show_building_template(evt):
 
     if context.game_mode == context.GameMode.building:
         # TODO: Remove the hardcoded building type with a dynamic one
-        building_type = BuildingType.mg_turret.value
+        building_type = BuildingType.barricade.value
         entities = context.res_mgr.get('/entities')
         resource = context.res_mgr.get(
             entities.data['buildings_map'].get(
                 BuildingType(building_type).name,
-                '/prefabs/buildings/mg_turret'
+                '/prefabs/buildings/barricade'
             )
         )
 
