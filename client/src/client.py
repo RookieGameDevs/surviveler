@@ -375,10 +375,8 @@ class Client:
             self.exit = True
         else:
             LOG.info('Player "{}" disconnected'.format(srv_id))
-            char = self.context.resolve_entity(srv_id)
-            # Remove the name from the player names map map
-            self.context.players_name_map.pop(srv_id)
-            send_event(CharacterLeave(srv_id, char.name, reason))
+            name = self.context.players_name_map.pop(srv_id)
+            send_event(CharacterLeave(srv_id, name, reason))
 
     @message_handler(MT.gamestate)
     def gamestate_handler(self, msg):
