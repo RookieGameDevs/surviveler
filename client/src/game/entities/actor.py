@@ -63,7 +63,7 @@ class Actor(Entity):
     TRANSFORMS = {
         ActorType.grunt: (pi, 0.1),
         ActorType.zombie: (pi, 0.04),
-        ActorType.engineer: (pi, 0.11),
+        ActorType.engineer: (pi, 8),
     }
 
     def init_animations(self, mesh_data):
