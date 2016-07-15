@@ -70,9 +70,6 @@ class Building(Entity):
             resource['health_bar'], progress[0] / progress[1], group_node)
 
         params = {
-            'color_ambient': Vec(0.2, 0.2, 0.2, 1),
-            'color_diffuse': Vec(0.6, 0.6, 0.6, 1),
-            'color_specular': Vec(0.8, 0.8, 0.8, 1),
             'tex': texture,
         }
 

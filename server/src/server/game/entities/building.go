@@ -121,7 +121,7 @@ func NewBarricade(g game.Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 			curHP:        1,
 			requiredBP:   reqBP,
 			curBP:        0,
-			buildingType: game.MgTurretBuilding,
+			buildingType: game.BarricadeBuilding,
 		},
 	}
 }
