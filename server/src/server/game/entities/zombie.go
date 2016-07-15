@@ -28,9 +28,9 @@ const (
 	zombieRunLookingInterval = 200 * time.Millisecond
 	zombieDamageInterval     = 500 * time.Millisecond
 	zombieWalkSpeed          = 1.0
-	zombieRunSpeed           = 4.0
+	zombieRunSpeed           = 3.0
 	rageDistance             = 4.0
-	attackDistance           = 1.0
+	attackDistance           = 1.2
 )
 
 type Zombie struct {
@@ -115,10 +115,10 @@ func (z *Zombie) walk(dt time.Duration) (state int) {
 	}
 
 	z.Speed = z.walkSpeed
-	if z.Movable.Move(dt) {
-		z.world.UpdateEntity(z)
+	if collideState := z.moveOrCollide(dt); collideState != -1 {
+		// next move would have collide, change to the collide state
+		state = collideState
 	}
-
 	return
 }
 
@@ -137,8 +137,11 @@ func (z *Zombie) run(dt time.Duration) (state int) {
 	}
 
 	z.Speed = zombieRunSpeed
-	if z.Movable.Move(dt) {
-		z.world.UpdateEntity(z)
+
+	if collideState := z.moveOrCollide(dt); collideState != -1 {
+		// next move would have collide, change to the collide state
+		state = collideState
+		return
 	}
 
 	if z.target.Position().Sub(z.Pos).Len() <= attackDistance {
@@ -163,6 +166,50 @@ func (z *Zombie) attack(dt time.Duration) (state int) {
 		}
 	}
 
+	return
+}
+
+/*
+ * moveOrCollide moves the zombies or resolve collision
+ *
+ * It returns the next zombie state, in order to resolve the possible collision
+ * If -1 is returned, there was no collision and the zombie should go
+ * ahead with its current action
+ */
+func (z *Zombie) moveOrCollide(dt time.Duration) (state int) {
+	//func (z *Zombie) moveOrCollide(dt time.Duration) (hasCollided bool) {
+	// check if moving would create a collision
+	nextPos := z.Movable.ComputeMove(z.Pos, dt)
+	nextBB := math.NewBoundingBoxFromCircle(nextPos, 0.5)
+	colliding := z.world.AABBSpatialQuery(nextBB)
+
+	var wouldCollide bool
+	colliding.Each(func(e game.Entity) bool {
+
+		if e == z {
+			// it's just me... pass
+			return true
+		}
+		if _, ok := e.(*Player); ok {
+			// what? it's a player! let's kill him
+			// change target, in case we were following somebody else
+			state = attackingState
+			z.target = e
+			// we are colliding and the current framework allows us to 'resolve'
+			// one collision only so no need to check further
+			return false
+		}
+		state = lookingState
+		wouldCollide = true
+		return true
+	})
+
+	if !wouldCollide {
+		if z.Movable.Move(dt) {
+			z.world.UpdateEntity(z)
+		}
+		state = -1
+	}
 	return
 }
 
