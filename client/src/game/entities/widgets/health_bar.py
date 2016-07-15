@@ -3,7 +3,7 @@ from game.components import Renderable
 from game.entities.entity import Entity
 from math import pi
 from matlib import Vec
-from renderer import Rect
+from renderer.mesh import Rect
 import logging
 import math
 

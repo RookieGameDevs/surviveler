@@ -220,7 +220,7 @@ def load_mesh(manager, fp, cwd):
     :returns: The resulting mesh object
     :rtype: :class:`renderer.Mesh`
     """
-    from renderer import Mesh
+    from renderer.mesh import Mesh
     v, n, u, i = load_obj(as_utf8(fp.read()))
     return Mesh(v, i, n, u)
 
@@ -243,7 +243,7 @@ def load_vertex(manager, fp, cwd):
     :returns: The resulting vert object
     :rtype: :class:`renderer.shader.ShaderSource`
     """
-    from renderer import ShaderSource
+    from renderer.shader import ShaderSource
     from OpenGL.GL import GL_VERTEX_SHADER
     return ShaderSource.load_and_compile(fp.read(), GL_VERTEX_SHADER)
 
@@ -266,7 +266,7 @@ def load_fragment(manager, fp, cwd):
     :returns: The resulting frag object
     :rtype: :class:`renderer.shader.ShaderSource`
     """
-    from renderer import ShaderSource
+    from renderer.shader import ShaderSource
     from OpenGL.GL import GL_FRAGMENT_SHADER
     return ShaderSource.load_and_compile(fp.read(), GL_FRAGMENT_SHADER)
 
@@ -289,7 +289,7 @@ def load_shader(manager, fp, cwd):
     :returns: The resulting shader program object
     :rtype: :class:`renderer.Shader`
     """
-    from renderer import Shader
+    from renderer.shader import Shader
 
     shader_data = json.loads(as_utf8(fp.read()))
     shaders = []

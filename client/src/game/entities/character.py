@@ -9,8 +9,8 @@ from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
 from game.events import CharacterJoin
 from matlib import Vec
-from renderer import Font
-from renderer import TextNode
+from renderer.font import Font
+from renderer.text import TextNode
 import logging
 import math
 

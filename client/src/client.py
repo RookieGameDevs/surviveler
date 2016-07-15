@@ -16,10 +16,10 @@ from network import MessageField as MF
 from network import MessageType as MT
 from network import get_message_handlers
 from network import message_handler
-from renderer import Light
-from renderer import LightNode
-from renderer import PerspCamera
-from renderer import Scene
+from renderer.camera import PerspCamera
+from renderer.light import Light
+from renderer.light import LightNode
+from renderer.scene import Scene
 from utils import as_utf8
 from utils import tstamp
 import logging

@@ -10,7 +10,7 @@ from matlib import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
-from renderer import Texture
+from renderer.texture import Texture
 from utils import to_scene
 import logging
 

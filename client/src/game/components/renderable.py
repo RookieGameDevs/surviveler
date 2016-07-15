@@ -1,5 +1,5 @@
 from game.components import Component
-from renderer import GeometryNode
+from renderer.geometry import GeometryNode
 
 
 class Renderable(Component):

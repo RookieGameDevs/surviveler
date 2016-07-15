@@ -5,13 +5,13 @@ from game.events import GameModeChange
 from game.events import TimeUpdate
 from math import pi
 from matlib import Vec
-from renderer import Font
-from renderer import GeometryNode
-from renderer import OrthoCamera
-from renderer import Rect
-from renderer import Scene
-from renderer import TextNode
-from renderer import Texture
+from renderer.camera import OrthoCamera
+from renderer.font import Font
+from renderer.geometry import GeometryNode
+from renderer.mesh import Rect
+from renderer.scene import Scene
+from renderer.text import TextNode
+from renderer.texture import Texture
 import logging
 
 
