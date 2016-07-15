@@ -12,6 +12,7 @@ from matlib import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
+from renderer import Texture
 from renderer.scene import SceneNode
 from utils import to_scene
 import logging
@@ -55,6 +56,7 @@ class Building(Entity):
         self.completed = completed
 
         shader = resource['shader']
+        texture = Texture.from_image(resource['texture'])
         self.mesh_project = resource['model_project']
         self.mesh_complete = resource['model_complete']
 
@@ -71,6 +73,7 @@ class Building(Entity):
             'color_ambient': Vec(0.2, 0.2, 0.2, 1),
             'color_diffuse': Vec(0.6, 0.6, 0.6, 1),
             'color_specular': Vec(0.8, 0.8, 0.8, 1),
+            'tex': texture,
         }
 
         # create components
@@ -79,6 +82,7 @@ class Building(Entity):
             self.mesh,
             shader,
             params,
+            textures=[texture],
             enable_light=True)
 
         # initialize entity
