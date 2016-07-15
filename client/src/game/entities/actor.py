@@ -47,7 +47,7 @@ class ActionType(IntEnum):
 
 
 def action_anim_index(action_type):
-    if action_type == ActionType.idle:
+    if action_type in {ActionType.idle, ActionType.drinking}:
         return 0
     elif action_type == ActionType.move:
         return 1
