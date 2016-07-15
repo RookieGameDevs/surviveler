@@ -5,11 +5,14 @@ Files supported:
     * bit depth: 16 bit
 """
 from sdl2.ext.compat import byteify
+from sdl2.sdlmixer import Mix_FadeOutMusic
+from sdl2.sdlmixer import Mix_FadingMusic
 from sdl2.sdlmixer import Mix_GetError
 from sdl2.sdlmixer import Mix_HaltChannel
 from sdl2.sdlmixer import Mix_LoadMUS
 from sdl2.sdlmixer import Mix_LoadWAV
 from sdl2.sdlmixer import Mix_PlayChannel
+from sdl2.sdlmixer import Mix_PlayingMusic
 from sdl2.sdlmixer import Mix_PlayMusic
 from sdl2.sdlmixer import Mix_VolumeMusic
 from random import choice as rand_choice
@@ -114,6 +117,15 @@ class AudioManager:
         Mix_VolumeMusic(volume)
         if Mix_PlayMusic(self.musics[music_name], loops) == -1:
             LOG.error('Cannot play music "{}"'.format(music_name))
+
+    def music_is_fading(self):
+        return Mix_FadingMusic()
+
+    def music_is_playing(self):
+        return Mix_PlayingMusic()
+
+    def fade_out_music(self, ms):
+        return Mix_FadeOutMusic(ms)
 
     def play_fx(self, sound_name, loops=0, key=None):
         """Plays a preloaded sound effect using the first available channel.

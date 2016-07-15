@@ -130,9 +130,27 @@ class TimeUpdate(Event):
         self.minute = minute
 
 
+class DaytimeChange(Event):
+    """Daytime update.
+
+    Event emitted when daytime changes from day to night or vice versa.
+    """
+
+    def __init__(self, daytime):
+        self.daytime = daytime
+
+
+class IncomingDaytimeChange(Event):
+
+    def __init__(self, current_daytime, next_daytime):
+        self.current_daytime = current_daytime
+        self.next_daytime = next_daytime
+
+
 class EntityPick(Event):
     """The player clicked on an entity.
     """
+
     def __init__(self, entity):
         """Constructor.
 

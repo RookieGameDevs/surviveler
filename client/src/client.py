@@ -275,8 +275,6 @@ class Client:
         self.ping()
         self.join(self.context.character_name, self.context.character_type)
 
-        self.context.audio_mgr.play_music('sunset')
-
         while not self.exit:
             # Compute time delta
             dt = self.dt()
