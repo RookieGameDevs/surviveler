@@ -198,11 +198,16 @@ class Renderer:
 
         polygon_mode = PolygonMode.fill
 
+        current_shader = None
         for op in sorted(self.render_queue, key=sort_key, reverse=True):
             # perform actual rendering
             with ExitStack() as stack:
                 for tex_unit, tex in enumerate(op.textures):
                     stack.enter_context(tex.use(tex_unit))
+
+                if op.shader.prog != current_shader:
+                    op.shader.activate()
+                    current_shader = op.shader.prog
 
                 op.shader.use(op.shader_params)
 

@@ -350,13 +350,16 @@ class Shader:
             except (TypeError, KeyError, ValueError):
                 raise ShaderError('Unknown shader parameter "{}"'.format(k))
 
+    def activate(self):
+        """Activates the shader for being used in subsequent renderings."""
+        glUseProgram(self.prog)
+
     def use(self, shader_params):
-        """Makes the shader active and sets up its parameters (uniforms).
+        """Sets up shader parameters (uniforms).
 
         :param shader_params: The params to be bound to the shader
         :type shader_params: dict
         """
-        glUseProgram(self.prog)
 
         # setup uniforms
         for name, uniform in self.uniforms.items():
