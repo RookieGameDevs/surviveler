@@ -1,7 +1,7 @@
 from game.components import Renderable
 from game.entities.entity import Entity
 from matlib import Vec
-from renderer import Texture
+from renderer.texture import Texture
 
 
 class Terrain(Entity):

@@ -1,5 +1,5 @@
 from matlib import Vec
-from renderer import RenderOp
+from renderer.renderer import RenderOp
 from renderer.mesh import Rect
 from renderer.scene import SceneNode
 

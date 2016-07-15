@@ -13,7 +13,7 @@ from math import atan
 from math import copysign
 from math import pi
 from matlib import Vec
-from renderer import Texture
+from renderer.texture import Texture
 from renderer.scene import SceneNode
 from surrender import AnimationInstance
 from utils import to_scene

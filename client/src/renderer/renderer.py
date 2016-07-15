@@ -1,3 +1,6 @@
+import OpenGL  # noqa
+OpenGL.ERROR_CHECKING = False  # noqa
+
 from OpenGL.GL import GL_BACK
 from OpenGL.GL import GL_BLEND
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
@@ -198,13 +201,18 @@ class Renderer:
 
         polygon_mode = PolygonMode.fill
 
+        current_shader = None
         for op in sorted(self.render_queue, key=sort_key, reverse=True):
             # perform actual rendering
             with ExitStack() as stack:
                 for tex_unit, tex in enumerate(op.textures):
                     stack.enter_context(tex.use(tex_unit))
 
-                stack.enter_context(op.shader.use(op.shader_params))
+                if op.shader.prog != current_shader:
+                    op.shader.activate()
+                    current_shader = op.shader.prog
+
+                op.shader.use(op.shader_params)
 
                 # change the polygon mode, if requested by render op
                 if polygon_mode != op.polygon_mode:

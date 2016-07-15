@@ -2,7 +2,7 @@ from game.components import Renderable
 from game.entities.entity import Entity
 from game.entities.map_object import MapObject
 from matlib import Vec
-from renderer import Texture
+from renderer.texture import Texture
 
 
 class Map(Entity):
