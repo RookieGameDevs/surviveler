@@ -13,6 +13,7 @@ class Light:
 
     def __init__(self, color=None):
         self.color = color or Vec(1, 1, 1, 1)
+        self.shininess = 1
 
 
 class LightNode(SceneNode):
@@ -44,4 +45,5 @@ class LightNode(SceneNode):
         LIGHT_SOURCES[self.light_id] = {
             'color': self.light.color,
             'position': Vec(transform[0, 3], transform[1, 3], transform[2, 3]),
+            'shininess': self.light.shininess,
         }

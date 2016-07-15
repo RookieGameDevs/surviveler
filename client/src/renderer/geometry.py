@@ -53,15 +53,19 @@ class GeometryNode(SceneNode):
         self.params['modelview'] = ctx.modelview
         self.params['projection'] = ctx.projection
 
+        # let there be light?
         if self.enable_light:
             self.params.update({
-                'Light[{}].{}'.format(light_id, p): v for light_id, p, v in
+                'lights[{}].{}'.format(light_id, p): v for light_id, p, v in
                 chain.from_iterable([
                     [(light_id, p, v) for p, v in params.items()] for light_id, params in
                     LIGHT_SOURCES.items()
                 ])
             })
+            self.params['eye'] = ctx.camera.position
+            self.params['enable_light'] = 1
 
+        # submit computed animation pose data if requested and available
         if self.animate and self.anim_inst:
             self.params['animate'] = 1
             self.params['joints[0]'] = self.anim_inst.skin_transforms
