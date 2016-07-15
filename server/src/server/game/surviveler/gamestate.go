@@ -47,6 +47,7 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	// TODO: this map is hard-coded for now, but will be read from resources
 	// in the future
 	_entityTypes["grunt"] = game.TankEntity
+	_entityTypes["programmer"] = game.ProgrammerEntity
 	_entityTypes["engineer"] = game.EngineerEntity
 	_entityTypes["zombie"] = game.ZombieEntity
 	_entityTypes["barricade"] = game.BarricadeBuilding

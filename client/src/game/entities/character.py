@@ -107,7 +107,7 @@ class Label:
 class Character(Actor):
     """Game entity which represents a character.
     """
-    MEMBERS = {ActorType.grunt, ActorType.engineer}
+    MEMBERS = {ActorType.grunt, ActorType.programmer, ActorType.engineer}
 
     def __init__(self, resource, name, health, parent_node):
         """Constructor.

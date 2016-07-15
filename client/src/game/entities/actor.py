@@ -28,8 +28,7 @@ WHOLE_ANGLE = 2.0 * pi
 class ActorType(IntEnum):
     """Enumeration of the possible actors"""
     grunt = 0
-    # TODO: enable these actors types when they will be available
-    # programmer = 1
+    programmer = 1
     engineer = 2
     zombie = 3
 
