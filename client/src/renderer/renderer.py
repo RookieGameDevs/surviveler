@@ -1,3 +1,6 @@
+import OpenGL  # noqa
+OpenGL.ERROR_CHECKING = False  # noqa
+
 from OpenGL.GL import GL_BACK
 from OpenGL.GL import GL_BLEND
 from OpenGL.GL import GL_COLOR_BUFFER_BIT
