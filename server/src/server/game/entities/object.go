@@ -10,39 +10,51 @@ import (
 	"time"
 )
 
-type Object struct {
+const (
+	// FIXME: take us from resources!
+	HealingFrequency = 500 * time.Millisecond
+	HealingDistance  = 1.5 // healing distance for the coffee machine
+	HealingPower     = 10  // healing power per tick
+)
+
+type CoffeeMachine struct {
 	id         uint32
 	pos        math.Vec2
 	objectType game.EntityType
 	operatedBy game.Entity
+	lastHeal   time.Time
+	g          game.Game
+	gamestate  game.GameState
 }
 
 /*
- * NewObject creates a new object and set its initial position
+ * NewCoffeeMachine creates a new object and set its initial position
  */
-func NewObject(g game.Game, gamestate game.GameState, pos math.Vec2, objectType game.EntityType) *Object {
-	obj := new(Object)
+func NewCoffeeMachine(g game.Game, pos math.Vec2, objectType game.EntityType) *CoffeeMachine {
+	obj := new(CoffeeMachine)
 	obj.pos = pos
 	obj.objectType = objectType
 	obj.id = game.InvalidId
 	obj.operatedBy = nil
+	obj.g = g
+	obj.gamestate = g.State()
 
 	return obj
 }
 
-func (obj *Object) Id() uint32 {
+func (obj *CoffeeMachine) Id() uint32 {
 	return obj.id
 }
 
-func (obj *Object) SetId(id uint32) {
+func (obj *CoffeeMachine) SetId(id uint32) {
 	obj.id = id
 }
 
-func (obj *Object) Type() game.EntityType {
+func (obj *CoffeeMachine) Type() game.EntityType {
 	return obj.objectType
 }
 
-func (obj *Object) State() game.EntityState {
+func (obj *CoffeeMachine) State() game.EntityState {
 	var operatedById uint32
 	if obj.operatedBy == nil {
 		operatedById = game.InvalidId
@@ -57,34 +69,50 @@ func (obj *Object) State() game.EntityState {
 	}
 }
 
-func (obj *Object) Position() math.Vec2 {
+func (obj *CoffeeMachine) Position() math.Vec2 {
 	return obj.pos
 }
 
-func (obj *Object) Update(dt time.Duration) {
-	// Add code here
+func (obj *CoffeeMachine) Update(dt time.Duration) {
+	if obj.operatedBy != nil {
+		dist := obj.operatedBy.Position().Sub(obj.pos).Len()
+		if dist > HealingDistance {
+			obj.operatedBy = nil
+		} else {
+			if time.Since(obj.lastHeal) > HealingFrequency {
+				obj.operatedBy.HealDamage(HealingPower)
+				obj.lastHeal = time.Now()
+			}
+		}
+	}
 }
 
-func (obj *Object) DealDamage(dmg float64) bool {
+func (obj *CoffeeMachine) DealDamage(dmg float64) bool {
 	// NOTE: no damage to clickable objects
 	return false
 }
 
-func (obj *Object) BoundingBox() math.BoundingBox {
+func (obj *CoffeeMachine) HealDamage(dmg float64) bool {
+	// NOTE: no damage to clickable objects
+	return true
+}
+
+func (obj *CoffeeMachine) BoundingBox() math.BoundingBox {
 	x, y := obj.pos.Elem()
 	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
 }
 
-func (obj *Object) OperatedBy() game.Entity {
+func (obj *CoffeeMachine) OperatedBy() game.Entity {
 	return obj.operatedBy
 }
 
-func (obj *Object) Operate(ent game.Entity) (res bool) {
+func (obj *CoffeeMachine) Operate(ent game.Entity) (res bool) {
 	res = true
-	if obj.operatedBy != nil {
-		res = false
-	} else {
+	if obj.operatedBy == nil {
 		obj.operatedBy = ent
+		obj.lastHeal = time.Time{}
+	} else {
+		res = false
 	}
 	return
 }

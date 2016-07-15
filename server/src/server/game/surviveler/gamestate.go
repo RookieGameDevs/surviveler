@@ -65,8 +65,11 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 	}
 
 	for _, objdata := range gs.gameData.mapData.UsableObjects {
-		obj := entities.NewObject(gs.game, gs, objdata.Pos, game.CoffeeMachineObject)
-		gs.AddEntity(obj)
+		switch game.EntityType(objdata.Type) {
+		case game.CoffeeMachineObject:
+			obj := entities.NewCoffeeMachine(gs.game, objdata.Pos, game.CoffeeMachineObject)
+			gs.AddEntity(obj)
+		}
 	}
 
 	// precompute constant, translation from corner to center of tile
@@ -261,11 +264,41 @@ func (gs *gamestate) onPlayerOperate(event *events.Event) {
 	if player := gs.getPlayer(evt.Id); player != nil {
 
 		if object := gs.getObject(evt.EntityId); object != nil {
-			// set player action
-			player.Operate(object)
+			// get the tile at building point coordinates
+			tile := gs.world.TileFromWorldVec(object.Position())
 
-			// plan movement
-			gs.fillMovementRequest(player, object.Position())
+			var draft *game.Tile
+			var position *math.Vec2
+
+			// This is awful, isn't it?
+			// FIXME: please, at some point...
+			for x := tile.X - 1; x <= tile.X+1; x++ {
+				if position != nil {
+					break
+				}
+				for y := tile.Y - 1; y <= tile.Y+1; y++ {
+					if position != nil {
+						break
+					}
+					if x != tile.X && y != tile.Y {
+						draft = gs.world.Tile(x, y)
+						if draft.IsWalkable() {
+							position = &math.Vec2{
+								float64(x) / gs.world.GridScale,
+								float64(y) / gs.world.GridScale,
+							}
+						}
+					}
+				}
+			}
+
+			if position != nil {
+				// set player action
+				player.Operate(object)
+
+				// plan movement
+				gs.fillMovementRequest(player, *position)
+			}
 		}
 	}
 }

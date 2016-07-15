@@ -55,6 +55,7 @@ type Entity interface {
 	Position() math.Vec2
 	Update(dt time.Duration)
 	DealDamage(float64) bool
+	HealDamage(float64) bool
 	math.BoundingBoxer
 }
 
@@ -94,6 +95,7 @@ type Building interface {
 type Object interface {
 	Entity
 
+	Operate(Entity) bool
 	OperatedBy() Entity
 }
 

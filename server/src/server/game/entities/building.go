@@ -74,6 +74,11 @@ func (bb *BuildingBase) DealDamage(damage float64) (dead bool) {
 	return
 }
 
+func (bb *BuildingBase) HealDamage(damage float64) (healthy bool) {
+	healthy = true
+	return
+}
+
 func (bb *BuildingBase) addBuildPower(bp uint16) {
 	if !bb.isBuilt {
 		bb.curBP += bp
