@@ -65,12 +65,9 @@ def find_root(nodes):
 
 
 def load_animations(scene, skeleton, counter):
-    animations = {}
     for i, anim in enumerate(scene.animations):
-        name = 'anim{}'.format(next(counter))
-
         if len(anim.channels) == 0 or len(anim.channels[0].positionkeys) == 0:
-            raise DataFormatError('animation "{}" has no keyframes'.format(name))
+            raise DataFormatError('animation {} has no keyframes'.format(i))
 
         timestamps = list(sorted([
             pos.time for pos in anim.channels[0].positionkeys
@@ -85,9 +82,8 @@ def load_animations(scene, skeleton, counter):
                 t = pos.time
                 if pos.time != rot.time or rot.time != scale.time:
                     raise DataFormatError(
-                        'node "{}" in animation "{}" has inconsistent channel timeline'.format(
-                            node_name,
-                            name))
+                        'node "{}" in animation {} has inconsistent channel timeline'.format(
+                            node_name, i))
                 node_timeline[t] = (pos.value, rot.value, scale.value)
             node_timelines[node_name] = node_timeline
 
@@ -95,10 +91,9 @@ def load_animations(scene, skeleton, counter):
             node_timestamps = list(sorted(node_timeline.keys()))
             if node_timestamps != timestamps:
                 raise DataFormatError(
-                    'node "{}" in animation "{}" local timeline does not match '
+                    'node "{}" in animation {} local timeline does not match '
                     'global timeline'.format(
-                        node_name,
-                        name))
+                        node_name, i))
 
         # inject identity transformations for non-joint animation nodes for each
         # timestamp in the timeline
@@ -124,7 +119,7 @@ def load_animations(scene, skeleton, counter):
                     joint_id = skeleton[node_name][0]
                 except KeyError:
                     raise DataFormatError(
-                        'animation "{}" skeleton does not match reference one'.format(name))
+                        'animation {} skeleton does not match reference one'.format(i))
                 pos, rot, scale = timeline[t]
                 skeleton_pose.append((joint_id, pos, rot, scale))
 
@@ -132,24 +127,22 @@ def load_animations(scene, skeleton, counter):
             skeleton_pose = sorted(skeleton_pose, key=lambda p: p[0])
             pose_data.extend(skeleton_pose)
 
-        animations[name] = (timestamps, pose_data, anim.duration, anim.tickspersecond)
-
-    return animations
+        yield timestamps, pose_data, anim.duration, anim.tickspersecond
 
 
 def load_skeleton(scene):
     skeleton = {}
     mesh = scene.meshes[0]
 
-    def mark_node(n, flag):
-        skeleton_parts.setdefault(n.name, [False, n])
-        skeleton_parts[n.name][0] = flag
+    def mark_node(collection, n, flag):
+        collection.setdefault(n.name, [False, n])
+        collection[n.name][0] = flag
         return True
 
     # create a mapping with nodes which are part of the skeleton
     skeleton_parts = {}
     bones_by_name = {}
-    traverse_scene(scene, lambda n: mark_node(n, False))
+    traverse_scene(scene, lambda n: mark_node(skeleton_parts, n, False))
     for bone in mesh.bones:
         bones_by_name[bone.name] = bone
         # mark node and its parents as part of the skeleton
@@ -157,7 +150,15 @@ def load_skeleton(scene):
         traverse_parents(
             scene,
             node,
-            lambda n: mark_node(n, True))
+            lambda n: mark_node(skeleton_parts, n, True))
+
+    # add nodes not referenced directly, but which are children of parents which
+    # are parts of the skeleton
+    orphan_parts = {}
+    traverse_scene(scene, lambda n: mark_node(orphan_parts, n, n != scene.rootnode and n.parent.name in skeleton_parts))
+    for k, v in orphan_parts.iteritems():
+        if k in skeleton_parts and v[0]:
+            skeleton_parts[k] = v
 
     # find the root node for nodes which are part of the skeleton
     skeleton_root = find_root([
@@ -216,7 +217,7 @@ def main(mesh, out, anims=None):
     scene = pyassimp.load(mesh)
 
     anim_counter = count(0)
-    animations = {}
+    animations = []
     skeleton = {}
 
     if scene.mNumMeshes != 1:
@@ -243,8 +244,8 @@ def main(mesh, out, anims=None):
         skeleton, vertex_bone_ids, vertex_bone_weights = load_skeleton(scene)
         for anim_file in anims or []:
             anim_scene = pyassimp.load(anim_file)
-            animations.update(load_animations(anim_scene, skeleton, anim_counter))
-        strings = {s: i for i, s in enumerate(animations.iterkeys())}
+            for anim in load_animations(anim_scene, skeleton, anim_counter):
+                animations.append(anim)
 
     with open(out, 'wb') as fp:
         # write header
@@ -301,11 +302,10 @@ def main(mesh, out, anims=None):
                 fp.write(pack('<ffff', *row))
 
         # write animations
-        for name, (timestamps, poses, duration, tickspersecond) in animations.iteritems():
+        for timestamps, poses, duration, tickspersecond in animations:
             # header
             fp.write(pack(
-                '<LffL',
-                strings[name],
+                '<ffL',
                 duration,
                 tickspersecond,
                 len(timestamps)))
@@ -324,23 +324,14 @@ def main(mesh, out, anims=None):
                     scale[0], scale[1], scale[2])
                 fp.write(pose)
 
-        # write strings
-        for string in strings:
-            try:
-                enc_string = string.encode('ascii')
-            except UnicodeEncodeError:
-                raise DataFormatError(
-                    u'{} non-ascii string constants are not allowed'.format(string))
-            fp.write(pack('<{}sb'.format(len(enc_string)), enc_string, 0))
-
     print('Mesh file:  {}'.format(out))
     print('Mesh size:  {} bytes'.format(os.stat(out).st_size))
     print('Polygons:   {}'.format(len(mesh.faces)))
     print('Vertices:   {}'.format(v_count))
     print('Indices:    {}'.format(v_count))
     print('Joints:     {}'.format(len(skeleton)))
-    for name, (timeline, pose_data, duration, tickspersecond) in animations.items():
-        print('Animation   "{}"'.format(name))
+    for i, (timeline, pose_data, duration, tickspersecond) in enumerate(animations):
+        print('Animation {}:'.format(i))
         print('  Duration: {}'.format(duration))
         print('  Speed:    {}'.format(tickspersecond))
         print('  Keys:     {}'.format(len(timeline)))

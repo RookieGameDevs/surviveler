@@ -65,13 +65,13 @@ make_object(struct MeshData *md)
 	md_o->mesh_data = md;
 
 	// setup animations dict
-	md_o->animations = PyDict_New();
+	md_o->animations = PyList_New(md->anim_count);
 	for (size_t i = 0; i < md->anim_count; i++) {
 		PyAnimationObject *anim_o = PyObject_New(PyAnimationObject, &py_animation_type);
 		anim_o->anim = &md->animations[i];
 		anim_o->container = md_o;
 
-		PyDict_SetItemString(md_o->animations, md->animations[i].name, (PyObject*)anim_o);
+		PyList_SetItem(md_o->animations, i, (PyObject*)anim_o);
 
 		Py_INCREF(md_o);
 	}

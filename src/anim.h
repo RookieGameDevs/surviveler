@@ -43,7 +43,6 @@ struct SkeletonPose {
  * Animation as a collection of clips.
  */
 struct Animation {
-	char *name;                   // animation name
 	struct Skeleton *skeleton;    // reference skeleton
 	float duration;               // duration in ticks
 	float speed;                  // number of ticks played per second

@@ -19,7 +19,6 @@ The data within a `.mesh` file is stored in contigous sections as following:
   |Index data     |`icount * 4`    |78 + `vdata`                    |
   |Joint data     |`jcount * 66`   |78 + `vdata` + `idata`          |
   |Animation data |`acount * asize`|78 + `vdata` + `idata` + `jdata`|
-  |Strings        |variable        |78 + `vdata` + `idata` + `adata`|
 
 Data sections are tightly-packed with no padding between them.
 
@@ -138,14 +137,10 @@ is structured as following:
 
 |Field     |Type        |Size |Count       |Offset |
 |----------|------------|-----|------------|-------|
-|Name      |unsigned int|4    |1           |0      |
-|Duration  |float       |4    |1           |4      |
-|Speed     |float       |4    |1           |8      |
-|Pose count|unsigned int|4    |1           |12     |
-|Timestamps|float       |4    |`Pose count`|16     |
-
-### Name
-Index in string constants section of the animation name string.
+|Duration  |float       |4    |1           |0      |
+|Speed     |float       |4    |1           |4      |
+|Pose count|unsigned int|4    |1           |8      |
+|Timestamps|float       |4    |`Pose count`|12     |
 
 ### Duration
 Animation duration in ticks.
@@ -188,9 +183,3 @@ Scale of the joint at given time expressed as `(Xs,Ys,Zs)` tuple.
 ### Rotation
 Rotation of the joint at given time expressed as rotation quaternion
 `(W,X,Y,Z)`.
-
-
-Strings
--------
-String constants referenced in other sections as a sequence of C-style
-`NUL`-terminated series of bytes.

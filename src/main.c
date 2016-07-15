@@ -138,6 +138,7 @@ update(float dt)
 	);
 
 	transform = mesh_data->transform;
+	mat_scale(&transform, 0.041, 0.041, 0.041);
 
 	// play the animation
 	if (controls.play_animation && anim_inst) {
@@ -277,7 +278,7 @@ main(int argc, char *argv[])
 	if (!load_mesh(argv[1], &mesh_data, &mesh))
 		return 0;
 	if (mesh_data->anim_count > 0 &&
-	    !(anim_inst = anim_new_instance(&mesh_data->animations[0])))
+	    !(anim_inst = anim_new_instance(&mesh_data->animations[2])))
 		return 0;
 
 	// load joint mesh

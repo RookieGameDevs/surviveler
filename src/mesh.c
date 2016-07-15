@@ -19,7 +19,7 @@
 #define JOINT_ATTRIB_SIZE 8
 #define INDEX_SIZE 4
 #define JOINT_SIZE 66
-#define ANIM_SIZE  16
+#define ANIM_SIZE  12
 #define POSE_SIZE  41
 
 #define VERSION_FIELD   uint8_t,  0
@@ -40,20 +40,6 @@ enum {
 	HAS_UV        = 1 << 2,
 	HAS_JOINTS    = 1 << 3
 };
-
-static const char*
-get_string(const char *data, size_t max_size, int index, size_t *len)
-{
-	size_t off = 0, count = 0;
-	while (off < max_size) {
-		*len = strnlen(data, max_size);
-		if (count == index)
-			return data + off;
-		off = *len + 1;
-		count++;
-	}
-	return NULL;
-}
 
 struct MeshData*
 mesh_data_from_file(const char *filename)
@@ -78,7 +64,6 @@ struct MeshData*
 mesh_data_from_buffer(const char *data, size_t data_size)
 {
 	struct MeshData *md = NULL;
-	size_t *anim_name_indices = NULL;
 
 	// check header and version
 	if (data_size < HEADER_SIZE ||
@@ -171,16 +156,14 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 	// initialize animations (if there's a skeleton)
 	md->anim_count = get_field(data, ACOUNT_FIELD);
 	if (md->skeleton && md->anim_count > 0) {
-		anim_name_indices = malloc(sizeof(size_t) * md->anim_count);
 		md->animations = malloc(sizeof(struct Animation) * md->anim_count);
 
 		for (size_t a = 0; a < md->anim_count; a++) {
 			struct Animation *anim = &md->animations[a];
-			anim_name_indices[a] = *(uint32_t*)(data + offset);
 			anim->skeleton = md->skeleton;
-			anim->duration = *(float*)(data + offset + 4);
-			anim->speed = *(float*)(data + offset + 8);
-			anim->pose_count = *(uint32_t*)(data + offset + 12);
+			anim->duration = *(float*)(data + offset);
+			anim->speed = *(float*)(data + offset + 4);
+			anim->pose_count = *(uint32_t*)(data + offset + 8);
 
 			offset += ANIM_SIZE;
 
@@ -235,24 +218,9 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 				}
 			}
 		}
-
-		// lookup animation names
-		for (size_t a = 0; a < md->anim_count; a++) {
-			size_t len;
-			const char *name = get_string(
-				data + offset,
-				data_size - offset,
-				anim_name_indices[a],
-				&len
-			);
-			md->animations[a].name = malloc(len + 1);
-			strncpy(md->animations[a].name, name, len);
-			md->animations[a].name[len] = 0;  // nul terminator
-		}
 	}
 
 cleanup:
-	free(anim_name_indices);
 	return md;
 
 error:
