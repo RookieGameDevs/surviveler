@@ -17,6 +17,7 @@ const (
 	PlayerBuild
 	PlayerRepair
 	PlayerAttack
+	PlayerOperate
 	PlayerDeath
 	ZombieDeath
 	BuildingDestroy
@@ -51,6 +52,11 @@ type PlayerRepairEvent struct {
 }
 
 type PlayerAttackEvent struct {
+	Id       uint32
+	EntityId uint32
+}
+
+type PlayerOperateEvent struct {
 	Id       uint32
 	EntityId uint32
 }

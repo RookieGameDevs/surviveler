@@ -64,6 +64,14 @@ func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
 		return err
 	}
 
+	for _, objdata := range gs.gameData.mapData.UsableObjects {
+		switch game.EntityType(objdata.Type) {
+		case game.CoffeeMachineObject:
+			obj := entities.NewCoffeeMachine(gs.game, objdata.Pos, game.CoffeeMachineObject)
+			gs.AddEntity(obj)
+		}
+	}
+
 	// precompute constant, translation from corner to center of tile
 	txCenter = math.Vec2{1.0, 1.0}.Div(2.0 * gs.world.GridScale)
 	return nil
@@ -81,9 +89,12 @@ func (gs *gamestate) pack() *msg.GameStateMsg {
 	// to ease client reception, we separate mobile entities and buildings
 	gsMsg.Entities = make(map[uint32]interface{})
 	gsMsg.Buildings = make(map[uint32]interface{})
+	gsMsg.Objects = make(map[uint32]interface{})
 
 	for id, ent := range gs.entities {
 		switch ent.(type) {
+		case game.Object:
+			gsMsg.Objects[id] = ent.State()
 		case game.Building:
 			gsMsg.Buildings[id] = ent.State()
 		default:
@@ -239,6 +250,55 @@ func (gs *gamestate) onPlayerAttack(event *events.Event) {
 		if enemy := gs.getZombie(evt.EntityId); enemy != nil {
 			// set player action
 			player.Attack(enemy)
+		}
+	}
+}
+
+/*
+ * event handler for PlayerUse events
+ */
+func (gs *gamestate) onPlayerOperate(event *events.Event) {
+	evt := event.Payload.(events.PlayerOperateEvent)
+	log.WithField("evt", evt).Info("Received PlayerOperate event")
+
+	if player := gs.getPlayer(evt.Id); player != nil {
+
+		if object := gs.getObject(evt.EntityId); object != nil {
+			// get the tile at building point coordinates
+			tile := gs.world.TileFromWorldVec(object.Position())
+
+			var draft *game.Tile
+			var position *math.Vec2
+
+			// This is awful, isn't it?
+			// FIXME: please, at some point...
+			for x := tile.X - 1; x <= tile.X+1; x++ {
+				if position != nil {
+					break
+				}
+				for y := tile.Y - 1; y <= tile.Y+1; y++ {
+					if position != nil {
+						break
+					}
+					if x != tile.X && y != tile.Y {
+						draft = gs.world.Tile(x, y)
+						if draft.IsWalkable() {
+							position = &math.Vec2{
+								float64(x) / gs.world.GridScale,
+								float64(y) / gs.world.GridScale,
+							}
+						}
+					}
+				}
+			}
+
+			if position != nil {
+				// set player action
+				player.Operate(object)
+
+				// plan movement
+				gs.fillMovementRequest(player, *position)
+			}
 		}
 	}
 }

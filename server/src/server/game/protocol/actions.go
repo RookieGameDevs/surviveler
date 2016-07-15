@@ -80,3 +80,20 @@ func (self *Server) handleAttack(c *network.Conn, msg *messages.Message) error {
 			}))
 	return nil
 }
+
+/*
+ * handleOperate processes a OperateMsg and fires a PlayerOperate event
+ */
+func (self *Server) handleOperate(c *network.Conn, msg *messages.Message) error {
+	// decode payload into a operate message
+	operate := self.factory.DecodePayload(messages.OperateId, msg.Payload).(messages.OperateMsg)
+	log.WithField("msg", operate).Info("Operate message")
+
+	self.evtCb(
+		events.NewEvent(events.PlayerOperate,
+			events.PlayerOperateEvent{
+				Id:       c.GetUserData().(ClientData).Id,
+				EntityId: operate.Id,
+			}))
+	return nil
+}

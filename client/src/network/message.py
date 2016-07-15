@@ -21,6 +21,7 @@ class MessageType(IntEnum):
     build = 8
     repair = 9
     attack = 10
+    use = 11
 
 
 class MessageField(bytes, Enum):
@@ -35,6 +36,9 @@ class MessageField(bytes, Enum):
     entity_type = b'Type'
     id = b'Id'
     name = b'Name'
+    object_type = b'Type'
+    objects = b'Objects'
+    operated_by = b'OperatedBy'
     path = b'Path'
     players = b'Players'
     reason = b'Reason'

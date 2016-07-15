@@ -295,3 +295,9 @@ func (z *Zombie) DealDamage(damage float64) (dead bool) {
 	}
 	return
 }
+
+func (z *Zombie) HealDamage(damage float64) (healthy bool) {
+	// FIXME: healed zombies? No thanks.
+	healthy = true
+	return
+}

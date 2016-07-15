@@ -27,22 +27,24 @@ const (
  * implements the Entity interface.
  */
 type Player struct {
-	id            uint32
-	entityType    game.EntityType  // player type
-	actions       game.ActionStack // action stack
-	lastBPinduced time.Time        // time of last initiated BP induction
-	lastAttack    time.Time        // time of last initiated BP induction
-	lastPathFind  time.Time        // time of last initiated BP induction
-	curBuilding   game.Building    // building in construction
-	g             game.Game
-	gamestate     game.GameState
-	world         *game.World
-	buildPower    uint16
-	combatPower   uint16
-	totalHP       float64
-	curHP         float64
-	target        game.Entity
-	posDirty      bool
+	id              uint32
+	entityType      game.EntityType  // player type
+	actions         game.ActionStack // action stack
+	lastBPinduced   time.Time        // time of last initiated BP induction
+	lastAttack      time.Time        // time of last attack
+	lastPathFind    time.Time        // time of last path find
+	lastCoffeeDrink time.Time        // time of last coffee drink
+	curBuilding     game.Building    // building in construction
+	target          game.Entity
+	curObject       game.Object
+	g               game.Game
+	gamestate       game.GameState
+	world           *game.World
+	buildPower      uint16
+	combatPower     uint16
+	totalHP         float64
+	curHP           float64
+	posDirty        bool
 	*components.Movable
 }
 
@@ -92,6 +94,10 @@ func (p *Player) Update(dt time.Duration) {
 
 			// building/repairing actually end up being the same
 			p.induceBuildPower()
+
+		case game.DrinkCoffeeAction:
+			p.curObject.Operate(p)
+			p.actions.Pop()
 
 		case game.AttackAction:
 
@@ -265,6 +271,9 @@ func (p *Player) State() game.EntityState {
 			actionType = game.IdleAction
 			actionData = game.IdleActionData{}
 		}
+	case game.DrinkCoffeeAction:
+		actionType = game.IdleAction
+		actionData = game.IdleActionData{}
 	}
 
 	return game.MobileEntityState{
@@ -332,6 +341,16 @@ func (p *Player) Attack(e game.Entity) {
 
 }
 
+func (p *Player) Operate(e game.Object) {
+	log.Debug("Player.Operate")
+	switch e.Type() {
+	case game.CoffeeMachineObject:
+		p.moveAndAction(game.DrinkCoffeeAction, game.DrinkCoffeeActionData{})
+		p.curObject = e
+		p.lastCoffeeDrink = time.Time{}
+	}
+}
+
 /*
  * emptyActions removes all the actions from the actions stack.
  *
@@ -368,6 +387,16 @@ func (p *Player) DealDamage(damage float64) (dead bool) {
 		dead = true
 	} else {
 		p.curHP -= damage
+	}
+	return
+}
+
+func (p *Player) HealDamage(damage float64) (healthy bool) {
+	if damage+p.curHP >= p.totalHP {
+		p.curHP = p.totalHP
+		healthy = true
+	} else {
+		p.curHP += damage
 	}
 	return
 }

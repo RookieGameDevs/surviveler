@@ -19,6 +19,7 @@ const (
 	BuildId
 	RepairId
 	AttackId
+	OperateId
 )
 
 /*
@@ -42,6 +43,7 @@ type GameStateMsg struct {
 	Time      int16
 	Entities  map[uint32]interface{}
 	Buildings map[uint32]interface{}
+	Objects   map[uint32]interface{}
 }
 
 /*
@@ -73,6 +75,13 @@ type RepairMsg struct {
  */
 type AttackMsg struct {
 	Id uint32 // id of the entity to attack
+}
+
+/*
+ * player initiated an operate action. Client -> server message
+ */
+type OperateMsg struct {
+	Id uint32 // id of the entity to operate
 }
 
 /*

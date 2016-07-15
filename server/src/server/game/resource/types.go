@@ -17,6 +17,11 @@ type MapObject struct {
 	Rotation int       `json:"rotation"` // rotation of the object on the map
 }
 
+type MapUsableObject struct {
+	MapObject
+	Type uint8 `json:"type"`
+}
+
 type ResourceList map[string]string
 
 /*
@@ -38,10 +43,11 @@ type AIKeypoints struct {
  * MapData regroups settings and information about the map
  */
 type MapData struct {
-	Resources   ResourceList `json:"resources"`
-	ScaleFactor float64      `json:"scale_factor"`
-	Objects     []MapObject  `json:"objects"`
-	AIKeypoints AIKeypoints  `json:"ai_keypoints"`
+	Resources     ResourceList      `json:"resources"`
+	ScaleFactor   float64           `json:"scale_factor"`
+	UsableObjects []MapUsableObject `json:"usable_objects"`
+	Objects       []MapObject       `json:"objects"`
+	AIKeypoints   AIKeypoints       `json:"ai_keypoints"`
 }
 
 /*
