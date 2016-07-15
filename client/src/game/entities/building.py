@@ -23,7 +23,8 @@ LOG = logging.getLogger(__name__)
 @unique
 class BuildingType(IntEnum):
     """Enumeration of the possible buildings"""
-    mg_turret = 0
+    barricade = 0
+    mg_turret = 1
 
 
 class Building(Entity):
@@ -187,7 +188,7 @@ def building_spawn(evt):
         resource = context.res_mgr.get(
             entities.data['buildings_map'].get(
                 BuildingType(evt.b_type).name,
-                '/prefabs/buildings/mg_turret'
+                '/prefabs/buildings/barricade'
             )
         )
 

@@ -49,6 +49,7 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	_entityTypes["grunt"] = game.TankEntity
 	_entityTypes["engineer"] = game.EngineerEntity
 	_entityTypes["zombie"] = game.ZombieEntity
+	_entityTypes["barricade"] = game.BarricadeBuilding
 	_entityTypes["mg_turret"] = game.MgTurretBuilding
 	return gs
 }
@@ -427,6 +428,9 @@ func (gs *gamestate) RemoveEntity(id uint32) {
 func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Building {
 	var building game.Building
 	switch t {
+	case game.BarricadeBuilding:
+		data := gs.BuildingData(t)
+		building = entities.NewBarricade(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	case game.MgTurretBuilding:
 		data := gs.BuildingData(t)
 		building = entities.NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
