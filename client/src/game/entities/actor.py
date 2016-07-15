@@ -1,4 +1,3 @@
-from enum import Enum
 from enum import IntEnum
 from enum import unique
 from events import subscriber
@@ -47,11 +46,13 @@ class ActionType(IntEnum):
     drinking = 5
 
 
-class AnimationType(str, Enum):
-    """Enum of animation types."""
-    walk = 'anim0'
-    action = 'anim1'
-    run = 'anim2'
+def action_anim_index(action_type):
+    if action_type == ActionType.idle:
+        return 0
+    elif action_type == ActionType.move:
+        return 1
+    else:
+        return 2
 
 
 class Actor(Entity):
@@ -60,10 +61,18 @@ class Actor(Entity):
     # *FIXME* *FIXME* *FIXME*
     # REFACTOR THIS!!!
     TRANSFORMS = {
-        ActorType.grunt: (pi, 0.2),
-        ActorType.zombie: (pi, 0.01),
+        ActorType.grunt: (pi, 0.1),
+        ActorType.zombie: (pi, 0.04),
         ActorType.engineer: (pi, 0.11),
     }
+
+    def init_animations(self, mesh_data):
+        self.animations = {}
+        for i in range(3):
+            try:
+                self.animations[i] = AnimationInstance(mesh_data.animations[i])
+            except IndexError:
+                self.animations[i] = None
 
     def __init__(self, resource, actor_type, health, parent_node):
         """Constructor.
@@ -90,15 +99,9 @@ class Actor(Entity):
         # root transformation to apply to the mesh
         self.transform = md.transform
 
-        walk_anim = md.animations.get(AnimationType.walk)
-        if walk_anim:
-            walk_anim = AnimationInstance(walk_anim)
-        self.current_anim = self.walk_anim = walk_anim
-
-        action_anim = md.animations.get(AnimationType.action)
-        if action_anim:
-            action_anim = AnimationInstance(action_anim)
-        self.action_anim = action_anim
+        # instantiate animations
+        self.init_animations(md)
+        self.current_anim = self.animations[action_anim_index(ActionType.idle)]
 
         texture = Texture.from_image(resource['texture'])
 
@@ -235,16 +238,8 @@ class Actor(Entity):
         :param action_type: Action to set.
         :type action_type: :class:`game.entities.actor.ActionType`
         """
-        if (action_type == ActionType.attack or
-                action_type == ActionType.build or
-                action_type == ActionType.repair):
-            self.current_anim = self.action_anim
-        elif action_type == ActionType.move:
-            self.current_anim = self.walk_anim
-        else:
-            self.current_anim = None
-
-        self[Renderable].animation = self.current_anim
+        anim = self.animations[action_anim_index(action_type)]
+        self[Renderable].animation = self.current_anim = anim
 
     def update(self, dt):
         """Update the character.

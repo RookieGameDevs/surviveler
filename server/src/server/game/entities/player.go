@@ -260,6 +260,7 @@ func (p *Player) State() game.EntityState {
 		actionType = game.IdleAction
 		fallthrough
 	case game.IdleAction:
+		actionType = game.IdleAction
 		actionData = game.IdleActionData{}
 	case game.AttackAction:
 		dist := p.target.Position().Sub(p.Pos).Len()
