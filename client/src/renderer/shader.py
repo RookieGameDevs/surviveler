@@ -84,6 +84,9 @@ UNIFORM_CONVERTERS = {
     GL_FLOAT: lambda v: v,
 }
 
+UNIFORM_JSON_CONVERTERS = {
+    'Vec': lambda v: Vec(v[0], v[1], v[2], v[3]),
+}
 
 UNIFORM_DEFAULTS = {
     GL_FLOAT_MAT4: Mat,
@@ -219,8 +222,24 @@ class Shader:
             u_name, u_size, u_type = glGetActiveUniform(self.prog, u_id)
             u_loc = glGetUniformLocation(self.prog, u_name)
             if u_loc >= 0:
-                self.uniforms[as_ascii(u_name)] = {
-                    'value': params.get(u_name, UNIFORM_DEFAULTS[u_type]()),
+                u_name = as_ascii(u_name)
+
+                # lookup if a default was provided from resource
+                default = params.get(u_name)
+                if default:
+                    try:
+                        value = UNIFORM_JSON_CONVERTERS[default['type']](default['value'])
+                    except KeyError:
+                        raise ShaderError('Unknown shader param type "{}"'.format(
+                            default['type']))
+                    except ValueError as err:
+                        raise ShaderError('Failed to create shader paraam of type "{}": {}'.format(
+                            default['type'], err))
+                else:
+                    value = None
+
+                self.uniforms[u_name] = {
+                    'value': value or UNIFORM_DEFAULTS[u_type](),
                     'loc': u_loc,
                     'type': u_type,
                     'size': u_size,
@@ -339,19 +358,14 @@ class Shader:
         :param shader_params: The params to be bound to the shader
         :type shader_params: dict
         """
-        previous = {}
-        for p, v in shader_params.items():
-            previous[p] = self[p]
-            self[p] = v
-
         glUseProgram(self.prog)
 
         # setup uniforms
-        for uniform in self.uniforms.values():
+        for name, uniform in self.uniforms.items():
             u_type = uniform['type']
             u_loc = uniform['loc']
             u_size = uniform['size']
-            u_value = uniform['value']
+            u_value = shader_params.get(name, uniform['value'])
             if isinstance(u_value, list):
                 gl_value = bytearray()
                 for val in u_value:
@@ -363,6 +377,5 @@ class Shader:
         # setup uniform blocks
         for block in self.uniform_blocks.values():
             block.bind()
+
         yield
-        for p, v in previous.items():
-            self[p] = v
