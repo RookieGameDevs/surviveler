@@ -14,7 +14,7 @@ const (
 	// FIXME: take us from resources!
 	HealingFrequency = 500 * time.Millisecond
 	HealingDistance  = 1.5 // healing distance for the coffee machine
-	HealingPower     = 10  // healing power per tick
+	HealingPower     = 5   // healing power per tick
 )
 
 type CoffeeMachine struct {
