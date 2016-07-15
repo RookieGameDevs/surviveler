@@ -9,6 +9,7 @@ from sdl2.sdlmixer import Mix_FadeOutMusic
 from sdl2.sdlmixer import Mix_FadingMusic
 from sdl2.sdlmixer import Mix_GetError
 from sdl2.sdlmixer import Mix_HaltChannel
+from sdl2.sdlmixer import Mix_HaltMusic
 from sdl2.sdlmixer import Mix_LoadMUS
 from sdl2.sdlmixer import Mix_LoadWAV
 from sdl2.sdlmixer import Mix_PlayChannel
@@ -126,6 +127,9 @@ class AudioManager:
 
     def fade_out_music(self, ms):
         return Mix_FadeOutMusic(ms)
+
+    def stop_music(self):
+        return Mix_HaltMusic()
 
     def play_fx(self, sound_name, loops=0, key=None):
         """Plays a preloaded sound effect using the first available channel.

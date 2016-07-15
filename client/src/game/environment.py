@@ -13,8 +13,7 @@ daytime_music = {'day': 'day', 'night': 'sunset'}
 def fade_out_music(evt):
     LOG.info('Incoming daytime change: {curr} -> {next}'.format(
         curr=evt.current_daytime, next=evt.next_daytime))
-    # if evt.context.audio_mgr.music_is_playing():
-    evt.context.audio_mgr.fade_out_music(20000)
+    evt.context.audio_mgr.fade_out_music(5000)
 
 
 @subscriber(DaytimeChange)
@@ -23,5 +22,7 @@ def start_music(evt):
     LOG.info('Starting music for {daytime}: {music}'.format(
         daytime=evt.daytime, music=music)
     )
-    assert not evt.context.audio_mgr.music_is_playing()
+    if evt.context.audio_mgr.music_is_playing():
+        evt.context.audio_mgr.stop_music()
+
     evt.context.audio_mgr.play_music(music)
