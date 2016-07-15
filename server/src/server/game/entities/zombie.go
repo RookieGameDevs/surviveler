@@ -18,19 +18,14 @@ import (
 const (
 	lookingState = iota
 	walkingState
-	runningState
 	attackingState
 )
 
 // TODO: all of those values should be taken from the zombie resource
 const (
-	zombieLookingInterval    = 1 * time.Second
-	zombieRunLookingInterval = 200 * time.Millisecond
-	zombieDamageInterval     = 500 * time.Millisecond
-	zombieWalkSpeed          = 1.0
-	zombieRunSpeed           = 3.0
-	rageDistance             = 4.0
-	attackDistance           = 1.2
+	zombieLookingInterval = 200 * time.Millisecond
+	zombieDamageInterval  = 500 * time.Millisecond
+	attackDistance        = 1.2
 )
 
 type Zombie struct {
@@ -38,7 +33,6 @@ type Zombie struct {
 	g           game.Game
 	curState    int // current state
 	combatPower uint8
-	runSpeed    float64
 	walkSpeed   float64
 	totalHP     float64
 	curHP       float64
@@ -90,8 +84,8 @@ func (z *Zombie) look(dt time.Duration) (state int) {
 		z.SetPath(path)
 
 		// update the state
-		if dist < rageDistance {
-			state = runningState
+		if dist < attackDistance {
+			state = attackingState
 		} else {
 			state = walkingState
 		}
@@ -103,8 +97,8 @@ func (z *Zombie) walk(dt time.Duration) (state int) {
 	state = z.curState
 
 	dist := z.target.Position().Sub(z.Pos).Len()
-	if dist < rageDistance {
-		state = runningState
+	if dist < attackDistance {
+		state = attackingState
 		return
 	}
 
@@ -122,40 +116,11 @@ func (z *Zombie) walk(dt time.Duration) (state int) {
 	return
 }
 
-func (z *Zombie) run(dt time.Duration) (state int) {
-	state = z.curState
-
-	if z.timeAcc >= zombieRunLookingInterval {
-		z.timeAcc -= zombieRunLookingInterval
-
-		path, found := z.findPathToTarget()
-		if found == false {
-			state = lookingState
-			return
-		}
-		z.SetPath(path)
-	}
-
-	z.Speed = zombieRunSpeed
-
-	if collideState := z.moveOrCollide(dt); collideState != -1 {
-		// next move would have collide, change to the collide state
-		state = collideState
-		return
-	}
-
-	if z.target.Position().Sub(z.Pos).Len() <= attackDistance {
-		state = attackingState
-	}
-
-	return
-}
-
 func (z *Zombie) attack(dt time.Duration) (state int) {
 	state = z.curState
 
 	if z.target.Position().Sub(z.Pos).Len() > attackDistance {
-		state = runningState
+		state = walkingState
 		return
 	}
 
@@ -222,7 +187,6 @@ func (z *Zombie) Update(dt time.Duration) {
 	stateMap := map[int]func(time.Duration) int{
 		lookingState:   z.look,
 		walkingState:   z.walk,
-		runningState:   z.run,
 		attackingState: z.attack,
 	}
 
@@ -257,9 +221,6 @@ func (z *Zombie) State() game.EntityState {
 		fallthrough
 
 	case walkingState:
-		fallthrough
-
-	case runningState:
 		if !z.Movable.HasReachedDestination() {
 			moveActionData := game.MoveActionData{
 				Speed: z.Speed,
