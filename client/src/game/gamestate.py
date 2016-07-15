@@ -266,9 +266,14 @@ def handle_time(gs_mgr):
     :param gs_mgr: The gamestate manager.
     :type gs_mgr: :class:`game.gamestate.GameStateManager`
     """
-    total_minutes = gs_mgr.get()[0].get(MF.time, 0)
-    h, m = int(total_minutes / 60), total_minutes % 60
-    send_event(TimeUpdate(h, m))
+    new, old = gs_mgr.get(2)
+    if old:
+        prev_total_minutes = old.get(MF.time, 0)
+        total_minutes = new.get(MF.time, 0)
+        h, m = int(total_minutes / 60), total_minutes % 60
+        prev_h, prev_m = int(prev_total_minutes / 60), prev_total_minutes % 60
+        if m != prev_m:
+            send_event(TimeUpdate(h, m))
 
 
 def handle_buildings(selected, buildings, event):
