@@ -167,7 +167,7 @@ class Client:
         aspect = self.renderer.height / float(self.renderer.width)
 
         camera = PerspCamera(
-            45,
+            25,
             1.0 / aspect,
             1,
             500)

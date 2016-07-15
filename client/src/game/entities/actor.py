@@ -61,10 +61,10 @@ class Actor(Entity):
     # *FIXME* *FIXME* *FIXME*
     # REFACTOR THIS!!!
     TRANSFORMS = {
-        ActorType.grunt: (pi, 0.1),
-        ActorType.zombie: (pi, 0.04),
-        ActorType.engineer: (pi, 8),
-        ActorType.programmer: (pi, 0.027),
+        ActorType.grunt: (pi, 0.12),
+        ActorType.zombie: (pi, 0.07),
+        ActorType.engineer: (pi, 6.5),
+        ActorType.programmer: (pi, 0.022),
     }
 
     def init_animations(self, mesh_data):
