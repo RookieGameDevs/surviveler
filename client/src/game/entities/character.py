@@ -109,7 +109,7 @@ class Character(Actor):
     """
     MEMBERS = {ActorType.grunt, ActorType.programmer, ActorType.engineer}
 
-    def __init__(self, resource, name, health, parent_node):
+    def __init__(self, resource, actor_type, name, health, parent_node):
         """Constructor.
 
         :param resource: The character resource
@@ -121,10 +121,10 @@ class Character(Actor):
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
-        super().__init__(resource, health, parent_node)
+        super().__init__(resource, actor_type, health, parent_node)
 
         self._name = name
-        self.name_node = Label(resource, name, self.group_node)
+        # self.name_node = Label(resource, name, self.group_node)
 
     @property
     def name(self):
@@ -133,11 +133,11 @@ class Character(Actor):
     @name.setter
     def name(self, name):
         self._name = name
-        self.name_node.text = name
+        # self.name_node.text = name
 
     def update(self, dt):
         super().update(dt)
-        self.name_node.update()
+        # self.name_node.update()
 
 
 @subscriber(ActorSpawn)
@@ -175,7 +175,7 @@ def character_spawn(evt):
         name = context.players_name_map[evt.srv_id]
         # Create the character
         character = Character(
-            resource, name, (evt.cur_hp, tot), context.scene.root)
+            resource, evt.actor_type, name, (evt.cur_hp, tot), context.scene.root)
         context.entities[character.e_id] = character
         context.server_entities_map[evt.srv_id] = character.e_id
 

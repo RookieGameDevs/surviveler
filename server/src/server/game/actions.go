@@ -34,7 +34,9 @@ type RepairActionData struct{}
 /*
  * Attack action payload
  */
-type AttackActionData struct{}
+type AttackActionData struct {
+	TargetId uint32
+}
 
 /*
  * Drink coffee action payload

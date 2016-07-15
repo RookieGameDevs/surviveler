@@ -30,7 +30,7 @@ class ActorDisappear(Event):
 
 
 class ActorStatusChange(Event):
-    """A building has different status
+    """An actor status changed.
 
     Event emitted when the amount of hp of a building changes.
     """
@@ -43,6 +43,23 @@ class ActorStatusChange(Event):
 
     def __str__(self):
         return '<ActorStatusChange({}, {}, {}, {})>'.format(
+            self.srv_id, self.actor_type, self.old, self.new)
+
+
+class ActorActionChange(Event):
+    """An entity changed current action.
+
+    Event emitted when an entity started doing another action.
+    """
+
+    def __init__(self, srv_id, actor_type, old, new):
+        self.srv_id = srv_id
+        self.actor_type = actor_type
+        self.old = old
+        self.new = new
+
+    def __str__(self):
+        return '<ActorActionChange({}, {}, {}, {})>'.format(
             self.srv_id, self.actor_type, self.old, self.new)
 
 

@@ -5,6 +5,7 @@ from game.components import Movable
 from game.components import Renderable
 from game.entities.entity import Entity
 from game.entities.widgets.health_bar import HealthBar
+from game.events import ActorActionChange
 from game.events import ActorIdle
 from game.events import ActorMove
 from game.events import ActorStatusChange
@@ -14,6 +15,7 @@ from math import pi
 from matlib import Vec
 from renderer import Texture
 from renderer.scene import SceneNode
+from surrender import AnimationInstance
 from utils import to_scene
 import logging
 
@@ -33,10 +35,47 @@ class ActorType(IntEnum):
     zombie = 3
 
 
+@unique
+class ActionType(IntEnum):
+    """Enum of the various possible ActionType"""
+    idle = 0
+    move = 1
+    build = 2
+    repair = 3
+    attack = 4
+    drinking = 5
+
+
+def action_anim_index(action_type):
+    if action_type in {ActionType.idle, ActionType.drinking}:
+        return 0
+    elif action_type == ActionType.move:
+        return 1
+    else:
+        return 2
+
+
 class Actor(Entity):
     """Game entity which represents an actor."""
 
-    def __init__(self, resource, health, parent_node):
+    # *FIXME* *FIXME* *FIXME*
+    # REFACTOR THIS!!!
+    TRANSFORMS = {
+        ActorType.grunt: (pi, 0.1),
+        ActorType.zombie: (pi, 0.04),
+        ActorType.engineer: (pi, 8),
+        ActorType.programmer: (pi, 0.027),
+    }
+
+    def init_animations(self, mesh_data):
+        self.animations = {}
+        for i in range(3):
+            try:
+                self.animations[i] = AnimationInstance(mesh_data.animations[i])
+            except IndexError:
+                self.animations[i] = None
+
+    def __init__(self, resource, actor_type, health, parent_node):
         """Constructor.
 
         :param resource: The character resource
@@ -48,12 +87,23 @@ class Actor(Entity):
         :param parent_node: The parent node in the scene graph
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        self.actor_type = actor_type
+
         # Health is going to be a property used to update only when necessary
         # the health bar.
         self._health = health
 
         shader = resource['shader']
-        mesh = resource['model']
+        mesh = resource['model']['mesh']
+        md = resource['model']['mesh_data']
+
+        # root transformation to apply to the mesh
+        self.transform = md.transform
+
+        # instantiate animations
+        self.init_animations(md)
+        self.current_anim = self.animations[action_anim_index(ActionType.idle)]
+
         texture = Texture.from_image(resource['texture'])
 
         # shader params
@@ -83,7 +133,11 @@ class Actor(Entity):
             shader,
             params,
             textures=[texture],
-            enable_light=True)
+            enable_light=True,
+            animation=self.current_anim)
+
+        # by default, start with playing animation
+        renderable.animate = True
 
         # initialize actor
         super().__init__(renderable, movable)
@@ -179,6 +233,15 @@ class Actor(Entity):
         node = self.group_node
         node.parent.remove_child(node)
 
+    def set_action(self, action_type):
+        """Sets current player action.
+
+        :param action_type: Action to set.
+        :type action_type: :class:`game.entities.actor.ActionType`
+        """
+        anim = self.animations[action_anim_index(action_type)]
+        self[Renderable].animation = self.current_anim = anim
+
     def update(self, dt):
         """Update the character.
 
@@ -196,14 +259,42 @@ class Actor(Entity):
         g_t.identity()
         g_t.translate(to_scene(x, y))
 
+        rot, scale = self.TRANSFORMS[self.actor_type]
         t = self[Renderable].transform
         t.identity()
+        t *= self.transform
+        t.rotate(Vec(0, 1, 0), rot)  # FIXME
         t.rotate(Vec(0, 1, 0), -self.heading)
+        t.scale(Vec(scale, scale, scale))
 
         self.orientate()
 
         # Update the health bar
         self.health_bar.update(dt)
+
+        # play animation
+        if self.current_anim:
+            self.current_anim.play(dt)
+
+
+def lookup_entity(evt):
+    """Looks up the entity associated with given event.
+
+    :param evt: Event object.
+    :type evt: :class:`events.Event`
+    """
+    context = evt.context
+    if evt.srv_id in context.server_entities_map:
+        e_id = context.server_entities_map[evt.srv_id]
+        return context.entities[e_id]
+
+
+@subscriber(ActorActionChange)
+def actor_action_change(evt):
+    """Updates actor action."""
+    actor = lookup_entity(evt)
+    if actor:
+        actor.set_action(evt.new)
 
 
 @subscriber(ActorStatusChange)

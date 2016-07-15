@@ -247,12 +247,18 @@ func (z *Zombie) State() game.EntityState {
 	var actionType game.ActionType = game.IdleAction
 
 	switch z.curState {
+	case attackingState:
+		actionData = game.AttackActionData{
+			TargetId: z.target.Id(),
+		}
+		actionType = game.AttackAction
+
 	case lookingState:
 		fallthrough
-	case attackingState:
-		// TODO: we are doing nothing here.
+
 	case walkingState:
 		fallthrough
+
 	case runningState:
 		if !z.Movable.HasReachedDestination() {
 			moveActionData := game.MoveActionData{

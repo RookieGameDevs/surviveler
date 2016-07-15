@@ -1,8 +1,8 @@
-from enum import IntEnum
-from enum import unique
 from events import send_event
 from game.entities.actor import ActorType
+from game.entities.actor import ActionType
 from game.entities.building import BuildingType
+from game.events import ActorActionChange
 from game.events import ActorDisappear
 from game.events import ActorIdle
 from game.events import ActorMove
@@ -106,17 +106,6 @@ def gamestate_entities(gs_mgr):
         yield srv_id, e
 
 
-@unique
-class ActionType(IntEnum):
-    """Enum of the various possible ActionType"""
-    idle = 0
-    move = 1
-    build = 2
-    repair = 3
-    attack = 4
-    drinking = 5
-
-
 @processor
 def handle_actor_spawn(gs_mgr):
     """Check for new entities and send the appropriate events.
@@ -154,6 +143,27 @@ def handle_actor_disappear(gs_mgr):
     for ent in old_entities:
         evt = ActorDisappear(ent, old[ent][MF.entity_type])
         send_event(evt)
+
+
+@processor
+def handle_actor_action_change(gs_mgr):
+    new, old = gs_mgr.get(2)
+    if not old:
+        return
+
+    new_entities = new.get(MF.entities, {})
+    old_entities = old.get(MF.entities, {})
+    for srv_id, entity in old_entities.items():
+        if srv_id in new_entities:
+            old_action = entity[MF.action_type]
+            new_action = new_entities[srv_id][MF.action_type]
+            if old_action != new_action:
+                actor_type = ActorType(entity[MF.entity_type])
+                send_event(ActorActionChange(
+                    srv_id,
+                    actor_type,
+                    old_action,
+                    new_action))
 
 
 @processor

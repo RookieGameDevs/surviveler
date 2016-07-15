@@ -5,12 +5,13 @@
 package entities
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/components"
 	"server/game/events"
 	"server/math"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // player private action types
@@ -259,6 +260,7 @@ func (p *Player) State() game.EntityState {
 		actionType = game.IdleAction
 		fallthrough
 	case game.IdleAction:
+		actionType = game.IdleAction
 		actionData = game.IdleActionData{}
 	case game.AttackAction:
 		dist := p.target.Position().Sub(p.Pos).Len()
@@ -268,8 +270,10 @@ func (p *Player) State() game.EntityState {
 				Speed: p.Speed,
 			}
 		} else {
-			actionType = game.IdleAction
-			actionData = game.IdleActionData{}
+			actionData = game.AttackActionData{
+				TargetId: p.target.Id(),
+			}
+			actionType = game.AttackAction
 		}
 	case game.DrinkCoffeeAction:
 		actionType = game.IdleAction
