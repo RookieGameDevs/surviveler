@@ -49,6 +49,7 @@ func (g *survivelerGame) loop() error {
 	g.eventManager.Subscribe(events.PlayerOperate, g.state.onPlayerOperate)
 	g.eventManager.Subscribe(events.PlayerDeath, g.state.onPlayerDeath)
 	g.eventManager.Subscribe(events.ZombieDeath, g.state.onZombieDeath)
+	g.eventManager.Subscribe(events.ZombieDeath, g.ai.OnZombieDeath)
 	g.eventManager.Subscribe(events.BuildingDestroy, g.state.onBuildingDestroy)
 
 	var lastTime, curTime time.Time

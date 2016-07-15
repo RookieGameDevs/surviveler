@@ -8,15 +8,18 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
+	"server/game/events"
 	"time"
 )
 
 // This number represents the ration between the number of logic ticks for one
 // AI director tick
-const AIDirectorTickUpdate int = 20
-
-// FIXME: add a Zombie every N seconds
-const FrequencyAddZombie time.Duration = 30 * time.Second
+const (
+	AIDirectorTickUpdate int           = 20
+	FrequencyAddZombie   time.Duration = 30 * time.Second
+	MaxZombieCount       int           = 10
+	MobZombieCount       int           = 3
+)
 
 /*
  * AIDirector is the system that manages the ingredients a game session
@@ -30,11 +33,13 @@ const FrequencyAddZombie time.Duration = 30 * time.Second
  *   time if no zombies are around
  */
 type AIDirector struct {
-	game       game.Game
-	curTick    int
-	nightStart int16
-	nightEnd   int16
-	lastTime   time.Time
+	game        game.Game
+	curTick     int
+	nightStart  int16
+	nightEnd    int16
+	lastTime    time.Time
+	zombieCount int
+	intensity   int
 }
 
 func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
@@ -48,6 +53,14 @@ func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
 	return ai
 }
 
+/*
+ * event handler for EnemyDeath events
+ */
+func (ai *AIDirector) OnZombieDeath(event *events.Event) {
+	ai.zombieCount--
+	ai.intensity++
+}
+
 func (ai *AIDirector) SummonZombie() {
 	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
@@ -58,15 +71,20 @@ func (ai *AIDirector) SummonZombie() {
 	}).Info("summoning zombie")
 
 	ai.game.State().AddZombie(org)
+	ai.zombieCount++
 }
 
 /*
  * summonZombieMob creates a group of zombies
  */
 func (ai *AIDirector) summonZombieMob(qty int) {
-	// TODO: to be implemented!
+	keypoints := ai.game.State().MapData().AIKeypoints
+	// pick a random spawn point
+	idx := rand.Intn(len(keypoints.Spawn.Enemies))
 	for i := 0; i < qty; i++ {
-		//zombie
+		org := keypoints.Spawn.Enemies[(i+idx)%len(keypoints.Spawn.Enemies)]
+		ai.game.State().AddZombie(org)
+		ai.zombieCount++
 	}
 }
 
@@ -77,13 +95,18 @@ func (ai *AIDirector) Update(curTime time.Time) {
 		return
 	}
 
-	// TODO: improve with emotional intensity!
-
-	// but for now we stupidly summon a zombie every N seconds (during night
-	// time)
 	freq := FrequencyAddZombie
-	if time.Since(ai.lastTime) > freq && ai.IsNight() {
-		ai.SummonZombie()
+	if time.Since(ai.lastTime) > freq && ai.IsNight() && ai.zombieCount < MaxZombieCount {
+		if ai.intensity >= 5 {
+			n := MaxZombieCount - ai.zombieCount
+			if n > MobZombieCount {
+				n = MobZombieCount
+			}
+			ai.summonZombieMob(n)
+			ai.intensity -= 5
+		} else {
+			ai.SummonZombie()
+		}
 		ai.lastTime = time.Now()
 	}
 }
