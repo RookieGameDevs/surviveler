@@ -362,7 +362,7 @@ def load_bitmap(manager, fp, cwd):
     from PIL import Image
     img = Image.open(fp)
     size = img.size
-    img_data = img.tobytes()
+    img_data = img.convert('L').tobytes()
     matrix = []
     for y in range(size[1]):
         matrix.append([])
