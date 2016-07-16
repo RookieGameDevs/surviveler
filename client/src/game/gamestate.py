@@ -13,8 +13,6 @@ from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
-from game.events import DaytimeChange
-from game.events import IncomingDaytimeChange
 from game.events import ObjectSpawn
 from game.events import TimeUpdate
 from network import MessageField as MF
@@ -30,6 +28,7 @@ class GameStateManager:
     Instances of this objects are meant to handle a configurable ring buffer of
     game states.
     """
+
     def __init__(self, size):
         """Constructur.
 
@@ -268,26 +267,14 @@ def handle_time(gs_mgr):
     :param gs_mgr: The gamestate manager.
     :type gs_mgr: :class:`game.gamestate.GameStateManager`
     """
-    DAY_START = 5
-    NIGHT_START = 16
-    DAYTIME_TRANSITION = 59
     new, old = gs_mgr.get(2)
     if old:
         prev_total_minutes = old.get(MF.time, 0)
         total_minutes = new.get(MF.time, 0)
         h, m = int(total_minutes / 60), total_minutes % 60
-        prev_h, prev_m = int(prev_total_minutes / 60), prev_total_minutes % 60
+        prev_m = prev_total_minutes % 60
         if m != prev_m:
             send_event(TimeUpdate(h, m))
-            if (h, m) == (DAY_START - 1, 60 - DAYTIME_TRANSITION):
-                send_event(IncomingDaytimeChange('night', 'day'))
-            elif (h, m) == (NIGHT_START - 1, 60 - DAYTIME_TRANSITION):
-                send_event(IncomingDaytimeChange('day', 'night'))
-            if h != prev_h:
-                if (prev_h, h) == (DAY_START - 1, DAY_START):
-                    send_event(DaytimeChange('day'))
-                elif (prev_h, h) == (NIGHT_START - 1, NIGHT_START):
-                    send_event(DaytimeChange('night'))
 
 
 def handle_buildings(selected, buildings, event):

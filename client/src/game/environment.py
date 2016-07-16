@@ -1,28 +1,37 @@
 from events import subscriber
-from game.events import DaytimeChange
-from game.events import IncomingDaytimeChange
+from game.events import TimeUpdate
 import logging
 
 
 LOG = logging.getLogger(__name__)
+DAY_START = 5
+NIGHT_START = 17
+MUSIC_FADE_OUT_TIME = 25000
 
 daytime_music = {'day': 'day', 'night': 'sunset'}
 
 
-@subscriber(IncomingDaytimeChange)
-def fade_out_music(evt):
-    LOG.info('Incoming daytime change: {curr} -> {next}'.format(
-        curr=evt.current_daytime, next=evt.next_daytime))
-    evt.context.audio_mgr.fade_out_music(5000)
+def get_daytime(hour):
+    if DAY_START <= hour < NIGHT_START:
+        return 'day'
+    return 'night'
 
 
-@subscriber(DaytimeChange)
-def start_music(evt):
-    music = daytime_music[evt.daytime]
-    LOG.info('Starting music for {daytime}: {music}'.format(
-        daytime=evt.daytime, music=music)
-    )
-    if evt.context.audio_mgr.music_is_playing():
-        evt.context.audio_mgr.stop_music()
+@subscriber(TimeUpdate)
+def deejay(evt):
+    """Change music based on daytime.
+    """
+    hour, minute = evt.hour, evt.minute
+    audio_mgr = evt.context.audio_mgr
+    if (hour, minute) in ((DAY_START, 0), (NIGHT_START, 0)):
+        if audio_mgr.music_is_playing():
+            LOG.info('Music fade out...')
+            audio_mgr.fade_out_music(MUSIC_FADE_OUT_TIME)
 
-    evt.context.audio_mgr.play_music(music)
+    if not audio_mgr.music_is_playing():
+        daytime = get_daytime(hour)
+        music = daytime_music[daytime]
+        audio_mgr.play_music(music)
+        LOG.info('Starting music for {daytime}: {music}'.format(
+            daytime=daytime, music=music)
+        )
