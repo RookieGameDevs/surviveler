@@ -92,10 +92,21 @@ load_mesh(const char *filename, struct MeshData **md, struct Mesh **m)
 	return 1;
 }
 
+static void
+print_shader_info(const char *name, struct Shader *s)
+{
+	printf("Shader %s params table:\n", name);
+	for (unsigned int i = 0; i < s->param_count; i++) {
+		struct ShaderParam sp = s->params[i];
+		printf("  %-20s (loc=%d, size=% d, type=%d)\n", sp.name, sp.loc, sp.size, sp.type);
+	}
+}
+
 static int
 load_shaders()
 {
 	model_shader.shader = shader_load_and_compile(MODEL_VERT, MODEL_FRAG);
+	print_shader_info("model", model_shader.shader);
 	model_shader.projection = shader_get_param(model_shader.shader, "projection");
 	model_shader.modelview = shader_get_param(model_shader.shader, "modelview");
 	model_shader.transform = shader_get_param(model_shader.shader, "transform");
@@ -103,6 +114,7 @@ load_shaders()
 	model_shader.animate = shader_get_param(model_shader.shader, "animate");
 
 	joint_shader.shader = shader_load_and_compile(JOINT_VERT, JOINT_FRAG);
+	print_shader_info("joint", joint_shader.shader);
 	joint_shader.projection = shader_get_param(joint_shader.shader, "projection");
 	joint_shader.modelview = shader_get_param(joint_shader.shader, "modelview");
 	joint_shader.transform = shader_get_param(joint_shader.shader, "transform");
