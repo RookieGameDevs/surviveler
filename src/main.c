@@ -57,6 +57,7 @@ static struct {
 // shaders
 static struct {
 	struct Shader *shader;
+	GLuint vert, frag;
 	const struct ShaderParam *projection;
 	const struct ShaderParam *modelview;
 	const struct ShaderParam *transform;
@@ -66,6 +67,7 @@ static struct {
 
 static struct {
 	struct Shader *shader;
+	GLuint vert, frag;
 	const struct ShaderParam *projection;
 	const struct ShaderParam *modelview;
 	const struct ShaderParam *transform;
@@ -105,7 +107,15 @@ print_shader_info(const char *name, struct Shader *s)
 static int
 load_shaders()
 {
-	model_shader.shader = shader_load_and_compile(MODEL_VERT, MODEL_FRAG);
+	if (!(model_shader.vert = shader_compile_file(MODEL_VERT)))
+		return 0;
+	printf("loaded %s\n", MODEL_VERT);
+	if (!(model_shader.frag = shader_compile_file(MODEL_FRAG)))
+		return 0;
+	printf("loaded %s\n", MODEL_FRAG);
+	if (!(model_shader.shader = shader_new(model_shader.vert, model_shader.frag)))
+		return 0;
+
 	print_shader_info("model", model_shader.shader);
 	model_shader.projection = shader_get_param(model_shader.shader, "projection");
 	model_shader.modelview = shader_get_param(model_shader.shader, "modelview");
@@ -113,7 +123,15 @@ load_shaders()
 	model_shader.joints = shader_get_param(model_shader.shader, "joints[0]");
 	model_shader.animate = shader_get_param(model_shader.shader, "animate");
 
-	joint_shader.shader = shader_load_and_compile(JOINT_VERT, JOINT_FRAG);
+	if (!(joint_shader.vert = shader_compile_file(JOINT_VERT)))
+		return 0;
+	printf("loaded %s\n", JOINT_VERT);
+	if (!(joint_shader.frag = shader_compile_file(JOINT_FRAG)))
+		return 0;
+	printf("loaded %s\n", JOINT_FRAG);
+	if (!(joint_shader.shader = shader_new(joint_shader.vert, joint_shader.frag)))
+		return 0;
+
 	print_shader_info("joint", joint_shader.shader);
 	joint_shader.projection = shader_get_param(joint_shader.shader, "projection");
 	joint_shader.modelview = shader_get_param(joint_shader.shader, "modelview");
@@ -364,7 +382,6 @@ main(int argc, char *argv[])
 	}
 
 cleanup:
-
 	if (!ok) {
 		error_print_tb();
 		error_clear();
@@ -374,7 +391,13 @@ cleanup:
 	mesh_data_free(mesh_data);
 	mesh_free(joint_mesh);
 	mesh_data_free(joint_mesh_data);
+
+	shader_free_source(model_shader.vert);
+	shader_free_source(model_shader.frag);
 	shader_free(model_shader.shader);
+
+	shader_free_source(joint_shader.vert);
+	shader_free_source(joint_shader.frag);
 	shader_free(joint_shader.shader);
 
 	surrender_shutdown();

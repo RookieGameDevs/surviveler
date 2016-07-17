@@ -17,14 +17,20 @@ struct Shader {
 	struct ShaderParam *params;
 };
 
+GLuint
+shader_compile_source(const char *source, GLenum type);
+
+GLuint
+shader_compile_file(const char *filename);
+
+void
+shader_free_source(GLuint src);
+
 struct Shader*
-shader_new(const char *vert_src, const char *frag_src);
+shader_new(GLuint vert_src, GLuint frag_src);
 
 void
 shader_free(struct Shader *s);
-
-struct Shader*
-shader_load_and_compile(const char *vert_shader, const char *frag_shader);
 
 int
 shader_use(struct Shader *s);

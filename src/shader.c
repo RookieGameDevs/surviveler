@@ -2,12 +2,11 @@
 #include "ioutils.h"
 #include "shader.h"
 #include <assert.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static GLuint
-compile_shader(const char *src, GLenum type)
+GLuint
+shader_compile_source(const char *source, GLenum type)
 {
 	GLenum gl_err = GL_NO_ERROR;
 
@@ -19,7 +18,7 @@ compile_shader(const char *src, GLenum type)
 	}
 
 	// set shader and compile it
-	glShaderSource(shader, 1, (const char**)&src, NULL);
+	glShaderSource(shader, 1, (const char**)&source, NULL);
 	glCompileShader(shader);
 
 	int status = GL_FALSE;
@@ -31,32 +30,53 @@ compile_shader(const char *src, GLenum type)
 		char log[log_len];
 		glGetShaderInfoLog(shader, log_len, NULL, log);
 
-		errf("failed to compile shader: %s", log);
+		errf("shader compile error: %s", log);
 		goto error;
 	}
 
 	return shader;
 
 error:
-	if (shader != 0)
-		glDeleteShader(shader);
+	shader_free_source(shader);
 	return 0;
 }
 
-struct Shader*
-shader_load_and_compile(const char *vert_shader, const char *frag_shader)
+GLuint
+shader_compile_file(const char *filename)
 {
-	char *vert_src;
-	if (!file_read(vert_shader, &vert_src))
-		return 0;
-
-	char *frag_src;
-	if (!file_read(frag_shader, &frag_src)) {
-		free(vert_src);
+	const char *ext = strrchr(filename, '.');
+	GLenum type;
+	if (strncmp(ext, ".vert", 4) == 0) {
+		type = GL_VERTEX_SHADER;
+	} else if (strncmp(ext, ".frag", 4) == 0) {
+		type = GL_FRAGMENT_SHADER;
+	} else {
+		errf(
+			"bad shader source filename '%s'; "
+			"extension must be .vert or .frag",
+			filename
+		);
 		return 0;
 	}
 
-	return shader_new(vert_src, frag_src);
+	char *source = NULL;
+	if (!file_read(filename, &source))
+		return 0;
+
+	GLuint shader = shader_compile_source(source, type);
+	if (!shader)
+		errf("shader source '%s' compilation failed", filename);
+
+	free(source);
+
+	return shader;
+}
+
+void
+shader_free_source(GLuint src)
+{
+	if (src)
+		glDeleteShader(src);
 }
 
 static int
@@ -119,19 +139,11 @@ error:
 }
 
 struct Shader*
-shader_new(const char *vert_src, const char *frag_src)
+shader_new(GLuint vert_src, GLuint frag_src)
 {
 	GLenum gl_err = GL_NO_ERROR;
 	GLuint prog = 0;
-
-	// compile shader shaders
-	GLuint shaders[2];
-	const char *sources[2] = { vert_src, frag_src, };
-	GLenum types[2] = { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER };
-	for (int i = 0; i < 2; i++) {
-		if (!(shaders[i] = compile_shader(sources[i], types[i])))
-			goto error;
-	}
+	struct Shader *shader = NULL;
 
 	// create shader program
 	prog = glCreateProgram();
@@ -144,8 +156,8 @@ shader_new(const char *vert_src, const char *frag_src)
 	}
 
 	// attach shaders and link the program
-	for (int i = 0; i < 2; i++)
-		glAttachShader(prog, shaders[i]);
+	glAttachShader(prog, vert_src);
+	glAttachShader(prog, frag_src);
 	glLinkProgram(prog);
 	if ((gl_err = glGetError()) != GL_NO_ERROR) {
 		errf("failed to link shader program (OpenGL error %d)", gl_err);
@@ -166,7 +178,7 @@ shader_new(const char *vert_src, const char *frag_src)
 		goto error;
 	}
 
-	struct Shader *shader = malloc(sizeof(struct Shader));
+	shader = malloc(sizeof(struct Shader));
 	shader->prog = prog;
 	if (!init_shader_params(shader)) {
 		err("failed to initialize shader params table");
@@ -176,8 +188,6 @@ shader_new(const char *vert_src, const char *frag_src)
 	return shader;
 
 error:
-	for (int i = 0; i < 2; i++)
-		glDeleteShader(shaders[i]);
 	shader_free(shader);
 	return NULL;
 }
@@ -201,10 +211,8 @@ shader_use(struct Shader *s)
 #ifdef DEBUG
 	GLenum gl_err;
 	if ((gl_err = glGetError()) != GL_NO_ERROR) {
-		fprintf(
-			stderr,
-			"failed to make shader %d active\n"
-			"OpenGL error %d\n",
+		errf(
+			"failed to make shader %d active (OpenGL error %d)",
 			s->prog,
 			gl_err
 		);
