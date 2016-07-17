@@ -45,7 +45,7 @@ static struct AnimationInstance *anim_inst = NULL;
 
 // controls
 static struct {
-	bool play_animation;
+	int play_animation;
 	enum CameraType cam_type;
 	enum RenderMode rndr_mode;
 } controls = {
@@ -55,8 +55,21 @@ static struct {
 };
 
 // shaders
-static GLuint model_shader = 0;
-static GLuint joint_shader = 0;
+static struct {
+	struct Shader *shader;
+	const struct ShaderParam *projection;
+	const struct ShaderParam *modelview;
+	const struct ShaderParam *transform;
+	const struct ShaderParam *animate;
+	const struct ShaderParam *joints;
+} model_shader = { NULL };
+
+static struct {
+	struct Shader *shader;
+	const struct ShaderParam *projection;
+	const struct ShaderParam *modelview;
+	const struct ShaderParam *transform;
+} joint_shader = { NULL };
 
 static int
 load_mesh(const char *filename, struct MeshData **md, struct Mesh **m)
@@ -82,9 +95,19 @@ load_mesh(const char *filename, struct MeshData **md, struct Mesh **m)
 static int
 load_shaders()
 {
-	model_shader = shader_load_and_compile(MODEL_VERT, MODEL_FRAG);
-	joint_shader = shader_load_and_compile(JOINT_VERT, JOINT_FRAG);
-	return model_shader && joint_shader;
+	model_shader.shader = shader_load_and_compile(MODEL_VERT, MODEL_FRAG);
+	model_shader.projection = shader_get_param(model_shader.shader, "projection");
+	model_shader.modelview = shader_get_param(model_shader.shader, "modelview");
+	model_shader.transform = shader_get_param(model_shader.shader, "transform");
+	model_shader.joints = shader_get_param(model_shader.shader, "joints[0]");
+	model_shader.animate = shader_get_param(model_shader.shader, "animate");
+
+	joint_shader.shader = shader_load_and_compile(JOINT_VERT, JOINT_FRAG);
+	joint_shader.projection = shader_get_param(joint_shader.shader, "projection");
+	joint_shader.modelview = shader_get_param(joint_shader.shader, "modelview");
+	joint_shader.transform = shader_get_param(joint_shader.shader, "transform");
+
+	return model_shader.shader && joint_shader.shader;
 }
 
 static int
@@ -158,62 +181,45 @@ render()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	int loc;
-
 	// draw skeleton joints
 	if (anim_inst && controls.play_animation) {
-		if (!shader_use(joint_shader))
+		if (!shader_use(joint_shader.shader))
 			return 0;
 
-		loc = glGetUniformLocation(joint_shader, "projection");
-		glUniformMatrix4fv(loc, 1, GL_TRUE, projection.data);
+		shader_set_param_mat(joint_shader.projection, 1, &projection);
+		shader_set_param_mat(joint_shader.modelview, 1, &modelview);
 
-		loc = glGetUniformLocation(joint_shader, "modelview");
-		glUniformMatrix4fv(loc, 1, GL_TRUE, modelview.data);
-
+		Mat joint_transform;
 		for (int j = 0; j < anim_inst->anim->skeleton->joint_count; j++) {
-			loc = glGetUniformLocation(joint_shader, "transform");
-			Mat joint_transform;
-			mat_mul(&transform, &anim_inst->joint_transforms[j], &joint_transform);
-			glUniformMatrix4fv(
-				loc,
-				1,
-				GL_TRUE,
-				joint_transform.data
+			mat_mul(
+				&transform,
+				&anim_inst->joint_transforms[j],
+				&joint_transform
 			);
-
+			shader_set_param_mat(
+				joint_shader.transform,
+				1,
+				&joint_transform
+			);
 			if (!mesh_render(joint_mesh))
 				return 0;
 		}
 	}
 
 	// update model shader uniforms
-	if (!shader_use(model_shader))
+	if (!shader_use(model_shader.shader))
 		return 0;
 
-	loc = glGetUniformLocation(model_shader, "projection");
-	glUniformMatrix4fv(loc, 1, GL_TRUE, projection.data);
-
-	loc = glGetUniformLocation(model_shader, "modelview");
-	glUniformMatrix4fv(loc, 1, GL_TRUE, modelview.data);
-
-	loc = glGetUniformLocation(model_shader, "transform");
-	glUniformMatrix4fv(loc, 1, GL_TRUE, transform.data);
-
-	loc = glGetUniformLocation(model_shader, "animate");
-	glUniform1i(loc, controls.play_animation);
+	shader_set_param_mat(model_shader.projection, 1, &projection);
+	shader_set_param_mat(model_shader.modelview, 1, &modelview);
+	shader_set_param_mat(model_shader.transform, 1, &transform);
+	shader_set_param_int(model_shader.animate, 1, &controls.play_animation);
 
 	if (controls.play_animation && anim_inst > 0) {
-		loc = glGetUniformLocation(model_shader, "joints");
-		if (loc < 0) {
-			fprintf(stderr, "no 'joints' uniform defined\n");
-			return 0;
-		};
-		glUniformMatrix4fv(
-			loc,
+		shader_set_param_mat(
+			model_shader.joints,
 			mesh_data->skeleton->joint_count,
-			GL_TRUE,
-			(float*)anim_inst->skin_transforms
+			anim_inst->skin_transforms
 		);
 	}
 
@@ -356,6 +362,8 @@ cleanup:
 	mesh_data_free(mesh_data);
 	mesh_free(joint_mesh);
 	mesh_data_free(joint_mesh_data);
+	shader_free(model_shader.shader);
+	shader_free(joint_shader.shader);
 
 	surrender_shutdown();
 
