@@ -1,120 +1,115 @@
+#include "error.h"
 #include "ioutils.h"
 #include "shader.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 static GLuint
-compile_source(const char *filename, GLenum type)
+compile_shader(const char *src, GLenum type)
 {
 	GLenum gl_err = GL_NO_ERROR;
 
-#define has_gl_error() (gl_err = glGetError()) != GL_NO_ERROR
-
-	char *data = NULL;
-	if (!file_read(filename, &data))
-		return 0;
-
 	// create the shader
-	GLuint source = glCreateShader(type);
-	if (!source || has_gl_error()) {
-		fprintf(stderr, "failed to create shader source object\n");
+	GLuint shader = glCreateShader(type);
+	if (!shader) {
+		errf("failed to create shader (OpenGL error %d)", gl_err);
 		goto error;
 	}
 
-	// set source and compile it
-	glShaderSource(source, 1, (const char**)&data, NULL);
-	glCompileShader(source);
+	// set shader and compile it
+	glShaderSource(shader, 1, (const char**)&src, NULL);
+	glCompileShader(shader);
 
-	int status;
-	glGetShaderiv(source, GL_COMPILE_STATUS, &status);
-	if (status == GL_FALSE || has_gl_error()) {
+	int status = GL_FALSE;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	if (status == GL_FALSE) {
+		// fetch compile log
 		int log_len;
-		glGetShaderiv(source, GL_INFO_LOG_LENGTH, &log_len);
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
 		char log[log_len];
-		glGetShaderInfoLog(source, log_len, NULL, log);
-		fprintf(
-			stderr,
-			"failed to compile %s: %s\n",
-			filename,
-			log
-		);
+		glGetShaderInfoLog(shader, log_len, NULL, log);
+
+		errf("failed to compile shader: %s", log);
 		goto error;
 	}
 
-#undef has_gl_error
-
-cleanup:
-	free(data);
-
-	return source;
+	return shader;
 
 error:
-	if (gl_err != GL_NO_ERROR)
-		fprintf(stderr, "OpenGL error %d\n", gl_err);
-	if (source != 0)
-		glDeleteShader(source);
-	source = 0;
-	goto cleanup;
+	if (shader != 0)
+		glDeleteShader(shader);
+	return 0;
 }
 
 GLuint
 shader_load_and_compile(const char *vert_shader, const char *frag_shader)
 {
+	char *vert_src;
+	if (!file_read(vert_shader, &vert_src))
+		return 0;
+
+	char *frag_src;
+	if (!file_read(frag_shader, &frag_src)) {
+		free(vert_src);
+		return 0;
+	}
+
+	return shader_new(vert_src, frag_src);
+}
+
+GLuint
+shader_new(const char *vert_src, const char *frag_src)
+{
 	GLenum gl_err = GL_NO_ERROR;
-
-#define has_gl_error() (gl_err = glGetError()) != GL_NO_ERROR
-
 	GLuint prog = 0;
 
-	// compile shader sources
-	GLuint sources[2];
-	const char *files[2] = { vert_shader, frag_shader, };
+	// compile shader shaders
+	GLuint shaders[2];
+	const char *sources[2] = { vert_src, frag_src, };
 	GLenum types[2] = { GL_VERTEX_SHADER, GL_FRAGMENT_SHADER };
 	for (int i = 0; i < 2; i++) {
-		if (!(sources[i] = compile_source(files[i], types[i])))
+		if (!(shaders[i] = compile_shader(sources[i], types[i])))
 			goto error;
 	}
 
 	// create shader program
 	prog = glCreateProgram();
-	if (!prog || has_gl_error()) {
-		fprintf(stderr, "failed to create shader program\n");
+	if (!prog) {
+		errf(
+			"failed to create shader program (OpenGL error %d)",
+			glGetError()
+		);
 		goto error;
 	}
 
 	// attach shaders and link the program
 	for (int i = 0; i < 2; i++)
-		glAttachShader(prog, sources[i]);
+		glAttachShader(prog, shaders[i]);
 	glLinkProgram(prog);
-	if (has_gl_error()) {
-		fprintf(stderr, "failed to link shader program\n");
+	if ((gl_err = glGetError()) != GL_NO_ERROR) {
+		errf("failed to link shader program (OpenGL error %d)", gl_err);
 		goto error;
 	}
 
 	// retrieve link status
-	int status;
+	int status = GL_FALSE;
 	glGetProgramiv(prog, GL_LINK_STATUS, &status);
 	if (status == GL_FALSE) {
+		// retrieve link log
 		int log_len;
 		glGetProgramiv(prog, GL_INFO_LOG_LENGTH, &log_len);
 		char log[log_len];
 		glGetProgramInfoLog(prog, log_len, NULL, log);
-		fprintf(stderr, "failed to link shader: %s\n", log);
+
+		errf("failed to link shader: %s", log);
 		goto error;
 	}
-
-#undef has_gl_error
-
-	printf("loaded shader program from %s %s\n", vert_shader, frag_shader);
 
 	return prog;
 
 error:
-	if (gl_err != GL_NO_ERROR)
-		fprintf(stderr, "OpenGL error %d\n", gl_err);
-
 	for (int i = 0; i < 2; i++)
-		glDeleteShader(sources[i]);
+		glDeleteShader(shaders[i]);
 	glDeleteProgram(prog);
 	return 0;
 }
