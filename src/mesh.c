@@ -1,6 +1,7 @@
 // use open source standard library features
 #define _XOPEN_SOURCE 700
 
+#include "error.h"
 #include "ioutils.h"
 #include "mesh.h"
 #include <assert.h>
@@ -68,7 +69,7 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 	// check header and version
 	if (data_size < HEADER_SIZE ||
 	    get_field(data, VERSION_FIELD) != MESH_VERSION) {
-		fprintf(stderr, "Invalid mesh header or unsupported version\n");
+		err("invalid mesh header or unsupported version");
 		goto error;
 	}
 
@@ -81,13 +82,13 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 	md->vertex_format = get_field(data, FORMAT_FIELD);
 	md->vertex_count = get_field(data, VCOUNT_FIELD);
 	if (!(md->vertex_format & HAS_POSITION) || md->vertex_count == 0) {
-		fprintf(stderr, "No vertex data provided\n");
+		err("no vertex data provided");
 		goto error;
 	}
 
 	md->index_count = get_field(data, ICOUNT_FIELD);
 	if (md->index_count == 0) {
-		fprintf(stderr, "No indices provided\n");
+		err("no indices provided");
 		goto error;
 	}
 
@@ -109,7 +110,7 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 	// initialize vertex data buffer
 	size_t vdata_size = md->vertex_count * md->vertex_size;
 	if (data_size < offset + vdata_size) {
-		fprintf(stderr, "Corrupted vertex data section\n");
+		err("corrupted vertex data section");
 		goto error;
 	}
 	if (!(md->vertex_data = malloc(vdata_size)))
@@ -120,7 +121,7 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 	// initialize index data buffer
 	size_t idata_size = md->index_count * INDEX_SIZE;
 	if (data_size < offset + idata_size) {
-		fprintf(stderr, "Corrupted index data section\n");
+		err("corrupted index data section");
 		goto error;
 	}
 	if (!(md->index_data = malloc(idata_size)))
@@ -133,7 +134,7 @@ mesh_data_from_buffer(const char *data, size_t data_size)
 		size_t joint_count = get_field(data, JCOUNT_FIELD);
 		size_t jdata_size = joint_count * JOINT_SIZE;
 		if (data_size < offset + jdata_size) {
-			fprintf(stderr, "Corrupted joint data section\n");
+			err("corrupted joint data section");
 			goto error;
 		}
 
@@ -247,7 +248,6 @@ struct Mesh*
 mesh_new(struct MeshData *md)
 {
 	GLenum gl_err = GL_NO_ERROR;
-	char *errmsg = NULL;
 
 	struct Mesh *m = malloc(sizeof(struct Mesh));
 	if (!m)
@@ -257,7 +257,7 @@ mesh_new(struct MeshData *md)
 	// create VAO
 	glGenVertexArrays(1, &m->vao);
 	if (!m->vao || (gl_err = glGetError()) != GL_NO_ERROR) {
-		errmsg = "VAO creation failed";
+		errf("VAO creation failed (OpenGL error %d)", gl_err);
 		goto error;
 	}
 	glBindVertexArray(m->vao);
@@ -267,7 +267,7 @@ mesh_new(struct MeshData *md)
 	glGenBuffers(2, bufs);
 	if (bufs[0] == 0 || bufs[1] == 0 ||
 	    (gl_err = glGetError()) != GL_NO_ERROR) {
-		errmsg = "VBO creation failed";
+		errf("VBO creation failed (OpenGL error %d)", gl_err);
 		goto error;
 	}
 	m->vbo = bufs[0];
@@ -282,7 +282,7 @@ mesh_new(struct MeshData *md)
 		GL_STATIC_DRAW
 	);
 	if ((gl_err = glGetError()) != GL_NO_ERROR) {
-		errmsg = "VBO initialization failed";
+		errf("VBO initialization failed (OpenGL error %d)", gl_err);
 		goto error;
 	}
 
@@ -370,12 +370,6 @@ cleanup:
 error:
 	mesh_free(m);
 	m = NULL;
-	fprintf(
-		stderr,
-		"Mesh creation failed: %s (OpenGL error %d)\n",
-		errmsg,
-		gl_err
-	);
 	goto cleanup;
 }
 
@@ -400,9 +394,9 @@ mesh_render(struct Mesh *m)
 		GL_UNSIGNED_INT,
 		(void*)(0)
 	);
-	GLenum err = glGetError();
-	if (err != GL_NO_ERROR) {
-		fprintf(stderr, "Mesh rendering failed (OpenGL error %d)\n", err);
+	GLenum gl_err = glGetError();
+	if (gl_err != GL_NO_ERROR) {
+		errf("mesh rendering failed (OpenGL error %d)", gl_err);
 		return 0;
 	}
 	return 1;

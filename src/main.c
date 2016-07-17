@@ -1,5 +1,7 @@
+#include "error.h"
 #include "surrender.h"
 #include <SDL.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -62,8 +64,10 @@ load_mesh(const char *filename, struct MeshData **md, struct Mesh **m)
 	*md = NULL;
 	*m = NULL;
 
-	if(!(*md = mesh_data_from_file(filename)))
+	if(!(*md = mesh_data_from_file(filename))) {
+		errf("failed to load mesh %s", filename);
 		return 0;
+	}
 
 	if (!(*m = mesh_new(*md))) {
 		mesh_data_free(*md);
@@ -225,6 +229,11 @@ render()
 int
 main(int argc, char *argv[])
 {
+	// print error traceback on abort
+	signal(SIGABRT, (sig_t)error_print_tb);
+
+	int ok = 1;
+
 	if (argc != 2) {
 		fprintf(stderr, "expected model file name\n");
 		return 1;
@@ -247,7 +256,7 @@ main(int argc, char *argv[])
 	);
 	if (!window) {
 		fprintf(stderr, "failed to create OpenGL window\n");
-		return 1;
+		goto cleanup;
 	}
 
 	// initialize OpenGL context
@@ -263,7 +272,7 @@ main(int argc, char *argv[])
 	SDL_GLContext *context = SDL_GL_CreateContext(window);
 	if (!context) {
 		fprintf(stderr, "failed to initialize OpenGL context\n");
-		return 1;
+		goto cleanup;
 	}
 
 	surrender_init();
@@ -271,22 +280,25 @@ main(int argc, char *argv[])
 	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
 	printf("GLSL version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-	if (!setup())
-		return 0;
+	if (!(ok = setup()))
+		goto cleanup;
 
 	// load mesh and create animation instance
-	if (!load_mesh(argv[1], &mesh_data, &mesh))
-		return 0;
+	if (!(ok = load_mesh(argv[1], &mesh_data, &mesh)))
+		goto cleanup;
+
 	if (mesh_data->anim_count > 0 &&
-	    !(anim_inst = anim_new_instance(&mesh_data->animations[2])))
-		return 0;
+	    !(anim_inst = anim_new_instance(&mesh_data->animations[1]))) {
+		ok = 0;
+		goto cleanup;
+	}
 
 	// load joint mesh
-	if (!load_mesh("data/joint.mesh", &joint_mesh_data, &joint_mesh))
-		return 0;
+	if (!(ok = load_mesh("data/joint.mesh", &joint_mesh_data, &joint_mesh)))
+		goto cleanup;
 
-	if (!load_shaders())
-		return 0;
+	if (!(ok = load_shaders()))
+		goto cleanup;
 
 	SDL_Event evt;
 
@@ -331,6 +343,13 @@ main(int argc, char *argv[])
 
 		run &= render();
 		SDL_GL_SwapWindow(window);
+	}
+
+cleanup:
+
+	if (!ok) {
+		error_print_tb();
+		error_clear();
 	}
 
 	mesh_free(mesh);
