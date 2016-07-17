@@ -117,8 +117,10 @@ error:
 int
 shader_use(GLuint prog)
 {
-	GLenum gl_err;
 	glUseProgram(prog);
+
+#ifdef DEBUG
+	GLenum gl_err;
 	if ((gl_err = glGetError()) != GL_NO_ERROR) {
 		fprintf(
 			stderr,
@@ -129,5 +131,7 @@ shader_use(GLuint prog)
 		);
 		return 0;
 	}
+#endif
+
 	return 1;
 }

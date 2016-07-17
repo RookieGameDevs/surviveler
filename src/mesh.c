@@ -394,10 +394,14 @@ mesh_render(struct Mesh *m)
 		GL_UNSIGNED_INT,
 		(void*)(0)
 	);
+
+#ifdef DEBUG
 	GLenum gl_err = glGetError();
 	if (gl_err != GL_NO_ERROR) {
 		errf("mesh rendering failed (OpenGL error %d)", gl_err);
 		return 0;
 	}
+#endif
+
 	return 1;
 }
