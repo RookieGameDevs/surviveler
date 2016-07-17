@@ -2,9 +2,9 @@
 
 #include "strutils.h"
 
-#define err(msg) error_push(string_fmt("%s:%d\n\t%s", __func__, __LINE__, msg))
+#define err(msg) error_push(string_fmt("%s:%d (%s)\n\t%s", __FILE__, __LINE__, __func__, msg))
 
-#define errf(fmt, ...) error_push(string_fmt("%s:%d\n\t" fmt, __func__, __LINE__, __VA_ARGS__))
+#define errf(fmt, ...) error_push(string_fmt("%s:%d (%s)\n\t" fmt, __FILE__, __LINE__, __func__, __VA_ARGS__))
 
 void
 error_push(char *errmsg);
