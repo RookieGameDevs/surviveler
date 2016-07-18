@@ -57,9 +57,11 @@ typedef struct _PyShaderObject {
 
 typedef struct _PyArrayObject {
 	PyObject_HEAD
+	size_t len;
 	size_t size;
 	void *data;
-	PyTypeObject *array_type;
+	PyObject **items;
+	PyTypeObject *type;
 } PyArrayObject;
 
 typedef struct _PyShaderParamObject {

@@ -323,7 +323,7 @@ py_vec_getbuffer(PyObject *self, Py_buffer *view, int flags)
 		self,
 		(void*)to_vec_ptr(self)->data,
 		sizeof(float) * 4,
-		1,
+		0,
 		flags
 	);
 }
@@ -745,7 +745,7 @@ py_mat_getbuffer(PyObject *self, Py_buffer *view, int flags)
 		self,
 		(void*)to_mat_ptr(self)->data,
 		sizeof(float) * 16,
-		1,
+		0,
 		flags
 	);
 }
