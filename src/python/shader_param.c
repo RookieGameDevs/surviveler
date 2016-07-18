@@ -5,16 +5,16 @@
 static void
 py_shader_param_free(PyObject *self)
 {
-	PyShaderParamObject *src_o = (PyShaderParamObject*)self;
-	Py_DECREF(src_o->shader);
+	PyShaderParamObject *param = (PyShaderParamObject*)self;
+	Py_DECREF(param->shader);
 }
 
 static PyObject*
 py_shader_param_set(PyObject *self, PyObject *val)
 {
-	PyShaderParamObject *src_o = (PyShaderParamObject*)self;
-
-	return NULL;
+	PyShaderParamObject *param = (PyShaderParamObject*)self;
+	// TODO
+	Py_RETURN_NONE;
 }
 
 static PyMethodDef py_shader_param_methods[] = {
@@ -58,7 +58,7 @@ register_shader_param(PyObject *module)
 {
 	// register ShaderParam type
 	if (PyType_Ready(&py_shader_param_type) < 0 ||
-	    PyModule_AddObject(module, "ShaderParam", (PyObject*)&py_array_type) < 0)
+	    PyModule_AddObject(module, "ShaderParam", (PyObject*)&py_shader_param_type) < 0)
 		raise_pyerror();
 
 	return 1;

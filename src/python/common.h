@@ -76,6 +76,7 @@ extern PyTypeObject py_animation_type;
 extern PyTypeObject py_animation_instance_type;
 extern PyTypeObject py_shader_type;
 extern PyTypeObject py_shader_source_type;
+extern PyTypeObject py_shader_param_type;
 extern PyTypeObject py_array_type;
 extern PyTypeObject py_vec_type;
 extern PyTypeObject py_mat_type;

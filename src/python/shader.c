@@ -44,7 +44,19 @@ py_shader_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	shader_o->params = PyDict_New();
 	for (unsigned int p = 0; p < shader->param_count; p++) {
 		struct ShaderParam *sp = shader->params + p;
-		// TODO: add shader params
+		PyShaderParamObject *param_o = PyObject_New(
+			PyShaderParamObject,
+			&py_shader_param_type
+		);
+		param_o->param = sp;
+		param_o->shader = self;
+		Py_INCREF(self);
+
+		PyDict_SetItemString(
+			shader_o->params,
+			sp->name,
+			(PyObject*)param_o
+		);
 	}
 
 	return 0;
