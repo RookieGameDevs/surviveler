@@ -116,7 +116,7 @@ def build(bld):
             target='python/surrender',
             source=bld.path.ant_glob('src/python/*.c'),
             includes=['src/python'],
-            use=['surrender'],
+            use=['surrender'] + deps,
             rpath=[rpath],
             uselib=['python'],
             **kwargs)

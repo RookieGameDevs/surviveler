@@ -1,6 +1,5 @@
 #include "error.h"
 #include "surrender.h"
-#include <SDL.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -258,6 +257,7 @@ render()
 		return 0;
 
 	glFlush();
+	surrender_render();
 
 	return 1;
 }
@@ -265,64 +265,27 @@ render()
 int
 main(int argc, char *argv[])
 {
-	// print error traceback on abort
-	signal(SIGABRT, (sig_t)error_print_tb);
-
-	int ok = 1;
-
 	if (argc != 2) {
 		fprintf(stderr, "expected model file name\n");
 		return 1;
 	}
 
-	// initialize SDL
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		fprintf(stderr, "failed to initialize SDL: %s", SDL_GetError());
-		return 1;
-	}
+	// print error traceback on abort
+	signal(SIGABRT, (sig_t)error_print_tb);
 
-	// create an OpenGL window
-	SDL_Window *window = SDL_CreateWindow(
-		"OpenGL demo",
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
-		VIEWPORT_WIDTH,
-		VIEWPORT_HEIGHT,
-		SDL_WINDOW_OPENGL
-	);
-	if (!window) {
-		fprintf(stderr, "failed to create OpenGL window\n");
+	int ok = surrender_init(VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
+	if (!ok)
 		goto cleanup;
-	}
 
-	// initialize OpenGL context
-	SDL_GL_SetAttribute(
-		SDL_GL_CONTEXT_PROFILE_MASK,
-		SDL_GL_CONTEXT_PROFILE_CORE
-	);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-
-	SDL_GLContext *context = SDL_GL_CreateContext(window);
-	if (!context) {
-		fprintf(stderr, "failed to initialize OpenGL context\n");
-		goto cleanup;
-	}
-
-	surrender_init();
-
-	printf("OpenGL version: %s\n", glGetString(GL_VERSION));
-	printf("GLSL version: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-
+	// setup OpenGL context and cameras
 	if (!(ok = setup()))
 		goto cleanup;
 
-	// load mesh and create animation instance
+	// load mesh data
 	if (!(ok = load_mesh(argv[1], &mesh_data, &mesh)))
 		goto cleanup;
 
+	// create animation instance
 	if (mesh_data->anim_count > 0 &&
 	    !(anim_inst = anim_new_instance(&mesh_data->animations[1]))) {
 		ok = 0;
@@ -333,11 +296,12 @@ main(int argc, char *argv[])
 	if (!(ok = load_mesh("data/joint.mesh", &joint_mesh_data, &joint_mesh)))
 		goto cleanup;
 
+	// load shaders
 	if (!(ok = load_shaders()))
 		goto cleanup;
 
+	// main loop
 	SDL_Event evt;
-
 	bool run = true;
 	Uint32 last_update = 0;
 	while (run) {
@@ -378,7 +342,6 @@ main(int argc, char *argv[])
 		run &= update(dt);
 
 		run &= render();
-		SDL_GL_SwapWindow(window);
 	}
 
 cleanup:
@@ -401,6 +364,5 @@ cleanup:
 	shader_free(joint_shader.shader);
 
 	surrender_shutdown();
-
 	return 0;
 }
