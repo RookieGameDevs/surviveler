@@ -1,10 +1,12 @@
 #include "surrender.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static SDL_Window *window = NULL;
 static SDL_GLContext *context = NULL;
 static int initialized = 0;
+static int registered_at_exit = 0;
 
 int
 surrender_init(unsigned int width, unsigned int height)
@@ -61,6 +63,10 @@ surrender_init(unsigned int width, unsigned int height)
 	printf("GLEW version: %s\n", glewGetString(GLEW_VERSION));
 
 	initialized = 1;
+	if (!registered_at_exit) {
+		atexit(surrender_shutdown);
+		registered_at_exit = 1;
+	}
 	return 1;
 
 cleanup:
