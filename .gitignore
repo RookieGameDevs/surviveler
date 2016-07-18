@@ -3,3 +3,4 @@ demo
 build/
 .waf*
 .lock*
+.env/
