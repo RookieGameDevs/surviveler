@@ -95,7 +95,7 @@ def build(bld):
     # build library
     bld.shlib(
         target='surrender',
-        source=bld.path.ant_glob('src/**/*.c', excl=['**/python', 'src/main.c']),
+        source=bld.path.ant_glob('src/**/*.c', excl=['**/python']),
         uselib=deps,
         **kwargs)
 
@@ -104,7 +104,7 @@ def build(bld):
     # build demo executable
     bld.program(
         target='demo',
-        source=[bld.path.find_node('src/main.c')],
+        source=[bld.path.find_node('tools/demo.c')],
         uselib=deps,
         rpath=[rpath],
         use=['surrender'],
