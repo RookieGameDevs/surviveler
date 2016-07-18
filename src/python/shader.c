@@ -6,9 +6,15 @@ static int
 py_shader_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	PyObject *vert_src_o, *frag_src_o;
-	if (!PyArg_ParseTuple(args, "OO", &vert_src_o, &frag_src_o) ||
-	    !PyObject_TypeCheck(vert_src_o, &py_shader_source_type) ||
-	    !PyObject_TypeCheck(frag_src_o, &py_shader_source_type)) {
+	int args_ok = PyArg_ParseTuple(
+		args,
+		"O!O!",
+		&py_shader_source_type,
+		&vert_src_o,
+		&py_shader_source_type,
+		&frag_src_o
+	);
+	if (!args_ok) {
 		PyErr_SetString(
 			PyExc_ValueError,
 			"expected vertex and shader source objects as arguments"
