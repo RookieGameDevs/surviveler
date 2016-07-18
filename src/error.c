@@ -34,3 +34,9 @@ error_clear(void)
 	for (; traceback_len > 0; --traceback_len)
 		free(traceback[traceback_len]);
 }
+
+const char*
+error_last(void)
+{
+	return traceback_len > 0 ? traceback[traceback_len - 1] : NULL;
+}

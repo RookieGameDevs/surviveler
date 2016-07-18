@@ -1,4 +1,5 @@
 #include "common.h"
+#include <error.h>
 #include <string.h>
 #include <structmember.h>
 
@@ -59,9 +60,34 @@ py_shader_source_from_buffer(PyObject *unused, PyObject *args)
 	return src ? make_object(src) : NULL;
 }
 
+static PyObject*
+py_shader_source_from_file(PyObject *unused, PyObject *arg)
+{
+	char *filename;
+	if (!PyArg_ParseTuple(arg, "s", &filename)) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"expected shader source file name"
+		);
+		return NULL;
+	}
+
+	GLuint src = shader_compile_file(filename);
+	if (!src) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			error_last()
+		);
+		return NULL;
+	}
+	return make_object(src);
+}
+
 static PyMethodDef py_shader_source_methods[] = {
 	{ "from_buffer", (PyCFunction)py_shader_source_from_buffer, METH_VARARGS | METH_STATIC,
 	  "Compile a shader source from buffer-like object." },
+	{ "from_file", (PyCFunction)py_shader_source_from_file, METH_VARARGS | METH_STATIC,
+	  "Compile a shader source from file." },
 	{ NULL }
 };
 

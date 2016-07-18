@@ -14,3 +14,6 @@ error_print_tb(void);
 
 void
 error_clear(void);
+
+const char*
+error_last(void);

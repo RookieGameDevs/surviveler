@@ -34,7 +34,7 @@ py_shader_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		return -1;
 	}
 
-	PyShaderObject *shader_o = PyObject_New(PyShaderObject, &py_shader_type);
+	PyShaderObject *shader_o = (PyShaderObject*)self;
 	shader_o->shader = shader;
 	shader_o->vert = vert_src_o;
 	shader_o->frag = frag_src_o;
@@ -55,9 +55,9 @@ py_shader_free(PyObject *self)
 {
 	PyShaderObject *shader_o = (PyShaderObject*)self;
 	shader_free(shader_o->shader);
-	Py_DECREF(shader_o->params);
-	Py_DECREF(shader_o->vert);
-	Py_DECREF(shader_o->frag);
+	Py_XDECREF(shader_o->params);
+	Py_XDECREF(shader_o->vert);
+	Py_XDECREF(shader_o->frag);
 }
 
 static PyObject*
