@@ -34,11 +34,16 @@ py_surrender_init(PyObject *unused, PyObject *args);
 static PyObject*
 py_surrender_shutdown(void);
 
+static PyObject*
+py_surrender_render(void);
+
 static PyMethodDef functions[] = {
 	{"init", (PyCFunction)py_surrender_init, METH_VARARGS,
 	 "Initialize renderer library."},
 	{"shutdown", (PyCFunction)py_surrender_shutdown, METH_NOARGS,
 	 "Shutdown renderer library."},
+	{"render", (PyCFunction)py_surrender_render, METH_NOARGS,
+	 "Render a frame."},
 	{NULL}
 };
 
@@ -64,6 +69,19 @@ py_surrender_init(PyObject *unused, PyObject *args)
 		PyErr_SetString(
 			PyExc_ValueError,
 			"surrender initialization failed"
+		);
+		return NULL;
+	}
+	Py_RETURN_NONE;
+}
+
+static PyObject*
+py_surrender_render(void)
+{
+	if (!surrender_render()) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"error occurred during rendering"
 		);
 		return NULL;
 	}

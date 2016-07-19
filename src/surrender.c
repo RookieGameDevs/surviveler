@@ -78,6 +78,7 @@ int
 surrender_render(void)
 {
 	assert(initialized);
+	glFlush();
 	SDL_GL_SwapWindow(window);
 	return 1;
 }

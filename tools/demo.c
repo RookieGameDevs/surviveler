@@ -256,7 +256,6 @@ render()
 	if (!mesh_render(mesh))
 		return 0;
 
-	glFlush();
 	surrender_render();
 
 	return 1;
