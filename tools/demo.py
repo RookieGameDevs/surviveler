@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
+from abc import ABC
 from OpenGL.GL import *  # noqa
+from enum import IntEnum
+from enum import unique
 from sdl2.ext import get_events
 from surrender import Mesh
 from surrender import MeshData
@@ -14,9 +17,26 @@ WIDTH = 800
 HEIGHT = 600
 
 
+class Event(ABC):
+    """Base class for events"""
+
+
+class KeyboardEvent(Event):
+    @unique
+    class KeyState(IntEnum):
+        pressed = 0
+        released = 1
+
+    def __init__(self, key, state):
+        self.key = key
+        self.state = state
+
+
 class App:
 
     def __init__(self, width, height, mesh_file):
+        self.events = []
+
         surrender.init(width, height)
         aspect = HEIGHT / float(WIDTH)
         self.projection_mat = matlib.Mat()
@@ -58,6 +78,13 @@ class App:
     def update(self, dt):
         self.transform_mat.identity()
 
+        for evt in self.events:
+            if type(evt) == KeyboardEvent:
+                if evt.key in {sdl.SDLK_q, sdl.SDLK_ESCAPE}:
+                    return False
+
+        return True
+
     def render(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -66,24 +93,33 @@ class App:
         self.shader.params['transform'].set(self.transform_mat)
 
         self.mesh.render()
-
         surrender.render()
 
+    def process_input(self):
+        events = get_events()
+        for evt in events:
+            if evt.type == sdl.SDL_KEYDOWN:
+                self.events.append(KeyboardEvent(
+                    evt.key.keysym.sym,
+                    KeyboardEvent.KeyState.pressed))
+            elif evt.type == sdl.SDL_KEYUP:
+                self.events.append(KeyboardEvent(
+                    evt.key.keysym.sym,
+                    KeyboardEvent.KeyState.released))
+
     def start(self):
-        run = True
-        while run:
+        while True:
             # process input
-            events = get_events()
-            for evt in events:
-                if evt.type == sdl.SDL_KEYDOWN:
-                    run = False
-                    break
+            self.process_input()
 
             # update logic
-            self.update(0)
+            if not self.update(0):
+                break
 
             # render
             self.render()
+
+            self.events = []
 
 
 if __name__ == '__main__':
