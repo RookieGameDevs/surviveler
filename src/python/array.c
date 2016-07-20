@@ -52,6 +52,29 @@ update_array(PyArrayObject *array, size_t i)
 }
 
 static int
+init_items(PyArrayObject *array)
+{
+	// allocate an array of mirror objects
+	if (!(array->items = malloc(sizeof(PyObject*) * array->len))) {
+		PyErr_SetString(
+			PyExc_RuntimeError,
+			"out of memory"
+		);
+		return 0;
+	}
+	memset(array->items, 0, array->len * sizeof(PyObject*));
+
+	// initialize mirror items
+	for (size_t i = 0; i < array->len; i++) {
+		array->items[i] = PyObject_New(PyObject, array->type);
+		if (!update_item(array, i))
+			return 0;
+	}
+
+	return 1;
+}
+
+static int
 py_array_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	size_t len = 0, size = 0;
@@ -71,6 +94,7 @@ py_array_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	array->size = size;
 	array->data = NULL;
 	array->items = NULL;
+	array->parent = NULL;
 
 	// allocate the array for underlying data
 	if (!(array->data = malloc(len * size))) {
@@ -82,22 +106,8 @@ py_array_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 	memset(array->data, 0, len * size);
 
-	// allocate an array of mirror objects
-	if (!(array->items = malloc(sizeof(PyObject*) * len))) {
-		PyErr_SetString(
-			PyExc_RuntimeError,
-			"out of memory"
-		);
+	if (!init_items(array))
 		goto error;
-	}
-	memset(array->items, 0, len * sizeof(PyObject*));
-
-	// initialize mirror items
-	for (size_t i = 0; i < len; i++) {
-		array->items[i] = PyObject_New(PyObject, t);
-		if (!update_item(array, i))
-			goto error;
-	}
 
 	return 0;
 
@@ -109,16 +119,39 @@ error:
 	return -1;
 }
 
+PyArrayObject*
+py_array_from_c_buffer(PyObject *parent, void *buf, size_t len, size_t size, PyTypeObject *type)
+{
+	PyArrayObject *array = PyObject_New(PyArrayObject, &py_array_type);
+	array->parent = parent;
+	array->len = len;
+	array->size = size;
+	array->type = type;
+	array->data = buf;
+	Py_INCREF(parent);
+
+	if (!init_items(array)) {
+		Py_DECREF(array);
+		return NULL;
+	}
+
+	return array;
+}
+
 static void
 py_array_free(PyObject *self)
 {
 	PyArrayObject *array = (PyArrayObject*)self;
-	free(array->data);
 	if (array->items) {
 		for (size_t i = 0; i < array->len; i++)
 			Py_XDECREF(array->items[i]);
 	}
 	free(array->items);
+
+	if (array->parent)
+		Py_XDECREF(array->parent);
+	else
+		free(array->data);
 }
 
 static Py_ssize_t

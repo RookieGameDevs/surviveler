@@ -33,6 +33,16 @@ typedef struct _PyAnimationObject {
 	PyMeshDataObject *container;
 } PyAnimationObject;
 
+typedef struct _PyArrayObject {
+	PyObject_HEAD
+	size_t len;
+	size_t size;
+	void *data;
+	PyObject *parent;
+	PyObject **items;
+	PyTypeObject *type;
+} PyArrayObject;
+
 typedef struct _PyAnimationInstanceObject {
 	PyObject_HEAD
 	struct AnimationInstance *inst;
@@ -55,15 +65,6 @@ typedef struct _PyShaderObject {
 	PyObject *params;
 } PyShaderObject;
 
-typedef struct _PyArrayObject {
-	PyObject_HEAD
-	size_t len;
-	size_t size;
-	void *data;
-	PyObject **items;
-	PyTypeObject *type;
-} PyArrayObject;
-
 typedef struct _PyShaderParamObject {
 	PyObject_HEAD
 	PyObject *shader;
@@ -80,6 +81,15 @@ extern PyTypeObject py_shader_param_type;
 extern PyTypeObject py_array_type;
 extern PyTypeObject py_vec_type;
 extern PyTypeObject py_mat_type;
+
+PyArrayObject*
+py_array_from_c_buffer(
+	PyObject *parent,
+	void *buf,
+	size_t len,
+	size_t size,
+	PyTypeObject *type
+);
 
 char*
 strfmt(const char *fmt, ...);

@@ -82,20 +82,25 @@ py_animation_instance_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	PyAnimationInstanceObject *inst_o = (PyAnimationInstanceObject*)self;
 	inst_o->joint_count = inst->anim->skeleton->joint_count;
-	inst_o->joint_transforms = PyList_New(inst_o->joint_count);
-	inst_o->skin_transforms = PyList_New(inst_o->joint_count);
+	inst_o->joint_transforms = (PyObject*)py_array_from_c_buffer(
+		self,
+		inst->joint_transforms,
+		inst_o->joint_count,
+		sizeof(Mat),
+		&py_mat_type
+	);
+	inst_o->skin_transforms = (PyObject*)py_array_from_c_buffer(
+		self,
+		inst->skin_transforms,
+		inst_o->joint_count,
+		sizeof(Mat),
+		&py_mat_type
+	);
+	if (!(inst_o->joint_transforms && inst_o->skin_transforms))
+		return -1;
+
 	inst_o->ref = anim_o;
 	inst_o->inst = inst;
-
-	for (size_t j = 0; j < inst_o->joint_count; j++) {
-		PyMatObject *j_mat = PyObject_New(PyMatObject, &py_mat_type);
-		mat_ident(&j_mat->mat);
-		PyList_SetItem(inst_o->joint_transforms, j, (PyObject*)j_mat);
-
-		PyMatObject *s_mat = PyObject_New(PyMatObject, &py_mat_type);
-		mat_ident(&s_mat->mat);
-		PyList_SetItem(inst_o->skin_transforms, j, (PyObject*)s_mat);
-	}
 
 	return 0;
 }
@@ -104,6 +109,8 @@ static void
 py_animation_instance_free(PyObject *self)
 {
 	PyAnimationInstanceObject *inst_o = (PyAnimationInstanceObject*)self;
+	Py_XDECREF(inst_o->joint_transforms);
+	Py_XDECREF(inst_o->skin_transforms);
 	Py_DECREF(inst_o->ref);
 	anim_free_instance(inst_o->inst);
 }
@@ -122,25 +129,39 @@ py_animation_instance_play(PyObject *self, PyObject *args)
 
 	PyAnimationInstanceObject *inst_o = (PyAnimationInstanceObject*)self;
 	struct AnimationInstance *inst = inst_o->inst;
+
+	int ok = 0;
+
+	// acquire transforms array buffers
+	Py_buffer jbuf, sbuf;
+	int jbuf_ok = PyObject_GetBuffer(inst_o->joint_transforms, &jbuf, PyBUF_WRITABLE) == 0;
+	int sbuf_ok = PyObject_GetBuffer(inst_o->skin_transforms, &sbuf, PyBUF_WRITABLE) == 0;
+	if (!(jbuf_ok && sbuf_ok)) {
+		PyErr_SetString(
+			PyExc_ValueError,
+			"failed to acquire animation instance transform array buffers"
+		);
+		goto cleanup;
+	}
+
+	// advance animation by given time delta
 	if (!anim_play(inst, dt)) {
 		PyErr_SetString(
 			PyExc_ValueError,
 			"animation play failed"
 		);
-		return NULL;
+		goto cleanup;
 	}
+	ok = 1;
 
-	size_t joint_count = inst->anim->skeleton->joint_count;
-
-	// update matrices
-	for (size_t j = 0; j < joint_count; j++) {
-		PyMatObject *j_mat = (PyMatObject*)PyList_GetItem(inst_o->joint_transforms, j);
-		j_mat->mat = inst->joint_transforms[j];
-
-		PyMatObject *s_mat = (PyMatObject*)PyList_GetItem(inst_o->skin_transforms, j);
-		s_mat->mat = inst->skin_transforms[j];
-	}
-	Py_RETURN_NONE;
+cleanup:
+	if (jbuf_ok)
+		PyBuffer_Release(&jbuf);
+	if (sbuf_ok)
+		PyBuffer_Release(&sbuf);
+	if (ok)
+		Py_RETURN_NONE;
+	return NULL;  // error
 }
 
 int

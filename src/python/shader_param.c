@@ -25,6 +25,31 @@ set_vec(const struct ShaderParam *p, PyObject *vec_o)
 	return shader_set_param_vec(p, 1, &vec->vec);
 }
 
+static int
+set_float(const struct ShaderParam *p, PyObject *float_o)
+{
+	float v = PyFloat_AsDouble(float_o);
+	return shader_set_param_float(p, 1, &v);
+}
+
+static int
+set_int(const struct ShaderParam *p, PyObject *int_o)
+{
+	int v = PyLong_AsLong(int_o);
+	return shader_set_param_int(p, 1, &v);
+}
+
+static int
+set_array(const struct ShaderParam *p, PyArrayObject *array)
+{
+	if (array->type == &py_mat_type)
+		return shader_set_param_mat(p, array->len, (Mat*)array->data);
+	else if (array->type == &py_vec_type)
+		return shader_set_param_vec(p, array->len, (Vec*)array->data);
+	errf("unsupported array type '%s'", array->type->tp_name);
+	return 0;
+}
+
 static PyObject*
 py_shader_set_param(PyObject *self, PyObject *val)
 {
@@ -35,10 +60,16 @@ py_shader_set_param(PyObject *self, PyObject *val)
 		ok = set_mat(p, val);
 	} else if (PyObject_TypeCheck(val, &py_vec_type)) {
 		ok = set_vec(p, val);
+	} else if (PyFloat_Check(val)) {
+		ok = set_float(p, val);
+	} else if (PyLong_Check(val)) {
+		ok = set_int(p, val);
+	} else if (PyObject_TypeCheck(val, &py_array_type)) {
+		ok = set_array(p, (PyArrayObject*)val);
 	} else {
 		PyErr_Format(
-			PyExc_ValueError,
-			"unsupported type '%s' for shader '%s'",
+			PyExc_TypeError,
+			"unsupported type '%s' for shader param '%s'",
 			Py_TYPE(val)->tp_name,
 			p->name
 		);
@@ -47,7 +78,7 @@ py_shader_set_param(PyObject *self, PyObject *val)
 
 	if (!ok) {
 		PyErr_Format(
-			PyExc_ValueError,
+			PyExc_RuntimeError,
 			"failed to set shader param '%s'",
 			p->name
 		);
