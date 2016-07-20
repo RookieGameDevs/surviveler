@@ -1,4 +1,5 @@
 #include "common.h"
+#include <error.h>
 #include <string.h>
 #include <structmember.h>
 
@@ -73,10 +74,19 @@ py_shader_free(PyObject *self)
 }
 
 static PyObject*
-py_shader_use(PyObject *self, PyObject *args)
+py_shader_use(PyObject *self)
 {
-	// TODO
-	return NULL;
+	PyShaderObject *shader_o = (PyShaderObject*)self;
+	if (!shader_use(shader_o->shader)) {
+		error_print_tb();
+		error_clear();
+		PyErr_SetString(
+			PyExc_ValueError,
+			"shader binding failed"
+		);
+		return NULL;
+	}
+	Py_RETURN_NONE;
 }
 
 static PyMethodDef py_shader_methods[] = {
