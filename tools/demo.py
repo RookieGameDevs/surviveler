@@ -13,48 +13,77 @@ import surrender
 WIDTH = 800
 HEIGHT = 600
 
-PROJECTION_MAT = None
-MODELVIEW_MAT = None
-TRANSFORM_MAT = None
 
+class App:
 
-def setup():
-    global PROJECTION_MAT
-    global MODELVIEW_MAT
-    global TRANSFORM_MAT
+    def __init__(self, width, height, mesh_file):
+        surrender.init(width, height)
+        aspect = HEIGHT / float(WIDTH)
+        self.projection_mat = matlib.Mat()
+        self.projection_mat.persp(50, 1.0 / aspect, 1, 100)
 
-    aspect = HEIGHT / float(WIDTH)
-    PROJECTION_MAT = matlib.Mat()
-    PROJECTION_MAT.persp(50, 1.0 / aspect, 1, 100)
+        self.modelview_mat = matlib.Mat()
+        self.modelview_mat.lookat(
+            matlib.Vec(5, 5, 5),
+            matlib.Vec(0, 0, 0),
+            matlib.Vec(0, 1, 0))
 
-    MODELVIEW_MAT = matlib.Mat()
-    MODELVIEW_MAT.lookat(
-        matlib.Vec(5, 5, 5),
-        matlib.Vec(0, 0, 0),
-        matlib.Vec(0, 1, 0))
+        self.transform_mat = matlib.Mat()
 
-    TRANSFORM_MAT = matlib.Mat()
+        glClearColor(0.3, 0.3, 0.3, 1.0)
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_CULL_FACE)
+        glCullFace(GL_BACK)
 
-    glClearColor(0.3, 0.3, 0.3, 1.0)
-    glEnable(GL_DEPTH_TEST)
-    glEnable(GL_CULL_FACE)
-    glCullFace(GL_BACK)
+        self.load(mesh_file)
 
+    def __del__(self):
+        surrender.shutdown()
 
-def update(dt):
-    global TRANSFORM_MAT
-    TRANSFORM_MAT.identity()
+    def load(self, mesh_file):
+        # load mesh
+        md = MeshData.from_file(mesh_file)
+        self.mesh = Mesh(md)
 
+        # compile shaders
+        sources = [
+            ShaderSource.from_file('data/default.vert'),
+            ShaderSource.from_file('data/default.frag'),
+        ]
 
-def render(mesh, shader):
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        # create and make active the shader program
+        self.shader = Shader(*sources)
+        self.shader.use()
 
-    shader.params['projection'].set(PROJECTION_MAT)
-    shader.params['modelview'].set(MODELVIEW_MAT)
-    shader.params['transform'].set(TRANSFORM_MAT)
+    def update(self, dt):
+        self.transform_mat.identity()
 
-    mesh.render()
-    surrender.render()
+    def render(self):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        self.shader.params['projection'].set(self.projection_mat)
+        self.shader.params['modelview'].set(self.modelview_mat)
+        self.shader.params['transform'].set(self.transform_mat)
+
+        self.mesh.render()
+
+        surrender.render()
+
+    def start(self):
+        run = True
+        while run:
+            # process input
+            events = get_events()
+            for evt in events:
+                if evt.type == sdl.SDL_KEYDOWN:
+                    run = False
+                    break
+
+            # update logic
+            self.update(0)
+
+            # render
+            self.render()
 
 
 if __name__ == '__main__':
@@ -64,38 +93,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # initialize renderer
-    surrender.init(WIDTH, HEIGHT)
-
-    # setup context and matrices
-    setup()
-
-    # load mesh
-    md = MeshData.from_file(args.mesh)
-    mesh = Mesh(md)
-
-    # compile shaders
-    sources = [
-        ShaderSource.from_file('data/default.vert'),
-        ShaderSource.from_file('data/default.frag'),
-    ]
-
-    # create and make active the shader program
-    shader = Shader(*sources)
-    shader.use()
-
-    # main loop
-    run = True
-    while run:
-        # process input
-        events = get_events()
-        for evt in events:
-            if evt.type == sdl.SDL_KEYDOWN:
-                run = False
-                break
-
-        # update logic
-        update(0)
-
-        # render
-        render(mesh, shader)
+    demo = App(WIDTH, HEIGHT, args.mesh)
+    demo.start()
