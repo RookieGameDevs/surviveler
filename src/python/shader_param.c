@@ -51,7 +51,7 @@ set_array(const struct ShaderParam *p, PyArrayObject *array)
 }
 
 static PyObject*
-py_shader_set_param(PyObject *self, PyObject *val)
+py_shader_param_set(PyObject *self, PyObject *val)
 {
 	const struct ShaderParam *p = ((PyShaderParamObject*)self)->param;
 
@@ -90,7 +90,7 @@ py_shader_set_param(PyObject *self, PyObject *val)
 }
 
 static PyMethodDef py_shader_param_methods[] = {
-	{ "set", (PyCFunction)py_shader_set_param, METH_O,
+	{ "set", (PyCFunction)py_shader_param_set, METH_O,
 	  "Set shader parameter." },
 	{ NULL }
 };

@@ -88,7 +88,7 @@ class App:
         if self.animations:
             if self.current_anim_idx < len(self.animations):
                 self.current_anim_idx = (self.current_anim_idx + 1) % len(self.animations)
-                self.reset_anim()
+                print('current animation: {}'.format(self.current_anim_idx))
                 return self.animations[self.current_anim_idx]
         return None
 
@@ -98,12 +98,9 @@ class App:
                 if self.current_anim_idx <= 0:
                     self.current_anim_idx = len(self.animations)
                 self.current_anim_idx -= 1
-                self.reset_anim()
+                print('current animation: {}'.format(self.current_anim_idx))
                 return self.animations[self.current_anim_idx]
         return None
-
-    def reset_anim(self):
-        print('current animation: {}'.format(self.current_anim_idx))
 
     def update(self, dt):
         self.transform_mat.identity()
@@ -119,7 +116,6 @@ class App:
                         self.current_anim = self.next_anim()
                     elif evt.key == sdl.SDLK_SPACE:
                         self.play = not self.play
-                        self.reset_anim()
 
         if self.play:
             self.current_anim.play(dt)
