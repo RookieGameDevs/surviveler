@@ -91,6 +91,9 @@ py_array_from_c_buffer(
 	PyTypeObject *type
 );
 
+int
+py_shader_param_set(PyShaderParamObject *self, PyObject *val);
+
 char*
 strfmt(const char *fmt, ...);
 

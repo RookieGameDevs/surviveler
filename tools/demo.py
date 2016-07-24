@@ -125,15 +125,15 @@ class App:
     def render(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        self.shader.params['projection'].set(self.projection_mat)
-        self.shader.params['modelview'].set(self.modelview_mat)
-        self.shader.params['transform'].set(self.transform_mat)
+        self.shader['projection'] = self.projection_mat
+        self.shader['modelview'] = self.modelview_mat
+        self.shader['transform'] = self.transform_mat
 
         if self.play and self.current_anim:
-            self.shader.params['animate'].set(1)
-            self.shader.params['joints[0]'].set(self.current_anim.skin_transforms)
+            self.shader['animate'] = 1
+            self.shader['joints[0]'] = self.current_anim.skin_transforms
         else:
-            self.shader.params['animate'].set(0)
+            self.shader['animate'] = 0
 
         self.mesh.render()
         surrender.render()

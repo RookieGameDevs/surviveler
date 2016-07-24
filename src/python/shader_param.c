@@ -50,10 +50,10 @@ set_array(const struct ShaderParam *p, PyArrayObject *array)
 	return 0;
 }
 
-static PyObject*
-py_shader_param_set(PyObject *self, PyObject *val)
+int
+py_shader_param_set(PyShaderParamObject *self, PyObject *val)
 {
-	const struct ShaderParam *p = ((PyShaderParamObject*)self)->param;
+	const struct ShaderParam *p = self->param;
 
 	int ok = 0;
 	if (PyObject_TypeCheck(val, &py_mat_type)) {
@@ -73,7 +73,7 @@ py_shader_param_set(PyObject *self, PyObject *val)
 			Py_TYPE(val)->tp_name,
 			p->name
 		);
-		return NULL;
+		return 0;
 	}
 
 	if (!ok) {
@@ -84,13 +84,22 @@ py_shader_param_set(PyObject *self, PyObject *val)
 		);
 		error_print_tb();
 		error_clear();
+		return 0;
 	}
 
+	return 1;
+}
+
+static PyObject*
+py_shader_param_set_method(PyObject *self, PyObject *val)
+{
+	if (!py_shader_param_set((PyShaderParamObject*)self, val))
+		return NULL;
 	Py_RETURN_NONE;
 }
 
 static PyMethodDef py_shader_param_methods[] = {
-	{ "set", (PyCFunction)py_shader_param_set, METH_O,
+	{ "set", (PyCFunction)py_shader_param_set_method, METH_O,
 	  "Set shader parameter." },
 	{ NULL }
 };
