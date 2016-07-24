@@ -5,6 +5,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef DEBUG
+# define HANDLE_GL_ERROR(param_name) { \
+	GLenum gl_errno = glGetError(); \
+	if (gl_errno != GL_NO_ERROR) { \
+		errf( \
+			"failed to set shader parameter '%s' (OpenGL error %d)", \
+			param_name, \
+			gl_errno \
+		); \
+		return 0; \
+	} \
+	return 1; \
+}
+#else
+# define HANDLE_GL_ERROR(param_name) return 1;
+#endif
+
 GLuint
 shader_compile_source(const char *source, GLenum type)
 {
@@ -244,6 +261,7 @@ shader_set_param_mat(const struct ShaderParam *p, size_t count, Mat *m)
 	assert(p != NULL);
 	assert(m != NULL);
 
+#ifdef DEBUG
 	if (p->type != GL_FLOAT_MAT4) {
 		errf("shader param %s is not of matrix type", p->name);
 		return 0;
@@ -251,8 +269,11 @@ shader_set_param_mat(const struct ShaderParam *p, size_t count, Mat *m)
 		errf("shader param %s value size too big", p->name);
 		return 0;
 	}
+#endif
+
 	glUniformMatrix4fv(p->loc, count, GL_TRUE, (float*)m);
-	return 1;
+
+	HANDLE_GL_ERROR(p->name);
 }
 
 int
@@ -261,6 +282,7 @@ shader_set_param_vec(const struct ShaderParam *p, size_t count, Vec *v)
 	assert(p != NULL);
 	assert(v != NULL);
 
+#ifdef DEBUG
 	if (p->type != GL_FLOAT_VEC4) {
 		errf("shader param %s is not of vector type", p->name);
 		return 0;
@@ -268,9 +290,11 @@ shader_set_param_vec(const struct ShaderParam *p, size_t count, Vec *v)
 		errf("shader param %s value size too big", p->name);
 		return 0;
 	}
+#endif
 
 	glUniform4fv(p->loc, count, (float*)v);
-	return 1;
+
+	HANDLE_GL_ERROR(p->name);
 }
 
 int
@@ -279,6 +303,7 @@ shader_set_param_int(const struct ShaderParam *p, size_t count, int *i)
 	assert(p != NULL);
 	assert(i != NULL);
 
+#ifdef DEBUG
 	if (p->type != GL_INT) {
 		errf("shader param %s is not of integer type", p->name);
 		return 0;
@@ -286,9 +311,11 @@ shader_set_param_int(const struct ShaderParam *p, size_t count, int *i)
 		errf("shader param %s value size too big", p->name);
 		return 0;
 	}
+#endif
 
 	glUniform1iv(p->loc, count, i);
-	return 1;
+
+	HANDLE_GL_ERROR(p->name);
 }
 
 int
@@ -297,6 +324,7 @@ shader_set_param_float(const struct ShaderParam *p, size_t count, float *f)
 	assert(p != NULL);
 	assert(f != NULL);
 
+#ifdef DEBUG
 	if (p->type != GL_FLOAT) {
 		errf("shader param %s is not of float type", p->name);
 		return 0;
@@ -304,7 +332,9 @@ shader_set_param_float(const struct ShaderParam *p, size_t count, float *f)
 		errf("shader param %s value size too big", p->name);
 		return 0;
 	}
+#endif
 
 	glUniform1fv(p->loc, count, f);
-	return 1;
+
+	HANDLE_GL_ERROR(p->name);
 }

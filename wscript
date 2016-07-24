@@ -31,6 +31,7 @@ def configure(cfg):
         cfg.env.append_unique('DEFINES', 'DEBUG')
     else:
         cfg.env.append_unique('CFLAGS', '-O3')
+        cfg.env.append_unique('DEFINES', 'NDEBUG')
 
     cfg.env.with_python = cfg.options.with_python
 
