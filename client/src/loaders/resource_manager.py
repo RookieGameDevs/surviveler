@@ -226,10 +226,8 @@ def load_mesh(manager, fp, cwd):
 
 
 @ResourceManager.resource_handler('.vert')
-def load_vertex(manager, fp, cwd):
+def load_vert_shader_source(manager, fp, cwd):
     """Loader for vert files.
-
-    TODO: define the object that is going to be returned by this function.
 
     :param manager: The resource manager
     :type manager: :class:`loaders.ResourceManager`
@@ -243,16 +241,13 @@ def load_vertex(manager, fp, cwd):
     :returns: The resulting vert object
     :rtype: :class:`renderer.shader.ShaderSource`
     """
-    from renderer.shader import ShaderSource
-    from OpenGL.GL import GL_VERTEX_SHADER
-    return ShaderSource.load_and_compile(fp.read(), GL_VERTEX_SHADER)
+    from surrender import ShaderSource
+    return ShaderSource.from_buffer(fp.read(), ShaderSource.VERTEX_SHADER)
 
 
 @ResourceManager.resource_handler('.frag')
-def load_fragment(manager, fp, cwd):
+def load_frag_shader_source(manager, fp, cwd):
     """Loader for frag files.
-
-    TODO: define the object that is going to be returned by this function.
 
     :param manager: The resource manager
     :type manager: :class:`loaders.ResourceManager`
@@ -266,9 +261,8 @@ def load_fragment(manager, fp, cwd):
     :returns: The resulting frag object
     :rtype: :class:`renderer.shader.ShaderSource`
     """
-    from renderer.shader import ShaderSource
-    from OpenGL.GL import GL_FRAGMENT_SHADER
-    return ShaderSource.load_and_compile(fp.read(), GL_FRAGMENT_SHADER)
+    from surrender import ShaderSource
+    return ShaderSource.from_buffer(fp.read(), ShaderSource.FRAGMENT_SHADER)
 
 
 @ResourceManager.resource_handler('.shader')
@@ -289,7 +283,7 @@ def load_shader(manager, fp, cwd):
     :returns: The resulting shader program object
     :rtype: :class:`renderer.Shader`
     """
-    from renderer.shader import Shader
+    from surrender import Shader
 
     shader_data = json.loads(as_utf8(fp.read()))
     shaders = []
@@ -297,7 +291,7 @@ def load_shader(manager, fp, cwd):
         res = manager.get(os.path.join(cwd, r))
         shaders.append(res.data)
 
-    return Shader.from_glsl(shaders, shader_data.get('params'))
+    return Shader(*shaders)
 
 
 @ResourceManager.resource_handler('.png', '.jpg')

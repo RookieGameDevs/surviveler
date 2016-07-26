@@ -22,6 +22,7 @@ class Terrain(Entity):
         # shader params
         params = {
             'tex': texture,
+            'animate': 0,
         }
         renderable = Renderable(
             parent_node,

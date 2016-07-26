@@ -34,8 +34,6 @@ class Client:
     def __init__(self, character, renderer, proxy, input_mgr, res_mgr, audio_mgr, conf):
         """Constructor.
 
-        Just passes the arguments to the _Client constructor.
-
         :param character: The character name
         :type character: str
 

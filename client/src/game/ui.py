@@ -33,7 +33,7 @@ class HealthBar:
         :param resource: The resource for the healthbar
         :type resource: :class:`loaders.Resource`
         """
-        self._value = 1
+        self._value = 1.0
         self.w = width
         self.h = height
 
@@ -73,8 +73,8 @@ class HealthBar:
         :param v: The value of the health bar
         :type v: :class:`float`
         """
-        self._value = v
-        self.node.params['value'] = v
+        self._value = float(v)
+        self.node.params['value'] = self._value
 
 
 class Avatar:
