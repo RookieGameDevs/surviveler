@@ -14,9 +14,9 @@ surrender_init(unsigned int width, unsigned int height)
 	if (initialized)
 		surrender_shutdown();
 
-	// initialize SDL
-	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		fprintf(stderr, "failed to initialize SDL: %s", SDL_GetError());
+	// initialize SDL video subsystem
+	if (!SDL_WasInit(SDL_INIT_VIDEO) && SDL_Init(SDL_INIT_VIDEO) != 0) {
+		fprintf(stderr, "failed to initialize SDL video subsystem: %s", SDL_GetError());
 		return 0;
 	}
 
