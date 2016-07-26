@@ -34,13 +34,15 @@ py_shader_source_from_buffer(PyObject *unused, PyObject *args)
 			"expected a buffer-like object and shader type"
 		);
 		return NULL;
-	} else if (type != GL_FRAGMENT_SHADER || type != GL_VERTEX_SHADER) {
+	} else if (type != GL_FRAGMENT_SHADER && type != GL_VERTEX_SHADER) {
 		PyErr_SetString(
 			PyExc_ValueError,
 			"invalid shader type"
 		);
 		return NULL;
-	} else if (PyObject_GetBuffer(buf_o, &buf, PyBUF_SIMPLE) < 0) {
+	}
+
+	if (PyObject_GetBuffer(buf_o, &buf, PyBUF_SIMPLE) < 0) {
 		PyErr_SetString(
 			PyExc_ValueError,
 			"failed to acquire buffer object"
@@ -49,7 +51,7 @@ py_shader_source_from_buffer(PyObject *unused, PyObject *args)
 	}
 
 	GLuint src = shader_compile_source(buf.buf, type);
-	if (src) {
+	if (!src) {
 		PyErr_SetString(
 			PyExc_ValueError,
 			"failed to compile shader source"

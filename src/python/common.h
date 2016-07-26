@@ -60,8 +60,9 @@ typedef struct _PyShaderSourceObject {
 typedef struct _PyShaderObject {
 	PyObject_HEAD
 	struct Shader *shader;
-	PyObject *vert;
-	PyObject *frag;
+	PyObject *dict;
+	PyObject **sources;
+	Py_ssize_t source_count;
 	PyObject *params;
 } PyShaderObject;
 

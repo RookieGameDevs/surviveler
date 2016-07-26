@@ -27,7 +27,7 @@ void
 shader_free_source(GLuint src);
 
 struct Shader*
-shader_new(GLuint vert_src, GLuint frag_src);
+shader_new(GLuint *sources, unsigned count);
 
 void
 shader_free(struct Shader *s);

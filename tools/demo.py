@@ -75,10 +75,14 @@ class App:
         self.current_anim = self.next_anim()
 
         # compile shaders
+        vert_file = open('data/default.vert', 'rb')
+        frag_file = open('data/default.frag', 'rb')
         sources = [
-            ShaderSource.from_file('data/default.vert'),
-            ShaderSource.from_file('data/default.frag'),
+            ShaderSource.from_buffer(vert_file.read(), ShaderSource.VERTEX_SHADER),
+            ShaderSource.from_buffer(frag_file.read(), ShaderSource.FRAGMENT_SHADER),
         ]
+        vert_file.close()
+        frag_file.close()
 
         # create and make active the shader program
         self.shader = Shader(*sources)

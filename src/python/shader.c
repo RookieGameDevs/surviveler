@@ -6,27 +6,42 @@
 static int
 py_shader_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	PyObject *vert_src_o, *frag_src_o;
-	int args_ok = PyArg_ParseTuple(
-		args,
-		"O!O!",
-		&py_shader_source_type,
-		&vert_src_o,
-		&py_shader_source_type,
-		&frag_src_o
-	);
-	if (!args_ok) {
+	Py_ssize_t len = PySequence_Length(args);
+	if (args < 0) {
 		PyErr_SetString(
 			PyExc_ValueError,
-			"expected vertex and shader source objects as arguments"
+			"expected a sequence of shader sources"
 		);
 		return -1;
 	}
 
-	GLuint vert = ((PyShaderSourceObject*)vert_src_o)->source;
-	GLuint frag = ((PyShaderSourceObject*)frag_src_o)->source;
+	PyShaderObject *shader_o = (PyShaderObject*)self;
+	shader_o->sources = malloc(sizeof(PyObject*) * len);
+	memset(shader_o->sources, 0, sizeof(PyObject*) * len);
+	shader_o->source_count = len;
 
-	struct Shader *shader = shader_new(vert, frag);
+	// initialize the array of shader sources from which the shader program will
+	// be created;
+	// also store them in the python object and increase the reference, in order
+	// to ensure they're alive as long as the dependant shader objects live
+	GLuint sources[len];
+	for (Py_ssize_t i = 0; i < len; i++) {
+		PyObject *item = PySequence_GetItem(args, i);
+		if (!PyObject_TypeCheck(item, &py_shader_source_type)) {
+			PyErr_Format(
+				PyExc_ValueError,
+				"argument %d is not a shader source object",
+				i + 1
+			);
+			return -1;
+		}
+
+		sources[i] = ((PyShaderSourceObject*)item)->source;
+		shader_o->sources[i] = item;
+		Py_INCREF(item);
+	}
+
+	struct Shader *shader = shader_new(sources, (unsigned)len);
 	if (!shader) {
 		PyErr_SetString(
 			PyExc_ValueError,
@@ -34,14 +49,9 @@ py_shader_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		);
 		return -1;
 	}
-
-	PyShaderObject *shader_o = (PyShaderObject*)self;
 	shader_o->shader = shader;
-	shader_o->vert = vert_src_o;
-	shader_o->frag = frag_src_o;
-	Py_INCREF(vert_src_o);
-	Py_INCREF(frag_src_o);
 
+	// initialize shader parameters dictionary
 	shader_o->params = PyDict_New();
 	for (unsigned int p = 0; p < shader->param_count; p++) {
 		struct ShaderParam *sp = shader->params + p;
@@ -60,6 +70,10 @@ py_shader_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		);
 	}
 
+	// initialize shader class instance attributes dictionary
+	shader_o->dict = PyDict_New();
+	PyDict_SetItemString(shader_o->dict, "prog", PyLong_FromLong(shader->prog));
+
 	return 0;
 }
 
@@ -69,8 +83,9 @@ py_shader_free(PyObject *self)
 	PyShaderObject *shader_o = (PyShaderObject*)self;
 	shader_free(shader_o->shader);
 	Py_XDECREF(shader_o->params);
-	Py_XDECREF(shader_o->vert);
-	Py_XDECREF(shader_o->frag);
+	for (Py_ssize_t i = 0; i < shader_o->source_count; i++) {
+		Py_XDECREF(shader_o->sources[i]);
+	}
 }
 
 static PyObject*
@@ -154,6 +169,7 @@ PyTypeObject py_shader_type = {
 	.tp_doc = "Shader.",
 	.tp_basicsize = sizeof(PyShaderObject),
 	.tp_itemsize = 0,
+	.tp_dictoffset = offsetof(PyShaderObject, dict),
 	.tp_alloc = PyType_GenericAlloc,
 	.tp_dealloc = py_shader_free,
 	.tp_new = PyType_GenericNew,
@@ -170,8 +186,8 @@ PyTypeObject py_shader_type = {
 	.tp_hash = NULL,
 	.tp_call = NULL,
 	.tp_str = NULL,
-	.tp_getattro = NULL,
-	.tp_setattro = NULL,
+	.tp_getattro = PyObject_GenericGetAttr,
+	.tp_setattro = PyObject_GenericSetAttr,
 	.tp_flags = Py_TPFLAGS_DEFAULT,
 	.tp_methods = py_shader_methods,
 	.tp_getset = NULL

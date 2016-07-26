@@ -156,8 +156,11 @@ error:
 }
 
 struct Shader*
-shader_new(GLuint vert_src, GLuint frag_src)
+shader_new(GLuint *sources, unsigned count)
 {
+	assert(sources != NULL);
+	assert(count > 0);
+
 	GLenum gl_err = GL_NO_ERROR;
 	GLuint prog = 0;
 	struct Shader *shader = NULL;
@@ -173,8 +176,9 @@ shader_new(GLuint vert_src, GLuint frag_src)
 	}
 
 	// attach shaders and link the program
-	glAttachShader(prog, vert_src);
-	glAttachShader(prog, frag_src);
+	for (unsigned i = 0; i < count; i++) {
+		glAttachShader(prog, sources[i]);
+	}
 	glLinkProgram(prog);
 	if ((gl_err = glGetError()) != GL_NO_ERROR) {
 		errf("failed to link shader program (OpenGL error %d)", gl_err);
@@ -283,7 +287,7 @@ shader_set_param_vec(const struct ShaderParam *p, size_t count, Vec *v)
 	assert(v != NULL);
 
 #ifdef DEBUG
-	if (p->type != GL_FLOAT_VEC4) {
+	if (p->type != GL_FLOAT_VEC4 && p->type != GL_FLOAT_VEC3) {
 		errf("shader param %s is not of vector type", p->name);
 		return 0;
 	} else if (count > p->size) {
@@ -292,7 +296,14 @@ shader_set_param_vec(const struct ShaderParam *p, size_t count, Vec *v)
 	}
 #endif
 
-	glUniform4fv(p->loc, count, (float*)v);
+	switch (p->type) {
+	case GL_FLOAT_VEC4:
+		glUniform4fv(p->loc, count, v->data);
+		break;
+	case GL_FLOAT_VEC3:
+		glUniform3fv(p->loc, count, v->data);
+		break;
+	}
 
 	HANDLE_GL_ERROR(p->name);
 }
@@ -304,7 +315,7 @@ shader_set_param_int(const struct ShaderParam *p, size_t count, int *i)
 	assert(i != NULL);
 
 #ifdef DEBUG
-	if (p->type != GL_INT) {
+	if (p->type != GL_INT && p->type != GL_SAMPLER_2D) {
 		errf("shader param %s is not of integer type", p->name);
 		return 0;
 	} else if (count > p->size) {

@@ -112,7 +112,12 @@ load_shaders()
 	if (!(model_shader.frag = shader_compile_file(MODEL_FRAG)))
 		return 0;
 	printf("loaded %s\n", MODEL_FRAG);
-	if (!(model_shader.shader = shader_new(model_shader.vert, model_shader.frag)))
+
+	GLuint sources[2] = {
+		model_shader.vert,
+		model_shader.frag
+	};
+	if (!(model_shader.shader = shader_new(sources, 2)))
 		return 0;
 
 	print_shader_info("model", model_shader.shader);
@@ -128,7 +133,10 @@ load_shaders()
 	if (!(joint_shader.frag = shader_compile_file(JOINT_FRAG)))
 		return 0;
 	printf("loaded %s\n", JOINT_FRAG);
-	if (!(joint_shader.shader = shader_new(joint_shader.vert, joint_shader.frag)))
+
+	sources[0] = joint_shader.vert;
+	sources[1] = joint_shader.frag;
+	if (!(joint_shader.shader = shader_new(sources, 2)))
 		return 0;
 
 	print_shader_info("joint", joint_shader.shader);
