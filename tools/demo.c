@@ -202,7 +202,6 @@ update(float dt)
 	);
 
 	transform = mesh_data->transform;
-	mat_scale(&transform, 0.041, 0.041, 0.041);
 
 	// play the animation
 	if (controls.play_animation && anim_inst) {
@@ -294,7 +293,7 @@ main(int argc, char *argv[])
 
 	// create animation instance
 	if (mesh_data->anim_count > 0 &&
-	    !(anim_inst = anim_new_instance(&mesh_data->animations[1]))) {
+	    !(anim_inst = anim_new_instance(&mesh_data->animations[0]))) {
 		ok = 0;
 		goto cleanup;
 	}
