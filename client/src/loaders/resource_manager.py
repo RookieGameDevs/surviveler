@@ -239,7 +239,7 @@ def load_vert_shader_source(manager, fp, cwd):
     :type cwd: str
 
     :returns: The resulting vert object
-    :rtype: :class:`renderer.shader.ShaderSource`
+    :rtype: :class:`surrender.ShaderSource`
     """
     from surrender import ShaderSource
     return ShaderSource.from_buffer(fp.read(), ShaderSource.VERTEX_SHADER)
@@ -259,7 +259,7 @@ def load_frag_shader_source(manager, fp, cwd):
     :type cwd: str
 
     :returns: The resulting frag object
-    :rtype: :class:`renderer.shader.ShaderSource`
+    :rtype: :class:`surrender.ShaderSource`
     """
     from surrender import ShaderSource
     return ShaderSource.from_buffer(fp.read(), ShaderSource.FRAGMENT_SHADER)
@@ -281,7 +281,7 @@ def load_shader(manager, fp, cwd):
     :type cwd: str
 
     :returns: The resulting shader program object
-    :rtype: :class:`renderer.Shader`
+    :rtype: :class:`surrender.Shader`
     """
     from surrender import Shader
 

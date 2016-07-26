@@ -19,7 +19,7 @@ class GeometryNode(SceneNode):
         :param shader: Shader to use during rendering. At each render, the node
             will set the `transform` parameter (uniform) implicitly, all other
             parameters can be passed as `params` argument.
-        :type shader: :class:`renderer.Shader`
+        :type shader: :class:`surrender.Shader`
 
         :param params: Additional shader parameters. These are passed to the
             shader verbatim.

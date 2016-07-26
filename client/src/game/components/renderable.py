@@ -21,7 +21,7 @@ class Renderable(Component):
         :type mesh: :class:`renderer.Mesh`
 
         :param shader: The shader program.
-        :type shader: :class:`renderer.Shader`
+        :type shader: :class:`surrender.Shader`
 
         :param params: The parameters mapping to pass during rendering to the
             shader program.

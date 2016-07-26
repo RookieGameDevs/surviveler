@@ -64,7 +64,7 @@ class RenderOp:
         :type key: :class:`float`
 
         :param shader: Shader to use for rendering.
-        :type shader: :class:`renderer.shader.Shader`
+        :type shader: :class:`surrender.Shader`
 
         :param shader_params: Shader parameters to submit to the shader.
         :type shader_params: mapping
