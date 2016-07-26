@@ -132,8 +132,9 @@ py_mesh_data_from_buffer(PyObject *unused, PyObject *arg)
 		);
 		return NULL;
 	}
+	PyBuffer_Release(&buf);
 
-	return make_object(md);
+	return md ? make_object(md): NULL;
 }
 
 static void

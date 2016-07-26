@@ -31,6 +31,7 @@ def configure(cfg):
         cfg.env.append_unique('DEFINES', 'DEBUG')
     else:
         cfg.env.append_unique('CFLAGS', '-O3')
+        cfg.env.append_unique('DEFINES', 'NDEBUG')
 
     cfg.env.with_python = cfg.options.with_python
 
@@ -95,7 +96,7 @@ def build(bld):
     # build library
     bld.shlib(
         target='surrender',
-        source=bld.path.ant_glob('src/**/*.c', excl=['**/python', 'src/main.c']),
+        source=bld.path.ant_glob('src/**/*.c', excl=['**/python']),
         uselib=deps,
         **kwargs)
 
@@ -104,7 +105,7 @@ def build(bld):
     # build demo executable
     bld.program(
         target='demo',
-        source=[bld.path.find_node('src/main.c')],
+        source=[bld.path.find_node('tools/demo.c')],
         uselib=deps,
         rpath=[rpath],
         use=['surrender'],
@@ -116,7 +117,7 @@ def build(bld):
             target='python/surrender',
             source=bld.path.ant_glob('src/python/*.c'),
             includes=['src/python'],
-            use=['surrender'],
+            use=['surrender'] + deps,
             rpath=[rpath],
             uselib=['python'],
             **kwargs)

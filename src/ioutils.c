@@ -1,3 +1,4 @@
+#include "error.h"
 #include "ioutils.h"
 #include <assert.h>
 #include <stdio.h>
@@ -9,12 +10,13 @@ file_read(const char *filename, char **r_buf)
 	assert(filename != NULL);
 	assert(r_buf != NULL);
 
-	char *errmsg = NULL;
+	*r_buf = NULL;
+
 	size_t size = 0;
 
 	FILE *fp = fopen(filename, "r");
 	if (!fp) {
-		errmsg = "no such file or directory or not enough rights";
+		errf("unable to open file '%s'", filename);
 		goto error;
 	}
 
@@ -26,7 +28,7 @@ file_read(const char *filename, char **r_buf)
 	// allocate a buffer for its contents
 	*r_buf = malloc(size + 1);
 	if (!*r_buf) {
-		errmsg = "could not allocate memory for file contents";
+		errf("could not allocate %d bytes for file contents", size + 1);
 		goto error;
 	}
 
@@ -34,7 +36,7 @@ file_read(const char *filename, char **r_buf)
 
 	// read the file
 	if (fread(*r_buf, 1, size, fp) != size) {
-		errmsg = "I/O error";
+		err("I/O error");
 		goto error;
 	}
 
@@ -45,6 +47,6 @@ cleanup:
 
 error:
 	size = 0;
-	fprintf(stderr, "failed to read file '%s': %s\n", filename, errmsg);
+	free(*r_buf);
 	goto cleanup;
 }

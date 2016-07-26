@@ -1,4 +1,5 @@
 #include "common.h"
+#include <error.h>
 
 static int
 py_mesh_init(PyObject *self, PyObject *args, PyObject *kwargs);
@@ -82,9 +83,11 @@ static PyObject*
 py_mesh_render(PyObject *self)
 {
 	if (!mesh_render(((PyMeshObject*)self)->mesh)) {
+		error_print_tb();
+		error_clear();
 		PyErr_SetString(
 			PyExc_ValueError,
-			"Mesh object creation failed"
+			"mesh object rendering failed"
 		);
 		return NULL;
 	}
