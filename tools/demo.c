@@ -1,3 +1,5 @@
+#define _BSD_SOURCE
+
 #include "error.h"
 #include "surrender.h"
 #include <signal.h>
