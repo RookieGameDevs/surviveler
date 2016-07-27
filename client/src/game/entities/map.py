@@ -24,6 +24,10 @@ class Map(Entity):
         params = {
             'tex': texture,
             'animate': 0,
+            'opacity': 1.0,
+            'color_ambient': Vec(0, 0, 0, 1),
+            'color_diffuse': Vec(0, 0, 0, 1),
+            'color_specular': Vec(0.1, 0.1, 0.1, 1),
         }
         renderable = Renderable(
             parent_node,
