@@ -406,18 +406,6 @@ func (gs *gamestate) AddEntity(ent game.Entity) {
 	gs.world.AttachEntity(ent)
 }
 
-func (gs *gamestate) AddZombie(org math.Vec2) {
-	et := game.ZombieEntity
-	if entityData := gs.EntityData(et); entityData == nil {
-		log.WithField("type", et).Panic("Can't create zombie, unsupported type")
-	} else {
-		speed := entityData.Speed
-		combatPower := entityData.CombatPower
-		totHP := float64(entityData.TotalHP)
-		gs.AddEntity(entities.NewZombie(gs.game, org, speed, combatPower, totHP))
-	}
-}
-
 /*
  * RemoveEntity removes an entity from the game state
  */

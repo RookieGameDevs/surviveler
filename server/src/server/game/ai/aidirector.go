@@ -8,7 +8,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
+	"server/game/entities"
 	"server/game/events"
+	"server/math"
 	"time"
 )
 
@@ -61,6 +63,12 @@ func (ai *AIDirector) OnZombieDeath(event *events.Event) {
 	ai.intensity++
 }
 
+// TODO: set as non exported. It is currently exported because of the use done
+// by the 'summon' telnet request. But this breaks encapsulation and a clear
+// definition of components role. In case this telnet feature is still needed
+// in the future, it could add a Zombie using AddEntity. Anyway, for unit-testing
+// the AIDirector should probably be replac-able by a special AIDirector summoning
+// entities following a scripted testable scenario.
 func (ai *AIDirector) SummonZombie() {
 	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
@@ -70,8 +78,20 @@ func (ai *AIDirector) SummonZombie() {
 		"spawn": org,
 	}).Info("summoning zombie")
 
-	ai.game.State().AddZombie(org)
+	ai.addZombie(org)
 	ai.zombieCount++
+}
+
+func (ai *AIDirector) addZombie(org math.Vec2) {
+	et := game.ZombieEntity
+	if entityData := ai.game.State().EntityData(et); entityData == nil {
+		log.WithField("type", et).Panic("Can't create zombie, unsupported type")
+	} else {
+		speed := entityData.Speed
+		combatPower := entityData.CombatPower
+		totHP := float64(entityData.TotalHP)
+		ai.game.State().AddEntity(entities.NewZombie(ai.game, org, speed, combatPower, totHP))
+	}
 }
 
 /*
@@ -83,7 +103,7 @@ func (ai *AIDirector) summonZombieMob(qty int) {
 	idx := rand.Intn(len(keypoints.Spawn.Enemies))
 	for i := 0; i < qty; i++ {
 		org := keypoints.Spawn.Enemies[(i+idx)%len(keypoints.Spawn.Enemies)]
-		ai.game.State().AddZombie(org)
+		ai.addZombie(org)
 		ai.zombieCount++
 	}
 }
