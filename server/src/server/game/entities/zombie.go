@@ -225,7 +225,7 @@ func (z *Zombie) State() game.EntityState {
 			moveActionData := game.MoveActionData{
 				Speed: z.Speed,
 			}
-			actionType = game.MovingAction
+			actionType = game.MoveAction
 			actionData = moveActionData
 		}
 	}

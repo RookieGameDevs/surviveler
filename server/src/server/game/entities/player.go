@@ -83,7 +83,7 @@ func (p *Player) Update(dt time.Duration) {
 	if action, exist := p.actions.Peek(); exist {
 		switch action.Type {
 
-		case game.MovingAction:
+		case game.MoveAction:
 
 			p.onMoveAction(dt)
 
@@ -91,9 +91,9 @@ func (p *Player) Update(dt time.Duration) {
 
 			// nothing to do
 
-		case game.BuildingAction, game.RepairingAction:
+		case game.BuildAction, game.RepairAction:
 
-			// building/repairing actually end up being the same
+			// build and repair actions actually end up being the same
 			p.induceBuildPower()
 
 		case game.DrinkCoffeeAction:
@@ -148,7 +148,7 @@ func (p *Player) onMoveAction(dt time.Duration) {
 		}
 
 		switch nextAction.Type {
-		case game.BuildingAction, game.RepairingAction:
+		case game.BuildAction, game.RepairAction:
 			if e == p.curBuilding {
 				log.WithField("ent", e).Debug("collision with target building")
 				// we are colliding with the building we wanna build/repair
@@ -218,7 +218,7 @@ func (p *Player) SetPath(path math.Path) {
 func (p *Player) Move() {
 	log.Debug("Player.Move")
 	p.emptyActions()
-	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
+	p.actions.Push(&game.Action{game.MoveAction, struct{}{}})
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }
 
@@ -248,13 +248,13 @@ func (p *Player) State() game.EntityState {
 	curAction, _ = p.actions.Peek()
 	actionType = curAction.Type
 	switch curAction.Type {
-	case game.MovingAction:
+	case game.MoveAction:
 		actionData = game.MoveActionData{
 			Speed: p.Speed,
 		}
-	case game.BuildingAction:
+	case game.BuildAction:
 		actionData = game.BuildActionData{}
-	case game.RepairingAction:
+	case game.RepairAction:
 		actionData = game.RepairActionData{}
 	case WaitingForPathAction:
 		actionType = game.IdleAction
@@ -265,7 +265,7 @@ func (p *Player) State() game.EntityState {
 	case game.AttackAction:
 		dist := p.target.Position().Sub(p.Pos).Len()
 		if dist > PlayerAttackDistance {
-			actionType = game.MovingAction
+			actionType = game.MoveAction
 			actionData = game.MoveActionData{
 				Speed: p.Speed,
 			}
@@ -300,7 +300,7 @@ func (p *Player) State() game.EntityState {
  */
 func (p *Player) Build(b game.Building) {
 	log.Debug("Player.Build")
-	p.moveAndAction(game.BuildingAction, game.BuildActionData{})
+	p.moveAndAction(game.BuildAction, game.BuildActionData{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
 }
@@ -314,7 +314,7 @@ func (p *Player) Build(b game.Building) {
  */
 func (p *Player) Repair(b game.Building) {
 	log.Debug("Player.Repair")
-	p.moveAndAction(game.RepairingAction, game.RepairActionData{})
+	p.moveAndAction(game.RepairAction, game.RepairActionData{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
 }
@@ -378,7 +378,7 @@ func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{
 	p.emptyActions()
 	// fill the player action stack
 	p.actions.Push(&game.Action{actionType, actionData})
-	p.actions.Push(&game.Action{game.MovingAction, struct{}{}})
+	p.actions.Push(&game.Action{game.MoveAction, struct{}{}})
 	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
 }
 

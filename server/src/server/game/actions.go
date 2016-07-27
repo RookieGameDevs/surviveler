@@ -9,9 +9,9 @@ type ActionType uint16
 // gamestate action types
 const (
 	IdleAction ActionType = 0 + iota
-	MovingAction
-	BuildingAction
-	RepairingAction
+	MoveAction
+	BuildAction
+	RepairAction
 	AttackAction
 	DrinkCoffeeAction
 )
@@ -22,12 +22,12 @@ const (
 type IdleActionData struct{}
 
 /*
- * Building action payload
+ * Build action payload
  */
 type BuildActionData struct{}
 
 /*
- * Repairing action payload
+ * Repair action payload
  */
 type RepairActionData struct{}
 
