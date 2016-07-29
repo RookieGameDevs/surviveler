@@ -41,13 +41,6 @@ func LoadEntitiesData(pkg resource.SurvivelerPackage) (*EntitiesData, error) {
 	return md, err
 }
 
-type gameData struct {
-	world         *game.World
-	mapData       *MapData
-	buildingsData BuildingDataDict
-	entitiesData  EntityDataDict
-}
-
 func (gd *gameData) newGameData(pkg resource.SurvivelerPackage) error {
 	gd.entitiesData = make(EntityDataDict)
 	gd.buildingsData = make(BuildingDataDict)

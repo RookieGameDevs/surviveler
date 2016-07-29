@@ -12,6 +12,14 @@ import (
 type Rect2D [2]math.Vec2
 type VecList []math.Vec2
 
+// gameData is the top-level struct containing game data
+type gameData struct {
+	world         *game.World
+	mapData       *MapData
+	buildingsData BuildingDataDict
+	entitiesData  EntityDataDict
+}
+
 type (
 	BuildingDataDict map[game.EntityType]*BuildingData
 	EntityDataDict   map[game.EntityType]*EntityData
