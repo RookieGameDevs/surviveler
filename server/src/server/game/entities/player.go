@@ -70,7 +70,7 @@ func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
 	// place an idle action as the bottommost item of the action stack item.
 	// This should never be removed as the player should remain idle if he
 	// has nothing better to do
-	p.actions.Push(&game.Action{game.IdleAction, game.IdleActionData{}})
+	p.actions.Push(game.NewAction(game.IdleAction, game.IdleActionData{}))
 	return p
 }
 
@@ -218,8 +218,8 @@ func (p *Player) SetPath(path math.Path) {
 func (p *Player) Move() {
 	log.Debug("Player.Move")
 	p.emptyActions()
-	p.actions.Push(&game.Action{game.MoveAction, struct{}{}})
-	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
+	p.actions.Push(game.NewAction(game.MoveAction, struct{}{}))
+	p.actions.Push(game.NewAction(WaitingForPathAction, struct{}{}))
 }
 
 func (p *Player) Position() math.Vec2 {
@@ -340,7 +340,7 @@ func (p *Player) Attack(e game.Entity) {
 
 	// setup the actions in the stack
 	p.emptyActions()
-	p.actions.Push(&game.Action{game.AttackAction, game.AttackActionData{}})
+	p.actions.Push(game.NewAction(game.AttackAction, game.AttackActionData{}))
 	p.target = e
 
 }
@@ -377,9 +377,9 @@ func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	// fill the player action stack
-	p.actions.Push(&game.Action{actionType, actionData})
-	p.actions.Push(&game.Action{game.MoveAction, struct{}{}})
-	p.actions.Push(&game.Action{WaitingForPathAction, struct{}{}})
+	p.actions.Push(game.NewAction(actionType, actionData))
+	p.actions.Push(game.NewAction(game.MoveAction, struct{}{}))
+	p.actions.Push(game.NewAction(WaitingForPathAction, struct{}{}))
 }
 
 func (p *Player) DealDamage(damage float64) (dead bool) {

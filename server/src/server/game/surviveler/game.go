@@ -120,7 +120,7 @@ func NewGame(cfg game.Config) game.Game {
 	// setup TCP server
 	rootHandler := func(imsg *msg.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
-		g.msgChan <- msg.ClientMessage{imsg, clientId}
+		g.msgChan <- msg.NewClientMessage(imsg, clientId)
 		return nil
 	}
 	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)

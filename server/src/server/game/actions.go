@@ -60,3 +60,10 @@ type Action struct {
 	Type ActionType
 	Item interface{}
 }
+
+/*
+ * NewAction creates a new Action.
+ */
+func NewAction(t ActionType, i interface{}) *Action {
+	return &Action{Type: t, Item: i}
+}

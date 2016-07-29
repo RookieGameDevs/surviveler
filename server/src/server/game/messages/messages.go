@@ -18,7 +18,7 @@ import (
 const MaxIncomingMsgLength uint32 = 1279
 
 /*
- * client -> server message
+ * Message represents a typed message with a possibly encoded payload.
  */
 type Message struct {
 	Type    uint16 // the message type
@@ -31,8 +31,15 @@ type Message struct {
  * the client Id
  */
 type ClientMessage struct {
-	*Message
+	*Message        // contained message
 	ClientId uint32 // client Id (set by server)
+}
+
+/*
+ * NewClientMessage creates and returns a ClientMessage.
+ */
+func NewClientMessage(m *Message, clientID uint32) ClientMessage {
+	return ClientMessage{Message: m, ClientId: clientID}
 }
 
 /*
