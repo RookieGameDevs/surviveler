@@ -25,7 +25,7 @@ import (
  */
 type survivelerGame struct {
 	cfg             game.Config                // configuration settings
-	server          protocol.Server            // server core
+	server          *protocol.Server           // server core
 	clients         *protocol.ClientRegistry   // the client registry
 	assets          resource.SurvivelerPackage // game assets package
 	ticker          time.Ticker                // the main tick source
@@ -123,7 +123,7 @@ func NewGame(cfg game.Config) game.Game {
 		g.msgChan <- msg.ClientMessage{imsg, clientId}
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
+	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
 
 	return g
 }
