@@ -7,10 +7,11 @@ package surviveler
 import (
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"image"
 	"server/game"
 	"server/game/resource"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // URI of some static elements contained in a package

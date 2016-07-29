@@ -6,7 +6,6 @@
 package surviveler
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
 	"server/game/entities"
@@ -15,6 +14,8 @@ import (
 	"server/math"
 	"sort"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // translation from topleft of tile to its center

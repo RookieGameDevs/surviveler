@@ -6,7 +6,6 @@ package surviveler
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
 	"runtime"
@@ -18,6 +17,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*

@@ -5,13 +5,14 @@
 package protocol
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"net"
 	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 const (

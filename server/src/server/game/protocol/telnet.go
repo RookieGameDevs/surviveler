@@ -5,11 +5,12 @@
 package protocol
 
 import (
+	"net"
+	"sync"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/telgo"
 	"github.com/urfave/cli"
-	"net"
-	"sync"
 )
 
 type TelnetServer struct {

@@ -6,11 +6,12 @@ package network
 
 import (
 	"errors"
-	log "github.com/Sirupsen/logrus"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*

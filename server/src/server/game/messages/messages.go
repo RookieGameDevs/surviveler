@@ -7,6 +7,7 @@ package messages
 import (
 	"bytes"
 	"encoding/binary"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 )

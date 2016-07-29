@@ -4,8 +4,6 @@
  */
 package messages
 
-import ()
-
 /*
  * MessageHandler is the interface implemented by an object that handles messages.
  * The messages handled represents decoded payloads.

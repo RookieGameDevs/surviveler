@@ -7,10 +7,11 @@ package game
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/beefsack/go-astar"
 	gomath "math"
 	"server/math"
+
+	log "github.com/Sirupsen/logrus"
+	astar "github.com/beefsack/go-astar"
 )
 
 type (
@@ -163,10 +164,9 @@ func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
 	if t.X == to_.X || t.Y == to_.Y {
 		// same axis, return the movement cost
 		return cf
-	} else {
-		// diagonal
-		return gomath.Sqrt2 * cf
 	}
+	// diagonal
+	return gomath.Sqrt2 * cf
 }
 
 /*

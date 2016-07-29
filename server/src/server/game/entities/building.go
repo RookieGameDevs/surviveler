@@ -5,11 +5,12 @@
 package entities
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"server/game"
 	"server/game/events"
 	"server/math"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*

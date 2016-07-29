@@ -5,9 +5,10 @@
 package messages
 
 import (
+	"reflect"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
-	"reflect"
 )
 
 var factory *Factory

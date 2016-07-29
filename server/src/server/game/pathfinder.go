@@ -5,9 +5,10 @@
 package game
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/beefsack/go-astar"
 	"server/math"
+
+	log "github.com/Sirupsen/logrus"
+	astar "github.com/beefsack/go-astar"
 )
 
 type Pathfinder struct {

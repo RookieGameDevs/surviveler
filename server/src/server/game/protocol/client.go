@@ -5,11 +5,12 @@
 package protocol
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"server/game/messages"
 	"server/network"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*

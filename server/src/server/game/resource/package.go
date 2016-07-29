@@ -7,11 +7,12 @@ package resource
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/image/bmp"
 	"image"
 	"io"
 	"os"
 	"path"
+
+	"golang.org/x/image/bmp"
 )
 
 /*
