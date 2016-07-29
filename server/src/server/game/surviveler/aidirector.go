@@ -90,14 +90,16 @@ func (ai *AIDirector) SummonZombie() {
 }
 
 func (ai *AIDirector) addZombie(org math.Vec2) {
-	if entityData, ok := ai.entitiesData[game.ZombieEntity]; !ok {
-		log.Panic("Can't create zombie, unsupported entity data type")
-	} else {
-		speed := entityData.Speed
-		combatPower := entityData.CombatPower
-		totHP := float64(entityData.TotalHP)
-		ai.game.State().AddEntity(entities.NewZombie(ai.game, org, speed, combatPower, totHP))
+	entityData, ok := ai.entitiesData[game.ZombieEntity]
+	if !ok {
+		log.Error("Can't create zombie, unsupported entity data type")
+		return
 	}
+	speed := entityData.Speed
+	combatPower := entityData.CombatPower
+	totHP := float64(entityData.TotalHP)
+	ai.game.State().AddEntity(
+		entities.NewZombie(ai.game, org, speed, combatPower, totHP))
 }
 
 /*
