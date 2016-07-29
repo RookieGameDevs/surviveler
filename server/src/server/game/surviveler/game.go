@@ -131,13 +131,21 @@ func NewGame(cfg game.Config) game.Game {
 /*
  * loadAssets load the assets package
  */
-func (g *survivelerGame) loadAssets(path string) error {
+func (g *survivelerGame) loadAssets(path string) (*gameData, error) {
 	if len(path) == 0 {
-		return fmt.Errorf("Can't start without a specified assets path")
+		return nil, fmt.Errorf("Can't start without a specified assets path")
 	}
 	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
+
+	var err error
+	// load game assets
+	gameData, err := newGameData(g.assets)
+	if err != nil {
+		return nil, err
+	}
+
 	log.WithField("path", path).Info("Assets loaded successfully")
-	return nil
+	return gameData, nil
 }
 
 /*

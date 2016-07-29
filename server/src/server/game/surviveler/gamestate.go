@@ -12,15 +12,10 @@ import (
 	"server/game/entities"
 	"server/game/events"
 	msg "server/game/messages"
-	"server/game/resource"
 	"server/math"
 	"sort"
 	"time"
 )
-
-// TODO: this map is hard-coded for now, but will be read from resources
-// in the future
-var _entityTypes = map[string]game.EntityType{}
 
 // translation from topleft of tile to its center
 var txCenter math.Vec2
@@ -29,7 +24,7 @@ var txCenter math.Vec2
  * gamestate is the structure that contains all the complete game state
  */
 type gamestate struct {
-	gameData        // game constants/resources coming from assets
+	gameData        *gameData // game constants/resources coming from assets
 	gameTime        int16
 	entities        map[uint32]game.Entity // entities currently in game
 	numEntities     uint32                 // number of entities currently present in the game
@@ -43,15 +38,6 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	gs.game = g
 	gs.entities = make(map[uint32]game.Entity)
 	gs.gameTime = gameStart
-
-	// TODO: this map is hard-coded for now, but will be read from resources
-	// in the future
-	_entityTypes["grunt"] = game.TankEntity
-	_entityTypes["programmer"] = game.ProgrammerEntity
-	_entityTypes["engineer"] = game.EngineerEntity
-	_entityTypes["zombie"] = game.ZombieEntity
-	_entityTypes["barricade"] = game.BarricadeBuilding
-	_entityTypes["mg_turret"] = game.MgTurretBuilding
 	return gs
 }
 
@@ -59,12 +45,10 @@ func newGameState(g *survivelerGame, gameStart int16) *gamestate {
  * init loads configuration from an assets package and initializes various game
  * state sub-structures
  */
-func (gs *gamestate) init(pkg resource.SurvivelerPackage) error {
-	var err error
-	// load game assets
-	if gs.world, err = gs.gameData.load(pkg); err != nil {
-		return err
-	}
+func (gs *gamestate) init(gameData *gameData) error {
+	// copy pointers
+	gs.gameData = gameData
+	gs.world = gameData.world
 
 	for _, objdata := range gs.gameData.mapData.UsableObjects {
 		switch game.EntityType(objdata.Type) {
@@ -115,8 +99,8 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	log.WithField("clientId", evt.Id).Info("Received a PlayerJoin event")
 
 	// pick a random spawn point
-	org := gs.mapData.AIKeypoints.Spawn.
-		Players[rand.Intn(len(gs.mapData.AIKeypoints.Spawn.Players))]
+	org := gs.gameData.mapData.AIKeypoints.Spawn.
+		Players[rand.Intn(len(gs.gameData.mapData.AIKeypoints.Spawn.Players))]
 
 	// load entity data
 	et := game.EntityType(evt.Type)
@@ -430,20 +414,20 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 	return building
 }
 
-func (gs *gamestate) MapData() *resource.MapData {
-	return gs.mapData
+func (gs *gamestate) MapData() *MapData {
+	return gs.gameData.mapData
 }
 
-func (gs *gamestate) EntityData(et game.EntityType) *resource.EntityData {
-	entityData, ok := gs.entityData[et]
+func (gs *gamestate) EntityData(et game.EntityType) *EntityData {
+	entityData, ok := gs.gameData.entitiesData[et]
 	if !ok {
 		log.WithField("type", et).Error("No resource for this Entity Type")
 	}
 	return entityData
 }
 
-func (gs *gamestate) BuildingData(bt game.EntityType) *resource.BuildingData {
-	buildingData, ok := gs.buildingData[bt]
+func (gs *gamestate) BuildingData(bt game.EntityType) *BuildingData {
+	buildingData, ok := gs.gameData.buildingsData[bt]
 	if !ok {
 		log.WithField("type", bt).Error("No resource for this Building Type")
 	}

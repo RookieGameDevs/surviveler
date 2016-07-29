@@ -19,6 +19,10 @@ const (
 	entitiesURI string = "entities/data.json"
 )
 
+// TODO: this map is hard-coded for now, but will be read from resources
+// in the future
+var _entityTypes = map[string]game.EntityType{}
+
 /*
  * LoadMapData loads the map data from the given package.
  *
@@ -41,30 +45,43 @@ func LoadEntitiesData(pkg resource.SurvivelerPackage) (*EntitiesData, error) {
 	return md, err
 }
 
-func (gd *gameData) newGameData(pkg resource.SurvivelerPackage) error {
+func newGameData(pkg resource.SurvivelerPackage) (*gameData, error) {
+	var (
+		gd  *gameData
+		err error
+	)
+	gd = new(gameData)
 	gd.entitiesData = make(EntityDataDict)
 	gd.buildingsData = make(BuildingDataDict)
 
 	// load map data and information
-	var err error
 	if gd.mapData, err = LoadMapData(pkg); err != nil {
-		return err
+		return nil, err
 	}
 	if gd.mapData.ScaleFactor == 0 {
-		return errors.New("'scale_factor' can't be 0")
+		return nil, errors.New("'scale_factor' can't be 0")
 	}
 	// package must contain the path to world matrix bitmap
 	fname, ok := gd.mapData.Resources["matrix"]
 	if !ok {
-		return errors.New("'matrix' field not found in the map asset")
+		return nil, errors.New("'matrix' field not found in the map asset")
 	}
 	var worldBmp image.Image
 	if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
 		if gd.world, err =
 			game.NewWorld(worldBmp, gd.mapData.ScaleFactor); err != nil {
-			return err
+			return nil, err
 		}
 	}
+
+	// TODO: this map is hard-coded for now, but will be read from resources
+	// in the future
+	_entityTypes["grunt"] = game.TankEntity
+	_entityTypes["programmer"] = game.ProgrammerEntity
+	_entityTypes["engineer"] = game.EngineerEntity
+	_entityTypes["zombie"] = game.ZombieEntity
+	_entityTypes["barricade"] = game.BarricadeBuilding
+	_entityTypes["mg_turret"] = game.MgTurretBuilding
 
 	// load entities URI map
 	var (
@@ -72,16 +89,16 @@ func (gd *gameData) newGameData(pkg resource.SurvivelerPackage) error {
 		t  game.EntityType
 	)
 	if em, err = LoadEntitiesData(pkg); err != nil {
-		return err
+		return nil, err
 	}
 	for name, uri := range em.Entities {
 		var entityData EntityData
 		err = pkg.LoadJSON(uri, &entityData)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if t, ok = _entityTypes[name]; !ok {
-			return fmt.Errorf("Couldn't find type of '%s' entity", name)
+			return nil, fmt.Errorf("Couldn't find type of '%s' entity", name)
 		}
 		log.WithFields(
 			log.Fields{"name": name, "type": t, "data": entityData}).
@@ -92,17 +109,21 @@ func (gd *gameData) newGameData(pkg resource.SurvivelerPackage) error {
 		var buildingData BuildingData
 		err = pkg.LoadJSON(uri, &buildingData)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if t, ok = _entityTypes[name]; !ok {
-			return fmt.Errorf("Couldn't find type of '%s' building", name)
+			return nil, fmt.Errorf("Couldn't find type of '%s' building", name)
 		}
 		log.WithFields(log.Fields{"name": name, "type": t, "data": buildingData}).
 			Debug("Loaded BuildingData")
 		gd.buildingsData[t] = &buildingData
 	}
 	// finally, validate world
-	return gd.validateWorld(gd.world)
+	err = gd.validateWorld(gd.world)
+	if err != nil {
+		return nil, err
+	}
+	return gd, nil
 }
 
 /*
