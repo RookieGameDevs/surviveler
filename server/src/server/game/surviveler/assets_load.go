@@ -1,6 +1,6 @@
 /*
  * Surviveler game package
- * game data
+ * game data: loading from assets
  */
 package surviveler
 
@@ -13,84 +13,103 @@ import (
 	"server/game/resource"
 )
 
-type (
-	buildingDataType map[game.EntityType]*resource.BuildingData
-	entityDataType   map[game.EntityType]*resource.EntityData
+// URI of some static elements contained in a package
+const (
+	mapURI      string = "map/data.json"
+	entitiesURI string = "entities/data.json"
 )
 
-type gameData struct {
-	mapData      *resource.MapData
-	buildingData buildingDataType
-	entityData   entityDataType
+/*
+ * LoadMapData loads the map data from the given package.
+ *
+ * It decodes it into a MapData struct
+ */
+func LoadMapData(pkg resource.SurvivelerPackage) (*MapData, error) {
+	md := new(MapData)
+	err := pkg.LoadJSON(mapURI, &md)
+	return md, err
 }
 
-func (gd *gameData) load(pkg resource.SurvivelerPackage) (world *game.World, err error) {
-	gd.entityData = make(entityDataType)
-	gd.buildingData = make(buildingDataType)
+/*
+ * LoadEntitiesData loads the entities data from the given package.
+ *
+ * It decodes it into an EntititesData struct
+ */
+func LoadEntitiesData(pkg resource.SurvivelerPackage) (*EntitiesData, error) {
+	md := new(EntitiesData)
+	err := pkg.LoadJSON(entitiesURI, &md)
+	return md, err
+}
+
+type gameData struct {
+	world         *game.World
+	mapData       *MapData
+	buildingsData BuildingDataDict
+	entitiesData  EntityDataDict
+}
+
+func (gd *gameData) newGameData(pkg resource.SurvivelerPackage) error {
+	gd.entitiesData = make(EntityDataDict)
+	gd.buildingsData = make(BuildingDataDict)
 
 	// load map data and information
-	if gd.mapData, err = pkg.LoadMapData(); err != nil {
-		return
+	var err error
+	if gd.mapData, err = LoadMapData(pkg); err != nil {
+		return err
 	}
 	if gd.mapData.ScaleFactor == 0 {
-		err = errors.New("'scale_factor' can't be 0")
+		return errors.New("'scale_factor' can't be 0")
 	}
 	// package must contain the path to world matrix bitmap
-	if fname, ok := gd.mapData.Resources["matrix"]; !ok {
-		err = errors.New("'matrix' field not found in the map asset")
-	} else {
-		var worldBmp image.Image
-		if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
-			if world, err =
-				game.NewWorld(worldBmp, gd.mapData.ScaleFactor); err == nil {
-			}
-		}
+	fname, ok := gd.mapData.Resources["matrix"]
+	if !ok {
+		return errors.New("'matrix' field not found in the map asset")
 	}
-	if err != nil {
-		return
+	var worldBmp image.Image
+	if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
+		if gd.world, err =
+			game.NewWorld(worldBmp, gd.mapData.ScaleFactor); err != nil {
+			return err
+		}
 	}
 
 	// load entities URI map
 	var (
-		em *resource.EntitiesData
+		em *EntitiesData
 		t  game.EntityType
-		ok bool
 	)
-	if em, err = pkg.LoadEntitiesData(); err != nil {
-		return
+	if em, err = LoadEntitiesData(pkg); err != nil {
+		return err
 	}
 	for name, uri := range em.Entities {
-		var entityData resource.EntityData
-		if pkg.LoadJSON(uri, &entityData); err != nil {
-			return
-		} else {
-			if t, ok = _entityTypes[name]; !ok {
-				err = fmt.Errorf("Couldn't find type of '%s' entity", name)
-				return
-			}
-			log.WithFields(
-				log.Fields{"name": name, "type": t, "data": entityData}).
-				Debug("Loaded EntityData")
-			gd.entityData[t] = &entityData
+		var entityData EntityData
+		err = pkg.LoadJSON(uri, &entityData)
+		if err != nil {
+			return err
 		}
+		if t, ok = _entityTypes[name]; !ok {
+			return fmt.Errorf("Couldn't find type of '%s' entity", name)
+		}
+		log.WithFields(
+			log.Fields{"name": name, "type": t, "data": entityData}).
+			Debug("Loaded EntityData")
+		gd.entitiesData[t] = &entityData
 	}
 	for name, uri := range em.Buildings {
-		var buildingData resource.BuildingData
-		if pkg.LoadJSON(uri, &buildingData); err != nil {
-			return
-		} else {
-			if t, ok = _entityTypes[name]; !ok {
-				err = fmt.Errorf("Couldn't find type of '%s' building", name)
-				return
-			}
-			log.WithFields(log.Fields{"name": name, "type": t, "data": buildingData}).
-				Debug("Loaded BuildingData")
-			gd.buildingData[t] = &buildingData
+		var buildingData BuildingData
+		err = pkg.LoadJSON(uri, &buildingData)
+		if err != nil {
+			return err
 		}
+		if t, ok = _entityTypes[name]; !ok {
+			return fmt.Errorf("Couldn't find type of '%s' building", name)
+		}
+		log.WithFields(log.Fields{"name": name, "type": t, "data": buildingData}).
+			Debug("Loaded BuildingData")
+		gd.buildingsData[t] = &buildingData
 	}
-	// finally, validate worl
-	err = gd.validateWorld(world)
-	return
+	// finally, validate world
+	return gd.validateWorld(gd.world)
 }
 
 /*
