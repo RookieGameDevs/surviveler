@@ -416,7 +416,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 
 	default:
 
-		return errors.New("Unknow telnet message id")
+		return errors.New("unknow telnet message id")
 	}
 
 	return nil

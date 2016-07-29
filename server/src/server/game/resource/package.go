@@ -52,7 +52,7 @@ func (sp SurvivelerPackage) Exists(uri string) bool {
  */
 func (sp SurvivelerPackage) getReader(uri string) (io.ReadCloser, error) {
 	if !sp.Exists(uri) {
-		return nil, fmt.Errorf("Resource not found: %s", uri)
+		return nil, fmt.Errorf("resource not found: %s", uri)
 	}
 	p := path.Join(sp.root, uri)
 	return os.Open(p)
