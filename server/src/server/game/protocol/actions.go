@@ -15,12 +15,12 @@ import (
 /*
  * handleMove processes a MoveMsg and fires a PlayerMove event
  */
-func (self *Server) handleMove(c *network.Conn, msg *messages.Message) error {
+func (srv *Server) handleMove(c *network.Conn, msg *messages.Message) error {
 	// decode payload into a move message
-	move := self.factory.DecodePayload(messages.MoveId, msg.Payload).(messages.MoveMsg)
+	move := srv.factory.DecodePayload(messages.MoveId, msg.Payload).(messages.MoveMsg)
 	log.WithField("msg", move).Info("Move message")
 
-	self.evtCb(
+	srv.evtCb(
 		events.NewEvent(
 			events.PlayerMove,
 			events.PlayerMoveEvent{
@@ -33,12 +33,12 @@ func (self *Server) handleMove(c *network.Conn, msg *messages.Message) error {
 /*
  * handleBuild processes a BuildMsg and fires a PlayerBuild event
  */
-func (self *Server) handleBuild(c *network.Conn, msg *messages.Message) error {
+func (srv *Server) handleBuild(c *network.Conn, msg *messages.Message) error {
 	// decode payload into a build message
-	build := self.factory.DecodePayload(messages.BuildId, msg.Payload).(messages.BuildMsg)
+	build := srv.factory.DecodePayload(messages.BuildId, msg.Payload).(messages.BuildMsg)
 	log.WithField("msg", build).Info("Build message")
 
-	self.evtCb(
+	srv.evtCb(
 		events.NewEvent(events.PlayerBuild,
 			events.PlayerBuildEvent{
 				Id:   c.GetUserData().(ClientData).Id,
@@ -51,12 +51,12 @@ func (self *Server) handleBuild(c *network.Conn, msg *messages.Message) error {
 /*
  * handleRepair processes a RepairMsg and fires a PlayerRepair event
  */
-func (self *Server) handleRepair(c *network.Conn, msg *messages.Message) error {
+func (srv *Server) handleRepair(c *network.Conn, msg *messages.Message) error {
 	// decode payload into a repair message
-	repair := self.factory.DecodePayload(messages.RepairId, msg.Payload).(messages.RepairMsg)
+	repair := srv.factory.DecodePayload(messages.RepairId, msg.Payload).(messages.RepairMsg)
 	log.WithField("msg", repair).Info("Repair message")
 
-	self.evtCb(
+	srv.evtCb(
 		events.NewEvent(events.PlayerRepair,
 			events.PlayerRepairEvent{
 				Id:         c.GetUserData().(ClientData).Id,
@@ -68,12 +68,12 @@ func (self *Server) handleRepair(c *network.Conn, msg *messages.Message) error {
 /*
  * handleAttack processes a AttackMsg and fires a PlayerAttack event
  */
-func (self *Server) handleAttack(c *network.Conn, msg *messages.Message) error {
+func (srv *Server) handleAttack(c *network.Conn, msg *messages.Message) error {
 	// decode payload into a attack message
-	attack := self.factory.DecodePayload(messages.AttackId, msg.Payload).(messages.AttackMsg)
+	attack := srv.factory.DecodePayload(messages.AttackId, msg.Payload).(messages.AttackMsg)
 	log.WithField("msg", attack).Info("Attack message")
 
-	self.evtCb(
+	srv.evtCb(
 		events.NewEvent(events.PlayerAttack,
 			events.PlayerAttackEvent{
 				Id:       c.GetUserData().(ClientData).Id,
@@ -85,12 +85,12 @@ func (self *Server) handleAttack(c *network.Conn, msg *messages.Message) error {
 /*
  * handleOperate processes a OperateMsg and fires a PlayerOperate event
  */
-func (self *Server) handleOperate(c *network.Conn, msg *messages.Message) error {
+func (srv *Server) handleOperate(c *network.Conn, msg *messages.Message) error {
 	// decode payload into a operate message
-	operate := self.factory.DecodePayload(messages.OperateId, msg.Payload).(messages.OperateMsg)
+	operate := srv.factory.DecodePayload(messages.OperateId, msg.Payload).(messages.OperateMsg)
 	log.WithField("msg", operate).Info("Operate message")
 
-	self.evtCb(
+	srv.evtCb(
 		events.NewEvent(events.PlayerOperate,
 			events.PlayerOperateEvent{
 				Id:       c.GetUserData().(ClientData).Id,

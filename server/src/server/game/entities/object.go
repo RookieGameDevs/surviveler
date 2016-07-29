@@ -31,86 +31,86 @@ type CoffeeMachine struct {
  * NewCoffeeMachine creates a new object and set its initial position
  */
 func NewCoffeeMachine(g game.Game, pos math.Vec2, objectType game.EntityType) *CoffeeMachine {
-	obj := new(CoffeeMachine)
-	obj.pos = pos
-	obj.objectType = objectType
-	obj.id = game.InvalidId
-	obj.operatedBy = nil
-	obj.g = g
-	obj.gamestate = g.State()
+	cm := new(CoffeeMachine)
+	cm.pos = pos
+	cm.objectType = objectType
+	cm.id = game.InvalidId
+	cm.operatedBy = nil
+	cm.g = g
+	cm.gamestate = g.State()
 
-	return obj
+	return cm
 }
 
-func (obj *CoffeeMachine) Id() uint32 {
-	return obj.id
+func (cm *CoffeeMachine) Id() uint32 {
+	return cm.id
 }
 
-func (obj *CoffeeMachine) SetId(id uint32) {
-	obj.id = id
+func (cm *CoffeeMachine) SetId(id uint32) {
+	cm.id = id
 }
 
-func (obj *CoffeeMachine) Type() game.EntityType {
-	return obj.objectType
+func (cm *CoffeeMachine) Type() game.EntityType {
+	return cm.objectType
 }
 
-func (obj *CoffeeMachine) State() game.EntityState {
+func (cm *CoffeeMachine) State() game.EntityState {
 	var operatedById uint32
-	if obj.operatedBy == nil {
+	if cm.operatedBy == nil {
 		operatedById = game.InvalidId
 	} else {
-		operatedById = obj.operatedBy.Id()
+		operatedById = cm.operatedBy.Id()
 	}
 	return game.ObjectState{
-		Type:       obj.objectType,
-		Xpos:       float32(obj.pos[0]),
-		Ypos:       float32(obj.pos[1]),
+		Type:       cm.objectType,
+		Xpos:       float32(cm.pos[0]),
+		Ypos:       float32(cm.pos[1]),
 		OperatedBy: operatedById,
 	}
 }
 
-func (obj *CoffeeMachine) Position() math.Vec2 {
-	return obj.pos
+func (cm *CoffeeMachine) Position() math.Vec2 {
+	return cm.pos
 }
 
-func (obj *CoffeeMachine) Update(dt time.Duration) {
-	if obj.operatedBy != nil {
-		dist := obj.operatedBy.Position().Sub(obj.pos).Len()
+func (cm *CoffeeMachine) Update(dt time.Duration) {
+	if cm.operatedBy != nil {
+		dist := cm.operatedBy.Position().Sub(cm.pos).Len()
 		if dist > HealingDistance {
-			obj.operatedBy = nil
+			cm.operatedBy = nil
 		} else {
-			if time.Since(obj.lastHeal) > HealingFrequency {
-				obj.operatedBy.HealDamage(HealingPower)
-				obj.lastHeal = time.Now()
+			if time.Since(cm.lastHeal) > HealingFrequency {
+				cm.operatedBy.HealDamage(HealingPower)
+				cm.lastHeal = time.Now()
 			}
 		}
 	}
 }
 
-func (obj *CoffeeMachine) DealDamage(dmg float64) bool {
+func (cm *CoffeeMachine) DealDamage(dmg float64) bool {
 	// NOTE: no damage to clickable objects
 	return false
 }
 
-func (obj *CoffeeMachine) HealDamage(dmg float64) bool {
+func (cm *CoffeeMachine) HealDamage(dmg float64) bool {
 	// NOTE: no damage to clickable objects
 	return true
 }
 
-func (obj *CoffeeMachine) BoundingBox() math.BoundingBox {
-	x, y := obj.pos.Elem()
+func (cm *CoffeeMachine) BoundingBox() math.BoundingBox {
+	x, y := cm.pos.Elem()
 	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
 }
 
-func (obj *CoffeeMachine) OperatedBy() game.Entity {
-	return obj.operatedBy
+func (cm *CoffeeMachine) OperatedBy() game.Entity {
+	return cm.operatedBy
 }
 
-func (obj *CoffeeMachine) Operate(ent game.Entity) (res bool) {
+func (cm *CoffeeMachine) Operate(ent game.Entity) (res bool) {
 	res = true
-	if obj.operatedBy == nil {
-		obj.operatedBy = ent
-		obj.lastHeal = time.Time{}
+	if cm.operatedBy == nil {
+		cm.operatedBy = ent
+		cm.lastHeal = time.Time{}
 	} else {
 		res = false
 	}

@@ -11,8 +11,8 @@ type Event struct {
 }
 
 func NewEvent(eventType EventType, payload interface{}) *Event {
-	self := new(Event)
-	self.Type = eventType
-	self.Payload = payload
-	return self
+	evt := new(Event)
+	evt.Type = eventType
+	evt.Payload = payload
+	return evt
 }
