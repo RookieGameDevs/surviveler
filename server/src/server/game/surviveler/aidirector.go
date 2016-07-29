@@ -2,7 +2,7 @@
  * Surviveler game package
  * AI director
  */
-package ai
+package surviveler
 
 import (
 	log "github.com/Sirupsen/logrus"
@@ -35,16 +35,18 @@ const (
  *   time if no zombies are around
  */
 type AIDirector struct {
-	game        game.Game
-	curTick     int
-	nightStart  int16
-	nightEnd    int16
-	lastTime    time.Time
-	zombieCount int
-	intensity   int
+	game         *survivelerGame
+	curTick      int
+	nightStart   int16
+	nightEnd     int16
+	lastTime     time.Time
+	zombieCount  int
+	intensity    int
+	keypoints    AIKeypoints
+	entitiesData EntityDataDict
 }
 
-func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
+func NewAIDirector(game *survivelerGame, nightStart, nightEnd int16) *AIDirector {
 	log.Info("Initializing AI Director")
 	ai := new(AIDirector)
 	ai.game = game
@@ -52,6 +54,11 @@ func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
 	ai.lastTime = time.Now()
 	ai.nightStart = nightStart
 	ai.nightEnd = nightEnd
+
+	// preload needed assets
+	gameData := game.gameData
+	ai.keypoints = gameData.mapData.AIKeypoints
+	ai.entitiesData = gameData.entitiesData
 	return ai
 }
 
@@ -70,9 +77,8 @@ func (ai *AIDirector) OnZombieDeath(event *events.Event) {
 // the AIDirector should probably be replac-able by a special AIDirector summoning
 // entities following a scripted testable scenario.
 func (ai *AIDirector) SummonZombie() {
-	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
-	org := keypoints.Spawn.Enemies[rand.Intn(len(keypoints.Spawn.Enemies))]
+	org := ai.keypoints.Spawn.Enemies[rand.Intn(len(ai.keypoints.Spawn.Enemies))]
 
 	log.WithFields(log.Fields{
 		"spawn": org,
@@ -83,9 +89,8 @@ func (ai *AIDirector) SummonZombie() {
 }
 
 func (ai *AIDirector) addZombie(org math.Vec2) {
-	et := game.ZombieEntity
-	if entityData := ai.game.State().EntityData(et); entityData == nil {
-		log.WithField("type", et).Panic("Can't create zombie, unsupported type")
+	if entityData, ok := ai.entitiesData[game.ZombieEntity]; !ok {
+		log.Panic("Can't create zombie, unsupported entity data type")
 	} else {
 		speed := entityData.Speed
 		combatPower := entityData.CombatPower
@@ -98,11 +103,10 @@ func (ai *AIDirector) addZombie(org math.Vec2) {
  * summonZombieMob creates a group of zombies
  */
 func (ai *AIDirector) summonZombieMob(qty int) {
-	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
-	idx := rand.Intn(len(keypoints.Spawn.Enemies))
+	idx := rand.Intn(len(ai.keypoints.Spawn.Enemies))
 	for i := 0; i < qty; i++ {
-		org := keypoints.Spawn.Enemies[(i+idx)%len(keypoints.Spawn.Enemies)]
+		org := ai.keypoints.Spawn.Enemies[(i+idx)%len(ai.keypoints.Spawn.Enemies)]
 		ai.addZombie(org)
 		ai.zombieCount++
 	}

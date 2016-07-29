@@ -9,8 +9,6 @@ import (
 
 type EntityFilter func(e Entity) bool
 
-type Data interface{}
-
 type GameState interface {
 	World() *World
 	Entity(id uint32) Entity
@@ -22,7 +20,6 @@ type GameState interface {
 
 type Game interface {
 	Start()
-	Data() Data
 	State() GameState
 	QuitChan() chan struct{}
 	MessageChan() chan messages.ClientMessage
