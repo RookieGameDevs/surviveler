@@ -35,7 +35,7 @@ type RepairActionData struct{}
  * Attack action payload
  */
 type AttackActionData struct {
-	TargetId uint32
+	TargetID uint32
 }
 
 /*

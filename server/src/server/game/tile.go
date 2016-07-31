@@ -158,10 +158,10 @@ func costFromKind(kind TileKind) float64 {
  * PathNeighborCost returns the exact movement cost to reach a neighbor tile
  */
 func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
-	to_ := to.(*Tile)
-	cf := costFromKind(to_.Kind)
+	tt := to.(*Tile)
+	cf := costFromKind(tt.Kind)
 
-	if t.X == to_.X || t.Y == to_.Y {
+	if t.X == tt.X || t.Y == tt.Y {
 		// same axis, return the movement cost
 		return cf
 	}

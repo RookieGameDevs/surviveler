@@ -42,7 +42,7 @@ const (
 )
 
 const (
-	InvalidId uint32 = gomath.MaxUint32
+	InvalidID uint32 = gomath.MaxUint32
 )
 
 /*

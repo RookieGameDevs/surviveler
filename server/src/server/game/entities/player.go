@@ -63,7 +63,7 @@ func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
 		g:           g,
 		gamestate:   g.State(),
 		world:       g.State().World(),
-		id:          game.InvalidId,
+		id:          game.InvalidID,
 		actions:     *game.NewActionStack(),
 		Movable:     components.NewMovable(spawn, speed),
 	}
@@ -271,7 +271,7 @@ func (p *Player) State() game.EntityState {
 			}
 		} else {
 			actionData = game.AttackActionData{
-				TargetId: p.target.Id(),
+				TargetID: p.target.Id(),
 			}
 			actionType = game.AttackAction
 		}

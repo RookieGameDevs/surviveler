@@ -115,7 +115,7 @@ type Barricade struct {
 func NewBarricade(g game.Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
-			id:           game.InvalidId,
+			id:           game.InvalidID,
 			g:            g,
 			pos:          pos,
 			totalHP:      float64(totHP),
@@ -164,7 +164,7 @@ type MgTurret struct {
 func NewMgTurret(g game.Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
-			id:           game.InvalidId,
+			id:           game.InvalidID,
 			g:            g,
 			pos:          pos,
 			totalHP:      float64(totHP),

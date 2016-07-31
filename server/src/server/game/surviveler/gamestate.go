@@ -349,7 +349,7 @@ func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
 	mvtReq := game.MovementRequest{}
 	mvtReq.Org = p.Position()
 	mvtReq.Dst = dst
-	mvtReq.EntityId = p.Id()
+	mvtReq.EntityID = p.Id()
 
 	// send the request to the movement planner
 	gs.movementPlanner.PlanMovement(&mvtReq)
@@ -377,12 +377,12 @@ func (gs *gamestate) Entity(id uint32) game.Entity {
 /*
  * AddEntity adds an entity to the game state.
  *
- * It entity Id is InvalidId, an unique id is generated and assigned
+ * It entity Id is InvalidID, an unique id is generated and assigned
  * to the entity
  */
 func (gs *gamestate) AddEntity(ent game.Entity) {
 	id := ent.Id()
-	if id == game.InvalidId {
+	if id == game.InvalidID {
 		id = gs.allocEntityId()
 		ent.SetId(id)
 	}

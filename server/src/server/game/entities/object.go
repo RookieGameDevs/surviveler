@@ -34,7 +34,7 @@ func NewCoffeeMachine(g game.Game, pos math.Vec2, objectType game.EntityType) *C
 	cm := new(CoffeeMachine)
 	cm.pos = pos
 	cm.objectType = objectType
-	cm.id = game.InvalidId
+	cm.id = game.InvalidID
 	cm.operatedBy = nil
 	cm.g = g
 	cm.gamestate = g.State()
@@ -57,7 +57,7 @@ func (cm *CoffeeMachine) Type() game.EntityType {
 func (cm *CoffeeMachine) State() game.EntityState {
 	var operatedById uint32
 	if cm.operatedBy == nil {
-		operatedById = game.InvalidId
+		operatedById = game.InvalidID
 	} else {
 		operatedById = cm.operatedBy.Id()
 	}
