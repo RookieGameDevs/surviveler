@@ -23,7 +23,7 @@ type Factory struct {
 }
 
 /*
- * GetFactory returns the global message factory, instaniating it at first call
+ * GetFactory returns the global message factory, instantiating it at first call
  */
 func GetFactory() *Factory {
 	if factory == nil {
