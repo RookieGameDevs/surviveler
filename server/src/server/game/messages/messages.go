@@ -68,7 +68,8 @@ func NewMessage(t uint16, p interface{}) *Message {
 	var enc *codec.Encoder = codec.NewEncoder(bb, &mh)
 	err := enc.Encode(p)
 	if err != nil {
-		log.WithError(err).Panic("Error encoding payload")
+		log.WithError(err).Error("Error encoding payload")
+		return nil
 	}
 
 	// Copy the payload buffer

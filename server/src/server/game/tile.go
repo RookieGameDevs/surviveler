@@ -150,7 +150,7 @@ func costFromKind(kind TileKind) float64 {
 	case KindNotWalkable:
 		return 1000000.0
 	}
-	log.WithField("kind", kind).Panic("TileKind not implemented")
+	log.WithField("kind", kind).Error("TileKind not implemented")
 	return 0.0
 }
 

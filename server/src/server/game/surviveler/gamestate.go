@@ -410,7 +410,7 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 		data := gs.BuildingData(t)
 		building = entities.NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	default:
-		log.WithField("type", t).Panic("Can't create building, unsupported type")
+		log.WithField("type", t).Error("Can't create building, unsupported type")
 	}
 	gs.AddEntity(building)
 	return building
