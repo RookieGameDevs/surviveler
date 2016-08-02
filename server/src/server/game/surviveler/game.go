@@ -125,7 +125,7 @@ func NewGame(cfg game.Config) game.Game {
 		return nil
 	}
 	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
-
+	g.registerMsgHandlers()
 	return g
 }
 

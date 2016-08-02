@@ -23,6 +23,7 @@ const (
 type (
 	IncomingMsgFunc func(msg *messages.Message, clientId uint32) error
 	PostEvtFunc     func(*events.Event)
+	messageHandler  func(c *network.Conn, msg interface{}) error
 )
 
 /*
@@ -30,14 +31,15 @@ type (
  * interface.
  */
 type Server struct {
-	port    string
-	server  network.Server    // tcp server instance
-	clients *ClientRegistry   // manage the connected clients
-	telnet  *TelnetServer     // embedded telnet server
-	factory *messages.Factory // the unique message factory
-	wg      *sync.WaitGroup   // game wait group
-	msgCb   IncomingMsgFunc   // where to forward incoming messages
-	evtCb   PostEvtFunc       // where to forward game events
+	port        string
+	server      network.Server            // tcp server instance
+	clients     *ClientRegistry           // manage the connected clients
+	telnet      *TelnetServer             // embedded telnet server
+	factory     *messages.Factory         // the unique message factory
+	wg          *sync.WaitGroup           // game wait group
+	msgCb       IncomingMsgFunc           // where to forward incoming messages
+	evtCb       PostEvtFunc               // where to forward game events
+	msgHandlers map[uint16]messageHandler //
 }
 
 /*
@@ -48,14 +50,22 @@ func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
 	evtCb PostEvtFunc) *Server {
 
 	return &Server{
-		clients: clients,
-		port:    port,
-		telnet:  telnet,
-		factory: messages.GetFactory(),
-		wg:      wg,
-		msgCb:   msgCb,
-		evtCb:   evtCb,
+		clients:     clients,
+		port:        port,
+		telnet:      telnet,
+		factory:     messages.GetFactory(),
+		wg:          wg,
+		msgCb:       msgCb,
+		evtCb:       evtCb,
+		msgHandlers: make(map[uint16]messageHandler),
 	}
+}
+
+/*
+ * RegisterMsgHandler registers a handler for incoming message
+ */
+func (srv *Server) RegisterMsgHandler(msgType uint16, handler messageHandler) {
+	srv.msgHandlers[msgType] = handler
 }
 
 /*
@@ -134,44 +144,17 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			"msg":        msg,
 		}).Debug("Incoming message")
 
-	switch msg.Type {
-	case messages.PingId:
-		// ping requires an immediate pong reply
-		if err := srv.handlePing(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Ping")
+	// get handler
+	handler, ok := srv.msgHandlers[msg.Type]
+	if ok {
+		// decode the payload
+		// TODO: just pass the `msg` here...
+		decoded := srv.factory.DecodePayload(msg.Type, msg.Payload)
+		if err := handler(c, decoded); err != nil {
+			log.WithError(err).Error("Error handling message")
 			return false
 		}
-	case messages.JoinId:
-		if err := srv.handleJoin(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Join")
-			return false
-		}
-	case messages.MoveId:
-		if err := srv.handleMove(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Move")
-			return false
-		}
-	case messages.BuildId:
-		if err := srv.handleBuild(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Build")
-			return false
-		}
-	case messages.RepairId:
-		if err := srv.handleRepair(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Repair")
-			return false
-		}
-	case messages.AttackId:
-		if err := srv.handleAttack(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Attack")
-			return false
-		}
-	case messages.OperateId:
-		if err := srv.handleOperate(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Operate")
-			return false
-		}
-	default:
+	} else {
 		// forward it
 		srv.msgCb(msg, clientData.Id)
 	}
