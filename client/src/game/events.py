@@ -6,6 +6,7 @@ class ActorSpawn(Event):
 
     Event emitted when a new actor is discovered in the gamestate.
     """
+
     def __init__(self, srv_id, actor_type, cur_hp):
         self.srv_id = srv_id
         self.actor_type = actor_type
@@ -21,6 +22,7 @@ class ActorDisappear(Event):
 
     Event emitted when a previously existing actor does not exist anymore.
     """
+
     def __init__(self, srv_id, actor_type):
         self.srv_id = srv_id
         self.actor_type = actor_type
@@ -85,6 +87,7 @@ class BuildingDisappear(Event):
 
     Event emitted when a previously existing building does not exist anymore.
     """
+
     def __init__(self, srv_id, b_type, pos, cur_hp, completed):
         self.srv_id = srv_id
         self.b_type = b_type
@@ -101,6 +104,7 @@ class BuildingStatusChange(Event):
 
     Event emitted when the amount of hp of a building changes.
     """
+
     def __init__(self, srv_id, old, new, completed):
         self.srv_id = srv_id
         self.old = old
@@ -117,6 +121,7 @@ class TimeUpdate(Event):
 
     Event emitted on game time change.
     """
+
     def __init__(self, hour, minute):
         """Constructor.
 
@@ -151,6 +156,7 @@ class ActorIdle(Event):
 
     Event emitted when the actor is in idle state.
     """
+
     def __init__(self, srv_id, x, y):
         """Constructor.
 
@@ -175,6 +181,7 @@ class ActorMove(Event):
 
     Event emitted whenever the player is subject to a move action.
     """
+
     def __init__(self, srv_id, position, path, speed):
         """Constructor.
 
@@ -206,6 +213,7 @@ class CharacterJoin(Event):
 
     Event emitted when a character joins the game.
     """
+
     def __init__(self, srv_id, name):
         self.srv_id = srv_id
         self.name = name
@@ -219,6 +227,7 @@ class CharacterLeave(Event):
 
     Event emitted when a character leaves the game.
     """
+
     def __init__(self, srv_id, name, reason):
         self.srv_id = srv_id
         self.name = name
@@ -234,6 +243,7 @@ class CharacterBuildingStart(Event):
 
     Event emitted when a character started building.
     """
+
     def __init__(self, srv_id):
         self.srv_id = srv_id
 
@@ -246,6 +256,7 @@ class CharacterBuildingStop(Event):
 
     Event emitted when a character stopped building.
     """
+
     def __init__(self, srv_id):
         self.srv_id = srv_id
 
@@ -299,6 +310,7 @@ class ObjectSpawn(Event):
 
     Event emitted when a new static object appear.
     """
+
     def __init__(self, srv_id, obj_type, pos, operated_by):
         """Constructor.
 
