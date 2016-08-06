@@ -202,7 +202,6 @@ func (reg *ClientRegistry) sendLeave(c *network.Conn, reason string) error {
 }
 
 func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
-
 	clientData := c.GetUserData().(ClientData)
 
 	log.WithFields(log.Fields{"name": join.Name, "clientData": clientData}).Info("Received JOIN from client")
