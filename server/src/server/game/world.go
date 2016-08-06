@@ -7,9 +7,10 @@ package game
 import (
 	"bytes"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"image"
 	"server/math"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*

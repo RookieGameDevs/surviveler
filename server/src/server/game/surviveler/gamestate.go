@@ -6,7 +6,6 @@
 package surviveler
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
 	"server/game/entities"
@@ -15,6 +14,8 @@ import (
 	"server/math"
 	"sort"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // translation from topleft of tile to its center
@@ -103,17 +104,17 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 		Players[rand.Intn(len(gs.gameData.mapData.AIKeypoints.Spawn.Players))]
 
 	// load entity data
-	et := game.EntityType(evt.Type)
-	if entityData := gs.EntityData(et); entityData == nil {
+	entityData := gs.EntityData(game.EntityType(evt.Type))
+	if entityData == nil {
 		return
-	} else {
-		// instantiate player with settings from the resources pkg
-		p := entities.NewPlayer(gs.game, org, game.EntityType(evt.Type),
-			float64(entityData.Speed), float64(entityData.TotalHP),
-			uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
-		p.SetId(evt.Id)
-		gs.AddEntity(p)
 	}
+
+	// instantiate player with settings from the resources pkg
+	p := entities.NewPlayer(gs.game, org, game.EntityType(evt.Type),
+		float64(entityData.Speed), float64(entityData.TotalHP),
+		uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
+	p.SetId(evt.Id)
+	gs.AddEntity(p)
 }
 
 /*
@@ -173,21 +174,21 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
 
 		// tile must be walkable
-		if tile.IsWalkable() {
-			// check if we can build here
-			tile.Entities.Each(func(ent game.Entity) bool {
-				if _, ok := ent.(game.Building); ok {
-					log.WithField("tile", tile).
-						Error("There's already a building on this tile")
-					return false
-				}
-				return true
-			})
-		} else {
+		if !tile.IsWalkable() {
 			log.WithField("tile", tile).
 				Error("Tile is not walkable: can't build")
 			return
 		}
+
+		// check if we can build here
+		tile.Entities.Each(func(ent game.Entity) bool {
+			if _, ok := ent.(game.Building); ok {
+				log.WithField("tile", tile).
+					Error("There's already a building on this tile")
+				return false
+			}
+			return true
+		})
 
 		// clip building center with tile center
 		pos := math.FromInts(tile.X, tile.Y).
@@ -336,21 +337,22 @@ func (gs *gamestate) onBuildingDestroy(event *events.Event) {
  * fillMovementRequest fills up and sends a movement request
  */
 func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
-	if gs.world.PointInBounds(dst) {
-		// fills up a movement request
-		mvtReq := game.MovementRequest{}
-		mvtReq.Org = p.Position()
-		mvtReq.Dst = dst
-		mvtReq.EntityId = p.Id()
-		// and send if to the movement planner
-		gs.movementPlanner.PlanMovement(&mvtReq)
-	} else {
+	if !gs.world.PointInBounds(dst) {
 		// do not forward a request with out-of-bounds destination
 		log.WithFields(log.Fields{
 			"dst":    dst,
 			"player": p.Id()}).
 			Error("Can't plan path to out-of-bounds destination")
 	}
+
+	// fills up a movement request
+	mvtReq := game.MovementRequest{}
+	mvtReq.Org = p.Position()
+	mvtReq.Dst = dst
+	mvtReq.EntityID = p.Id()
+
+	// send the request to the movement planner
+	gs.movementPlanner.PlanMovement(&mvtReq)
 }
 
 /*
@@ -375,12 +377,12 @@ func (gs *gamestate) Entity(id uint32) game.Entity {
 /*
  * AddEntity adds an entity to the game state.
  *
- * It entity Id is InvalidId, an unique id is generated and assigned
+ * It entity Id is InvalidID, an unique id is generated and assigned
  * to the entity
  */
 func (gs *gamestate) AddEntity(ent game.Entity) {
 	id := ent.Id()
-	if id == game.InvalidId {
+	if id == game.InvalidID {
 		id = gs.allocEntityId()
 		ent.SetId(id)
 	}
@@ -408,7 +410,7 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 		data := gs.BuildingData(t)
 		building = entities.NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	default:
-		log.WithField("type", t).Panic("Can't create building, unsupported type")
+		log.WithField("type", t).Error("Can't create building, unsupported type")
 	}
 	gs.AddEntity(building)
 	return building

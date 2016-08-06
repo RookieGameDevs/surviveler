@@ -7,13 +7,14 @@ package surviveler
 import (
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
 	"io"
 	"server/game/events"
 	"server/game/messages"
 	"server/math"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
+	yaml "gopkg.in/yaml.v2"
 )
 
 /*
@@ -416,7 +417,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 
 	default:
 
-		return errors.New("Unknow telnet message id")
+		return errors.New("unknow telnet message id")
 	}
 
 	return nil

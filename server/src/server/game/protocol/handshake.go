@@ -6,13 +6,14 @@ package protocol
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
 	"io"
 	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
 )
 
 /*

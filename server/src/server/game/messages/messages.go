@@ -7,6 +7,7 @@ package messages
 import (
 	"bytes"
 	"encoding/binary"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 )
@@ -18,7 +19,7 @@ import (
 const MaxIncomingMsgLength uint32 = 1279
 
 /*
- * client -> server message
+ * Message represents a typed message with a possibly encoded payload.
  */
 type Message struct {
 	Type    uint16 // the message type
@@ -31,8 +32,15 @@ type Message struct {
  * the client Id
  */
 type ClientMessage struct {
-	*Message
+	*Message        // contained message
 	ClientId uint32 // client Id (set by server)
+}
+
+/*
+ * NewClientMessage creates and returns a ClientMessage.
+ */
+func NewClientMessage(m *Message, clientID uint32) ClientMessage {
+	return ClientMessage{Message: m, ClientId: clientID}
 }
 
 /*
@@ -60,7 +68,8 @@ func NewMessage(t uint16, p interface{}) *Message {
 	var enc *codec.Encoder = codec.NewEncoder(bb, &mh)
 	err := enc.Encode(p)
 	if err != nil {
-		log.WithError(err).Panic("Error encoding payload: %v\n")
+		log.WithError(err).Error("Error encoding payload")
+		return nil
 	}
 
 	// Copy the payload buffer

@@ -20,7 +20,7 @@ const serverOnly uint32 = 1<<32 - 1
 
 type MovementRequest struct {
 	Org, Dst math.Vec2
-	EntityId uint32
+	EntityID uint32
 }
 
 type MovementPlanner struct {
@@ -56,13 +56,13 @@ func NewMovementPlanner(game Game) *MovementPlanner {
 func (mp *MovementPlanner) PlanMovement(mvtReq *MovementRequest) {
 	// check the time elapsed since last planned request
 	doIt := true
-	if last, ok := mp.lastRequests[mvtReq.EntityId]; ok {
+	if last, ok := mp.lastRequests[mvtReq.EntityID]; ok {
 		doIt = time.Since(last) > pathfinderMinPeriod
 	}
 	if doIt {
 		// insert the movement request in the ringbuffer
 		mp.ringBufIn <- mvtReq
-		mp.lastRequests[mvtReq.EntityId] = time.Now()
+		mp.lastRequests[mvtReq.EntityID] = time.Now()
 		log.WithField("req", *mvtReq).Info("Movement Request added to the planner")
 	} else {
 		log.WithField("req", *mvtReq).Info("Movement Request discarded because it was too close to previous one")
@@ -141,7 +141,7 @@ func (mp *MovementPlanner) Start() {
 						evt := events.NewEvent(
 							events.PathReady,
 							events.PathReadyEvent{
-								Id:   mvtReq.EntityId,
+								Id:   mvtReq.EntityID,
 								Path: path,
 							})
 						mp.game.PostEvent(evt)

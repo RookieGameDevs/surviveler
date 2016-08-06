@@ -5,13 +5,14 @@
 package protocol
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"net"
 	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 const (
@@ -31,7 +32,7 @@ type (
 type Server struct {
 	port    string
 	server  network.Server    // tcp server instance
-	clients ClientRegistry    // manage the connected clients
+	clients *ClientRegistry   // manage the connected clients
 	telnet  *TelnetServer     // embedded telnet server
 	factory *messages.Factory // the unique message factory
 	wg      *sync.WaitGroup   // game wait group
@@ -47,7 +48,7 @@ func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
 	evtCb PostEvtFunc) *Server {
 
 	return &Server{
-		clients: *clients,
+		clients: clients,
 		port:    port,
 		telnet:  telnet,
 		factory: messages.GetFactory(),
@@ -102,7 +103,7 @@ func (srv *Server) Start() {
 			log.Fatal("can't start telnet server")
 		}
 		srv.telnet.Start(listener, srv.wg)
-		registerTelnetCommands(srv.telnet, &srv.clients)
+		registerTelnetCommands(srv.telnet, srv.clients)
 	}
 }
 

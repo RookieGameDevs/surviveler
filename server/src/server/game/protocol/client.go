@@ -5,11 +5,12 @@
 package protocol
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"server/game/messages"
 	"server/network"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -119,12 +120,12 @@ func (reg *ClientRegistry) Disconnect(id uint32, reason string) {
 	reg.mutex.RLock()
 	defer reg.mutex.RUnlock()
 
-	if conn, ok := reg.clients[id]; ok {
-		if err := sendLeave(conn, reason); err != nil {
-			log.WithError(err).Error("Couldn't disconnect client")
-		}
-	} else {
+	conn, ok := reg.clients[id]
+	if !ok {
 		log.WithField("client", id).Error("Uknown client id, can't disconnect him/her")
+	}
+	if err := sendLeave(conn, reason); err != nil {
+		log.WithError(err).Error("Couldn't disconnect client")
 	}
 }
 
@@ -133,12 +134,12 @@ func (reg *ClientRegistry) Kick(id uint32, reason string) {
 	reg.mutex.RLock()
 	defer reg.mutex.RUnlock()
 
-	if conn, ok := reg.clients[id]; ok {
-		if err := sendLeave(conn, reason); err != nil {
-			log.WithError(err).Error("Couldn't kick client")
-		}
-	} else {
+	conn, ok := reg.clients[id]
+	if !ok {
 		log.WithField("client", id).Error("Uknown client id, can't kick him/her")
+	}
+	if err := sendLeave(conn, reason); err != nil {
+		log.WithError(err).Error("Couldn't kick client")
 	}
 }
 

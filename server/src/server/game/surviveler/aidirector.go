@@ -5,13 +5,14 @@
 package surviveler
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
 	"server/game/entities"
 	"server/game/events"
 	"server/math"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // This number represents the ration between the number of logic ticks for one
@@ -89,14 +90,16 @@ func (ai *AIDirector) SummonZombie() {
 }
 
 func (ai *AIDirector) addZombie(org math.Vec2) {
-	if entityData, ok := ai.entitiesData[game.ZombieEntity]; !ok {
-		log.Panic("Can't create zombie, unsupported entity data type")
-	} else {
-		speed := entityData.Speed
-		combatPower := entityData.CombatPower
-		totHP := float64(entityData.TotalHP)
-		ai.game.State().AddEntity(entities.NewZombie(ai.game, org, speed, combatPower, totHP))
+	entityData, ok := ai.entitiesData[game.ZombieEntity]
+	if !ok {
+		log.Error("Can't create zombie, unsupported entity data type")
+		return
 	}
+	speed := entityData.Speed
+	combatPower := entityData.CombatPower
+	totHP := float64(entityData.TotalHP)
+	ai.game.State().AddEntity(
+		entities.NewZombie(ai.game, org, speed, combatPower, totHP))
 }
 
 /*

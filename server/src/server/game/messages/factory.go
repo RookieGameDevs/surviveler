@@ -5,9 +5,10 @@
 package messages
 
 import (
+	"reflect"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
-	"reflect"
 )
 
 var factory *Factory
@@ -69,7 +70,7 @@ func (mf Factory) newMsg(t uint16) interface{} {
 	var ok bool
 	var reft reflect.Type
 	if reft, ok = mf.registry[t]; !ok {
-		log.WithField("msgtype", t).Panic("Unknown message type")
+		log.WithField("msgtype", t).Error("Unknown message type")
 	}
 	return reflect.New(reft).Elem().Interface()
 }
@@ -86,7 +87,7 @@ func (mf Factory) DecodePayload(t uint16, p []byte) interface{} {
 	decoder := codec.NewDecoderBytes(p, &mh)
 	err := decoder.Decode(&msg)
 	if err != nil {
-		log.WithError(err).Panic("Couldn't decode payload")
+		log.WithError(err).Error("Couldn't decode payload")
 	}
 	return msg
 }

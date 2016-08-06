@@ -44,7 +44,7 @@ type Zombie struct {
 
 func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
 	return &Zombie{
-		id:          game.InvalidId,
+		id:          game.InvalidID,
 		g:           g,
 		curState:    lookingState,
 		walkSpeed:   walkSpeed,
@@ -213,7 +213,7 @@ func (z *Zombie) State() game.EntityState {
 	switch z.curState {
 	case attackingState:
 		actionData = game.AttackActionData{
-			TargetId: z.target.Id(),
+			TargetID: z.target.Id(),
 		}
 		actionType = game.AttackAction
 

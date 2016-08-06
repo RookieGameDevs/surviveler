@@ -6,7 +6,6 @@ package surviveler
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"os"
 	"os/signal"
 	"runtime"
@@ -18,6 +17,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -25,7 +26,7 @@ import (
  */
 type survivelerGame struct {
 	cfg             game.Config                // configuration settings
-	server          protocol.Server            // server core
+	server          *protocol.Server           // server core
 	clients         *protocol.ClientRegistry   // the client registry
 	assets          resource.SurvivelerPackage // game assets package
 	ticker          time.Ticker                // the main tick source
@@ -120,10 +121,10 @@ func NewGame(cfg game.Config) game.Game {
 	// setup TCP server
 	rootHandler := func(imsg *msg.Message, clientId uint32) error {
 		// forward incoming messages to the game loop
-		g.msgChan <- msg.ClientMessage{imsg, clientId}
+		g.msgChan <- msg.NewClientMessage(imsg, clientId)
 		return nil
 	}
-	g.server = *protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
+	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
 
 	return g
 }
@@ -133,7 +134,7 @@ func NewGame(cfg game.Config) game.Game {
  */
 func (g *survivelerGame) loadAssets(path string) (*gameData, error) {
 	if len(path) == 0 {
-		return nil, fmt.Errorf("Can't start without a specified assets path")
+		return nil, fmt.Errorf("can't start without a specified assets path")
 	}
 	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
 

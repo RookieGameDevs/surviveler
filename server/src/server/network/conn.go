@@ -6,11 +6,12 @@ package network
 
 import (
 	"errors"
-	log "github.com/Sirupsen/logrus"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 /*
@@ -141,19 +142,19 @@ func (c *Conn) AsyncSendPacket(msg Packet, timeout time.Duration) (err error) {
 			return ErrBlockingWrite
 		}
 
-	} else {
-		select {
-		case c.outgoingChan <- msg:
-			return nil
+	}
 
-		case <-c.closeChan:
-			//  tried to send on a closed connection
-			return ErrClosedConnection
+	select {
+	case c.outgoingChan <- msg:
+		return nil
 
-		case <-time.After(timeout):
-			// in case a timeout, raise an error once it has elapsed
-			return ErrBlockingWrite
-		}
+	case <-c.closeChan:
+		//  tried to send on a closed connection
+		return ErrClosedConnection
+
+	case <-time.After(timeout):
+		// in case a timeout, raise an error once it has elapsed
+		return ErrBlockingWrite
 	}
 }
 
