@@ -1,6 +1,12 @@
-.venv
+*.o
 *.sublime-*
-.vimtags
 *.sw*
 .DS_Store
+.env/
+.lock*
+.venv
 .vimrc
+.vimtags
+.waf*
+build/
+demo
