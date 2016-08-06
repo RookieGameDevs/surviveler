@@ -7,136 +7,40 @@ package protocol
 import (
 	"fmt"
 	"io"
-	"server/game/events"
 	"server/game/messages"
 	"server/network"
-	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
-/*
- * handlePing processes a PingMsg and immediately replies with a PongMsg
- */
-func (srv *Server) handlePing(c *network.Conn, msg *messages.Message) error {
-	// decode payload into a ping message
-	ping := srv.factory.DecodePayload(messages.PingId, msg.Payload).(messages.PingMsg)
-	log.WithField("msg", ping).Info("It's a Ping!")
+type (
+	// AfterJoinHandler is the function called after a successfull JOIN
+	AfterJoinHandler func(ID uint32, playerType uint8)
+	// AfterLeaveHandler is the function called after an effective LEAVE
+	AfterLeaveHandler func(ID uint32)
+)
 
-	// reply pong
-	pong := messages.NewMessage(messages.PongId,
-		messages.PongMsg{
-			Id:     ping.Id,
-			Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
-		})
-	if err := c.AsyncSendPacket(pong, time.Second); err != nil {
-		return err
-	}
-	log.WithField("msg", pong).Info("Sent a Pong!")
-	return nil
-}
+// an Handshaker impements the server-side part of the handshaking protocol.
+type Handshaker interface {
 
-/*
- * handleJoin processes a JoinMsg, checking some conditions before eventually
- * accepting the client join request (or not). Inform other players and game
- * loop if the player is accepted.
- */
-func (srv *Server) handleJoin(c *network.Conn, msg *messages.Message) error {
-	// decode payload into a join message
-	join := srv.factory.DecodePayload(messages.JoinId, msg.Payload).(messages.JoinMsg)
-	log.WithFields(log.Fields{"name": join.Name, "type": join.Type}).Info("A client would like to join")
+	// Join should process the JOIN message of the Handshaking protocol, checks
+	// that the conditions are met in order to accept the emitter for the JOIN
+	// message. If that is the case, true is returned. In both cases, it should
+	// take care of the required steps in order to follow the defined
+	// handshaking protocol (i.e send/broadcast messages, etc.)
+	Join(join messages.JoinMsg, c *network.Conn) bool
 
-	clientData := c.GetUserData().(ClientData)
+	// AfterJoinHandler returns the registered 'after join' handler, if any.
+	AfterJoinHandler() AfterJoinHandler
 
-	// check if STAY conditions are met
-	var reason string
-	accepted := false
+	// SetAfterJoinHandler registers the 'after join' handler.
+	SetAfterJoinHandler(AfterJoinHandler)
 
-	switch {
-	case clientData.Joined:
-		reason = "Joined already received"
-	case len(join.Name) < 3:
-		reason = "Name is too short!"
-	default:
-		nameTaken := false
-		stay := messages.StayMsg{
-			Id:      clientData.Id,
-			Players: make(map[uint32]string),
-		}
+	// AfterLeaveHandler returns the registered 'after leave' handler, if any.
+	AfterLeaveHandler() AfterLeaveHandler
 
-		// compute the list of joined players in a closure
-		srv.clients.ForEach(func(cd ClientData) bool {
-			nameTaken = cd.Name == join.Name
-			stay.Players[cd.Id] = cd.Name
-			// stop iteration if name is taken
-			return !nameTaken
-		})
-		if nameTaken {
-			reason = "Name is already taken!"
-			break
-		}
-
-		// send STAY to client
-		log.WithField("id", clientData.Id).Info("Join conditions accepted, client can stay")
-		err := c.AsyncSendPacket(messages.NewMessage(messages.StayId, stay), time.Second)
-		if err != nil {
-			return err
-		}
-
-		// broadcast JOINED
-		joined := messages.NewMessage(messages.JoinedId, messages.JoinedMsg{
-			Id:   clientData.Id,
-			Name: join.Name,
-			Type: join.Type,
-		})
-		log.WithField("joined", joined).Info("Tell to the world this client has joined")
-		srv.Broadcast(joined)
-
-		// informs the game loop that we have a new player
-		evt := events.NewEvent(events.PlayerJoin, events.PlayerJoinEvent{
-			Id:   clientData.Id,
-			Type: join.Type,
-		})
-		srv.evtCb(evt)
-
-		// consider the client as accepted
-		clientData.Joined = true
-		clientData.Name = join.Name
-		c.SetUserData(clientData)
-		accepted = true
-	}
-
-	if !accepted {
-		sendLeave(c, reason)
-	}
-	return nil
-}
-
-/*
- * sendLeave sends a LEAVE message to the client associated to given connection
- */
-func sendLeave(c *network.Conn, reason string) error {
-	clientData := c.GetUserData().(ClientData)
-
-	// send LEAVE to client
-	leave := messages.NewMessage(messages.LeaveId, messages.LeaveMsg{
-		Id:     uint32(clientData.Id),
-		Reason: reason,
-	})
-	if err := c.AsyncSendPacket(leave, 5*time.Millisecond); err != nil {
-		return err
-	}
-	log.WithField("leave", leave).Info("Client is kindly asked to leave")
-
-	// closes the connection, registry cleanup will be performed in OnClose
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		if !c.IsClosed() {
-			c.Close()
-		}
-	}()
-	return nil
+	// SetAfterLeaveHandler registers the 'after leave' handler.
+	SetAfterLeaveHandler(AfterLeaveHandler)
 }
 
 /*
@@ -153,7 +57,7 @@ func registerTelnetCommands(tns *TelnetServer, registry *ClientRegistry) {
 		Action: func(c *cli.Context) error {
 			clientId := uint32(c.Int("id"))
 			if connection, ok := registry.clients[clientId]; ok {
-				if err := sendLeave(connection, "telnet just kicked your ass out"); err != nil {
+				if err := registry.sendLeave(connection, "telnet just kicked your ass out"); err != nil {
 					io.WriteString(c.App.Writer,
 						fmt.Sprintf("couldn't kick client %v\n", err))
 				} else {

@@ -6,7 +6,6 @@ package protocol
 
 import (
 	"net"
-	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"sync"
@@ -22,7 +21,6 @@ const (
 
 type (
 	IncomingMsgFunc func(msg *messages.Message, clientId uint32) error
-	PostEvtFunc     func(*events.Event)
 	messageHandler  func(c *network.Conn, msg interface{}) error
 )
 
@@ -38,7 +36,7 @@ type Server struct {
 	factory     *messages.Factory         // the unique message factory
 	wg          *sync.WaitGroup           // game wait group
 	msgCb       IncomingMsgFunc           // where to forward incoming messages
-	evtCb       PostEvtFunc               // where to forward game events
+	handshaker  Handshaker                // handle handshaking
 	msgHandlers map[uint16]messageHandler //
 }
 
@@ -46,8 +44,7 @@ type Server struct {
  * NewServer returns a new configured Server instance
  */
 func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
-	telnet *TelnetServer, wg *sync.WaitGroup,
-	evtCb PostEvtFunc) *Server {
+	telnet *TelnetServer, wg *sync.WaitGroup, handshaker Handshaker) *Server {
 
 	return &Server{
 		clients:     clients,
@@ -56,8 +53,8 @@ func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
 		factory:     messages.GetFactory(),
 		wg:          wg,
 		msgCb:       msgCb,
-		evtCb:       evtCb,
 		msgHandlers: make(map[uint16]messageHandler),
+		handshaker:  handshaker,
 	}
 }
 
@@ -135,28 +132,54 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
  */
 func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool {
 	clientData := c.GetUserData().(ClientData)
-	msg := packet.(*messages.Message)
+	rawmsg := packet.(*messages.Message)
 
 	log.WithFields(
 		log.Fields{
 			"clientData": clientData,
 			"addr":       c.GetRawConn().RemoteAddr(),
-			"msg":        msg,
+			"msg":        rawmsg,
 		}).Debug("Incoming message")
 
+	// decode the payload
+	// TODO: just pass the `rawmsg` here...
+	msg := srv.factory.DecodePayload(rawmsg.Type, rawmsg.Payload)
+
 	// get handler
-	handler, ok := srv.msgHandlers[msg.Type]
+	handler, ok := srv.msgHandlers[rawmsg.Type]
 	if ok {
-		// decode the payload
-		// TODO: just pass the `msg` here...
-		decoded := srv.factory.DecodePayload(msg.Type, msg.Payload)
-		if err := handler(c, decoded); err != nil {
+		if err := handler(c, msg); err != nil {
 			log.WithError(err).Error("Error handling message")
 			return false
 		}
 	} else {
-		// forward it
-		srv.msgCb(msg, clientData.Id)
+
+		switch rawmsg.Type {
+		case messages.PingId:
+
+			// immediately reply pong
+			ping := srv.factory.DecodePayload(messages.PingId, rawmsg.Payload).(messages.PingMsg)
+			pong := messages.NewMessage(messages.PongId,
+				messages.PongMsg{
+					Id:     ping.Id,
+					Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
+				})
+			if err := c.AsyncSendPacket(pong, time.Second); err != nil {
+				log.WithError(err).Error("Error handling message")
+				return false
+			}
+		// handshaking messages are handlede by the handshaker
+		case messages.JoinId:
+			join := srv.factory.DecodePayload(messages.JoinId, rawmsg.Payload).(messages.JoinMsg)
+			if srv.handshaker.Join(join, c) {
+				// new client has been accepted
+				srv.handshaker.AfterJoinHandler()(clientData.Id, join.Type)
+			}
+		default:
+			// other kinds are forwarded
+			// TODO: which messages are forwarded to who?!
+			srv.msgCb(rawmsg, clientData.Id)
+		}
 	}
 
 	return true
@@ -188,11 +211,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 		// and we have nothing more to do
 	}
 
-	// inform the game loop that the player left
-	evt := events.NewEvent(events.PlayerLeave, events.PlayerLeaveEvent{
-		Id: clientData.Id,
-	})
-	srv.evtCb(evt)
+	srv.handshaker.AfterLeaveHandler()(clientData.Id)
 }
 
 /*

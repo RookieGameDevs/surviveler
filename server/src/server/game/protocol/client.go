@@ -14,12 +14,16 @@ import (
 )
 
 /*
- * ClientRegistry manages a list of connections to remote clients
+ * ClientRegistry manages a list of connections to remote clients.
+ *
+ * It implements the Handshaker interface.
  */
 type ClientRegistry struct {
-	clients map[uint32]*network.Conn // one for each client connection
-	mutex   sync.RWMutex             // protect map from concurrent accesses
-	allocId func() uint32
+	clients           map[uint32]*network.Conn // one for each client connection
+	mutex             sync.RWMutex             // protect map from concurrent accesses
+	allocId           func() uint32
+	afterJoinHandler  AfterJoinHandler
+	afterLeaveHandler AfterLeaveHandler
 }
 
 /*
@@ -124,7 +128,7 @@ func (reg *ClientRegistry) Disconnect(id uint32, reason string) {
 	if !ok {
 		log.WithField("client", id).Error("Uknown client id, can't disconnect him/her")
 	}
-	if err := sendLeave(conn, reason); err != nil {
+	if err := reg.sendLeave(conn, reason); err != nil {
 		log.WithError(err).Error("Couldn't disconnect client")
 	}
 }
@@ -136,9 +140,9 @@ func (reg *ClientRegistry) Kick(id uint32, reason string) {
 
 	conn, ok := reg.clients[id]
 	if !ok {
-		log.WithField("client", id).Error("Uknown client id, can't kick him/her")
+		log.WithField("client", id).Error("Unknown client id, can't kick him/her")
 	}
-	if err := sendLeave(conn, reason); err != nil {
+	if err := reg.sendLeave(conn, reason); err != nil {
 		log.WithError(err).Error("Couldn't kick client")
 	}
 }
@@ -166,4 +170,114 @@ func (reg *ClientRegistry) ForEach(cb ClientDataFunc) {
 			break
 		}
 	}
+}
+
+/*
+ * sendLeave sends a LEAVE message to the client associated to given connection
+ */
+func (reg *ClientRegistry) sendLeave(c *network.Conn, reason string) error {
+	clientData := c.GetUserData().(ClientData)
+
+	// send LEAVE to client
+	leave := messages.NewMessage(messages.LeaveId, messages.LeaveMsg{
+		Id:     uint32(clientData.Id),
+		Reason: reason,
+	})
+	if err := c.AsyncSendPacket(leave, 5*time.Millisecond); err != nil {
+		return err
+	}
+	log.WithField("clientID", clientData.Id).Info("LEAVE message has been sent")
+
+	// TODO: Remove this: the client should remain alive even when the connection
+	// is closed. Example: when the lobby will be implemented
+
+	// closes the connection, registry cleanup will be performed in OnClose
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		if !c.IsClosed() {
+			c.Close()
+		}
+	}()
+	return nil
+}
+
+func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
+
+	clientData := c.GetUserData().(ClientData)
+
+	log.WithFields(log.Fields{"name": join.Name, "clientData": clientData}).Info("Received JOIN from client")
+
+	// client already JOINED?
+	if clientData.Joined {
+		reg.sendLeave(c, "Joined already received")
+		return false
+	}
+
+	// name length condition
+	if len(join.Name) < 3 {
+		reg.sendLeave(c, "Name is too short")
+		return false
+	}
+
+	// name already taken?
+	var (
+		nameTaken   bool
+		playerNames map[uint32]string
+	)
+
+	// compute the list of joined players, populating the STAY message and
+	// checking if name is taken as well
+	reg.ForEach(func(cd ClientData) bool {
+		nameTaken = cd.Name == join.Name
+		playerNames[cd.Id] = cd.Name
+		// stop iteration if name is taken
+		return !nameTaken
+	})
+
+	if nameTaken {
+		reg.sendLeave(c, "Name is already taken")
+		return false
+	}
+
+	// create and send STAY to the new client
+	stay := &messages.StayMsg{Id: clientData.Id, Players: playerNames}
+	err := c.AsyncSendPacket(messages.NewMessage(messages.StayId, stay), time.Second)
+	if err != nil {
+		// handle error in case we couldn't send the STAY message
+		log.WithError(err).Error("Couldn't send STAY message to the new client")
+		reg.sendLeave(c, "Couldn't finish handshaking")
+		return false
+	}
+
+	// fill a JOINED message
+	joined := &messages.JoinedMsg{
+		Id:   clientData.Id,
+		Name: join.Name,
+		Type: join.Type,
+	}
+
+	log.WithField("joined", joined).Info("Tell to the world this client has joined")
+	reg.Broadcast(messages.NewMessage(messages.JoinedId, joined))
+
+	// at this point we consider the client as accepted
+	clientData.Joined = true
+	clientData.Name = join.Name
+	c.SetUserData(clientData)
+	return true
+}
+
+func (reg *ClientRegistry) AfterJoinHandler() AfterJoinHandler {
+	return reg.afterJoinHandler
+}
+
+func (reg *ClientRegistry) SetAfterJoinHandler(fn AfterJoinHandler) {
+	reg.afterJoinHandler = fn
+}
+
+func (reg *ClientRegistry) AfterLeaveHandler() AfterLeaveHandler {
+	return reg.afterLeaveHandler
+}
+
+func (reg *ClientRegistry) SetAfterLeaveHandler(fn AfterLeaveHandler) {
+	reg.afterLeaveHandler = fn
 }

@@ -124,7 +124,24 @@ func NewGame(cfg game.Config) game.Game {
 		g.msgChan <- msg.NewClientMessage(imsg, clientId)
 		return nil
 	}
-	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
+
+	// register the 'after join' handler
+	g.clients.SetAfterJoinHandler(func(ID uint32, playerType uint8) {
+		g.PostEvent(
+			events.NewEvent(
+				events.PlayerJoin,
+				events.PlayerJoinEvent{Id: ID, Type: playerType}))
+	})
+
+	// register the 'after leave' handler
+	g.clients.SetAfterLeaveHandler(func(ID uint32) {
+		g.PostEvent(
+			events.NewEvent(
+				events.PlayerLeave,
+				events.PlayerLeaveEvent{Id: ID}))
+	})
+
+	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.clients)
 	g.registerMsgHandlers()
 	return g
 }
