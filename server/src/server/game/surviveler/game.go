@@ -11,7 +11,6 @@ import (
 	"os/signal"
 	"runtime"
 	"server/game"
-	"server/game/ai"
 	"server/game/events"
 	msg "server/game/messages"
 	"server/game/protocol"
@@ -40,7 +39,8 @@ type survivelerGame struct {
 	state           *gamestate                 // the game state
 	movementPlanner *game.MovementPlanner      // the movement planner
 	pathfinder      *game.Pathfinder           // pathfinder
-	ai              *ai.AIDirector             // AI director
+	ai              *AIDirector                // AI director
+	gameData        *gameData
 }
 
 /*
@@ -52,9 +52,11 @@ func NewGame(cfg game.Config) game.Game {
 	// copy configuration
 	g.cfg = cfg
 
+	var (
+		err error
+		lvl log.Level
+	)
 	// setup logger
-	var err error
-	var lvl log.Level
 	if lvl, err = log.ParseLevel(g.cfg.LogLevel); err != nil {
 		log.WithFields(log.Fields{
 			"level":   g.cfg.LogLevel,
@@ -72,14 +74,15 @@ func NewGame(cfg game.Config) game.Game {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// load assets
-	if err := g.loadAssets(g.cfg.AssetsPath); err != nil {
+	g.gameData, err = g.loadAssets(g.cfg.AssetsPath)
+	if err != nil {
 		log.WithError(err).Error("Couldn't load assets")
 		return nil
 	}
 
 	// initialize the gamestate
 	g.state = newGameState(g, int16(cfg.GameStartingTime))
-	if err := g.state.init(g.assets); err != nil {
+	if err := g.state.init(g.gameData); err != nil {
 		log.WithError(err).Error("Couldn't initialize gamestate")
 		return nil
 	}
@@ -112,7 +115,7 @@ func NewGame(cfg game.Config) game.Game {
 	g.state.movementPlanner = g.movementPlanner
 
 	// init the AI director
-	g.ai = ai.NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
+	g.ai = NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
 
 	// setup TCP server
 	rootHandler := func(imsg *msg.Message, clientId uint32) error {
@@ -128,13 +131,21 @@ func NewGame(cfg game.Config) game.Game {
 /*
  * loadAssets load the assets package
  */
-func (g *survivelerGame) loadAssets(path string) error {
+func (g *survivelerGame) loadAssets(path string) (*gameData, error) {
 	if len(path) == 0 {
-		return fmt.Errorf("Can't start without a specified assets path")
+		return nil, fmt.Errorf("Can't start without a specified assets path")
 	}
 	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
+
+	var err error
+	// load game assets
+	gameData, err := newGameData(g.assets)
+	if err != nil {
+		return nil, err
+	}
+
 	log.WithField("path", path).Info("Assets loaded successfully")
-	return nil
+	return gameData, nil
 }
 
 /*

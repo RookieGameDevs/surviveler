@@ -3,7 +3,6 @@ package game
 import (
 	"server/game/events"
 	"server/game/messages"
-	"server/game/resource"
 	"server/math"
 	"sync"
 )
@@ -15,11 +14,7 @@ type GameState interface {
 	Entity(id uint32) Entity
 	NearestEntity(pos math.Vec2, f EntityFilter) (Entity, float32)
 	AddEntity(ent Entity)
-	AddZombie(org math.Vec2)
 	RemoveEntity(id uint32)
-	MapData() *resource.MapData
-	EntityData(EntityType) *resource.EntityData
-	BuildingData(EntityType) *resource.BuildingData
 	GameTime() int16
 }
 

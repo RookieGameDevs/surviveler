@@ -2,13 +2,15 @@
  * Surviveler game package
  * AI director
  */
-package ai
+package surviveler
 
 import (
 	log "github.com/Sirupsen/logrus"
 	"math/rand"
 	"server/game"
+	"server/game/entities"
 	"server/game/events"
+	"server/math"
 	"time"
 )
 
@@ -33,16 +35,18 @@ const (
  *   time if no zombies are around
  */
 type AIDirector struct {
-	game        game.Game
-	curTick     int
-	nightStart  int16
-	nightEnd    int16
-	lastTime    time.Time
-	zombieCount int
-	intensity   int
+	game         *survivelerGame
+	curTick      int
+	nightStart   int16
+	nightEnd     int16
+	lastTime     time.Time
+	zombieCount  int
+	intensity    int
+	keypoints    AIKeypoints
+	entitiesData EntityDataDict
 }
 
-func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
+func NewAIDirector(game *survivelerGame, nightStart, nightEnd int16) *AIDirector {
 	log.Info("Initializing AI Director")
 	ai := new(AIDirector)
 	ai.game = game
@@ -50,6 +54,11 @@ func NewAIDirector(game game.Game, nightStart, nightEnd int16) *AIDirector {
 	ai.lastTime = time.Now()
 	ai.nightStart = nightStart
 	ai.nightEnd = nightEnd
+
+	// preload needed assets
+	gameData := game.gameData
+	ai.keypoints = gameData.mapData.AIKeypoints
+	ai.entitiesData = gameData.entitiesData
 	return ai
 }
 
@@ -61,29 +70,44 @@ func (ai *AIDirector) OnZombieDeath(event *events.Event) {
 	ai.intensity++
 }
 
+// TODO: set as non exported. It is currently exported because of the use done
+// by the 'summon' telnet request. But this breaks encapsulation and a clear
+// definition of components role. In case this telnet feature is still needed
+// in the future, it could add a Zombie using AddEntity. Anyway, for unit-testing
+// the AIDirector should probably be replac-able by a special AIDirector summoning
+// entities following a scripted testable scenario.
 func (ai *AIDirector) SummonZombie() {
-	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
-	org := keypoints.Spawn.Enemies[rand.Intn(len(keypoints.Spawn.Enemies))]
+	org := ai.keypoints.Spawn.Enemies[rand.Intn(len(ai.keypoints.Spawn.Enemies))]
 
 	log.WithFields(log.Fields{
 		"spawn": org,
 	}).Info("summoning zombie")
 
-	ai.game.State().AddZombie(org)
+	ai.addZombie(org)
 	ai.zombieCount++
+}
+
+func (ai *AIDirector) addZombie(org math.Vec2) {
+	if entityData, ok := ai.entitiesData[game.ZombieEntity]; !ok {
+		log.Panic("Can't create zombie, unsupported entity data type")
+	} else {
+		speed := entityData.Speed
+		combatPower := entityData.CombatPower
+		totHP := float64(entityData.TotalHP)
+		ai.game.State().AddEntity(entities.NewZombie(ai.game, org, speed, combatPower, totHP))
+	}
 }
 
 /*
  * summonZombieMob creates a group of zombies
  */
 func (ai *AIDirector) summonZombieMob(qty int) {
-	keypoints := ai.game.State().MapData().AIKeypoints
 	// pick a random spawn point
-	idx := rand.Intn(len(keypoints.Spawn.Enemies))
+	idx := rand.Intn(len(ai.keypoints.Spawn.Enemies))
 	for i := 0; i < qty; i++ {
-		org := keypoints.Spawn.Enemies[(i+idx)%len(keypoints.Spawn.Enemies)]
-		ai.game.State().AddZombie(org)
+		org := ai.keypoints.Spawn.Enemies[(i+idx)%len(ai.keypoints.Spawn.Enemies)]
+		ai.addZombie(org)
 		ai.zombieCount++
 	}
 }

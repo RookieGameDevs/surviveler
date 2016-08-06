@@ -14,12 +14,6 @@ import (
 	"path"
 )
 
-// URI of some static elements contained in a package
-const (
-	mapURI      string = "map/data.json"
-	entitiesURI string = "entities/data.json"
-)
-
 /*
  * SurvivelerPackage represents a package of data, resource files and assets for
  * the game Surviveler, grouped into a package.
@@ -91,24 +85,4 @@ func (sp SurvivelerPackage) LoadBitmap(uri string) (image.Image, error) {
 	}
 	defer r.Close()
 	return bmp.Decode(r)
-}
-
-/*
- * LoadMapData loads the map from the package and decodes it in a MapData
- * struct
- */
-func (sp SurvivelerPackage) LoadMapData() (*MapData, error) {
-	md := new(MapData)
-	err := sp.LoadJSON(mapURI, &md)
-	return md, err
-}
-
-/*
- * LoadEntitiesData loads the entities data from the package and decodes it in
- * a EntititesData struct
- */
-func (sp SurvivelerPackage) LoadEntitiesData() (*EntitiesData, error) {
-	md := new(EntitiesData)
-	err := sp.LoadJSON(entitiesURI, &md)
-	return md, err
 }
