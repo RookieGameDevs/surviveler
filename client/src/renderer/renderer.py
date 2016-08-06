@@ -106,7 +106,6 @@ class Renderer:
         try:
             width = int(config['width'])
             height = int(config['height'])
-            # depth = int(config.get('depth', 24))
             gl_major, gl_minor = [
                 int(v) for v in config.get('openglversion', '3.3').split('.')
             ]
