@@ -13,7 +13,7 @@ class Light:
 
     def __init__(self, color=None):
         self.color = color or Vec(1, 1, 1, 1)
-        self.shininess = 60
+        self.shininess = 60.0
 
 
 class LightNode(SceneNode):

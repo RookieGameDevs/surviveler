@@ -75,8 +75,8 @@ def setup_logging(config):
 class sdl2context(ContextDecorator):
 
     def __enter__(self):
-        LOG.debug('Creating SDL context')
-        sdl.SDL_Init(sdl.SDL_INIT_VIDEO | sdl.SDL_INIT_AUDIO)
+        LOG.debug('Initializing SDL context')
+        sdl.SDL_Init(sdl.SDL_INIT_EVERYTHING)
 
         LOG.debug('Initializing SDL mixer')
         if sdlmixer.Mix_OpenAudio(44100, sdlmixer.MIX_DEFAULT_FORMAT, 2, 1024):
@@ -111,7 +111,6 @@ def main(character, config):
         character, renderer, proxy, input_mgr, res_mgr, audio_mgr, config)
 
     client.start()
-    renderer.shutdown()
 
 
 @click.command()

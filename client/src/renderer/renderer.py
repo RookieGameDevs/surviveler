@@ -12,26 +12,19 @@ from OpenGL.GL import GL_FRONT_AND_BACK
 from OpenGL.GL import GL_LINE
 from OpenGL.GL import GL_ONE_MINUS_SRC_ALPHA
 from OpenGL.GL import GL_POINT
-from OpenGL.GL import GL_SHADING_LANGUAGE_VERSION
 from OpenGL.GL import GL_SRC_ALPHA
-from OpenGL.GL import GL_VERSION
 from OpenGL.GL import glBlendFunc
 from OpenGL.GL import glClear
 from OpenGL.GL import glClearColor
 from OpenGL.GL import glCullFace
 from OpenGL.GL import glEnable
-from OpenGL.GL import glFlush
-from OpenGL.GL import glGetString
 from OpenGL.GL import glPolygonMode
 from contextlib import ExitStack
 from enum import IntEnum
 from enum import unique
 from exceptions import ConfigError
-from exceptions import OpenGLError
-from exceptions import SDLError
-from utils import as_utf8
+from renderer.texture import Texture
 import logging
-import sdl2 as sdl
 import surrender
 
 
@@ -71,7 +64,7 @@ class RenderOp:
         :type key: :class:`float`
 
         :param shader: Shader to use for rendering.
-        :type shader: :class:`renderer.shader.Shader`
+        :type shader: :class:`surrender.Shader`
 
         :param shader_params: Shader parameters to submit to the shader.
         :type shader_params: mapping
@@ -113,49 +106,21 @@ class Renderer:
         try:
             width = int(config['width'])
             height = int(config['height'])
-            depth = int(config.get('depth', 24))
             gl_major, gl_minor = [
                 int(v) for v in config.get('openglversion', '3.3').split('.')
             ]
         except (KeyError, TypeError, ValueError) as err:
             raise ConfigError(err)
 
-        # window creation
-        self.window = sdl.SDL_CreateWindow(
-            b"Surviveler",
-            sdl.SDL_WINDOWPOS_CENTERED,
-            sdl.SDL_WINDOWPOS_CENTERED,
-            width,
-            height,
-            sdl.SDL_WINDOW_OPENGL)
-        if self.window is None:
-            raise SDLError('Unable to create a {}x{}x{} window'.format(
-                width, height, depth))
-
-        # OpenGL 3.3 core profile context initialization
-        sdl.SDL_GL_SetAttribute(
-            sdl.SDL_GL_CONTEXT_PROFILE_MASK,
-            sdl.SDL_GL_CONTEXT_PROFILE_CORE)
-        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_CONTEXT_MAJOR_VERSION, gl_major)
-        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_CONTEXT_MINOR_VERSION, gl_minor)
-        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_DOUBLEBUFFER, 1)
-        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_DEPTH_SIZE, depth)
-
-        self.gl_ctx = sdl.SDL_GL_CreateContext(self.window)
-        if self.gl_ctx is None:
-            raise OpenGLError('Unable to create OpenGL {}.{} context'.format(
-                gl_major, gl_minor))
-
-        LOG.info('OpenGL version: {}'.format(as_utf8(glGetString(GL_VERSION))))
-        LOG.info('GLSL version: {}'.format(
-            as_utf8(glGetString(GL_SHADING_LANGUAGE_VERSION))))
-
-        surrender.init()
+        surrender.init(width, height)
 
         self._width = width
         self._height = height
         self.gl_setup(width, height)
         self.render_queue = []
+
+    def __del__(self):
+        self.shutdown()
 
     @property
     def width(self):
@@ -209,10 +174,14 @@ class Renderer:
                     stack.enter_context(tex.use(tex_unit))
 
                 if op.shader.prog != current_shader:
-                    op.shader.activate()
+                    op.shader.use()
                     current_shader = op.shader.prog
 
-                op.shader.use(op.shader_params)
+                for k, v in op.shader_params.items():
+                    # FIXME: rework this
+                    if isinstance(v, Texture):
+                        v = v.tex_unit
+                    op.shader[k] = v
 
                 # change the polygon mode, if requested by render op
                 if polygon_mode != op.polygon_mode:
@@ -223,8 +192,7 @@ class Renderer:
 
         self.render_queue.clear()
 
-        glFlush()
-        sdl.SDL_GL_SwapWindow(self.window)
+        surrender.render()
 
     def shutdown(self):
         """Shuts down the renderer.
@@ -232,5 +200,3 @@ class Renderer:
         Destroys the OpenGL context and the window associated with the renderer.
         """
         surrender.shutdown()
-        sdl.SDL_GL_DeleteContext(self.gl_ctx)
-        sdl.SDL_DestroyWindow(self.window)

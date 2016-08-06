@@ -30,7 +30,7 @@ class HealthBar(Entity):
             defaults to the resource value
         :type y_offset: :class:`float`
         """
-        self._value = value
+        self._value = float(value)
 
         self.w = resource.data['width']
         self.h = resource.data['height']
@@ -79,8 +79,8 @@ class HealthBar(Entity):
         :param v: The value of the health bar
         :type v: :class:`float`
         """
-        self._value = v
-        self[Renderable].node.params['value'] = v
+        self._value = float(v)
+        self[Renderable].node.params['value'] = self._value
 
     def destroy(self):
         """Removes itself from the scene.

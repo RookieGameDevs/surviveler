@@ -14,7 +14,7 @@ class TextNode(SceneNode):
         :type font: :class:`renderer.Font`
 
         :param shader: Shader to use.
-        :type shader: :class:`renderer.Shader`
+        :type shader: :class:`surrender.Shader`
 
         :param text: Initial text string to render, must not be empty.
         :type text: tr
