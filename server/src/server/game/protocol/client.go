@@ -128,9 +128,7 @@ func (reg *ClientRegistry) Disconnect(id uint32, reason string) {
 	if !ok {
 		log.WithField("client", id).Error("Uknown client id, can't disconnect him/her")
 	}
-	if err := reg.sendLeave(conn, reason); err != nil {
-		log.WithError(err).Error("Couldn't disconnect client")
-	}
+	reg.Leave(reason, conn)
 }
 
 func (reg *ClientRegistry) Kick(id uint32, reason string) {
@@ -142,9 +140,7 @@ func (reg *ClientRegistry) Kick(id uint32, reason string) {
 	if !ok {
 		log.WithField("client", id).Error("Unknown client id, can't kick him/her")
 	}
-	if err := reg.sendLeave(conn, reason); err != nil {
-		log.WithError(err).Error("Couldn't kick client")
-	}
+	reg.Leave(reason, conn)
 }
 
 /*
@@ -173,9 +169,9 @@ func (reg *ClientRegistry) ForEach(cb ClientDataFunc) {
 }
 
 /*
- * sendLeave sends a LEAVE message to the client associated to given connection
+ * Leave sends a LEAVE message to the client associated to given connection
  */
-func (reg *ClientRegistry) sendLeave(c *network.Conn, reason string) error {
+func (reg *ClientRegistry) Leave(reason string, c *network.Conn) {
 	clientData := c.GetUserData().(ClientData)
 
 	// send LEAVE to client
@@ -184,9 +180,13 @@ func (reg *ClientRegistry) sendLeave(c *network.Conn, reason string) error {
 		Reason: reason,
 	})
 	if err := c.AsyncSendPacket(leave, 5*time.Millisecond); err != nil {
-		return err
+		// either the client received the LEAVE or not, we will close the
+		// connection afterwards, so there's nothing more to do in order to
+		// gracefully handle this error
+		log.WithError(err).WithField("clientID", clientData.Id).Error("LEAVE message couldn't be sent")
+	} else {
+		log.WithField("clientID", clientData.Id).Info("LEAVE message has been sent")
 	}
-	log.WithField("clientID", clientData.Id).Info("LEAVE message has been sent")
 
 	// TODO: Remove this: the client should remain alive even when the connection
 	// is closed. Example: when the lobby will be implemented
@@ -198,7 +198,6 @@ func (reg *ClientRegistry) sendLeave(c *network.Conn, reason string) error {
 			c.Close()
 		}
 	}()
-	return nil
 }
 
 func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
@@ -208,13 +207,13 @@ func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
 
 	// client already JOINED?
 	if clientData.Joined {
-		reg.sendLeave(c, "Joined already received")
+		reg.Leave("Joined already received", c)
 		return false
 	}
 
 	// name length condition
 	if len(join.Name) < 3 {
-		reg.sendLeave(c, "Name is too short")
+		reg.Leave("Name is too short", c)
 		return false
 	}
 
@@ -234,7 +233,7 @@ func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
 	})
 
 	if nameTaken {
-		reg.sendLeave(c, "Name is already taken")
+		reg.Leave("Name is already taken", c)
 		return false
 	}
 
@@ -244,7 +243,7 @@ func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
 	if err != nil {
 		// handle error in case we couldn't send the STAY message
 		log.WithError(err).Error("Couldn't send STAY message to the new client")
-		reg.sendLeave(c, "Couldn't finish handshaking")
+		reg.Leave("Couldn't finish handshaking", c)
 		return false
 	}
 

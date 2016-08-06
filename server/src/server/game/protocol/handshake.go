@@ -14,9 +14,10 @@ import (
 )
 
 type (
-	// AfterJoinHandler is the function called after a successfull JOIN
+	// AfterJoinHandler is the function called after a successfull JOIN.
 	AfterJoinHandler func(ID uint32, playerType uint8)
-	// AfterLeaveHandler is the function called after an effective LEAVE
+
+	// AfterLeaveHandler is the function called after an effective LEAVE.
 	AfterLeaveHandler func(ID uint32)
 )
 
@@ -27,8 +28,12 @@ type Handshaker interface {
 	// that the conditions are met in order to accept the emitter for the JOIN
 	// message. If that is the case, true is returned. In both cases, it should
 	// take care of the required steps in order to follow the defined
-	// handshaking protocol (i.e send/broadcast messages, etc.)
+	// handshaking protocol (i.e send/broadcast messages, etc.).
 	Join(join messages.JoinMsg, c *network.Conn) bool
+
+	// Leave executes the LEAVE step of the Handshaking protocol on the client
+	// associtated to the connection c.
+	Leave(reason string, c *network.Conn)
 
 	// AfterJoinHandler returns the registered 'after join' handler, if any.
 	AfterJoinHandler() AfterJoinHandler
@@ -57,13 +62,9 @@ func registerTelnetCommands(tns *TelnetServer, registry *ClientRegistry) {
 		Action: func(c *cli.Context) error {
 			clientId := uint32(c.Int("id"))
 			if connection, ok := registry.clients[clientId]; ok {
-				if err := registry.sendLeave(connection, "telnet just kicked your ass out"); err != nil {
-					io.WriteString(c.App.Writer,
-						fmt.Sprintf("couldn't kick client %v\n", err))
-				} else {
-					io.WriteString(c.App.Writer,
-						fmt.Sprintf("client %v has been kicked out\n", clientId))
-				}
+				registry.Leave("telnet just kicked your ass out", connection)
+				io.WriteString(c.App.Writer,
+					fmt.Sprintf("client %v has been kicked out\n", clientId))
 			} else {
 				io.WriteString(c.App.Writer, fmt.Sprintf("invalid client id\n"))
 			}
