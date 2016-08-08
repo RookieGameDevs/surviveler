@@ -5,16 +5,16 @@
 package messages
 
 /*
- * MessageHandler is the interface implemented by an object that handles messages.
+ * Handler is the interface implemented by an object that handles messages.
  * The messages handled represents decoded payloads.
  */
-type MessageHandler interface {
+type Handler interface {
 	handleMsg(interface{}, uint32) error
 }
 
 /*
  * MsgHandlerFunc is the type of function that handles messages. It
- * implements the MessageHandler interface.
+ * implements the Handler interface.
  */
 type MsgHandlerFunc func(interface{}, uint32) error
 
@@ -26,8 +26,8 @@ func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint32) error {
  * MessageManager keeps track of the message handlers objects
  */
 type MessageManager struct {
-	listeners map[uint16][]MessageHandler // registered listeners
-	factory   *Factory                    // keep the msg factory
+	listeners map[uint16][]Handler // registered listeners
+	factory   *Factory             // keep the msg factory
 }
 
 /*
@@ -49,9 +49,9 @@ func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
  * Listen registers an event handler for the listening of a particular type of
  * message
  */
-func (mm *MessageManager) Listen(msgType uint16, handler MessageHandler) {
+func (mm *MessageManager) Listen(msgType uint16, handler Handler) {
 	if mm.listeners == nil {
-		mm.listeners = make(map[uint16][]MessageHandler)
+		mm.listeners = make(map[uint16][]Handler)
 		mm.factory = GetFactory()
 	}
 	mm.listeners[msgType] = append(mm.listeners[msgType], handler)
