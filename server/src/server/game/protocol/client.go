@@ -218,10 +218,8 @@ func (reg *ClientRegistry) Join(join messages.Join, c *network.Conn) bool {
 	}
 
 	// name already taken?
-	var (
-		nameTaken   bool
-		playerNames map[uint32]string
-	)
+	nameTaken := false
+	playerNames := make(map[uint32]string)
 
 	// compute the list of joined players, populating the STAY message and
 	// checking if name is taken as well
@@ -238,7 +236,7 @@ func (reg *ClientRegistry) Join(join messages.Join, c *network.Conn) bool {
 	}
 
 	// create and send STAY to the new client
-	stay := &messages.Stay{Id: clientData.Id, Players: playerNames}
+	stay := messages.Stay{Id: clientData.Id, Players: playerNames}
 	err := c.AsyncSendPacket(messages.New(messages.StayId, stay), time.Second)
 	if err != nil {
 		// handle error in case we couldn't send the STAY message
