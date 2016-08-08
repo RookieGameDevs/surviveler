@@ -5,6 +5,7 @@ package game
 
 import (
 	gomath "math"
+	"server/game/actions"
 	"server/math"
 	"time"
 )
@@ -113,7 +114,7 @@ type MobileEntityState struct {
 	Xpos         float32
 	Ypos         float32
 	CurHitPoints uint16
-	ActionType   ActionType
+	ActionType   actions.Type
 	Action       interface{}
 }
 

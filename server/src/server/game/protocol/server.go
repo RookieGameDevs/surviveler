@@ -172,6 +172,8 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 				// new client has been accepted
 				srv.handshaker.AfterJoinHandler()(clientData.Id, join.Type)
 			}
+		default:
+			log.WithField("msg", msg).Error("unhandled msg")
 		}
 	}
 
