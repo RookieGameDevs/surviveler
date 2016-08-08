@@ -10,13 +10,13 @@ type EventHandler func(*Event)
 type listenerMap map[EventType][]EventHandler
 
 type EventManager struct {
-	queue     *EventQueue
+	queue     *Queue
 	listeners listenerMap
 }
 
 func NewEventManager() *EventManager {
 	mgr := new(EventManager)
-	mgr.queue = NewEventQueue()
+	mgr.queue = NewQueue()
 	mgr.listeners = make(listenerMap)
 	return mgr
 }
