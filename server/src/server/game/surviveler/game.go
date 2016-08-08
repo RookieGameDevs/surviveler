@@ -200,10 +200,6 @@ func (g *survivelerGame) QuitChan() chan struct{} {
 	return g.quitChan
 }
 
-func (g *survivelerGame) MessageChan() chan msg.ClientMessage {
-	return g.msgChan
-}
-
 func (g *survivelerGame) PostEvent(evt *events.Event) {
 	g.eventManager.PostEvent(evt)
 }
