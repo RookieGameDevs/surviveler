@@ -36,9 +36,6 @@ func (g *survivelerGame) loop() error {
 	timeChan := time.NewTicker(
 		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
 
-	// message manager (and eventually listeners)
-	msgmgr := new(msg.Manager)
-
 	// event listeners
 	g.eventManager.Subscribe(events.PlayerJoin, g.state.onPlayerJoin)
 	g.eventManager.Subscribe(events.PlayerLeave, g.state.onPlayerLeave)
@@ -69,14 +66,6 @@ func (g *survivelerGame) loop() error {
 
 			case <-g.quitChan:
 				return
-
-			case msg := <-g.msgChan:
-				// dispatch msg to listeners
-				if err := msgmgr.Dispatch(msg.Message, msg.ClientId); err != nil {
-					// a listener can return an error, we log it but it should not
-					// perturb the rest of the game
-					log.WithField("err", err).Error("Dispatch returned an error")
-				}
 
 			case <-sendTickChan:
 				// pack the gamestate into a message
