@@ -71,7 +71,7 @@ func (g *survivelerGame) loop() error {
 				// pack the gamestate into a message
 				if gsMsg := g.state.pack(); gsMsg != nil {
 					// wrap the gameStateMsg into a generic Message
-					if msg := msg.NewMessage(msg.GameStateId, *gsMsg); msg != nil {
+					if msg := msg.New(msg.GameStateId, *gsMsg); msg != nil {
 						g.server.Broadcast(msg)
 					}
 				}

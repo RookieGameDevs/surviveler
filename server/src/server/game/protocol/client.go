@@ -175,7 +175,7 @@ func (reg *ClientRegistry) Leave(reason string, c *network.Conn) {
 	clientData := c.GetUserData().(ClientData)
 
 	// send LEAVE to client
-	leave := messages.NewMessage(messages.LeaveId, messages.Leave{
+	leave := messages.New(messages.LeaveId, messages.Leave{
 		Id:     uint32(clientData.Id),
 		Reason: reason,
 	})
@@ -239,7 +239,7 @@ func (reg *ClientRegistry) Join(join messages.Join, c *network.Conn) bool {
 
 	// create and send STAY to the new client
 	stay := &messages.Stay{Id: clientData.Id, Players: playerNames}
-	err := c.AsyncSendPacket(messages.NewMessage(messages.StayId, stay), time.Second)
+	err := c.AsyncSendPacket(messages.New(messages.StayId, stay), time.Second)
 	if err != nil {
 		// handle error in case we couldn't send the STAY message
 		log.WithError(err).Error("Couldn't send STAY message to the new client")
@@ -255,7 +255,7 @@ func (reg *ClientRegistry) Join(join messages.Join, c *network.Conn) bool {
 	}
 
 	log.WithField("joined", joined).Info("Tell to the world this client has joined")
-	reg.Broadcast(messages.NewMessage(messages.JoinedId, joined))
+	reg.Broadcast(messages.New(messages.JoinedId, joined))
 
 	// at this point we consider the client as accepted
 	clientData.Joined = true

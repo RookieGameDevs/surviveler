@@ -40,9 +40,9 @@ func (msg Message) Serialize() []byte {
 }
 
 /*
- * NewMessage creates a message from a message type and a generic payload
+ * New creates a new message from a message type and a generic payload
  */
-func NewMessage(t uint16, p interface{}) *Message {
+func New(t uint16, p interface{}) *Message {
 	var mh codec.MsgpackHandle
 	msg := new(Message)
 	msg.Type = t

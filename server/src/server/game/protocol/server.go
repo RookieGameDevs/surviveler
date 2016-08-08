@@ -155,7 +155,7 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 
 			// immediately reply pong
 			ping := msg.(messages.Ping)
-			pong := messages.NewMessage(messages.PongId,
+			pong := messages.New(messages.PongId,
 				messages.Pong{
 					Id:     ping.Id,
 					Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
@@ -193,7 +193,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 	if clientData.Joined {
 		// client is still JOINED so that's a disconnection initiated externally
 		// send a LEAVE to the rest of the world
-		msg := messages.NewMessage(messages.LeaveId,
+		msg := messages.New(messages.LeaveId,
 			messages.Leave{
 				Id:     uint32(clientData.Id),
 				Reason: "client disconnection",
