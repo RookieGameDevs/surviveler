@@ -4,10 +4,10 @@
  */
 package events
 
-type EventHandler func(*Event)
+type handler func(*Event)
 
 // Private helper type
-type listenerMap map[EventType][]EventHandler
+type listenerMap map[EventType][]handler
 
 type Manager struct {
 	queue     *Queue
@@ -24,10 +24,10 @@ func NewManager() *Manager {
 /*
  * registers an event handler for a specified event type.
  */
-func (mgr *Manager) Subscribe(eventType EventType, callback EventHandler) {
+func (mgr *Manager) Subscribe(eventType EventType, callback handler) {
 	lst, ok := mgr.listeners[eventType]
 	if !ok {
-		lst = make([]EventHandler, 0)
+		lst = make([]handler, 0)
 	}
 	mgr.listeners[eventType] = append(lst, callback)
 }
