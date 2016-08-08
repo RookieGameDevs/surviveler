@@ -129,21 +129,20 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
  */
 func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool {
 	clientData := c.GetUserData().(ClientData)
-	rawmsg := packet.(*messages.Message)
+	raw := packet.(*messages.Message)
 
 	log.WithFields(
 		log.Fields{
 			"clientData": clientData,
 			"addr":       c.GetRawConn().RemoteAddr(),
-			"msg":        rawmsg,
+			"msg":        raw,
 		}).Debug("Incoming message")
 
-	// decode the payload
-	// TODO: just pass the `rawmsg` here...
-	msg := srv.factory.DecodePayload(rawmsg.Type, rawmsg.Payload)
+	// decode the raw message
+	msg := srv.factory.Decode(raw)
 
 	// get handler
-	handler, ok := srv.msgHandlers[rawmsg.Type]
+	handler, ok := srv.msgHandlers[raw.Type]
 	if ok {
 		if err := handler(c, msg); err != nil {
 			log.WithError(err).Error("Error handling message")
@@ -151,11 +150,11 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 		}
 	} else {
 
-		switch rawmsg.Type {
+		switch raw.Type {
 		case messages.PingId:
 
 			// immediately reply pong
-			ping := srv.factory.DecodePayload(messages.PingId, rawmsg.Payload).(messages.Ping)
+			ping := msg.(messages.Ping)
 			pong := messages.NewMessage(messages.PongId,
 				messages.Pong{
 					Id:     ping.Id,
@@ -167,7 +166,7 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			}
 		// handshaking messages are handlede by the handshaker
 		case messages.JoinId:
-			join := srv.factory.DecodePayload(messages.JoinId, rawmsg.Payload).(messages.Join)
+			join := msg.(messages.Join)
 			if srv.handshaker.Join(join, c) {
 				// new client has been accepted
 				srv.handshaker.AfterJoinHandler()(clientData.Id, join.Type)

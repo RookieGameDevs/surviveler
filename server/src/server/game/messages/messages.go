@@ -19,7 +19,7 @@ import (
 const MaxIncomingMsgLength uint32 = 1279
 
 /*
- * Message represents a typed message with a possibly encoded payload.
+ * Message represents an encoded message and its type
  */
 type Message struct {
 	Type    uint16 // the message type

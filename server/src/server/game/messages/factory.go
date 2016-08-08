@@ -76,18 +76,18 @@ func (mf Factory) newMsg(t uint16) interface{} {
 }
 
 /*
- * DecodePayload returns a new message struct, decoded from given payload
+ * Decode returns a new specialized message, decoded from a raw message
  */
-func (mf Factory) DecodePayload(t uint16, p []byte) interface{} {
+func (mf Factory) Decode(msg *Message) interface{} {
 	var mh codec.MsgpackHandle
-	// Create a struct having the corresponding underlying type
-	msg := mf.newMsg(t)
+	// create a struct having the corresponding underlying type
+	m := mf.newMsg(msg.Type)
 
-	// Decode msgpack payload into interface
-	decoder := codec.NewDecoderBytes(p, &mh)
-	err := decoder.Decode(&msg)
+	// decode msgpack payload into interface
+	decoder := codec.NewDecoderBytes(msg.Payload, &mh)
+	err := decoder.Decode(&m)
 	if err != nil {
-		log.WithError(err).Error("Couldn't decode payload")
+		log.WithError(err).Error("Couldn't decode raw message payload")
 	}
 	return msg
 }
