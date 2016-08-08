@@ -119,16 +119,16 @@ func NewGame(cfg game.Config) game.Game {
 	g.clients.SetAfterJoinHandler(func(ID uint32, playerType uint8) {
 		g.PostEvent(
 			events.NewEvent(
-				events.PlayerJoin,
-				events.PlayerJoinEvent{Id: ID, Type: playerType}))
+				events.PlayerJoinId,
+				events.PlayerJoin{Id: ID, Type: playerType}))
 	})
 
 	// register the 'after leave' handler
 	g.clients.SetAfterLeaveHandler(func(ID uint32) {
 		g.PostEvent(
 			events.NewEvent(
-				events.PlayerLeave,
-				events.PlayerLeaveEvent{Id: ID}))
+				events.PlayerLeaveId,
+				events.PlayerLeave{Id: ID}))
 	})
 
 	g.server = protocol.NewServer(g.cfg.Port, g.clients, g.telnet, &g.wg, g.clients)

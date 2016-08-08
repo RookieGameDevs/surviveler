@@ -28,8 +28,8 @@ func (g *survivelerGame) handleMove(c *network.Conn, msg interface{}) error {
 
 	g.eventManager.PostEvent(
 		events.NewEvent(
-			events.PlayerMove,
-			events.PlayerMoveEvent{
+			events.PlayerMoveId,
+			events.PlayerMove{
 				Id:   (c.GetUserData().(protocol.ClientData)).Id,
 				Xpos: move.Xpos, Ypos: move.Ypos,
 			}))
@@ -44,8 +44,8 @@ func (g *survivelerGame) handleBuild(c *network.Conn, msg interface{}) error {
 	log.WithField("msg", build).Info("Build message")
 
 	g.eventManager.PostEvent(
-		events.NewEvent(events.PlayerBuild,
-			events.PlayerBuildEvent{
+		events.NewEvent(events.PlayerBuildId,
+			events.PlayerBuild{
 				Id:   c.GetUserData().(protocol.ClientData).Id,
 				Type: build.Type,
 				Xpos: build.Xpos, Ypos: build.Ypos,
@@ -61,8 +61,8 @@ func (g *survivelerGame) handleRepair(c *network.Conn, msg interface{}) error {
 	log.WithField("msg", repair).Info("Repair message")
 
 	g.eventManager.PostEvent(
-		events.NewEvent(events.PlayerRepair,
-			events.PlayerRepairEvent{
+		events.NewEvent(events.PlayerRepairId,
+			events.PlayerRepair{
 				Id:         c.GetUserData().(protocol.ClientData).Id,
 				BuildingId: repair.Id,
 			}))
@@ -77,8 +77,8 @@ func (g *survivelerGame) handleAttack(c *network.Conn, msg interface{}) error {
 	log.WithField("msg", attack).Info("Attack message")
 
 	g.eventManager.PostEvent(
-		events.NewEvent(events.PlayerAttack,
-			events.PlayerAttackEvent{
+		events.NewEvent(events.PlayerAttackId,
+			events.PlayerAttack{
 				Id:       c.GetUserData().(protocol.ClientData).Id,
 				EntityId: attack.Id,
 			}))
@@ -93,8 +93,8 @@ func (g *survivelerGame) handleOperate(c *network.Conn, msg interface{}) error {
 	log.WithField("msg", operate).Info("Operate message")
 
 	g.eventManager.PostEvent(
-		events.NewEvent(events.PlayerOperate,
-			events.PlayerOperateEvent{
+		events.NewEvent(events.PlayerOperateId,
+			events.PlayerOperate{
 				Id:       c.GetUserData().(protocol.ClientData).Id,
 				EntityId: operate.Id,
 			}))

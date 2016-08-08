@@ -66,8 +66,8 @@ func (bb *BuildingBase) DealDamage(damage float64) (dead bool) {
 	if damage >= bb.curHP {
 		bb.curHP = 0
 		bb.g.PostEvent(events.NewEvent(
-			events.BuildingDestroy,
-			events.BuildingDestroyEvent{Id: bb.id}))
+			events.BuildingDestroyId,
+			events.BuildingDestroy{Id: bb.id}))
 		dead = true
 	} else {
 		bb.curHP -= damage

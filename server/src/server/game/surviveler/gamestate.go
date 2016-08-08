@@ -95,7 +95,7 @@ func (gs *gamestate) pack() *msg.GameState {
  * event handler for PlayerJoin events
  */
 func (gs *gamestate) onPlayerJoin(event *events.Event) {
-	evt := event.Payload.(events.PlayerJoinEvent)
+	evt := event.Payload.(events.PlayerJoin)
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", evt.Id).Info("Received a PlayerJoin event")
 
@@ -121,7 +121,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
  * event handler for PlayerLeave events
  */
 func (gs *gamestate) onPlayerLeave(event *events.Event) {
-	evt := event.Payload.(events.PlayerLeaveEvent)
+	evt := event.Payload.(events.PlayerLeave)
 	// one player less, remove him from the map
 	log.WithField("clientId", evt.Id).Info("We have one less player")
 	delete(gs.entities, evt.Id)
@@ -131,7 +131,7 @@ func (gs *gamestate) onPlayerLeave(event *events.Event) {
  * event handler for PathReadyEvent events
  */
 func (gs *gamestate) onPathReady(event *events.Event) {
-	evt := event.Payload.(events.PathReadyEvent)
+	evt := event.Payload.(events.PathReady)
 	log.WithField("evt", evt).Info("Received a path ready event")
 
 	if player := gs.getPlayer(evt.Id); player != nil {
@@ -143,7 +143,7 @@ func (gs *gamestate) onPathReady(event *events.Event) {
  * event handler for PlayerMove events
  */
 func (gs *gamestate) onPlayerMove(event *events.Event) {
-	evt := event.Payload.(events.PlayerMoveEvent)
+	evt := event.Payload.(events.PlayerMove)
 	log.WithField("evt", evt).Info("Received PlayerMove event")
 
 	if player := gs.getPlayer(evt.Id); player != nil {
@@ -158,7 +158,7 @@ func (gs *gamestate) onPlayerMove(event *events.Event) {
  * event handler for PlayerBuild events
  */
 func (gs *gamestate) onPlayerBuild(event *events.Event) {
-	evt := event.Payload.(events.PlayerBuildEvent)
+	evt := event.Payload.(events.PlayerBuild)
 	log.WithField("evt", evt).Info("Received PlayerBuild event")
 
 	if player := gs.getPlayer(evt.Id); player != nil {
@@ -210,7 +210,7 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
  * event handler for PlayerRepair events
  */
 func (gs *gamestate) onPlayerRepair(event *events.Event) {
-	evt := event.Payload.(events.PlayerRepairEvent)
+	evt := event.Payload.(events.PlayerRepair)
 	log.WithField("evt", evt).Info("Received PlayerRepair event")
 
 	if player := gs.getPlayer(evt.Id); player != nil {
@@ -229,7 +229,7 @@ func (gs *gamestate) onPlayerRepair(event *events.Event) {
  * event handler for PlayerAttack events
  */
 func (gs *gamestate) onPlayerAttack(event *events.Event) {
-	evt := event.Payload.(events.PlayerAttackEvent)
+	evt := event.Payload.(events.PlayerAttack)
 	log.WithField("evt", evt).Info("Received PlayerAttack event")
 
 	if player := gs.getPlayer(evt.Id); player != nil {
@@ -245,7 +245,7 @@ func (gs *gamestate) onPlayerAttack(event *events.Event) {
  * event handler for PlayerUse events
  */
 func (gs *gamestate) onPlayerOperate(event *events.Event) {
-	evt := event.Payload.(events.PlayerOperateEvent)
+	evt := event.Payload.(events.PlayerOperate)
 	log.WithField("evt", evt).Info("Received PlayerOperate event")
 
 	if player := gs.getPlayer(evt.Id); player != nil {
@@ -294,7 +294,7 @@ func (gs *gamestate) onPlayerOperate(event *events.Event) {
  * event handler for PlayerDeath events
  */
 func (gs *gamestate) onPlayerDeath(event *events.Event) {
-	evt := event.Payload.(events.PlayerDeathEvent)
+	evt := event.Payload.(events.PlayerDeath)
 	log.WithField("evt", evt).Info("Received PlayerDeath event")
 
 	// TODO: we should keep track of what is happening and maybe mark the
@@ -309,7 +309,7 @@ func (gs *gamestate) onPlayerDeath(event *events.Event) {
  * event handler for EnemyDeath events
  */
 func (gs *gamestate) onZombieDeath(event *events.Event) {
-	evt := event.Payload.(events.ZombieDeathEvent)
+	evt := event.Payload.(events.ZombieDeath)
 	log.WithField("evt", evt).Info("Received ZombieDeath event")
 
 	// TODO: we should keep track of what is happening and maybe mark the
@@ -323,7 +323,7 @@ func (gs *gamestate) onZombieDeath(event *events.Event) {
  * event handler for BuildingDestroy events
  */
 func (gs *gamestate) onBuildingDestroy(event *events.Event) {
-	evt := event.Payload.(events.BuildingDestroyEvent)
+	evt := event.Payload.(events.BuildingDestroy)
 	log.WithField("evt", evt).Info("Received BuildingDestroy event")
 
 	// TODO: we should keep track of what is happening and maybe mark the

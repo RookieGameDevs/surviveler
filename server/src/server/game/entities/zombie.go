@@ -254,8 +254,8 @@ func (z *Zombie) DealDamage(damage float64) (dead bool) {
 	if damage >= z.curHP {
 		z.curHP = 0
 		z.g.PostEvent(events.NewEvent(
-			events.ZombieDeath,
-			events.ZombieDeathEvent{Id: z.id}))
+			events.ZombieDeathId,
+			events.ZombieDeath{Id: z.id}))
 		dead = true
 	} else {
 		z.curHP -= damage

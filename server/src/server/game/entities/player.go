@@ -386,8 +386,8 @@ func (p *Player) DealDamage(damage float64) (dead bool) {
 	if damage >= p.curHP {
 		p.curHP = 0
 		p.g.PostEvent(events.NewEvent(
-			events.PlayerDeath,
-			events.PlayerDeathEvent{Id: p.id}))
+			events.PlayerDeathId,
+			events.PlayerDeath{Id: p.id}))
 		dead = true
 	} else {
 		p.curHP -= damage

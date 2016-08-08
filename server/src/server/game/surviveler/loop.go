@@ -37,18 +37,18 @@ func (g *survivelerGame) loop() error {
 		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
 
 	// event listeners
-	g.eventManager.Subscribe(events.PlayerJoin, g.state.onPlayerJoin)
-	g.eventManager.Subscribe(events.PlayerLeave, g.state.onPlayerLeave)
-	g.eventManager.Subscribe(events.PlayerMove, g.state.onPlayerMove)
-	g.eventManager.Subscribe(events.PathReady, g.state.onPathReady)
-	g.eventManager.Subscribe(events.PlayerBuild, g.state.onPlayerBuild)
-	g.eventManager.Subscribe(events.PlayerRepair, g.state.onPlayerRepair)
-	g.eventManager.Subscribe(events.PlayerAttack, g.state.onPlayerAttack)
-	g.eventManager.Subscribe(events.PlayerOperate, g.state.onPlayerOperate)
-	g.eventManager.Subscribe(events.PlayerDeath, g.state.onPlayerDeath)
-	g.eventManager.Subscribe(events.ZombieDeath, g.state.onZombieDeath)
-	g.eventManager.Subscribe(events.ZombieDeath, g.ai.OnZombieDeath)
-	g.eventManager.Subscribe(events.BuildingDestroy, g.state.onBuildingDestroy)
+	g.eventManager.Subscribe(events.PlayerJoinId, g.state.onPlayerJoin)
+	g.eventManager.Subscribe(events.PlayerLeaveId, g.state.onPlayerLeave)
+	g.eventManager.Subscribe(events.PlayerMoveId, g.state.onPlayerMove)
+	g.eventManager.Subscribe(events.PathReadyId, g.state.onPathReady)
+	g.eventManager.Subscribe(events.PlayerBuildId, g.state.onPlayerBuild)
+	g.eventManager.Subscribe(events.PlayerRepairId, g.state.onPlayerRepair)
+	g.eventManager.Subscribe(events.PlayerAttackId, g.state.onPlayerAttack)
+	g.eventManager.Subscribe(events.PlayerOperateId, g.state.onPlayerOperate)
+	g.eventManager.Subscribe(events.PlayerDeathId, g.state.onPlayerDeath)
+	g.eventManager.Subscribe(events.ZombieDeathId, g.state.onZombieDeath)
+	g.eventManager.Subscribe(events.ZombieDeathId, g.ai.OnZombieDeath)
+	g.eventManager.Subscribe(events.BuildingDestroyId, g.state.onBuildingDestroy)
 
 	var lastTime, curTime time.Time
 	lastTime = time.Now()
