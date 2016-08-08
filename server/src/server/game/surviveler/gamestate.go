@@ -10,7 +10,7 @@ import (
 	"server/game"
 	"server/game/entities"
 	"server/game/events"
-	msg "server/game/messages"
+	"server/game/messages"
 	"server/math"
 	"sort"
 	"time"
@@ -67,9 +67,9 @@ func (gs *gamestate) init(gameData *gameData) error {
 /*
  * pack converts the current game state into a GameState message
  */
-func (gs *gamestate) pack() *msg.GameState {
+func (gs *gamestate) pack() *messages.GameState {
 	// fill the GameState message
-	gsMsg := new(msg.GameState)
+	gsMsg := new(messages.GameState)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Time = gs.gameTime
 
