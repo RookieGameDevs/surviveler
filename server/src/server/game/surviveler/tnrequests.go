@@ -319,7 +319,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	case TnGameStateId:
 
 		var (
-			gsMsg *messages.GameStateMsg
+			gsMsg *messages.GameState
 			gs    *TnGameState
 			str   string
 		)

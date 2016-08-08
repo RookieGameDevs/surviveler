@@ -65,11 +65,11 @@ func (gs *gamestate) init(gameData *gameData) error {
 }
 
 /*
- * pack converts the current game state into a GameStateMsg
+ * pack converts the current game state into a GameState message
  */
-func (gs *gamestate) pack() *msg.GameStateMsg {
-	// fill the GameStateMsg
-	gsMsg := new(msg.GameStateMsg)
+func (gs *gamestate) pack() *msg.GameState {
+	// fill the GameState message
+	gsMsg := new(msg.GameState)
 	gsMsg.Tstamp = time.Now().UnixNano() / int64(time.Millisecond)
 	gsMsg.Time = gs.gameTime
 

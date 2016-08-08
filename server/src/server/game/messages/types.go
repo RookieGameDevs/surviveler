@@ -25,7 +25,7 @@ const (
 /*
  * Client->server time synchronization message
  */
-type PingMsg struct {
+type Ping struct {
 	Id     uint32
 	Tstamp int64
 }
@@ -33,12 +33,12 @@ type PingMsg struct {
 /*
  * Server->client time synchronization message
  */
-type PongMsg PingMsg
+type Pong Ping
 
 /*
  * Server->client game state
  */
-type GameStateMsg struct {
+type GameState struct {
 	Tstamp    int64
 	Time      int16
 	Entities  map[uint32]interface{}
@@ -49,7 +49,7 @@ type GameStateMsg struct {
 /*
  * player initiated character movement. Client -> server message
  */
-type MoveMsg struct {
+type Move struct {
 	Xpos float32
 	Ypos float32
 }
@@ -57,7 +57,7 @@ type MoveMsg struct {
 /*
  * player initiated a building action. Client -> server message
  */
-type BuildMsg struct {
+type Build struct {
 	Type uint8
 	Xpos float32
 	Ypos float32
@@ -66,21 +66,21 @@ type BuildMsg struct {
 /*
  * player initiated a repair action. Client -> server message
  */
-type RepairMsg struct {
+type Repair struct {
 	Id uint32 // id of the building to repair
 }
 
 /*
  * player initiated an attack action. Client -> server message
  */
-type AttackMsg struct {
+type Attack struct {
 	Id uint32 // id of the entity to attack
 }
 
 /*
  * player initiated an operate action. Client -> server message
  */
-type OperateMsg struct {
+type Operate struct {
 	Id uint32 // id of the entity to operate
 }
 
@@ -88,7 +88,7 @@ type OperateMsg struct {
  * This message is sent only by clients right after a connection is
  * established.
  */
-type JoinMsg struct {
+type Join struct {
 	Name string
 	Type uint8
 }
@@ -97,7 +97,7 @@ type JoinMsg struct {
  * Message broadcasted to all clients by the server when a successful join was
  * accomplished.
  */
-type JoinedMsg struct {
+type Joined struct {
 	Id   uint32
 	Name string
 	Type uint8
@@ -107,7 +107,7 @@ type JoinedMsg struct {
  * Response to a `JOIN` message, sent only by server to the client which
  * requested to join.
  */
-type StayMsg struct {
+type Stay struct {
 	Id      uint32
 	Players map[uint32]string
 }
@@ -116,7 +116,7 @@ type StayMsg struct {
  * Response to a bad `JOIN` request *OR* broadcast message sent at any point
  * during play.
  */
-type LeaveMsg struct {
+type Leave struct {
 	Id     uint32
 	Reason string
 }

@@ -29,7 +29,7 @@ type Handshaker interface {
 	// message. If that is the case, true is returned. In both cases, it should
 	// take care of the required steps in order to follow the defined
 	// handshaking protocol (i.e send/broadcast messages, etc.).
-	Join(join messages.JoinMsg, c *network.Conn) bool
+	Join(join messages.Join, c *network.Conn) bool
 
 	// Leave executes the LEAVE step of the Handshaking protocol on the client
 	// associtated to the connection c.

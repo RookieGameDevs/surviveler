@@ -20,10 +20,10 @@ func (g *survivelerGame) registerMsgHandlers() {
 }
 
 /*
- * handleMove processes a MoveMsg and fires a PlayerMove event
+ * handleMove processes a Move message and fires a PlayerMove event
  */
 func (g *survivelerGame) handleMove(c *network.Conn, msg interface{}) error {
-	move := msg.(messages.MoveMsg)
+	move := msg.(messages.Move)
 	log.WithField("msg", move).Info("Move message")
 
 	g.eventManager.PostEvent(
@@ -37,10 +37,10 @@ func (g *survivelerGame) handleMove(c *network.Conn, msg interface{}) error {
 }
 
 /*
- * handleBuild processes a BuildMsg and fires a PlayerBuild event
+ * handleBuild processes a Build message and fires a PlayerBuild event
  */
 func (g *survivelerGame) handleBuild(c *network.Conn, msg interface{}) error {
-	build := msg.(messages.BuildMsg)
+	build := msg.(messages.Build)
 	log.WithField("msg", build).Info("Build message")
 
 	g.eventManager.PostEvent(
@@ -54,10 +54,10 @@ func (g *survivelerGame) handleBuild(c *network.Conn, msg interface{}) error {
 }
 
 /*
- * handleRepair processes a RepairMsg and fires a PlayerRepair event
+ * handleRepair processes a Repair message and fires a PlayerRepair event
  */
 func (g *survivelerGame) handleRepair(c *network.Conn, msg interface{}) error {
-	repair := msg.(messages.RepairMsg)
+	repair := msg.(messages.Repair)
 	log.WithField("msg", repair).Info("Repair message")
 
 	g.eventManager.PostEvent(
@@ -70,10 +70,10 @@ func (g *survivelerGame) handleRepair(c *network.Conn, msg interface{}) error {
 }
 
 /*
- * handleAttack processes a AttackMsg and fires a PlayerAttack event
+ * handleAttack processes a Attack message and fires a PlayerAttack event
  */
 func (g *survivelerGame) handleAttack(c *network.Conn, msg interface{}) error {
-	attack := msg.(messages.AttackMsg)
+	attack := msg.(messages.Attack)
 	log.WithField("msg", attack).Info("Attack message")
 
 	g.eventManager.PostEvent(
@@ -86,10 +86,10 @@ func (g *survivelerGame) handleAttack(c *network.Conn, msg interface{}) error {
 }
 
 /*
- * handleOperate processes a OperateMsg and fires a PlayerOperate event
+ * handleOperate processes a Operate message and fires a PlayerOperate event
  */
 func (g *survivelerGame) handleOperate(c *network.Conn, msg interface{}) error {
-	operate := msg.(messages.OperateMsg)
+	operate := msg.(messages.Operate)
 	log.WithField("msg", operate).Info("Operate message")
 
 	g.eventManager.PostEvent(

@@ -155,9 +155,9 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 		case messages.PingId:
 
 			// immediately reply pong
-			ping := srv.factory.DecodePayload(messages.PingId, rawmsg.Payload).(messages.PingMsg)
+			ping := srv.factory.DecodePayload(messages.PingId, rawmsg.Payload).(messages.Ping)
 			pong := messages.NewMessage(messages.PongId,
-				messages.PongMsg{
+				messages.Pong{
 					Id:     ping.Id,
 					Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
 				})
@@ -167,7 +167,7 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			}
 		// handshaking messages are handlede by the handshaker
 		case messages.JoinId:
-			join := srv.factory.DecodePayload(messages.JoinId, rawmsg.Payload).(messages.JoinMsg)
+			join := srv.factory.DecodePayload(messages.JoinId, rawmsg.Payload).(messages.Join)
 			if srv.handshaker.Join(join, c) {
 				// new client has been accepted
 				srv.handshaker.AfterJoinHandler()(clientData.Id, join.Type)
@@ -194,7 +194,7 @@ func (srv *Server) OnClose(c *network.Conn) {
 		// client is still JOINED so that's a disconnection initiated externally
 		// send a LEAVE to the rest of the world
 		msg := messages.NewMessage(messages.LeaveId,
-			messages.LeaveMsg{
+			messages.Leave{
 				Id:     uint32(clientData.Id),
 				Reason: "client disconnection",
 			})

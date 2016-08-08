@@ -175,7 +175,7 @@ func (reg *ClientRegistry) Leave(reason string, c *network.Conn) {
 	clientData := c.GetUserData().(ClientData)
 
 	// send LEAVE to client
-	leave := messages.NewMessage(messages.LeaveId, messages.LeaveMsg{
+	leave := messages.NewMessage(messages.LeaveId, messages.Leave{
 		Id:     uint32(clientData.Id),
 		Reason: reason,
 	})
@@ -200,7 +200,7 @@ func (reg *ClientRegistry) Leave(reason string, c *network.Conn) {
 	}()
 }
 
-func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
+func (reg *ClientRegistry) Join(join messages.Join, c *network.Conn) bool {
 	clientData := c.GetUserData().(ClientData)
 
 	log.WithFields(log.Fields{"name": join.Name, "clientData": clientData}).Info("Received JOIN from client")
@@ -238,7 +238,7 @@ func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
 	}
 
 	// create and send STAY to the new client
-	stay := &messages.StayMsg{Id: clientData.Id, Players: playerNames}
+	stay := &messages.Stay{Id: clientData.Id, Players: playerNames}
 	err := c.AsyncSendPacket(messages.NewMessage(messages.StayId, stay), time.Second)
 	if err != nil {
 		// handle error in case we couldn't send the STAY message
@@ -248,7 +248,7 @@ func (reg *ClientRegistry) Join(join messages.JoinMsg, c *network.Conn) bool {
 	}
 
 	// fill a JOINED message
-	joined := &messages.JoinedMsg{
+	joined := &messages.Joined{
 		Id:   clientData.Id,
 		Name: join.Name,
 		Type: join.Type,

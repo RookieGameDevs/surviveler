@@ -40,18 +40,18 @@ func GetFactory() *Factory {
  */
 func (mf Factory) registerMsgTypes() {
 	// client/server message types
-	mf.registerMsgType(PingId, PingMsg{})
-	mf.registerMsgType(PongId, PongMsg{})
-	mf.registerMsgType(GameStateId, GameStateMsg{})
-	mf.registerMsgType(MoveId, MoveMsg{})
-	mf.registerMsgType(BuildId, BuildMsg{})
-	mf.registerMsgType(JoinId, JoinMsg{})
-	mf.registerMsgType(JoinedId, JoinedMsg{})
-	mf.registerMsgType(StayId, StayMsg{})
-	mf.registerMsgType(LeaveId, LeaveMsg{})
-	mf.registerMsgType(RepairId, RepairMsg{})
-	mf.registerMsgType(AttackId, AttackMsg{})
-	mf.registerMsgType(OperateId, OperateMsg{})
+	mf.registerMsgType(PingId, Ping{})
+	mf.registerMsgType(PongId, Pong{})
+	mf.registerMsgType(GameStateId, GameState{})
+	mf.registerMsgType(MoveId, Move{})
+	mf.registerMsgType(BuildId, Build{})
+	mf.registerMsgType(JoinId, Join{})
+	mf.registerMsgType(JoinedId, Joined{})
+	mf.registerMsgType(StayId, Stay{})
+	mf.registerMsgType(LeaveId, Leave{})
+	mf.registerMsgType(RepairId, Repair{})
+	mf.registerMsgType(AttackId, Attack{})
+	mf.registerMsgType(OperateId, Operate{})
 }
 
 /*
