@@ -8,7 +8,7 @@ import (
 	"server/math"
 )
 
-type EventType uint16
+type Type uint16
 
 const (
 	PlayerJoin = iota
