@@ -33,7 +33,7 @@ type survivelerGame struct {
 	telnetReq       chan TelnetRequest         // channel for game related telnet commands
 	telnetDone      chan error                 // signals the end of a telnet request
 	quitChan        chan struct{}              // to signal the game loop goroutine it must end
-	eventManager    *events.EventManager       // event manager
+	eventManager    *events.Manager            // event manager
 	wg              sync.WaitGroup             // wait for the different goroutine to finish
 	state           *gamestate                 // the game state
 	movementPlanner *game.MovementPlanner      // the movement planner
@@ -89,7 +89,7 @@ func NewGame(cfg game.Config) game.Game {
 	// init channels
 	g.quitChan = make(chan struct{})
 
-	g.eventManager = events.NewEventManager()
+	g.eventManager = events.NewManager()
 
 	// creates the client registry
 	allocId := func() uint32 {

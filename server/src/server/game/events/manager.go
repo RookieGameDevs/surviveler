@@ -9,13 +9,13 @@ type EventHandler func(*Event)
 // Private helper type
 type listenerMap map[EventType][]EventHandler
 
-type EventManager struct {
+type Manager struct {
 	queue     *Queue
 	listeners listenerMap
 }
 
-func NewEventManager() *EventManager {
-	mgr := new(EventManager)
+func NewManager() *Manager {
+	mgr := new(Manager)
 	mgr.queue = NewQueue()
 	mgr.listeners = make(listenerMap)
 	return mgr
@@ -24,7 +24,7 @@ func NewEventManager() *EventManager {
 /*
  * registers an event handler for a specified event type.
  */
-func (mgr *EventManager) Subscribe(eventType EventType, callback EventHandler) {
+func (mgr *Manager) Subscribe(eventType EventType, callback EventHandler) {
 	lst, ok := mgr.listeners[eventType]
 	if !ok {
 		lst = make([]EventHandler, 0)
@@ -38,7 +38,7 @@ func (mgr *EventManager) Subscribe(eventType EventType, callback EventHandler) {
  * This method dequeues and processes sequentially every event, thus blocking
  * until all events have been processed.
  */
-func (mgr *EventManager) Process() {
+func (mgr *Manager) Process() {
 	for {
 		if evt, found := mgr.queue.Dequeue(); found {
 			lst, ok := mgr.listeners[evt.Type]
@@ -53,6 +53,6 @@ func (mgr *EventManager) Process() {
 	}
 }
 
-func (mgr *EventManager) PostEvent(evt *Event) {
+func (mgr *Manager) PostEvent(evt *Event) {
 	mgr.queue.Enqueue(evt)
 }
