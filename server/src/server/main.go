@@ -10,8 +10,8 @@ import (
 	"server/game/surviveler"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/go-ini/ini"
 	"github.com/urfave/cli"
-	ini "gopkg.in/ini.v2"
 )
 
 /*
