@@ -19,7 +19,7 @@ var factory *Factory
  * be instantiated by passing its type to newMsg()
  */
 type Factory struct {
-	registry map[uint16]reflect.Type
+	registry map[Type]reflect.Type
 }
 
 /*
@@ -28,7 +28,7 @@ type Factory struct {
 func GetFactory() *Factory {
 	if factory == nil {
 		factory = new(Factory)
-		factory.registry = make(map[uint16]reflect.Type)
+		factory.registry = make(map[Type]reflect.Type)
 		factory.registerMsgTypes()
 	}
 	return factory
@@ -57,7 +57,7 @@ func (mf Factory) registerMsgTypes() {
 /*
  * registerMsgType registers a new MsgType and associates it to a struct type
  */
-func (mf Factory) registerMsgType(t uint16, i interface{}) {
+func (mf Factory) registerMsgType(t Type, i interface{}) {
 	// retrieve underlying msg type
 	it := reflect.TypeOf(i)
 	mf.registry[t] = it
@@ -66,7 +66,7 @@ func (mf Factory) registerMsgType(t uint16, i interface{}) {
 /*
  * newMsg returns a new (zero'ed) message struct
  */
-func (mf Factory) newMsg(t uint16) interface{} {
+func (mf Factory) newMsg(t Type) interface{} {
 	var ok bool
 	var reft reflect.Type
 	if reft, ok = mf.registry[t]; !ok {

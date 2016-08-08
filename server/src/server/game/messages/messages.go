@@ -22,7 +22,7 @@ const MaxIncomingMsgLength uint32 = 1279
  * Message represents an encoded message and its type
  */
 type Message struct {
-	Type    uint16 // the message type
+	Type    Type   // the message type
 	Length  uint32 // the payload length
 	Payload []byte // payload buffer
 }
@@ -42,7 +42,7 @@ func (msg Message) Serialize() []byte {
 /*
  * New creates a new message from a message type and a generic payload
  */
-func New(t uint16, p interface{}) *Message {
+func New(t Type, p interface{}) *Message {
 	var mh codec.MsgpackHandle
 	msg := new(Message)
 	msg.Type = t

@@ -4,11 +4,14 @@
  */
 package messages
 
+//go:generate stringer -type=Type
+type Type uint16
+
 /*
  * Client - Server messages
  */
 const (
-	PingId uint16 = 0 + iota
+	PingId Type = 0 + iota
 	PongId
 	JoinId
 	JoinedId

@@ -29,13 +29,13 @@ type (
  */
 type Server struct {
 	port        string
-	server      network.Server            // tcp server instance
-	clients     *ClientRegistry           // manage the connected clients
-	telnet      *TelnetServer             // embedded telnet server
-	factory     *messages.Factory         // the unique message factory
-	wg          *sync.WaitGroup           // game wait group
-	handshaker  Handshaker                // handle handshaking
-	msgHandlers map[uint16]messageHandler // message handlers
+	server      network.Server                   // tcp server instance
+	clients     *ClientRegistry                  // manage the connected clients
+	telnet      *TelnetServer                    // embedded telnet server
+	factory     *messages.Factory                // the unique message factory
+	wg          *sync.WaitGroup                  // game wait group
+	handshaker  Handshaker                       // handle handshaking
+	msgHandlers map[messages.Type]messageHandler // message handlers
 }
 
 /*
@@ -50,7 +50,7 @@ func NewServer(port string, clients *ClientRegistry,
 		telnet:      telnet,
 		factory:     messages.GetFactory(),
 		wg:          wg,
-		msgHandlers: make(map[uint16]messageHandler),
+		msgHandlers: make(map[messages.Type]messageHandler),
 		handshaker:  handshaker,
 	}
 }
@@ -58,8 +58,8 @@ func NewServer(port string, clients *ClientRegistry,
 /*
  * RegisterMsgHandler registers a handler for incoming message
  */
-func (srv *Server) RegisterMsgHandler(msgType uint16, handler messageHandler) {
-	srv.msgHandlers[msgType] = handler
+func (srv *Server) RegisterMsgHandler(t messages.Type, fn messageHandler) {
+	srv.msgHandlers[t] = fn
 }
 
 /*
