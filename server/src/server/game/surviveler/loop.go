@@ -37,7 +37,7 @@ func (g *survivelerGame) loop() error {
 		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
 
 	// message manager (and eventually listeners)
-	msgmgr := new(msg.MessageManager)
+	msgmgr := new(msg.Manager)
 
 	// event listeners
 	g.eventManager.Subscribe(events.PlayerJoin, g.state.onPlayerJoin)

@@ -23,9 +23,9 @@ func (mhf MsgHandlerFunc) handleMsg(i interface{}, clientId uint32) error {
 }
 
 /*
- * MessageManager keeps track of the message handlers objects
+ * Manager keeps track of the message handlers objects
  */
-type MessageManager struct {
+type Manager struct {
 	listeners map[uint16][]Handler // registered listeners
 	factory   *Factory             // keep the msg factory
 }
@@ -34,7 +34,7 @@ type MessageManager struct {
  * Dispatch dispatches messages of a particular type to the listeners. It
  * performs the decoding of the payload into an interface.
  */
-func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
+func (mm *Manager) Dispatch(msg *Message, clientId uint32) error {
 	for _, handler := range mm.listeners[msg.Type] {
 		iface := mm.factory.DecodePayload(msg.Type, msg.Payload)
 		err := handler.handleMsg(iface, clientId)
@@ -49,7 +49,7 @@ func (mm *MessageManager) Dispatch(msg *Message, clientId uint32) error {
  * Listen registers an event handler for the listening of a particular type of
  * message
  */
-func (mm *MessageManager) Listen(msgType uint16, handler Handler) {
+func (mm *Manager) Listen(msgType uint16, handler Handler) {
 	if mm.listeners == nil {
 		mm.listeners = make(map[uint16][]Handler)
 		mm.factory = GetFactory()
