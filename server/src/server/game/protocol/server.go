@@ -164,7 +164,8 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 				log.WithError(err).Error("Error handling message")
 				return false
 			}
-		// handshaking messages are handlede by the handshaker
+
+		// handshaking messages are handled by the handshaker
 		case messages.JoinId:
 			join := msg.(messages.Join)
 			if srv.handshaker.Join(join, c) {
