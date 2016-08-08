@@ -135,7 +135,7 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 		log.Fields{
 			"clientData": clientData,
 			"addr":       c.GetRawConn().RemoteAddr(),
-			"msg":        raw,
+			"type":       raw.Type.String(),
 		}).Debug("Incoming message")
 
 	// decode the raw message
@@ -151,10 +151,11 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 	} else {
 
 		switch raw.Type {
+
 		case messages.PingId:
 
 			// immediately reply pong
-			ping := msg.(messages.Ping)
+			ping, ok := msg.(messages.Ping)
 			pong := messages.New(messages.PongId,
 				messages.Pong{
 					Id:     ping.Id,
@@ -165,15 +166,14 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 				return false
 			}
 
-		// handshaking messages are handled by the handshaker
 		case messages.JoinId:
+
 			join := msg.(messages.Join)
+			// JOIN is handled by the handshaker
 			if srv.handshaker.Join(join, c) {
 				// new client has been accepted
 				srv.handshaker.AfterJoinHandler()(clientData.Id, join.Type)
 			}
-		default:
-			log.WithField("msg", msg).Error("unhandled msg")
 		}
 	}
 
