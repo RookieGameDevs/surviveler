@@ -78,14 +78,14 @@ func (mf Factory) newMsg(t Type) interface{} {
 /*
  * Decode returns a new specialized message, decoded from a raw message
  */
-func (mf Factory) Decode(msg *Message) interface{} {
+func (mf Factory) Decode(raw *Message) interface{} {
 	var mh codec.MsgpackHandle
 	// create a struct having the corresponding underlying type
-	m := mf.newMsg(msg.Type)
+	msg := mf.newMsg(raw.Type)
 
 	// decode msgpack payload into interface
-	decoder := codec.NewDecoderBytes(msg.Payload, &mh)
-	err := decoder.Decode(&m)
+	decoder := codec.NewDecoderBytes(raw.Payload, &mh)
+	err := decoder.Decode(&msg)
 	if err != nil {
 		log.WithError(err).Error("Couldn't decode raw message payload")
 	}
