@@ -20,8 +20,7 @@ const (
 )
 
 type (
-	IncomingMsgFunc func(msg *messages.Message, clientId uint32) error
-	messageHandler  func(c *network.Conn, msg interface{}) error
+	messageHandler func(c *network.Conn, msg interface{}) error
 )
 
 /*
@@ -35,15 +34,14 @@ type Server struct {
 	telnet      *TelnetServer             // embedded telnet server
 	factory     *messages.Factory         // the unique message factory
 	wg          *sync.WaitGroup           // game wait group
-	msgCb       IncomingMsgFunc           // where to forward incoming messages
 	handshaker  Handshaker                // handle handshaking
-	msgHandlers map[uint16]messageHandler //
+	msgHandlers map[uint16]messageHandler // message handlers
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
+func NewServer(port string, clients *ClientRegistry,
 	telnet *TelnetServer, wg *sync.WaitGroup, handshaker Handshaker) *Server {
 
 	return &Server{
@@ -52,7 +50,6 @@ func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
 		telnet:      telnet,
 		factory:     messages.GetFactory(),
 		wg:          wg,
-		msgCb:       msgCb,
 		msgHandlers: make(map[uint16]messageHandler),
 		handshaker:  handshaker,
 	}
@@ -175,10 +172,6 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 				// new client has been accepted
 				srv.handshaker.AfterJoinHandler()(clientData.Id, join.Type)
 			}
-		default:
-			// other kinds are forwarded
-			// TODO: which messages are forwarded to who?!
-			srv.msgCb(rawmsg, clientData.Id)
 		}
 	}
 

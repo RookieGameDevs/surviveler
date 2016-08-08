@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"server/game"
 	"server/game/events"
-	msg "server/game/messages"
 	"server/game/protocol"
 	"server/game/resource"
 	"sync"
@@ -33,7 +32,6 @@ type survivelerGame struct {
 	telnet          *protocol.TelnetServer     // if enabled, the telnet server
 	telnetReq       chan TelnetRequest         // channel for game related telnet commands
 	telnetDone      chan error                 // signals the end of a telnet request
-	msgChan         chan msg.ClientMessage     // conducts ClientMessage to the game loop
 	quitChan        chan struct{}              // to signal the game loop goroutine it must end
 	eventManager    *events.EventManager       // event manager
 	wg              sync.WaitGroup             // wait for the different goroutine to finish
@@ -89,7 +87,6 @@ func NewGame(cfg game.Config) game.Game {
 	}
 
 	// init channels
-	g.msgChan = make(chan msg.ClientMessage)
 	g.quitChan = make(chan struct{})
 
 	g.eventManager = events.NewEventManager()
@@ -118,13 +115,6 @@ func NewGame(cfg game.Config) game.Game {
 	// init the AI director
 	g.ai = NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
 
-	// setup TCP server
-	rootHandler := func(imsg *msg.Message, clientId uint32) error {
-		// forward incoming messages to the game loop
-		g.msgChan <- msg.NewClientMessage(imsg, clientId)
-		return nil
-	}
-
 	// register the 'after join' handler
 	g.clients.SetAfterJoinHandler(func(ID uint32, playerType uint8) {
 		g.PostEvent(
@@ -141,7 +131,7 @@ func NewGame(cfg game.Config) game.Game {
 				events.PlayerLeaveEvent{Id: ID}))
 	})
 
-	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.clients)
+	g.server = protocol.NewServer(g.cfg.Port, g.clients, g.telnet, &g.wg, g.clients)
 	g.registerMsgHandlers()
 	return g
 }
