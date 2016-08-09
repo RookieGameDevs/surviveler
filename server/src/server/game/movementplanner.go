@@ -139,8 +139,8 @@ func (mp *MovementPlanner) Start() {
 
 						// emit a PathReady event
 						evt := events.NewEvent(
-							events.PathReady,
-							events.PathReadyEvent{
+							events.PathReadyId,
+							events.PathReady{
 								Id:   mvtReq.EntityID,
 								Path: path,
 							})

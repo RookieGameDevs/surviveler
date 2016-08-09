@@ -319,7 +319,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	case TnGameStateId:
 
 		var (
-			gsMsg *messages.GameStateMsg
+			gsMsg *messages.GameState
 			gs    *TnGameState
 			str   string
 		)
@@ -347,8 +347,8 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 		}
 
 		// emit a PlayerMove event
-		evt := events.NewEvent(events.PlayerMove,
-			events.PlayerMoveEvent{
+		evt := events.NewEvent(events.PlayerMoveId,
+			events.PlayerMove{
 				Id:   move.Id,
 				Xpos: float32(move.Dest[0]),
 				Ypos: float32(move.Dest[1]),
@@ -378,7 +378,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 			return fmt.Errorf("unknown building type: %v", build.Type)
 		}
 		// emit a PlayerBuild event
-		evt := events.NewEvent(events.PlayerBuild, events.PlayerBuildEvent{
+		evt := events.NewEvent(events.PlayerBuildId, events.PlayerBuild{
 			Id:   build.Id,
 			Xpos: float32(build.Pos[0]),
 			Ypos: float32(build.Pos[1]),
@@ -396,7 +396,7 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 			return err
 		}
 		// emit a PlayerRepair event
-		evt := events.NewEvent(events.PlayerRepair, events.PlayerRepairEvent{
+		evt := events.NewEvent(events.PlayerRepairId, events.PlayerRepair{
 			Id:         repair.Id,
 			BuildingId: repair.BuildingId,
 		})
