@@ -12,13 +12,13 @@ General structure
 
 The data within a `.mesh` file is stored in contigous sections as following:
 
-  |Section        |Size            |Offset                          |
-  |---------------|----------------|--------------------------------|
-  |Header         |78              |0                               |
-  |Vertex data    |`vcount * vsize`|78                              |
-  |Index data     |`icount * 4`    |78 + `vdata`                    |
-  |Joint data     |`jcount * 66`   |78 + `vdata` + `idata`          |
-  |Animation data |`acount * asize`|78 + `vdata` + `idata` + `jdata`|
+|Section        |Size            |Offset                          |
+|---------------|----------------|--------------------------------|
+|Header         |78              |0                               |
+|Vertex data    |`vcount * vsize`|78                              |
+|Index data     |`icount * 4`    |78 + `vdata`                    |
+|Joint data     |`jcount * 66`   |78 + `vdata` + `idata`          |
+|Animation data |`acount * asize`|78 + `vdata` + `idata` + `jdata`|
 
 Data sections are tightly-packed with no padding between them.
 
