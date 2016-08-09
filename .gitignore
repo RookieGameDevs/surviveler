@@ -19,3 +19,6 @@ lib/
 local/
 pip-selfcheck.json
 pkg/
+.Python
+data/
+data

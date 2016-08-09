@@ -4,6 +4,17 @@ Surviveler is a real-time role playing game in which players face a zombie
 apocalypse while being trapped inside the building of an IT company named
 Develer Corporation.
 
+
+# Assets
+Game data is *not* included in this repository and is not publicly available,
+you'll need to obtain your copy of game assets via one of authorized game
+distribution services. In case you already have a licensed copy of the game,
+then you can use the assets from it either by copying them or creating a symlink
+to `data` directory in project's root, for example:
+
+    ln -s /path/to/data data
+
+
 # Surviveler server
 
 ## Requirements
@@ -40,12 +51,13 @@ To start the server, just run:
 
     bin/server
 
-### Configuration
-You can set the server options in two ways and a summary of the
-possible options is printed after issuing, or by reading the hopefully updated
-`server.ini`:
+*NOTE*: The server will need game assets to be in `data/` directory.
 
-    $ server -h
+### Configuration
+You can specify a certain number of options at server startup, a short usage
+help is available by specifying `-h` flag when running the server:
+
+    $ bin/server -h
     Usage of server:
       -config string
             Path to ini config for using in go flags.
@@ -60,29 +72,31 @@ possible options is printed after issuing, or by reading the hopefully updated
       -telnet-port string
             Any port different than 0 enables the telnet server (disabled by defaut)
 
-Example:
+Example of server port change:
 
     bin/server -port 12345
 
-Every command line flag can also be defined in a *ini* file, which keys are the
-same than the command line flags. Inifile sections are ignored.
-Provides the path to the ini file path with the `-config` flag, as in:
+Every command line flag can also be specified in a `.ini` file, which keys are
+the same than the command line flags. Inifile sections are ignored. In order to
+instruct the server to read the configuration parameters from file, provide the
+path to the ini file path with the `-config` flag, as in:
 
-    bin/server -config /path/to/server.ini
+    bin/server -config /home/surviveler/home-lan-party.ini
+
 
 ### Admin mode with the telnet server
-
 The embedded telnet server is enabled by setting the `telnet-port` option.
 
     bin/server -telnet-port 2244
 
-Then, start your favourite telnet client:
+To use the telnet interface, start your favourite telnet client by specifying
+the configured port:
 
     telnet server-ip 2244
 
-Issue `help` on the telnet line to have a list of available commands, then
-`help command` or `command -h` or also `command --help` with provide you
-with the list of *unix-like* options accepted by this specific command.
+Issue `help` on the telnet line to have a list of available commands, then `help
+command` or `command -h` or also `command --help` which will provide you with
+the list of *UNIX-like* options accepted by command in question.
 
 Example session:
 
@@ -104,7 +118,7 @@ development and install the needed dependencies. Common setup routines are given
 below for Bash and Fish shell users.
 
 ## Python virtualenv setup for bash shell
-Ensure you have `virtualenv` installed and then just issue:
+Ensure you have `virtualenv` utility installed and then just type:
 
     virtualenv --with-python=python3.5 .
 
@@ -171,19 +185,28 @@ development environment from client's top directory:
 
     python src/client/main.py
 
+*NOTE*: The client will need game assets to be in `data/` directory.
 
 # Configuration
-It is possible to tweak various parameters of the client using the client.ini
-config file. Some useful parameters that can be changed are:
+It is possible to tweak various game settings by modifying the
+`config/game.ini` config file. Some useful parameters that can be changed are:
 
- * **[Network] ServerIPAddress** if you need to connect on a server hosted elsewher than
- localhost
+## `[Network]`
+Network related configuration section.
 
- * **[Logging] Level** is the level of logging for the client:
+### `ServerIPAddress`
+IP address of the server to connect to.
 
-  * *NOTSET*: I have no idea about what this level means, actually.
-  * *DEBUG*: huge amount of noise, useful for debug, useless for production.
-  * *INFO*: main pieces of information about the game. No spam.
-  * *WARNING*: not used yet.
-  * *ERROR*: not used yet.
-  * *CRITICAL*: not used yet.
+## `[Logging]`
+Game logging system configuration section.
+
+### `Level`
+Is the level of logging for the client, possible values are:
+
+  * `NOTSET`: I have no idea about what this level means, actually.
+  * `DEBUG`: huge amount of noise, useful for debug, useless for anything else
+    and *slows the game a lot*.
+  * `INFO`: main pieces of information about the game. No spam.
+  * `WARNING`: not used yet.
+  * `ERROR`: not used yet.
+  * `CRITICAL`: not used yet.
