@@ -24,7 +24,7 @@ def configure(cfg):
 
     cfg.env.append_unique('CFLAGS', '-std=c99')
     cfg.env.append_unique('CFLAGS', '-Wall')
-    cfg.env.append_unique('INCLUDES', cfg.path.find_dir('src').abspath())
+    cfg.env.append_unique('INCLUDES', cfg.path.find_dir('src/renderer').abspath())
     if cfg.options.build_type == 'debug':
         cfg.env.append_unique('CFLAGS', '-g')
         cfg.env.append_unique('CXXFLAGS', '-g')
@@ -96,7 +96,7 @@ def build(bld):
     # build library
     bld.shlib(
         target='surrender',
-        source=bld.path.ant_glob('src/**/*.c', excl=['**/python']),
+        source=bld.path.ant_glob('src/renderer/**/*.c', excl=['**/python']),
         uselib=deps,
         **kwargs)
 
@@ -115,7 +115,7 @@ def build(bld):
     if bld.env.with_python:
         bld.shlib(
             target='python/surrender',
-            source=bld.path.ant_glob('src/python/*.c'),
+            source=bld.path.ant_glob('src/renderer/python/*.c'),
             includes=['src/python'],
             use=['surrender'] + deps,
             rpath=[rpath],

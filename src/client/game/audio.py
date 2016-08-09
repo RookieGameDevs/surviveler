@@ -24,7 +24,7 @@ import os
 LOG = logging.getLogger(__name__)
 
 
-DATA_ROOT = '../data'
+DATA_ROOT = 'data'
 AUDIO_ROOT = os.path.join(DATA_ROOT, 'audio')
 MUSIC_ROOT = os.path.join(AUDIO_ROOT, 'music')
 FX_ROOT = os.path.join(AUDIO_ROOT, 'fx')

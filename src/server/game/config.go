@@ -36,6 +36,6 @@ func NewConfig() Config {
 		NightEndingTime:   480,
 		GameStartingTime:  480,
 		TelnetPort:        "1235",
-		AssetsPath:        "../data",
+		AssetsPath:        "data",
 	}
 }

@@ -21,7 +21,7 @@ import sdl2 as sdl
 LOG = logging.getLogger(__name__)
 
 
-CONFIG_FILE = os.path.join(os.getcwd(), 'client.ini')
+CONFIG_FILE = os.path.join(os.getcwd(), 'config/game.ini')
 
 
 def filter_modules(modules, record):
