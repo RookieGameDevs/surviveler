@@ -6,7 +6,6 @@ package protocol
 
 import (
 	"net"
-	"server/game/events"
 	"server/game/messages"
 	"server/network"
 	"sync"
@@ -21,8 +20,7 @@ const (
 )
 
 type (
-	IncomingMsgFunc func(msg *messages.Message, clientId uint32) error
-	PostEvtFunc     func(*events.Event)
+	messageHandler func(c *network.Conn, msg interface{}) error
 )
 
 /*
@@ -30,32 +28,40 @@ type (
  * interface.
  */
 type Server struct {
-	port    string
-	server  network.Server    // tcp server instance
-	clients *ClientRegistry   // manage the connected clients
-	telnet  *TelnetServer     // embedded telnet server
-	factory *messages.Factory // the unique message factory
-	wg      *sync.WaitGroup   // game wait group
-	msgCb   IncomingMsgFunc   // where to forward incoming messages
-	evtCb   PostEvtFunc       // where to forward game events
+	port           string
+	server         network.Server                   // tcp server instance
+	clients        *ClientRegistry                  // manage the connected clients
+	telnet         *TelnetServer                    // embedded telnet server
+	factory        *messages.Factory                // the unique message factory
+	wg             *sync.WaitGroup                  // game wait group
+	handshaker     Handshaker                       // handle handshaking
+	msgHandlers    map[messages.Type]messageHandler // message handlers
+	playerJoinedCb func(uint32, uint8)              // raised after a successfull JOIN
+	playerLeftCb   func(uint32)                     // raised after an effective LEAVE
 }
 
 /*
  * NewServer returns a new configured Server instance
  */
-func NewServer(port string, msgCb IncomingMsgFunc, clients *ClientRegistry,
-	telnet *TelnetServer, wg *sync.WaitGroup,
-	evtCb PostEvtFunc) *Server {
+func NewServer(port string, clients *ClientRegistry,
+	telnet *TelnetServer, wg *sync.WaitGroup, handshaker Handshaker) *Server {
 
 	return &Server{
-		clients: clients,
-		port:    port,
-		telnet:  telnet,
-		factory: messages.GetFactory(),
-		wg:      wg,
-		msgCb:   msgCb,
-		evtCb:   evtCb,
+		clients:     clients,
+		port:        port,
+		telnet:      telnet,
+		factory:     messages.GetFactory(),
+		wg:          wg,
+		msgHandlers: make(map[messages.Type]messageHandler),
+		handshaker:  handshaker,
 	}
+}
+
+/*
+ * RegisterMsgHandler registers a handler for incoming message
+ */
+func (srv *Server) RegisterMsgHandler(t messages.Type, fn messageHandler) {
+	srv.msgHandlers[t] = fn
 }
 
 /*
@@ -125,55 +131,55 @@ func (srv *Server) OnConnect(c *network.Conn) bool {
  */
 func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool {
 	clientData := c.GetUserData().(ClientData)
-	msg := packet.(*messages.Message)
+	raw := packet.(*messages.Message)
 
 	log.WithFields(
 		log.Fields{
 			"clientData": clientData,
 			"addr":       c.GetRawConn().RemoteAddr(),
-			"msg":        msg,
+			"type":       raw.Type.String(),
 		}).Debug("Incoming message")
 
-	switch msg.Type {
-	case messages.PingId:
-		// ping requires an immediate pong reply
-		if err := srv.handlePing(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Ping")
+	// decode the raw message
+	msg := srv.factory.Decode(raw)
+
+	// get handler
+	handler, ok := srv.msgHandlers[raw.Type]
+	if ok {
+		if err := handler(c, msg); err != nil {
+			log.WithError(err).Error("Error handling message")
 			return false
 		}
-	case messages.JoinId:
-		if err := srv.handleJoin(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Join")
-			return false
+	} else {
+
+		switch raw.Type {
+
+		case messages.PingId:
+
+			// immediately reply pong
+			ping := msg.(messages.Ping)
+			pong := messages.New(messages.PongId,
+				messages.Pong{
+					Id:     ping.Id,
+					Tstamp: time.Now().UnixNano() / int64(time.Millisecond),
+				})
+			if err := c.AsyncSendPacket(pong, time.Second); err != nil {
+				log.WithError(err).Error("Error handling message")
+				return false
+			}
+
+		case messages.JoinId:
+
+			join := msg.(messages.Join)
+			// JOIN is handled by the handshaker
+			if srv.handshaker.Join(join, c) {
+				// new client has been accepted
+				if srv.playerJoinedCb != nil {
+					// raise 'player joined' external callback
+					srv.playerJoinedCb(clientData.Id, join.Type)
+				}
+			}
 		}
-	case messages.MoveId:
-		if err := srv.handleMove(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Move")
-			return false
-		}
-	case messages.BuildId:
-		if err := srv.handleBuild(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Build")
-			return false
-		}
-	case messages.RepairId:
-		if err := srv.handleRepair(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Repair")
-			return false
-		}
-	case messages.AttackId:
-		if err := srv.handleAttack(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Attack")
-			return false
-		}
-	case messages.OperateId:
-		if err := srv.handleOperate(c, msg); err != nil {
-			log.WithError(err).Error("Couldn't handle Operate")
-			return false
-		}
-	default:
-		// forward it
-		srv.msgCb(msg, clientData.Id)
 	}
 
 	return true
@@ -194,8 +200,8 @@ func (srv *Server) OnClose(c *network.Conn) {
 	if clientData.Joined {
 		// client is still JOINED so that's a disconnection initiated externally
 		// send a LEAVE to the rest of the world
-		msg := messages.NewMessage(messages.LeaveId,
-			messages.LeaveMsg{
+		msg := messages.New(messages.LeaveId,
+			messages.Leave{
 				Id:     uint32(clientData.Id),
 				Reason: "client disconnection",
 			})
@@ -205,11 +211,20 @@ func (srv *Server) OnClose(c *network.Conn) {
 		// and we have nothing more to do
 	}
 
-	// inform the game loop that the player left
-	evt := events.NewEvent(events.PlayerLeave, events.PlayerLeaveEvent{
-		Id: clientData.Id,
-	})
-	srv.evtCb(evt)
+	if srv.playerLeftCb != nil {
+		// raise 'player left' external callback
+		srv.playerLeftCb(clientData.Id)
+	}
+}
+
+// OnPlayerJoined sets the function called when a player has joined the game
+func (srv *Server) OnPlayerJoined(fn func(ID uint32, playerType uint8)) {
+	srv.playerJoinedCb = fn
+}
+
+// OnPlayerJoined sets the function called when a player has left the game
+func (srv *Server) OnPlayerLeft(fn func(ID uint32)) {
+	srv.playerLeftCb = fn
 }
 
 /*

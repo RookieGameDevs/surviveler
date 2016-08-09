@@ -19,28 +19,12 @@ import (
 const MaxIncomingMsgLength uint32 = 1279
 
 /*
- * Message represents a typed message with a possibly encoded payload.
+ * Message represents an encoded message and its type
  */
 type Message struct {
-	Type    uint16 // the message type
+	Type    Type   // the message type
 	Length  uint32 // the payload length
 	Payload []byte // payload buffer
-}
-
-/*
- * ClientMessage is a message sent by the client, to which the server has added
- * the client Id
- */
-type ClientMessage struct {
-	*Message        // contained message
-	ClientId uint32 // client Id (set by server)
-}
-
-/*
- * NewClientMessage creates and returns a ClientMessage.
- */
-func NewClientMessage(m *Message, clientID uint32) ClientMessage {
-	return ClientMessage{Message: m, ClientId: clientID}
 }
 
 /*
@@ -56,9 +40,9 @@ func (msg Message) Serialize() []byte {
 }
 
 /*
- * NewMessage creates a message from a message type and a generic payload
+ * New creates a new message from a message type and a generic payload
  */
-func NewMessage(t uint16, p interface{}) *Message {
+func New(t Type, p interface{}) *Message {
 	var mh codec.MsgpackHandle
 	msg := new(Message)
 	msg.Type = t

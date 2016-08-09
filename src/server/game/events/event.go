@@ -4,13 +4,13 @@
  */
 package events
 
-//go:generate go-gencon -type Event -cont LockFreeQueue -name EventQueue
+//go:generate go-gencon -type Event -cont LockFreeQueue -name Queue
 type Event struct {
-	Type    EventType
+	Type    Type
 	Payload interface{}
 }
 
-func NewEvent(eventType EventType, payload interface{}) *Event {
+func NewEvent(eventType Type, payload interface{}) *Event {
 	evt := new(Event)
 	evt.Type = eventType
 	evt.Payload = payload

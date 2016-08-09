@@ -11,7 +11,6 @@ import (
 	"runtime"
 	"server/game"
 	"server/game/events"
-	msg "server/game/messages"
 	"server/game/protocol"
 	"server/game/resource"
 	"sync"
@@ -33,9 +32,8 @@ type survivelerGame struct {
 	telnet          *protocol.TelnetServer     // if enabled, the telnet server
 	telnetReq       chan TelnetRequest         // channel for game related telnet commands
 	telnetDone      chan error                 // signals the end of a telnet request
-	msgChan         chan msg.ClientMessage     // conducts ClientMessage to the game loop
 	quitChan        chan struct{}              // to signal the game loop goroutine it must end
-	eventManager    *events.EventManager       // event manager
+	eventManager    *events.Manager            // event manager
 	wg              sync.WaitGroup             // wait for the different goroutine to finish
 	state           *gamestate                 // the game state
 	movementPlanner *game.MovementPlanner      // the movement planner
@@ -89,10 +87,9 @@ func NewGame(cfg game.Config) game.Game {
 	}
 
 	// init channels
-	g.msgChan = make(chan msg.ClientMessage)
 	g.quitChan = make(chan struct{})
 
-	g.eventManager = events.NewEventManager()
+	g.eventManager = events.NewManager()
 
 	// creates the client registry
 	allocId := func() uint32 {
@@ -117,15 +114,25 @@ func NewGame(cfg game.Config) game.Game {
 
 	// init the AI director
 	g.ai = NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
+	g.server = protocol.NewServer(g.cfg.Port, g.clients, g.telnet, &g.wg, g.clients)
 
-	// setup TCP server
-	rootHandler := func(imsg *msg.Message, clientId uint32) error {
-		// forward incoming messages to the game loop
-		g.msgChan <- msg.NewClientMessage(imsg, clientId)
-		return nil
-	}
-	g.server = protocol.NewServer(g.cfg.Port, rootHandler, g.clients, g.telnet, &g.wg, g.eventManager.PostEvent)
+	// this will be called after a new player has successfully joined the game
+	g.server.OnPlayerJoined(func(ID uint32, playerType uint8) {
+		g.PostEvent(
+			events.NewEvent(
+				events.PlayerJoinId,
+				events.PlayerJoin{Id: ID, Type: playerType}))
+	})
 
+	// this will be called after a player has effectively left the game
+	g.server.OnPlayerLeft(func(ID uint32) {
+		g.PostEvent(
+			events.NewEvent(
+				events.PlayerLeaveId,
+				events.PlayerLeave{Id: ID}))
+	})
+
+	g.registerMsgHandlers()
 	return g
 }
 
@@ -181,10 +188,6 @@ func (g *survivelerGame) State() game.GameState {
 
 func (g *survivelerGame) QuitChan() chan struct{} {
 	return g.quitChan
-}
-
-func (g *survivelerGame) MessageChan() chan msg.ClientMessage {
-	return g.msgChan
 }
 
 func (g *survivelerGame) PostEvent(evt *events.Event) {

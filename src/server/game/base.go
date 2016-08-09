@@ -2,7 +2,6 @@ package game
 
 import (
 	"server/game/events"
-	"server/game/messages"
 	"server/math"
 	"sync"
 )
@@ -22,7 +21,6 @@ type Game interface {
 	Start()
 	State() GameState
 	QuitChan() chan struct{}
-	MessageChan() chan messages.ClientMessage
 	PostEvent(*events.Event)
 	Pathfinder() *Pathfinder
 	WaitGroup() *sync.WaitGroup

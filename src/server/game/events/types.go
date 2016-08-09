@@ -8,72 +8,72 @@ import (
 	"server/math"
 )
 
-type EventType uint16
+type Type uint16
 
 const (
-	PlayerJoin = iota
-	PlayerLeave
-	PlayerMove
-	PlayerBuild
-	PlayerRepair
-	PlayerAttack
-	PlayerOperate
-	PlayerDeath
-	ZombieDeath
-	BuildingDestroy
-	PathReady
+	PlayerJoinId = iota
+	PlayerLeaveId
+	PlayerMoveId
+	PlayerBuildId
+	PlayerRepairId
+	PlayerAttackId
+	PlayerOperateId
+	PlayerDeathId
+	ZombieDeathId
+	BuildingDestroyId
+	PathReadyId
 )
 
-type PlayerJoinEvent struct {
+type PlayerJoin struct {
 	Id   uint32
 	Type uint8
 }
 
-type PlayerLeaveEvent struct {
+type PlayerLeave struct {
 	Id uint32
 }
 
-type PlayerMoveEvent struct {
+type PlayerMove struct {
 	Id   uint32
 	Xpos float32
 	Ypos float32
 }
 
-type PlayerBuildEvent struct {
+type PlayerBuild struct {
 	Id   uint32
 	Type uint8
 	Xpos float32
 	Ypos float32
 }
 
-type PlayerRepairEvent struct {
+type PlayerRepair struct {
 	Id         uint32
 	BuildingId uint32
 }
 
-type PlayerAttackEvent struct {
+type PlayerAttack struct {
 	Id       uint32
 	EntityId uint32
 }
 
-type PlayerOperateEvent struct {
+type PlayerOperate struct {
 	Id       uint32
 	EntityId uint32
 }
 
-type PlayerDeathEvent struct {
+type PlayerDeath struct {
 	Id uint32
 }
 
-type ZombieDeathEvent struct {
+type ZombieDeath struct {
 	Id uint32
 }
 
-type BuildingDestroyEvent struct {
+type BuildingDestroy struct {
 	Id uint32
 }
 
-type PathReadyEvent struct {
+type PathReady struct {
 	Id   uint32
 	Path math.Path // the path found
 }

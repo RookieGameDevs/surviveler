@@ -6,6 +6,7 @@ package entities
 
 import (
 	"server/game"
+	"server/game/actions"
 	"server/game/components"
 	"server/game/events"
 	"server/math"
@@ -207,25 +208,25 @@ func (z *Zombie) Type() game.EntityType {
 
 func (z *Zombie) State() game.EntityState {
 	// first, compile the data depending on current action
-	var actionData interface{} = game.IdleActionData{}
-	var actionType game.ActionType = game.IdleAction
+	var actionData interface{} = actions.Idle{}
+	var actionType actions.Type = actions.IdleId
 
 	switch z.curState {
 	case attackingState:
-		actionData = game.AttackActionData{
+		actionData = actions.Attack{
 			TargetID: z.target.Id(),
 		}
-		actionType = game.AttackAction
+		actionType = actions.AttackId
 
 	case lookingState:
 		fallthrough
 
 	case walkingState:
 		if !z.Movable.HasReachedDestination() {
-			moveActionData := game.MoveActionData{
+			moveActionData := actions.Move{
 				Speed: z.Speed,
 			}
-			actionType = game.MoveAction
+			actionType = actions.MoveId
 			actionData = moveActionData
 		}
 	}
@@ -254,8 +255,8 @@ func (z *Zombie) DealDamage(damage float64) (dead bool) {
 	if damage >= z.curHP {
 		z.curHP = 0
 		z.g.PostEvent(events.NewEvent(
-			events.ZombieDeath,
-			events.ZombieDeathEvent{Id: z.id}))
+			events.ZombieDeathId,
+			events.ZombieDeath{Id: z.id}))
 		dead = true
 	} else {
 		z.curHP -= damage

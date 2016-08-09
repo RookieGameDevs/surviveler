@@ -6,6 +6,7 @@ package entities
 
 import (
 	"server/game"
+	"server/game/actions"
 	"server/game/components"
 	"server/game/events"
 	"server/math"
@@ -29,13 +30,13 @@ const (
  */
 type Player struct {
 	id              uint32
-	entityType      game.EntityType  // player type
-	actions         game.ActionStack // action stack
-	lastBPinduced   time.Time        // time of last initiated BP induction
-	lastAttack      time.Time        // time of last attack
-	lastPathFind    time.Time        // time of last path find
-	lastCoffeeDrink time.Time        // time of last coffee drink
-	curBuilding     game.Building    // building in construction
+	entityType      game.EntityType // player type
+	actions         actions.Stack   // action stack
+	lastBPinduced   time.Time       // time of last initiated BP induction
+	lastAttack      time.Time       // time of last attack
+	lastPathFind    time.Time       // time of last path find
+	lastCoffeeDrink time.Time       // time of last coffee drink
+	curBuilding     game.Building   // building in construction
 	target          game.Entity
 	curObject       game.Object
 	g               game.Game
@@ -64,13 +65,13 @@ func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
 		gamestate:   g.State(),
 		world:       g.State().World(),
 		id:          game.InvalidID,
-		actions:     *game.NewActionStack(),
+		actions:     *actions.NewStack(),
 		Movable:     components.NewMovable(spawn, speed),
 	}
 	// place an idle action as the bottommost item of the action stack item.
 	// This should never be removed as the player should remain idle if he
 	// has nothing better to do
-	p.actions.Push(game.NewAction(game.IdleAction, game.IdleActionData{}))
+	p.actions.Push(actions.New(actions.IdleId, actions.Idle{}))
 	return p
 }
 
@@ -83,7 +84,7 @@ func (p *Player) Update(dt time.Duration) {
 	if action, exist := p.actions.Peek(); exist {
 		switch action.Type {
 
-		case game.MoveAction:
+		case actions.MoveId:
 
 			p.onMoveAction(dt)
 
@@ -91,16 +92,16 @@ func (p *Player) Update(dt time.Duration) {
 
 			// nothing to do
 
-		case game.BuildAction, game.RepairAction:
+		case actions.BuildId, actions.RepairId:
 
 			// build and repair actions actually end up being the same
 			p.induceBuildPower()
 
-		case game.DrinkCoffeeAction:
+		case actions.DrinkCoffeeId:
 			p.curObject.Operate(p)
 			p.actions.Pop()
 
-		case game.AttackAction:
+		case actions.AttackId:
 
 			dist := p.target.Position().Sub(p.Pos).Len()
 			if dist < PlayerAttackDistance {
@@ -148,7 +149,7 @@ func (p *Player) onMoveAction(dt time.Duration) {
 		}
 
 		switch nextAction.Type {
-		case game.BuildAction, game.RepairAction:
+		case actions.BuildId, actions.RepairId:
 			if e == p.curBuilding {
 				log.WithField("ent", e).Debug("collision with target building")
 				// we are colliding with the building we wanna build/repair
@@ -218,8 +219,8 @@ func (p *Player) SetPath(path math.Path) {
 func (p *Player) Move() {
 	log.Debug("Player.Move")
 	p.emptyActions()
-	p.actions.Push(game.NewAction(game.MoveAction, struct{}{}))
-	p.actions.Push(game.NewAction(WaitingForPathAction, struct{}{}))
+	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
+	p.actions.Push(actions.New(WaitingForPathAction, struct{}{}))
 }
 
 func (p *Player) Position() math.Vec2 {
@@ -240,44 +241,38 @@ func (p *Player) Id() uint32 {
 
 func (p *Player) State() game.EntityState {
 	var (
-		actionData interface{} // action data to be sent
-		actionType game.ActionType
-		curAction  *game.Action // action action from the stack
+		actionData interface{}     // action data to be sent
+		actionType actions.Type    //
+		curAction  *actions.Action // action action from the stack
 	)
 
 	curAction, _ = p.actions.Peek()
 	actionType = curAction.Type
 	switch curAction.Type {
-	case game.MoveAction:
-		actionData = game.MoveActionData{
-			Speed: p.Speed,
-		}
-	case game.BuildAction:
-		actionData = game.BuildActionData{}
-	case game.RepairAction:
-		actionData = game.RepairActionData{}
+	case actions.MoveId:
+		actionData = actions.Move{Speed: p.Speed}
+	case actions.BuildId:
+		actionData = actions.Build{}
+	case actions.RepairId:
+		actionData = actions.Repair{}
 	case WaitingForPathAction:
-		actionType = game.IdleAction
+		actionType = actions.IdleId
 		fallthrough
-	case game.IdleAction:
-		actionType = game.IdleAction
-		actionData = game.IdleActionData{}
-	case game.AttackAction:
+	case actions.IdleId:
+		actionType = actions.IdleId
+		actionData = actions.Idle{}
+	case actions.AttackId:
 		dist := p.target.Position().Sub(p.Pos).Len()
 		if dist > PlayerAttackDistance {
-			actionType = game.MoveAction
-			actionData = game.MoveActionData{
-				Speed: p.Speed,
-			}
+			actionType = actions.MoveId
+			actionData = actions.Move{Speed: p.Speed}
 		} else {
-			actionData = game.AttackActionData{
-				TargetID: p.target.Id(),
-			}
-			actionType = game.AttackAction
+			actionData = actions.Attack{TargetID: p.target.Id()}
+			actionType = actions.AttackId
 		}
-	case game.DrinkCoffeeAction:
-		actionType = game.IdleAction
-		actionData = game.IdleActionData{}
+	case actions.DrinkCoffeeId:
+		actionType = actions.IdleId
+		actionData = actions.Idle{}
 	}
 
 	return game.MobileEntityState{
@@ -300,7 +295,7 @@ func (p *Player) State() game.EntityState {
  */
 func (p *Player) Build(b game.Building) {
 	log.Debug("Player.Build")
-	p.moveAndAction(game.BuildAction, game.BuildActionData{})
+	p.moveAndAction(actions.BuildId, actions.Build{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
 }
@@ -314,7 +309,7 @@ func (p *Player) Build(b game.Building) {
  */
 func (p *Player) Repair(b game.Building) {
 	log.Debug("Player.Repair")
-	p.moveAndAction(game.RepairAction, game.RepairActionData{})
+	p.moveAndAction(actions.RepairId, actions.Repair{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
 }
@@ -340,7 +335,7 @@ func (p *Player) Attack(e game.Entity) {
 
 	// setup the actions in the stack
 	p.emptyActions()
-	p.actions.Push(game.NewAction(game.AttackAction, game.AttackActionData{}))
+	p.actions.Push(actions.New(actions.AttackId, actions.Attack{}))
 	p.target = e
 
 }
@@ -349,7 +344,7 @@ func (p *Player) Operate(e game.Object) {
 	log.Debug("Player.Operate")
 	switch e.Type() {
 	case game.CoffeeMachineObject:
-		p.moveAndAction(game.DrinkCoffeeAction, game.DrinkCoffeeActionData{})
+		p.moveAndAction(actions.DrinkCoffeeId, actions.DrinkCoffee{})
 		p.curObject = e
 		p.lastCoffeeDrink = time.Time{}
 	}
@@ -373,21 +368,21 @@ func (p *Player) emptyActions() {
  * will be moving alongside the path. When reached the path destination, the
  * specified action will begin
  */
-func (p *Player) moveAndAction(actionType game.ActionType, actionData interface{}) {
+func (p *Player) moveAndAction(actionType actions.Type, actionData interface{}) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	// fill the player action stack
-	p.actions.Push(game.NewAction(actionType, actionData))
-	p.actions.Push(game.NewAction(game.MoveAction, struct{}{}))
-	p.actions.Push(game.NewAction(WaitingForPathAction, struct{}{}))
+	p.actions.Push(actions.New(actionType, actionData))
+	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
+	p.actions.Push(actions.New(WaitingForPathAction, struct{}{}))
 }
 
 func (p *Player) DealDamage(damage float64) (dead bool) {
 	if damage >= p.curHP {
 		p.curHP = 0
 		p.g.PostEvent(events.NewEvent(
-			events.PlayerDeath,
-			events.PlayerDeathEvent{Id: p.id}))
+			events.PlayerDeathId,
+			events.PlayerDeath{Id: p.id}))
 		dead = true
 	} else {
 		p.curHP -= damage

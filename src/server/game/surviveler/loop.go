@@ -7,7 +7,7 @@ package surviveler
 
 import (
 	"server/game/events"
-	msg "server/game/messages"
+	"server/game/messages"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -36,22 +36,19 @@ func (g *survivelerGame) loop() error {
 	timeChan := time.NewTicker(
 		time.Minute * 1 / time.Duration(g.cfg.TimeFactor)).C
 
-	// message manager (and eventually listeners)
-	msgmgr := new(msg.MessageManager)
-
 	// event listeners
-	g.eventManager.Subscribe(events.PlayerJoin, g.state.onPlayerJoin)
-	g.eventManager.Subscribe(events.PlayerLeave, g.state.onPlayerLeave)
-	g.eventManager.Subscribe(events.PlayerMove, g.state.onPlayerMove)
-	g.eventManager.Subscribe(events.PathReady, g.state.onPathReady)
-	g.eventManager.Subscribe(events.PlayerBuild, g.state.onPlayerBuild)
-	g.eventManager.Subscribe(events.PlayerRepair, g.state.onPlayerRepair)
-	g.eventManager.Subscribe(events.PlayerAttack, g.state.onPlayerAttack)
-	g.eventManager.Subscribe(events.PlayerOperate, g.state.onPlayerOperate)
-	g.eventManager.Subscribe(events.PlayerDeath, g.state.onPlayerDeath)
-	g.eventManager.Subscribe(events.ZombieDeath, g.state.onZombieDeath)
-	g.eventManager.Subscribe(events.ZombieDeath, g.ai.OnZombieDeath)
-	g.eventManager.Subscribe(events.BuildingDestroy, g.state.onBuildingDestroy)
+	g.eventManager.Subscribe(events.PlayerJoinId, g.state.onPlayerJoin)
+	g.eventManager.Subscribe(events.PlayerLeaveId, g.state.onPlayerLeave)
+	g.eventManager.Subscribe(events.PlayerMoveId, g.state.onPlayerMove)
+	g.eventManager.Subscribe(events.PathReadyId, g.state.onPathReady)
+	g.eventManager.Subscribe(events.PlayerBuildId, g.state.onPlayerBuild)
+	g.eventManager.Subscribe(events.PlayerRepairId, g.state.onPlayerRepair)
+	g.eventManager.Subscribe(events.PlayerAttackId, g.state.onPlayerAttack)
+	g.eventManager.Subscribe(events.PlayerOperateId, g.state.onPlayerOperate)
+	g.eventManager.Subscribe(events.PlayerDeathId, g.state.onPlayerDeath)
+	g.eventManager.Subscribe(events.ZombieDeathId, g.state.onZombieDeath)
+	g.eventManager.Subscribe(events.ZombieDeathId, g.ai.OnZombieDeath)
+	g.eventManager.Subscribe(events.BuildingDestroyId, g.state.onBuildingDestroy)
 
 	var lastTime, curTime time.Time
 	lastTime = time.Now()
@@ -70,19 +67,11 @@ func (g *survivelerGame) loop() error {
 			case <-g.quitChan:
 				return
 
-			case msg := <-g.msgChan:
-				// dispatch msg to listeners
-				if err := msgmgr.Dispatch(msg.Message, msg.ClientId); err != nil {
-					// a listener can return an error, we log it but it should not
-					// perturb the rest of the game
-					log.WithField("err", err).Error("Dispatch returned an error")
-				}
-
 			case <-sendTickChan:
 				// pack the gamestate into a message
 				if gsMsg := g.state.pack(); gsMsg != nil {
 					// wrap the gameStateMsg into a generic Message
-					if msg := msg.NewMessage(msg.GameStateId, *gsMsg); msg != nil {
+					if msg := messages.New(messages.GameStateId, *gsMsg); msg != nil {
 						g.server.Broadcast(msg)
 					}
 				}

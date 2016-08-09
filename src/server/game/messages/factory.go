@@ -19,16 +19,16 @@ var factory *Factory
  * be instantiated by passing its type to newMsg()
  */
 type Factory struct {
-	registry map[uint16]reflect.Type
+	registry map[Type]reflect.Type
 }
 
 /*
- * GetFactory returns the global message factory, instaniating it at first call
+ * GetFactory returns the global message factory, instantiating it at first call
  */
 func GetFactory() *Factory {
 	if factory == nil {
 		factory = new(Factory)
-		factory.registry = make(map[uint16]reflect.Type)
+		factory.registry = make(map[Type]reflect.Type)
 		factory.registerMsgTypes()
 	}
 	return factory
@@ -40,24 +40,24 @@ func GetFactory() *Factory {
  */
 func (mf Factory) registerMsgTypes() {
 	// client/server message types
-	mf.registerMsgType(PingId, PingMsg{})
-	mf.registerMsgType(PongId, PongMsg{})
-	mf.registerMsgType(GameStateId, GameStateMsg{})
-	mf.registerMsgType(MoveId, MoveMsg{})
-	mf.registerMsgType(BuildId, BuildMsg{})
-	mf.registerMsgType(JoinId, JoinMsg{})
-	mf.registerMsgType(JoinedId, JoinedMsg{})
-	mf.registerMsgType(StayId, StayMsg{})
-	mf.registerMsgType(LeaveId, LeaveMsg{})
-	mf.registerMsgType(RepairId, RepairMsg{})
-	mf.registerMsgType(AttackId, AttackMsg{})
-	mf.registerMsgType(OperateId, OperateMsg{})
+	mf.registerMsgType(PingId, Ping{})
+	mf.registerMsgType(PongId, Pong{})
+	mf.registerMsgType(GameStateId, GameState{})
+	mf.registerMsgType(MoveId, Move{})
+	mf.registerMsgType(BuildId, Build{})
+	mf.registerMsgType(JoinId, Join{})
+	mf.registerMsgType(JoinedId, Joined{})
+	mf.registerMsgType(StayId, Stay{})
+	mf.registerMsgType(LeaveId, Leave{})
+	mf.registerMsgType(RepairId, Repair{})
+	mf.registerMsgType(AttackId, Attack{})
+	mf.registerMsgType(OperateId, Operate{})
 }
 
 /*
  * registerMsgType registers a new MsgType and associates it to a struct type
  */
-func (mf Factory) registerMsgType(t uint16, i interface{}) {
+func (mf Factory) registerMsgType(t Type, i interface{}) {
 	// retrieve underlying msg type
 	it := reflect.TypeOf(i)
 	mf.registry[t] = it
@@ -66,7 +66,7 @@ func (mf Factory) registerMsgType(t uint16, i interface{}) {
 /*
  * newMsg returns a new (zero'ed) message struct
  */
-func (mf Factory) newMsg(t uint16) interface{} {
+func (mf Factory) newMsg(t Type) interface{} {
 	var ok bool
 	var reft reflect.Type
 	if reft, ok = mf.registry[t]; !ok {
@@ -76,18 +76,18 @@ func (mf Factory) newMsg(t uint16) interface{} {
 }
 
 /*
- * DecodePayload returns a new message struct, decoded from given payload
+ * Decode returns a new specialized message, decoded from a raw message
  */
-func (mf Factory) DecodePayload(t uint16, p []byte) interface{} {
+func (mf Factory) Decode(raw *Message) interface{} {
 	var mh codec.MsgpackHandle
-	// Create a struct having the corresponding underlying type
-	msg := mf.newMsg(t)
+	// create a struct having the corresponding underlying type
+	msg := mf.newMsg(raw.Type)
 
-	// Decode msgpack payload into interface
-	decoder := codec.NewDecoderBytes(p, &mh)
+	// decode msgpack payload into interface
+	decoder := codec.NewDecoderBytes(raw.Payload, &mh)
 	err := decoder.Decode(&msg)
 	if err != nil {
-		log.WithError(err).Error("Couldn't decode payload")
+		log.WithError(err).Error("Couldn't decode raw message payload")
 	}
 	return msg
 }
