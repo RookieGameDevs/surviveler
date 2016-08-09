@@ -13,14 +13,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-type (
-	// AfterJoinHandler is the function called after a successfull JOIN.
-	AfterJoinHandler func(ID uint32, playerType uint8)
-
-	// AfterLeaveHandler is the function called after an effective LEAVE.
-	AfterLeaveHandler func(ID uint32)
-)
-
 // an Handshaker impements the server-side part of the handshaking protocol.
 type Handshaker interface {
 
@@ -34,18 +26,6 @@ type Handshaker interface {
 	// Leave executes the LEAVE step of the Handshaking protocol on the client
 	// associtated to the connection c.
 	Leave(reason string, c *network.Conn)
-
-	// AfterJoinHandler returns the registered 'after join' handler, if any.
-	AfterJoinHandler() AfterJoinHandler
-
-	// SetAfterJoinHandler registers the 'after join' handler.
-	SetAfterJoinHandler(AfterJoinHandler)
-
-	// AfterLeaveHandler returns the registered 'after leave' handler, if any.
-	AfterLeaveHandler() AfterLeaveHandler
-
-	// SetAfterLeaveHandler registers the 'after leave' handler.
-	SetAfterLeaveHandler(AfterLeaveHandler)
 }
 
 /*

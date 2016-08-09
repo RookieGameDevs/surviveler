@@ -19,11 +19,9 @@ import (
  * It implements the Handshaker interface.
  */
 type ClientRegistry struct {
-	clients           map[uint32]*network.Conn // one for each client connection
-	mutex             sync.RWMutex             // protect map from concurrent accesses
-	allocId           func() uint32
-	afterJoinHandler  AfterJoinHandler
-	afterLeaveHandler AfterLeaveHandler
+	clients map[uint32]*network.Conn // one for each client connection
+	mutex   sync.RWMutex             // protect map from concurrent accesses
+	allocId func() uint32
 }
 
 /*
@@ -260,20 +258,4 @@ func (reg *ClientRegistry) Join(join messages.Join, c *network.Conn) bool {
 	clientData.Name = join.Name
 	c.SetUserData(clientData)
 	return true
-}
-
-func (reg *ClientRegistry) AfterJoinHandler() AfterJoinHandler {
-	return reg.afterJoinHandler
-}
-
-func (reg *ClientRegistry) SetAfterJoinHandler(fn AfterJoinHandler) {
-	reg.afterJoinHandler = fn
-}
-
-func (reg *ClientRegistry) AfterLeaveHandler() AfterLeaveHandler {
-	return reg.afterLeaveHandler
-}
-
-func (reg *ClientRegistry) SetAfterLeaveHandler(fn AfterLeaveHandler) {
-	reg.afterLeaveHandler = fn
 }

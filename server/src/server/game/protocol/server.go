@@ -28,14 +28,16 @@ type (
  * interface.
  */
 type Server struct {
-	port        string
-	server      network.Server                   // tcp server instance
-	clients     *ClientRegistry                  // manage the connected clients
-	telnet      *TelnetServer                    // embedded telnet server
-	factory     *messages.Factory                // the unique message factory
-	wg          *sync.WaitGroup                  // game wait group
-	handshaker  Handshaker                       // handle handshaking
-	msgHandlers map[messages.Type]messageHandler // message handlers
+	port           string
+	server         network.Server                   // tcp server instance
+	clients        *ClientRegistry                  // manage the connected clients
+	telnet         *TelnetServer                    // embedded telnet server
+	factory        *messages.Factory                // the unique message factory
+	wg             *sync.WaitGroup                  // game wait group
+	handshaker     Handshaker                       // handle handshaking
+	msgHandlers    map[messages.Type]messageHandler // message handlers
+	playerJoinedCb func(uint32, uint8)              // raised after a successfull JOIN
+	playerLeftCb   func(uint32)                     // raised after an effective LEAVE
 }
 
 /*
@@ -155,7 +157,7 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 		case messages.PingId:
 
 			// immediately reply pong
-			ping, ok := msg.(messages.Ping)
+			ping := msg.(messages.Ping)
 			pong := messages.New(messages.PongId,
 				messages.Pong{
 					Id:     ping.Id,
@@ -172,7 +174,10 @@ func (srv *Server) OnIncomingPacket(c *network.Conn, packet network.Packet) bool
 			// JOIN is handled by the handshaker
 			if srv.handshaker.Join(join, c) {
 				// new client has been accepted
-				srv.handshaker.AfterJoinHandler()(clientData.Id, join.Type)
+				if srv.playerJoinedCb != nil {
+					// raise 'player joined' external callback
+					srv.playerJoinedCb(clientData.Id, join.Type)
+				}
 			}
 		}
 	}
@@ -206,7 +211,20 @@ func (srv *Server) OnClose(c *network.Conn) {
 		// and we have nothing more to do
 	}
 
-	srv.handshaker.AfterLeaveHandler()(clientData.Id)
+	if srv.playerLeftCb != nil {
+		// raise 'player left' external callback
+		srv.playerLeftCb(clientData.Id)
+	}
+}
+
+// OnPlayerJoined sets the function called when a player has joined the game
+func (srv *Server) OnPlayerJoined(fn func(ID uint32, playerType uint8)) {
+	srv.playerJoinedCb = fn
+}
+
+// OnPlayerJoined sets the function called when a player has left the game
+func (srv *Server) OnPlayerLeft(fn func(ID uint32)) {
+	srv.playerLeftCb = fn
 }
 
 /*

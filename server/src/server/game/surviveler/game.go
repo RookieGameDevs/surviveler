@@ -114,24 +114,24 @@ func NewGame(cfg game.Config) game.Game {
 
 	// init the AI director
 	g.ai = NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
+	g.server = protocol.NewServer(g.cfg.Port, g.clients, g.telnet, &g.wg, g.clients)
 
-	// register the 'after join' handler
-	g.clients.SetAfterJoinHandler(func(ID uint32, playerType uint8) {
+	// this will be called after a new player has successfully joined the game
+	g.server.OnPlayerJoined(func(ID uint32, playerType uint8) {
 		g.PostEvent(
 			events.NewEvent(
 				events.PlayerJoinId,
 				events.PlayerJoin{Id: ID, Type: playerType}))
 	})
 
-	// register the 'after leave' handler
-	g.clients.SetAfterLeaveHandler(func(ID uint32) {
+	// this will be called after a player has effectively left the game
+	g.server.OnPlayerLeft(func(ID uint32) {
 		g.PostEvent(
 			events.NewEvent(
 				events.PlayerLeaveId,
 				events.PlayerLeave{Id: ID}))
 	})
 
-	g.server = protocol.NewServer(g.cfg.Port, g.clients, g.telnet, &g.wg, g.clients)
 	g.registerMsgHandlers()
 	return g
 }
