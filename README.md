@@ -133,8 +133,6 @@ To use the fish shell at your best you should install globally virtualfish with
 
     pip install virtualfish
 
-Then go inside the `surviveler/client` directory and create a virtualfish env:
-
     # Create the environment and activate it (python3 is the python executable you
     # want to use)
     vf new -p python3 surviveler
@@ -170,8 +168,8 @@ environment is set):
 
 Install the resulting library in local Python distribution `site-packages` folder:
 
-`cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (Linux)
-`cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (OSX)
+ * `cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (Linux)
+ * `cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (OSX)
 
 *NOTE*: On Mac OS X the final file name must have `.so` extension!
 
