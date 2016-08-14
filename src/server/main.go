@@ -7,7 +7,7 @@ package main
 import (
 	"os"
 	"server/game"
-	"server/game/surviveler"
+	"server/surviveler"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-ini/ini"
