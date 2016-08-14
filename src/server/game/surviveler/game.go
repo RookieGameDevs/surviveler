@@ -11,7 +11,7 @@ import (
 	"runtime"
 	"server/game"
 	"server/game/events"
-	"server/game/protocol"
+	"server/protocol"
 	"server/resource"
 	"sync"
 	"syscall"
