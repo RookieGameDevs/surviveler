@@ -40,7 +40,6 @@ func (g *survivelerGame) loop() error {
 	g.eventManager.Subscribe(events.PlayerJoinId, g.state.onPlayerJoin)
 	g.eventManager.Subscribe(events.PlayerLeaveId, g.state.onPlayerLeave)
 	g.eventManager.Subscribe(events.PlayerMoveId, g.state.onPlayerMove)
-	g.eventManager.Subscribe(events.PathReadyId, g.state.onPathReady)
 	g.eventManager.Subscribe(events.PlayerBuildId, g.state.onPlayerBuild)
 	g.eventManager.Subscribe(events.PlayerRepairId, g.state.onPlayerRepair)
 	g.eventManager.Subscribe(events.PlayerAttackId, g.state.onPlayerAttack)

@@ -24,22 +24,21 @@ import (
  * survivelerGame is the main game structure, entry and exit points
  */
 type survivelerGame struct {
-	cfg             game.Config                // configuration settings
-	server          *protocol.Server           // server core
-	clients         *protocol.ClientRegistry   // the client registry
-	assets          resource.SurvivelerPackage // game assets package
-	ticker          time.Ticker                // the main tick source
-	telnet          *protocol.TelnetServer     // if enabled, the telnet server
-	telnetReq       chan TelnetRequest         // channel for game related telnet commands
-	telnetDone      chan error                 // signals the end of a telnet request
-	quitChan        chan struct{}              // to signal the game loop goroutine it must end
-	eventManager    *events.Manager            // event manager
-	wg              sync.WaitGroup             // wait for the different goroutine to finish
-	state           *gamestate                 // the game state
-	movementPlanner *game.MovementPlanner      // the movement planner
-	pathfinder      *game.Pathfinder           // pathfinder
-	ai              *AIDirector                // AI director
-	gameData        *gameData
+	cfg          game.Config                // configuration settings
+	server       *protocol.Server           // server core
+	clients      *protocol.ClientRegistry   // the client registry
+	assets       resource.SurvivelerPackage // game assets package
+	ticker       time.Ticker                // the main tick source
+	telnet       *protocol.TelnetServer     // if enabled, the telnet server
+	telnetReq    chan TelnetRequest         // channel for game related telnet commands
+	telnetDone   chan error                 // signals the end of a telnet request
+	quitChan     chan struct{}              // to signal the game loop goroutine it must end
+	eventManager *events.Manager            // event manager
+	wg           sync.WaitGroup             // wait for the different goroutine to finish
+	state        *gamestate                 // the game state
+	pathfinder   *game.Pathfinder           // pathfinder
+	ai           *AIDirector                // AI director
+	gameData     *gameData
 }
 
 /*
@@ -108,10 +107,6 @@ func NewGame(cfg game.Config) game.Game {
 	// initialize the pathfinder module
 	g.pathfinder = game.NewPathfinder(g)
 
-	// init the movement planner (and provide it to the game state)
-	g.movementPlanner = game.NewMovementPlanner(g)
-	g.state.movementPlanner = g.movementPlanner
-
 	// init the AI director
 	g.ai = NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
 	g.server = protocol.NewServer(g.cfg.Port, g.clients, g.telnet, &g.wg, g.clients)
@@ -162,9 +157,6 @@ func (g *survivelerGame) loadAssets(path string) (*gameData, error) {
 func (g *survivelerGame) Start() {
 	// start everything
 	g.server.Start()
-
-	// start the movement planner
-	g.movementPlanner.Start()
 
 	// start the game loop (will return immedialtely as the game loop runs
 	// in a goroutine)

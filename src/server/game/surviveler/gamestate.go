@@ -23,13 +23,12 @@ var txCenter math.Vec2
  * gamestate is the structure that contains all the complete game state
  */
 type gamestate struct {
-	gameData        *gameData // game constants/resources coming from assets
-	gameTime        int16
-	entities        map[uint32]game.Entity // entities currently in game
-	numEntities     uint32                 // number of entities currently present in the game
-	game            *survivelerGame
-	world           *game.World
-	movementPlanner *game.MovementPlanner
+	gameData    *gameData // game constants/resources coming from assets
+	gameTime    int16
+	entities    map[uint32]game.Entity // entities currently in game
+	numEntities uint32                 // number of entities currently present in the game
+	game        *survivelerGame
+	world       *game.World
 }
 
 func newGameState(g *survivelerGame, gameStart int16) *gamestate {
@@ -87,28 +86,6 @@ func (gs *gamestate) pack() *messages.GameState {
 		}
 	}
 	return gsMsg
-}
-
-/*
- * fillMovementRequest fills up and sends a movement request
- */
-func (gs *gamestate) fillMovementRequest(p *entities.Player, dst math.Vec2) {
-	if !gs.world.PointInBounds(dst) {
-		// do not forward a request with out-of-bounds destination
-		log.WithFields(log.Fields{
-			"dst":    dst,
-			"player": p.Id()}).
-			Error("Can't plan path to out-of-bounds destination")
-	}
-
-	// fills up a movement request
-	mvtReq := game.MovementRequest{}
-	mvtReq.Org = p.Position()
-	mvtReq.Dst = dst
-	mvtReq.EntityID = p.Id()
-
-	// send the request to the movement planner
-	gs.movementPlanner.PlanMovement(&mvtReq)
 }
 
 /*

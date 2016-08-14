@@ -47,18 +47,6 @@ func (gs *gamestate) onPlayerLeave(event *events.Event) {
 }
 
 /*
- * event handler for PathReadyEvent events
- */
-func (gs *gamestate) onPathReady(event *events.Event) {
-	evt := event.Payload.(events.PathReady)
-	log.WithField("evt", evt).Info("Received a path ready event")
-
-	if player := gs.getPlayer(evt.Id); player != nil {
-		player.SetPath(evt.Path)
-	}
-}
-
-/*
  * event handler for PlayerMove events
  */
 func (gs *gamestate) onPlayerMove(event *events.Event) {

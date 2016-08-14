@@ -17,7 +17,6 @@ import (
 
 // player private action types
 const (
-	WaitingForPathAction      = 1000 + iota
 	BuildPowerInductionPeriod = time.Second
 	PlayerAttackDistance      = 1
 	AttackPeriod              = 500 * time.Millisecond
@@ -87,10 +86,6 @@ func (p *Player) Update(dt time.Duration) {
 		case actions.MoveId:
 
 			p.onMoveAction(dt)
-
-		case WaitingForPathAction:
-
-			// nothing to do
 
 		case actions.BuildId, actions.RepairId:
 
@@ -220,7 +215,6 @@ func (p *Player) Move() {
 	log.Debug("Player.Move")
 	p.emptyActions()
 	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
-	p.actions.Push(actions.New(WaitingForPathAction, struct{}{}))
 }
 
 func (p *Player) Position() math.Vec2 {
@@ -255,9 +249,6 @@ func (p *Player) State() game.EntityState {
 		actionData = actions.Build{}
 	case actions.RepairId:
 		actionData = actions.Repair{}
-	case WaitingForPathAction:
-		actionType = actions.IdleId
-		fallthrough
 	case actions.IdleId:
 		actionType = actions.IdleId
 		actionData = actions.Idle{}
@@ -295,7 +286,6 @@ func (p *Player) State() game.EntityState {
  */
 func (p *Player) Build(b game.Building) {
 	log.Debug("Player.Build")
-	p.moveAndAction(actions.BuildId, actions.Build{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
 }
@@ -309,7 +299,6 @@ func (p *Player) Build(b game.Building) {
  */
 func (p *Player) Repair(b game.Building) {
 	log.Debug("Player.Repair")
-	p.moveAndAction(actions.RepairId, actions.Repair{})
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
 }
@@ -344,7 +333,6 @@ func (p *Player) Operate(e game.Object) {
 	log.Debug("Player.Operate")
 	switch e.Type() {
 	case game.CoffeeMachineObject:
-		p.moveAndAction(actions.DrinkCoffeeId, actions.DrinkCoffee{})
 		p.curObject = e
 		p.lastCoffeeDrink = time.Time{}
 	}
@@ -359,22 +347,6 @@ func (p *Player) emptyActions() {
 	// empty the action stack, just let the bottommost (idle)
 	for ; p.actions.Len() > 1; p.actions.Pop() {
 	}
-}
-
-/*
- * moveAndAction makes a player move until to reach a specified action point
- *
- * After this call, the player will be waiting for a path. When received, he
- * will be moving alongside the path. When reached the path destination, the
- * specified action will begin
- */
-func (p *Player) moveAndAction(actionType actions.Type, actionData interface{}) {
-	// empty action stack, this cancel any current action(s)
-	p.emptyActions()
-	// fill the player action stack
-	p.actions.Push(actions.New(actionType, actionData))
-	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
-	p.actions.Push(actions.New(WaitingForPathAction, struct{}{}))
 }
 
 func (p *Player) DealDamage(damage float64) (dead bool) {

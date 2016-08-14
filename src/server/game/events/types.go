@@ -4,10 +4,6 @@
  */
 package events
 
-import (
-	"server/math"
-)
-
 type Type uint16
 
 const (
@@ -21,7 +17,6 @@ const (
 	PlayerDeathId
 	ZombieDeathId
 	BuildingDestroyId
-	PathReadyId
 )
 
 type PlayerJoin struct {
@@ -71,9 +66,4 @@ type ZombieDeath struct {
 
 type BuildingDestroy struct {
 	Id uint32
-}
-
-type PathReady struct {
-	Id   uint32
-	Path math.Path // the path found
 }
