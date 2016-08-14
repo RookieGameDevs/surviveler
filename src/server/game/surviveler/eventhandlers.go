@@ -11,6 +11,28 @@ import (
 )
 
 /*
+ * runPathFinder runs the macro-pathfinder from org to dst.
+ *
+ * The callback function fn is called if a path is found.
+ */
+func (gs *gamestate) runPathFinder(org, dst math.Vec2, fn func(path math.Path)) {
+	ctxLog := log.WithFields(log.Fields{"org": org, "dst": dst})
+	// run the macro-pathfinder
+	path, _, found := gs.game.Pathfinder().FindPath(org, dst)
+	if !found {
+		ctxLog.Warn("Pathfinder failed to find path")
+		return
+	}
+
+	// TODO: why > 1? it should be forbidden, pathfinder-side, to return an
+	// empty path!
+	if len(path) > 1 {
+		ctxLog.WithField("path", path).Debug("Pathfinder found a path")
+		fn(path)
+	}
+}
+
+/*
  * event handler for PlayerJoin events
  */
 func (gs *gamestate) onPlayerJoin(event *events.Event) {
@@ -68,17 +90,9 @@ func (gs *gamestate) onPlayerMove(event *events.Event) {
 		return
 	}
 
-	// run pathfinding
-	path, _, found := gs.game.Pathfinder().FindPath(player.Position(), dst)
-	if !found {
-		ctxLog.Warn("Pathfinder failed to find path")
-		return
-	}
-
-	if len(path) > 1 {
-		ctxLog.WithField("path", path).Debug("Pathfinder found a path")
-		player.Move(path)
-	}
+	gs.runPathFinder(player.Position(), dst, func(p math.Path) {
+		player.Move(p)
+	})
 }
 
 /*
@@ -127,20 +141,11 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 		Div(gs.world.GridScale).
 		Add(txCenter)
 
-	// run pathfinding
-	path, _, found := gs.game.Pathfinder().FindPath(player.Position(), pos)
-	if !found {
-		ctxLog.Warn("Pathfinder failed to find path")
-		return
-	}
-
-	if len(path) > 1 {
-		ctxLog.WithField("path", path).Debug("Pathfinder found a path")
-
+	gs.runPathFinder(player.Position(), pos, func(p math.Path) {
 		// create the building, attach it to the tile
 		building := gs.createBuilding(game.EntityType(evt.Type), pos)
-		player.Build(building, path)
-	}
+		player.Build(building, p)
+	})
 }
 
 /*
@@ -164,19 +169,10 @@ func (gs *gamestate) onPlayerRepair(event *events.Event) {
 		return
 	}
 
-	// run pathfinding
-	path, _, found := gs.game.Pathfinder().FindPath(player.Position(), building.Position())
-	if !found {
-		ctxLog.Warn("Pathfinder failed to find path")
-		return
-	}
-
-	if len(path) > 1 {
-		ctxLog.WithField("path", path).Debug("Pathfinder found a path")
-
+	gs.runPathFinder(player.Position(), building.Position(), func(p math.Path) {
 		// set player action
-		player.Repair(building, path)
-	}
+		player.Repair(building, p)
+	})
 }
 
 /*
@@ -247,16 +243,9 @@ func (gs *gamestate) onPlayerOperate(event *events.Event) {
 	}
 
 	if position != nil {
-
-		// run pathfinding
-		path, _, found := gs.game.Pathfinder().FindPath(player.Position(), *position)
-		if !found {
-			ctxLog.Warn("Pathfinder failed to find path")
-			return
-		}
-
-		// set player action
-		player.Operate(object, path)
+		gs.runPathFinder(player.Position(), *position, func(p math.Path) {
+			player.Operate(object, p)
+		})
 	}
 }
 
