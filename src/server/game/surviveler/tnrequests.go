@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"server/game/events"
+	"server/events"
 	"server/math"
 	"server/messages"
 

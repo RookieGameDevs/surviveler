@@ -1,7 +1,7 @@
 package game
 
 import (
-	"server/game/events"
+	"server/events"
 	"server/math"
 	"sync"
 )

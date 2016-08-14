@@ -3,7 +3,7 @@
 package surviveler
 
 import (
-	"server/game/events"
+	"server/events"
 	"server/messages"
 	"server/network"
 	"server/protocol"

@@ -5,10 +5,10 @@
 package entities
 
 import (
+	"server/events"
 	"server/game"
 	"server/game/actions"
 	"server/game/components"
-	"server/game/events"
 	"server/math"
 	"time"
 )
