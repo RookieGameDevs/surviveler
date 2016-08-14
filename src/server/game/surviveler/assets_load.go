@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"image"
 	"server/game"
-	"server/game/resource"
+	"server/resource"
 
 	log "github.com/Sirupsen/logrus"
 )

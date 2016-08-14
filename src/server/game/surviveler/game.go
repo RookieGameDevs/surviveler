@@ -12,7 +12,7 @@ import (
 	"server/game"
 	"server/game/events"
 	"server/game/protocol"
-	"server/game/resource"
+	"server/resource"
 	"sync"
 	"syscall"
 	"time"
