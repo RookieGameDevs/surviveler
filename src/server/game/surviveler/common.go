@@ -6,8 +6,8 @@ package surviveler
 
 import (
 	"fmt"
+	"server/entities"
 	"server/game"
-	"server/game/entities"
 )
 
 /*

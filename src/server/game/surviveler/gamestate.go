@@ -6,8 +6,8 @@
 package surviveler
 
 import (
+	"server/entities"
 	"server/game"
-	"server/game/entities"
 	"server/math"
 	"server/messages"
 	"sort"

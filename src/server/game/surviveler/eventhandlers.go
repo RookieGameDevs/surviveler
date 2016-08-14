@@ -2,9 +2,9 @@ package surviveler
 
 import (
 	"math/rand"
+	"server/entities"
 	"server/events"
 	"server/game"
-	"server/game/entities"
 	"server/math"
 
 	log "github.com/Sirupsen/logrus"
