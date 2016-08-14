@@ -5,9 +5,9 @@
 package entities
 
 import (
+	"server/actions"
 	"server/events"
 	"server/game"
-	"server/game/actions"
 	"server/math"
 	"time"
 

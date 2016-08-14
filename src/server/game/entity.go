@@ -5,7 +5,7 @@ package game
 
 import (
 	gomath "math"
-	"server/game/actions"
+	"server/actions"
 	"server/math"
 	"time"
 )
