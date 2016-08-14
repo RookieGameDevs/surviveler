@@ -7,7 +7,7 @@ package protocol
 import (
 	"fmt"
 	"io"
-	"server/game/messages"
+	"server/messages"
 	"server/network"
 
 	"github.com/urfave/cli"

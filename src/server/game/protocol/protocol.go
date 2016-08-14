@@ -8,7 +8,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
-	"server/game/messages"
+	"server/messages"
 	"server/network"
 )
 

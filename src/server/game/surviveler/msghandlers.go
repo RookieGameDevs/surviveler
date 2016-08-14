@@ -4,8 +4,8 @@ package surviveler
 
 import (
 	"server/game/events"
-	"server/game/messages"
 	"server/game/protocol"
+	"server/messages"
 	"server/network"
 
 	log "github.com/Sirupsen/logrus"

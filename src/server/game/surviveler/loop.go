@@ -7,7 +7,7 @@ package surviveler
 
 import (
 	"server/game/events"
-	"server/game/messages"
+	"server/messages"
 	"time"
 
 	log "github.com/Sirupsen/logrus"

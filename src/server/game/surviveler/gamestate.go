@@ -8,8 +8,8 @@ package surviveler
 import (
 	"server/game"
 	"server/game/entities"
-	"server/game/messages"
 	"server/math"
+	"server/messages"
 	"sort"
 	"time"
 

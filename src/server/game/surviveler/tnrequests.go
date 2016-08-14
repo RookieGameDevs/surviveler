@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"io"
 	"server/game/events"
-	"server/game/messages"
 	"server/math"
+	"server/messages"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"

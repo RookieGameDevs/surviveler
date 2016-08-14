@@ -5,7 +5,7 @@
 package protocol
 
 import (
-	"server/game/messages"
+	"server/messages"
 	"server/network"
 	"sync"
 	"time"
