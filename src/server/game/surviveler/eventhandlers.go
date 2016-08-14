@@ -222,6 +222,14 @@ func (gs *gamestate) onPlayerOperate(event *events.Event) {
 
 	// This is awful, isn't it?
 	// FIXME: please, at some point...
+	//
+	// Yes, this has to and will be fixed as this:
+	// when we'll use steering behaviours with entity visibility for
+	// micro-pahfinding, we won't have to do this any more, instead we will
+	// define the object position as micro-path destination, and the
+	// destination reached when the player will collide with this object (as it
+	// is now done to detect that an engineer actually reached his target
+	// building
 	for x := tile.X - 1; x <= tile.X+1; x++ {
 		if position != nil {
 			break
