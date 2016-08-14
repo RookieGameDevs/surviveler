@@ -8,7 +8,6 @@ import (
 	"server/events"
 	"server/game"
 	"server/game/actions"
-	"server/game/components"
 	"server/math"
 	"time"
 
@@ -46,7 +45,7 @@ type Player struct {
 	totalHP         float64
 	curHP           float64
 	posDirty        bool
-	*components.Movable
+	*Movable
 }
 
 /*
@@ -65,7 +64,7 @@ func NewPlayer(g game.Game, spawn math.Vec2, entityType game.EntityType,
 		world:       g.State().World(),
 		id:          game.InvalidID,
 		actions:     *actions.NewStack(),
-		Movable:     components.NewMovable(spawn, speed),
+		Movable:     NewMovable(spawn, speed),
 	}
 	// place an idle action as the bottommost item of the action stack item.
 	// This should never be removed as the player should remain idle if he

@@ -2,7 +2,7 @@
  * Surviveler entity package
  * types definitions
  */
-package components
+package entities
 
 import (
 	gomath "math"

@@ -8,7 +8,6 @@ import (
 	"server/events"
 	"server/game"
 	"server/game/actions"
-	"server/game/components"
 	"server/math"
 	"time"
 )
@@ -40,7 +39,7 @@ type Zombie struct {
 	timeAcc     time.Duration
 	target      game.Entity
 	world       *game.World
-	*components.Movable
+	*Movable
 }
 
 func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
@@ -53,7 +52,7 @@ func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8,
 		curHP:       totalHP,
 		combatPower: combatPower,
 		world:       g.State().World(),
-		Movable:     components.NewMovable(pos, walkSpeed),
+		Movable:     NewMovable(pos, walkSpeed),
 	}
 }
 
