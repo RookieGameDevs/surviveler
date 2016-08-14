@@ -51,13 +51,33 @@ func (gs *gamestate) onPlayerLeave(event *events.Event) {
  */
 func (gs *gamestate) onPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMove)
-	log.WithField("evt", evt).Info("Received PlayerMove event")
+	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
 
-	if player := gs.getPlayer(evt.Id); player != nil {
-		// set player action
-		player.Move()
-		// plan movement
-		gs.fillMovementRequest(player, math.FromFloat32(evt.Xpos, evt.Ypos))
+	ctxLog := log.WithFields(log.Fields{"evt": evt, "dst": dst})
+	ctxLog.Info("Received PlayerMove event")
+
+	if !gs.world.PointInBounds(dst) {
+		// do not forward a request with out-of-bounds destination
+		ctxLog.Error("Can't plan path to out-of-bounds destination")
+		return
+	}
+
+	player := gs.getPlayer(evt.Id)
+	if player == nil {
+		ctxLog.Error("Unknown player id")
+		return
+	}
+
+	// run pathfinding
+	path, _, found := gs.game.Pathfinder().FindPath(player.Position(), dst)
+	if !found {
+		ctxLog.Warn("Pathfinder failed to find path")
+		return
+	}
+
+	if len(path) > 1 {
+		ctxLog.WithField("path", path).Debug("Pathfinder found a path")
+		player.Move(path)
 	}
 }
 
@@ -66,50 +86,60 @@ func (gs *gamestate) onPlayerMove(event *events.Event) {
  */
 func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	evt := event.Payload.(events.PlayerBuild)
-	log.WithField("evt", evt).Info("Received PlayerBuild event")
+	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
 
-	if player := gs.getPlayer(evt.Id); player != nil {
+	ctxLog := log.WithFields(log.Fields{"evt": evt, "dst": dst})
+	ctxLog.Info("Received PlayerBuild event")
 
-		// check entity type because only engineers can build
-		if player.Type() != game.EngineerEntity {
-			gs.game.clients.Kick(evt.Id,
-				"illegal action: only engineers can build!")
-			return
+	player := gs.getPlayer(evt.Id)
+	if player == nil {
+		ctxLog.Error("Unknown player id")
+		return
+	}
+
+	// only engineers can build
+	if player.Type() != game.EngineerEntity {
+		gs.game.clients.Kick(evt.Id,
+			"illegal action: only engineers can build!")
+		return
+	}
+	// get the tile at building point coordinates
+	tile := gs.world.TileFromWorldVec(dst)
+	ctxLog.WithField("tile", tile)
+
+	// tile must be walkable
+	if !tile.IsWalkable() {
+		ctxLog.Error("Tile is not walkable: can't build")
+		return
+	}
+
+	// check if we can build here
+	tile.Entities.Each(func(ent game.Entity) bool {
+		if _, ok := ent.(game.Building); ok {
+			ctxLog.Error("There's already a building on this tile")
+			return false
 		}
+		return true
+	})
 
-		// get the tile at building point coordinates
-		tile := gs.world.TileFromWorldVec(math.FromFloat32(evt.Xpos, evt.Ypos))
+	// clip building center with tile center
+	pos := math.FromInts(tile.X, tile.Y).
+		Div(gs.world.GridScale).
+		Add(txCenter)
 
-		// tile must be walkable
-		if !tile.IsWalkable() {
-			log.WithField("tile", tile).
-				Error("Tile is not walkable: can't build")
-			return
-		}
+	// run pathfinding
+	path, _, found := gs.game.Pathfinder().FindPath(player.Position(), pos)
+	if !found {
+		ctxLog.Warn("Pathfinder failed to find path")
+		return
+	}
 
-		// check if we can build here
-		tile.Entities.Each(func(ent game.Entity) bool {
-			if _, ok := ent.(game.Building); ok {
-				log.WithField("tile", tile).
-					Error("There's already a building on this tile")
-				return false
-			}
-			return true
-		})
-
-		// clip building center with tile center
-		pos := math.FromInts(tile.X, tile.Y).
-			Div(gs.world.GridScale).
-			Add(txCenter)
+	if len(path) > 1 {
+		ctxLog.WithField("path", path).Debug("Pathfinder found a path")
 
 		// create the building, attach it to the tile
 		building := gs.createBuilding(game.EntityType(evt.Type), pos)
-
-		// set player action
-		player.Build(building)
-
-		// plan movement
-		gs.fillMovementRequest(player, pos)
+		player.Build(building, path)
 	}
 }
 
@@ -118,17 +148,34 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
  */
 func (gs *gamestate) onPlayerRepair(event *events.Event) {
 	evt := event.Payload.(events.PlayerRepair)
-	log.WithField("evt", evt).Info("Received PlayerRepair event")
 
-	if player := gs.getPlayer(evt.Id); player != nil {
+	ctxLog := log.WithField("evt", evt)
+	ctxLog.Info("Received PlayerRepair event")
 
-		if building := gs.getBuilding(evt.BuildingId); building != nil {
-			// set player action
-			player.Repair(building)
+	player := gs.getPlayer(evt.Id)
+	if player == nil {
+		ctxLog.Error("Unknown player id")
+		return
+	}
 
-			// plan movement
-			gs.fillMovementRequest(player, building.Position())
-		}
+	building := gs.getBuilding(evt.BuildingId)
+	if building == nil {
+		ctxLog.Error("Unknown building id")
+		return
+	}
+
+	// run pathfinding
+	path, _, found := gs.game.Pathfinder().FindPath(player.Position(), building.Position())
+	if !found {
+		ctxLog.Warn("Pathfinder failed to find path")
+		return
+	}
+
+	if len(path) > 1 {
+		ctxLog.WithField("path", path).Debug("Pathfinder found a path")
+
+		// set player action
+		player.Repair(building, path)
 	}
 }
 
@@ -149,51 +196,67 @@ func (gs *gamestate) onPlayerAttack(event *events.Event) {
 }
 
 /*
- * event handler for PlayerUse events
+ * event handler for PlayerOperate events
  */
 func (gs *gamestate) onPlayerOperate(event *events.Event) {
 	evt := event.Payload.(events.PlayerOperate)
-	log.WithField("evt", evt).Info("Received PlayerOperate event")
 
-	if player := gs.getPlayer(evt.Id); player != nil {
+	ctxLog := log.WithField("evt", evt)
+	ctxLog.Info("Received PlayerOperate event")
 
-		if object := gs.getObject(evt.EntityId); object != nil {
-			// get the tile at building point coordinates
-			tile := gs.world.TileFromWorldVec(object.Position())
+	player := gs.getPlayer(evt.Id)
+	if player == nil {
+		ctxLog.Error("Unknown player id")
+		return
+	}
 
-			var draft *game.Tile
-			var position *math.Vec2
+	object := gs.getObject(evt.EntityId)
+	if object == nil {
+		ctxLog.Error("Unknown object id")
+		return
+	}
 
-			// This is awful, isn't it?
-			// FIXME: please, at some point...
-			for x := tile.X - 1; x <= tile.X+1; x++ {
-				if position != nil {
-					break
-				}
-				for y := tile.Y - 1; y <= tile.Y+1; y++ {
-					if position != nil {
-						break
-					}
-					if x != tile.X && y != tile.Y {
-						draft = gs.world.Tile(x, y)
-						if draft.IsWalkable() {
-							position = &math.Vec2{
-								float64(x) / gs.world.GridScale,
-								float64(y) / gs.world.GridScale,
-							}
-						}
-					}
-				}
-			}
+	var (
+		tile, draft *game.Tile
+		position    *math.Vec2
+	)
 
+	// get the tile at object coordinates
+	tile = gs.world.TileFromWorldVec(object.Position())
+
+	// This is awful, isn't it?
+	// FIXME: please, at some point...
+	for x := tile.X - 1; x <= tile.X+1; x++ {
+		if position != nil {
+			break
+		}
+		for y := tile.Y - 1; y <= tile.Y+1; y++ {
 			if position != nil {
-				// set player action
-				player.Operate(object)
-
-				// plan movement
-				gs.fillMovementRequest(player, *position)
+				break
+			}
+			if x != tile.X && y != tile.Y {
+				draft = gs.world.Tile(x, y)
+				if draft.IsWalkable() {
+					position = &math.Vec2{
+						float64(x) / gs.world.GridScale,
+						float64(y) / gs.world.GridScale,
+					}
+				}
 			}
 		}
+	}
+
+	if position != nil {
+
+		// run pathfinding
+		path, _, found := gs.game.Pathfinder().FindPath(player.Position(), *position)
+		if !found {
+			ctxLog.Warn("Pathfinder failed to find path")
+			return
+		}
+
+		// set player action
+		player.Operate(object, path)
 	}
 }
 
@@ -213,7 +276,7 @@ func (gs *gamestate) onPlayerDeath(event *events.Event) {
 }
 
 /*
- * event handler for EnemyDeath events
+ * event handler for ZombieDeath events
  */
 func (gs *gamestate) onZombieDeath(event *events.Event) {
 	evt := event.Payload.(events.ZombieDeath)

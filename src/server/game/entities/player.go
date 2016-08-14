@@ -200,21 +200,20 @@ func (p *Player) induceBuildPower() {
  * SetPath defines the path that the player must follow.
  */
 func (p *Player) SetPath(path math.Path) {
-	log.Debug("Player.SetPath, setting path to movable")
-	p.actions.Pop()
 	p.Movable.SetPath(path)
 }
 
 /*
- * Move makes the player initiates a move action
+ * Move sets the player current action as 'moving' and define its macro-path.
  *
- * It cancels any high-level actions the player may already be doing and set
- * the player as waiting for the calculated path
+ * The player action stack is emptied, effectively cancelling any previous
+ * player action, and defines its macro path.
  */
-func (p *Player) Move() {
-	log.Debug("Player.Move")
+func (p *Player) Move(path math.Path) {
+	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
+	p.SetPath(path)
 }
 
 func (p *Player) Position() math.Vec2 {
@@ -277,30 +276,43 @@ func (p *Player) State() game.EntityState {
 }
 
 /*
- * Build makes the player initiates a build action
+ * Build sets the player as 'moving' and defines its macro-path, taking him to
+ * the newly created building.
  *
- * It cancels any high-level actions the player may already be doing and set
- * the player as waiting for the calculated path to join the building point.
- * At destination, it immediately starts the construction until the building
- * is complete.
+ * The player action stack is emptied, effectively cancelling any previous
+ * player action, and replaced with a 'move' action on top of a 'build'
+ * action, that will immediately start once the player will be in contact
+ * with the target building
  */
-func (p *Player) Build(b game.Building) {
-	log.Debug("Player.Build")
+func (p *Player) Build(b game.Building, path math.Path) {
+	// empty action stack, this cancel any current action(s)
+	p.emptyActions()
+	// fill the player action stack
+	p.actions.Push(actions.New(actions.BuildId, actions.Build{}))
+	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
+	p.SetPath(path)
 }
 
 /*
- * Repair makes the player initiates a repair action
+ * Repair sets the player as 'moving' and defines its macro-path, taking him to
+ * the building to repair.
  *
- * It cancels any high-level actions the player may already be doing and set
- * the player as waiting for the calculated path to join the building point.
- * At destination, it immediately repairs the building until its completion.
+ * The player action stack is emptied, effectively cancelling any previous
+ * player action, and replaced with a 'move' action on top of a 'repair'
+ * action, that will immediately start once the player will be in contact
+ * with the target building
  */
-func (p *Player) Repair(b game.Building) {
-	log.Debug("Player.Repair")
+func (p *Player) Repair(b game.Building, path math.Path) {
+	// empty action stack, this cancel any current action(s)
+	p.emptyActions()
+	// fill the player action stack
+	p.actions.Push(actions.New(actions.BuildId, actions.Build{}))
+	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
 	p.curBuilding = b
 	p.lastBPinduced = time.Time{}
+	p.SetPath(path)
 }
 
 func (p *Player) findPath(dst math.Vec2) {
@@ -329,13 +341,35 @@ func (p *Player) Attack(e game.Entity) {
 
 }
 
-func (p *Player) Operate(e game.Object) {
-	log.Debug("Player.Operate")
-	switch e.Type() {
+/*
+ * Operate sets the player as 'moving' and defines its macro-path, taking him to
+ * the interactive object to operate.
+ *
+ * The player action stack is emptied, effectively cancelling any previous
+ * player action, and replaced with a 'move' action on top of an 'operate'
+ * action, that will immediately start once the player will be in contact
+ * with the target interactive object.
+ */
+func (p *Player) Operate(o game.Object, path math.Path) {
+	// empty action stack, this cancel any current action(s)
+	p.emptyActions()
+
+	var action *actions.Action
+
+	switch o.Type() {
 	case game.CoffeeMachineObject:
-		p.curObject = e
+		action = actions.New(actions.DrinkCoffeeId, actions.DrinkCoffee{})
 		p.lastCoffeeDrink = time.Time{}
+	default:
+		log.WithField("type", o.Type).Error("Player.Operate not implemented for this type of game object")
+		return
 	}
+
+	// fill the player action stack
+	p.actions.Push(action)
+	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
+	p.curObject = o
+	p.SetPath(path)
 }
 
 /*
