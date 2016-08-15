@@ -28,9 +28,9 @@ var _entityTypes = map[string]EntityType{}
  *
  * It decodes it into a MapData struct
  */
-func LoadMapData(pkg resource.SurvivelerPackage) (*MapData, error) {
+func LoadMapData(pkg resource.Package) (*MapData, error) {
 	md := new(MapData)
-	err := pkg.LoadJSON(mapURI, &md)
+	err := resource.LoadJSON(pkg, mapURI, &md)
 	return md, err
 }
 
@@ -39,13 +39,13 @@ func LoadMapData(pkg resource.SurvivelerPackage) (*MapData, error) {
  *
  * It decodes it into an EntititesData struct
  */
-func LoadEntitiesData(pkg resource.SurvivelerPackage) (*EntitiesData, error) {
+func LoadEntitiesData(pkg resource.Package) (*EntitiesData, error) {
 	md := new(EntitiesData)
-	err := pkg.LoadJSON(entitiesURI, &md)
+	err := resource.LoadJSON(pkg, entitiesURI, &md)
 	return md, err
 }
 
-func newGameData(pkg resource.SurvivelerPackage) (*gameData, error) {
+func newGameData(pkg resource.Package) (*gameData, error) {
 	var (
 		gd  *gameData
 		err error
@@ -67,7 +67,7 @@ func newGameData(pkg resource.SurvivelerPackage) (*gameData, error) {
 		return nil, errors.New("'matrix' field not found in the map asset")
 	}
 	var worldBmp image.Image
-	if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
+	if worldBmp, err = resource.LoadBitmap(pkg, fname); err == nil {
 		if gd.world, err =
 			NewWorld(worldBmp, gd.mapData.ScaleFactor); err != nil {
 			return nil, err
@@ -93,7 +93,7 @@ func newGameData(pkg resource.SurvivelerPackage) (*gameData, error) {
 	}
 	for name, uri := range em.Entities {
 		var entityData EntityData
-		err = pkg.LoadJSON(uri, &entityData)
+		err = resource.LoadJSON(pkg, uri, &entityData)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +107,7 @@ func newGameData(pkg resource.SurvivelerPackage) (*gameData, error) {
 	}
 	for name, uri := range em.Buildings {
 		var buildingData BuildingData
-		err = pkg.LoadJSON(uri, &buildingData)
+		err = resource.LoadJSON(pkg, uri, &buildingData)
 		if err != nil {
 			return nil, err
 		}

@@ -23,20 +23,20 @@ import (
  * Game is the main game structure, entry and exit points
  */
 type Game struct {
-	cfg          Config                     // configuration settings
-	server       *protocol.Server           // server core
-	clients      *protocol.ClientRegistry   // the client registry
-	assets       resource.SurvivelerPackage // game assets package
-	ticker       time.Ticker                // the main tick source
-	telnet       *protocol.TelnetServer     // if enabled, the telnet server
-	telnetReq    chan TelnetRequest         // channel for game related telnet commands
-	telnetDone   chan error                 // signals the end of a telnet request
-	quitChan     chan struct{}              // to signal the game loop goroutine it must end
-	eventManager *events.Manager            // event manager
-	wg           sync.WaitGroup             // wait for the different goroutine to finish
-	state        *GameState                 // the game state
-	pathfinder   *Pathfinder                // pathfinder
-	ai           *AIDirector                // AI director
+	cfg          Config                   // configuration settings
+	server       *protocol.Server         // server core
+	clients      *protocol.ClientRegistry // the client registry
+	assets       resource.Package         // game assets package
+	ticker       time.Ticker              // the main tick source
+	telnet       *protocol.TelnetServer   // if enabled, the telnet server
+	telnetReq    chan TelnetRequest       // channel for game related telnet commands
+	telnetDone   chan error               // signals the end of a telnet request
+	quitChan     chan struct{}            // to signal the game loop goroutine it must end
+	eventManager *events.Manager          // event manager
+	wg           sync.WaitGroup           // wait for the different goroutine to finish
+	state        *GameState               // the game state
+	pathfinder   *Pathfinder              // pathfinder
+	ai           *AIDirector              // AI director
 	gameData     *gameData
 }
 
@@ -137,7 +137,7 @@ func (g *Game) loadAssets(path string) (*gameData, error) {
 	if len(path) == 0 {
 		return nil, fmt.Errorf("can't start without a specified assets path")
 	}
-	g.assets = resource.NewSurvivelerPackage(g.cfg.AssetsPath)
+	g.assets = resource.OpenAssetsFolder(g.cfg.AssetsPath)
 
 	var err error
 	// load game assets
