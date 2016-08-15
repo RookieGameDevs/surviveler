@@ -5,91 +5,62 @@
 package surviveler
 
 import (
-	"fmt"
 	"server/entities"
 	"server/game"
 )
 
 /*
- * isPlayer checks if given entity exists and is a player
+ * getPlayer returns the Player associated to given ID.
+ *
+ * It returns nil if ID doesn't exist or the entity is not a Player.
  */
-func (gs *gamestate) isPlayer(id uint32) error {
-	if e, ok := gs.entities[id]; !ok {
-		return fmt.Errorf("unknown entity id: %v", id)
-	} else if _, ok = e.(*entities.Player); !ok {
-		return fmt.Errorf("entity %v is not a player", id)
+func (gs *gamestate) getPlayer(ID uint32) *entities.Player {
+	if e, ok := gs.entities[ID]; ok {
+		if p, ok := e.(*entities.Player); ok {
+			return p
+		}
 	}
 	return nil
 }
 
 /*
- * isZombie checks if given entity exists and is a zombie
+ * getZombie returns the Zombie associated to given ID.
+ *
+ * It returns nil if ID doesn't exist or the entity is not a Zombie.
  */
-func (gs *gamestate) isZombie(id uint32) error {
-	if e, ok := gs.entities[id]; !ok {
-		return fmt.Errorf("unknown entity id: %v", id)
-	} else if _, ok = e.(*entities.Zombie); !ok {
-		return fmt.Errorf("entity %v is not a zombie", id)
+func (gs *gamestate) getZombie(ID uint32) *entities.Zombie {
+	if e, ok := gs.entities[ID]; ok {
+		if z, ok := e.(*entities.Zombie); ok {
+			return z
+		}
 	}
 	return nil
 }
 
 /*
- * isBuilding checks if given entity exists and is a building
+ * getZombie returns the Object associated to given ID.
+ *
+ * It returns nil if ID doesn't exist or the entity is not an Object.
  */
-func (gs *gamestate) isBuilding(id uint32) error {
-	if e, ok := gs.entities[id]; !ok {
-		return fmt.Errorf("unknown entity id: %v", id)
-	} else if _, ok = e.(game.Building); !ok {
-		return fmt.Errorf("entity %v is not a building", id)
+func (gs *gamestate) getObject(ID uint32) game.Object {
+	if e, ok := gs.entities[ID]; ok {
+		if o, ok := e.(game.Object); ok {
+			return o
+		}
 	}
 	return nil
 }
 
 /*
- * getPlayer returns the Player associated to given id.
+ * getBuilding returns the Building associated to given ID.
  *
- * It returns nil in case of error
+ * It returns nil if ID doesn't exist or the entity is not a Building.
  */
-func (gs *gamestate) getPlayer(id uint32) (p *entities.Player) {
-	if e, ok := gs.entities[id]; ok {
-		p, ok = e.(*entities.Player)
+func (gs *gamestate) getBuilding(ID uint32) game.Building {
+	if e, ok := gs.entities[ID]; ok {
+		if b, ok := e.(game.Building); ok {
+			return b
+		}
 	}
-	return
-}
-
-/*
- * getZombie returns the Zombie associated to given id.
- *
- * It returns nil in case of error
- */
-func (gs *gamestate) getZombie(id uint32) (z *entities.Zombie) {
-	if e, ok := gs.entities[id]; ok {
-		z, ok = e.(*entities.Zombie)
-	}
-	return
-}
-
-/*
- * getObject returns the Object associated to given id.
- *
- * It returns nil in case of error
- */
-func (gs *gamestate) getObject(id uint32) (z game.Object) {
-	if e, ok := gs.entities[id]; ok {
-		z, ok = e.(game.Object)
-	}
-	return
-}
-
-/*
- * getBuilding returns the Building associated to given id.
- *
- * It returns nil in case of error
- */
-func (gs *gamestate) getBuilding(id uint32) (b game.Building) {
-	if e, ok := gs.entities[id]; ok {
-		b, ok = e.(game.Building)
-	}
-	return
+	return nil
 }

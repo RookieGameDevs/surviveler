@@ -342,8 +342,8 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	case TnMoveEntityId:
 
 		move := msg.Content.(*TnMoveEntity)
-		if err := g.state.isPlayer(move.Id); err != nil {
-			return err
+		if g.state.getPlayer(move.Id) == nil {
+			return fmt.Errorf("id %+v doesn't exist or isn't a player", move.Id)
 		}
 
 		// emit a PlayerMove event
@@ -370,8 +370,8 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	case TnBuildId:
 
 		build := msg.Content.(*TnBuild)
-		if err := g.state.isPlayer(build.Id); err != nil {
-			return err
+		if g.state.getPlayer(build.Id) == nil {
+			return fmt.Errorf("id %+v doesn't exist or isn't a player", build.Id)
 		}
 		// TODO: hard-coded building type check for now
 		if build.Type != 0 {
@@ -389,11 +389,11 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	case TnRepairId:
 
 		repair := msg.Content.(*TnRepair)
-		if err := g.state.isPlayer(repair.Id); err != nil {
-			return err
+		if g.state.getPlayer(repair.Id) == nil {
+			return fmt.Errorf("id %+v doesn't exist or isn't a player", repair.Id)
 		}
-		if err := g.state.isBuilding(repair.BuildingId); err != nil {
-			return err
+		if g.state.getBuilding(repair.BuildingId) == nil {
+			return fmt.Errorf("id %+v doesn't exist or isn't a building", repair.BuildingId)
 		}
 		// emit a PlayerRepair event
 		evt := events.NewEvent(events.PlayerRepairId, events.PlayerRepair{
@@ -405,8 +405,8 @@ func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
 	case TnDestroyId:
 
 		destroy := msg.Content.(*TnDestroy)
-		if err := g.state.isBuilding(destroy.Id); err != nil {
-			return err
+		if g.state.getBuilding(destroy.Id) == nil {
+			return fmt.Errorf("id %+v doesn't exist or isn't a building", destroy.Id)
 		}
 		// remove the building
 		g.state.RemoveEntity(destroy.Id)
