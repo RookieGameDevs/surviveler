@@ -1,89 +1,83 @@
 /*
- * Surviveler resource package
- * surviveler resource package implementation
+ * Resource package
+ * resource package implementation
  */
 package resource
 
 import (
-	"encoding/json"
 	"fmt"
-	"image"
 	"io"
 	"os"
 	"path"
+)
 
-	"golang.org/x/image/bmp"
+// Type indicates a type of resource
+type Type uint
+
+const (
+	Unknown Type = iota // not to be used
+	File                // File if resource if a File
+	Folder              // Folder is resource if a folder
 )
 
 /*
- * SurvivelerPackage represents a package of data, resource files and assets for
- * the game Surviveler, grouped into a package.
-
- * A package is a basic filesystem folder, a resource is a file in that folder,
- * and the resource uri is the path of this resource, relative to the package
- * root folder.
- */
-type SurvivelerPackage struct {
-	root string // package root folder path
-}
-
-/*
- * NewSurvivelerPackage opens the package at the specified path
- */
-func NewSurvivelerPackage(path string) SurvivelerPackage {
-	return SurvivelerPackage{root: path}
-}
-
-/*
- * Exists check if an uri exists inside a package
+ * Package represents a container of resources (folders or binary/text files).
  *
- * The specified URI must represent a file, not a directory
+ * A package is the high level abstraction that represents the container, and a
+ * way to read its content. The resources contained are accessed through their
+ * URI, that is the relative path of the given resource, from the package root.
  */
-func (sp SurvivelerPackage) Exists(uri string) bool {
-	p := path.Join(sp.root, uri)
-	fi, err := os.Stat(p)
-	return err == nil && !fi.IsDir()
+type Package interface {
+
+	// GetReader returns a reader of the resource at specified URI.
+	//
+	// Is is the caller's responsibility to close the reader if necessary.
+	GetReader(URI string) (io.ReadCloser, error)
+
+	// Exists checks if an uri exists inside the package.
+	//
+	// It returns a boolean indicating the existence of the specified URI and a
+	// Type value indicating the resource type.
+	Exists(URI string) (bool, Type)
 }
 
 /*
- * getReader obtains a ready to use reader, for the specified uri.
- *
- * It the responsibility of the caller to close the returned ReadCloser once
- * done
+ * AssetsFolder is a simple filesystem folder.
  */
-func (sp SurvivelerPackage) getReader(uri string) (io.ReadCloser, error) {
-	if !sp.Exists(uri) {
-		return nil, fmt.Errorf("resource not found: %s", uri)
+type AssetsFolder struct {
+	root string // folder absolute path
+}
+
+// GetReader returns a reader of the resource at specified URI
+//
+// Is is the caller's responsibility to close the reader if necessary.
+func (af AssetsFolder) GetReader(URI string) (io.ReadCloser, error) {
+	if exists, _ := af.Exists(URI); !exists {
+		return nil, fmt.Errorf("'%s' not found in assets folder '%s'", URI, af.root)
 	}
-	p := path.Join(sp.root, uri)
+	p := path.Join(af.root, URI)
 	return os.Open(p)
 }
 
 /*
- * LoadJSON decodes a JSON resource, which location is specified by uri, into
- * an interface
+ * OpenAssetsFolder returns a new AssetsFolder, as a Package
  */
-func (sp SurvivelerPackage) LoadJSON(uri string, i interface{}) error {
-	if !sp.Exists(uri) {
-		uri = uri + "/data.json"
-	}
-	r, err := sp.getReader(uri)
-	if err != nil {
-		return err
-	}
-	defer r.Close()
-	decoder := json.NewDecoder(r)
-	return decoder.Decode(i)
+func OpenAssetsFolder(path string) Package {
+	return AssetsFolder{root: path}
 }
 
-/*
- * LoadBitmap loads and a bitmap image contained in a package.
- */
-func (sp SurvivelerPackage) LoadBitmap(uri string) (image.Image, error) {
-	r, err := sp.getReader(uri)
-	if err != nil {
-		return nil, err
+// Exists checks if an uri exists inside the package.
+//
+// It returns a boolean indicating the existence of the specified URI and a
+// Type value indicating the resource type.
+func (af AssetsFolder) Exists(URI string) (bool, Type) {
+	p := path.Join(af.root, URI)
+	nfo, err := os.Stat(p)
+	if err == nil {
+		if nfo.IsDir() {
+			return true, Folder
+		}
+		return true, File
 	}
-	defer r.Close()
-	return bmp.Decode(r)
+	return false, Unknown
 }
