@@ -1,8 +1,8 @@
 /*
- * Surviveler entity package
- * player
+ * Surviveler package
+ * player entities
  */
-package entities
+package surviveler
 
 import (
 	"server/actions"

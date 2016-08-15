@@ -1,8 +1,8 @@
 /*
- * Surviveler entity package
- * types definitions
+ * Surviveler package
+ * movable type definition
  */
-package entities
+package surviveler
 
 import (
 	gomath "math"

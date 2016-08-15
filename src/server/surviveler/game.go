@@ -1,5 +1,5 @@
 /*
- * Surviveler game package
+ * Surviveler package
  * game entry & exit points
  */
 package surviveler

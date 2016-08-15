@@ -1,8 +1,11 @@
+/*
+ * Surviveler package
+ * event handlers
+ */
 package surviveler
 
 import (
 	"math/rand"
-	"server/entities"
 	"server/events"
 	"server/game"
 	"server/math"
@@ -51,7 +54,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 	}
 
 	// instantiate player with settings from the resources pkg
-	p := entities.NewPlayer(gs.game, org, game.EntityType(evt.Type),
+	p := NewPlayer(gs.game, org, game.EntityType(evt.Type),
 		float64(entityData.Speed), float64(entityData.TotalHP),
 		uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
 	p.SetId(evt.Id)

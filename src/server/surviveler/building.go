@@ -1,8 +1,8 @@
 /*
- * Surviveler entity package
+ * Surviveler game package
  * buildings
  */
-package entities
+package surviveler
 
 import (
 	"server/events"

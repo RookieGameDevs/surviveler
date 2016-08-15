@@ -1,5 +1,5 @@
 /*
- * Surviveler game package
+ * Surviveler package
  * game data: loading from assets
  */
 package surviveler

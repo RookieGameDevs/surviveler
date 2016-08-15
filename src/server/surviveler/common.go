@@ -1,11 +1,10 @@
 /*
- * Surviveler game package
+ * Surviveler package
  * common helper, utility functions
  */
 package surviveler
 
 import (
-	"server/entities"
 	"server/game"
 )
 
@@ -14,9 +13,9 @@ import (
  *
  * It returns nil if ID doesn't exist or the entity is not a Player.
  */
-func (gs *gamestate) getPlayer(ID uint32) *entities.Player {
+func (gs *gamestate) getPlayer(ID uint32) *Player {
 	if e, ok := gs.entities[ID]; ok {
-		if p, ok := e.(*entities.Player); ok {
+		if p, ok := e.(*Player); ok {
 			return p
 		}
 	}
@@ -28,9 +27,9 @@ func (gs *gamestate) getPlayer(ID uint32) *entities.Player {
  *
  * It returns nil if ID doesn't exist or the entity is not a Zombie.
  */
-func (gs *gamestate) getZombie(ID uint32) *entities.Zombie {
+func (gs *gamestate) getZombie(ID uint32) *Zombie {
 	if e, ok := gs.entities[ID]; ok {
-		if z, ok := e.(*entities.Zombie); ok {
+		if z, ok := e.(*Zombie); ok {
 			return z
 		}
 	}

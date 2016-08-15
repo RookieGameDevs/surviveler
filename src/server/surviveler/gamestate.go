@@ -1,12 +1,11 @@
 /*
- * Surviveler game package
+ * Surviveler package
  * game state structure
  */
 
 package surviveler
 
 import (
-	"server/entities"
 	"server/game"
 	"server/math"
 	"server/messages"
@@ -51,7 +50,7 @@ func (gs *gamestate) init(gameData *gameData) error {
 	for _, objdata := range gs.gameData.mapData.UsableObjects {
 		switch game.EntityType(objdata.Type) {
 		case game.CoffeeMachineObject:
-			obj := entities.NewCoffeeMachine(gs.game, objdata.Pos, game.CoffeeMachineObject)
+			obj := NewCoffeeMachine(gs.game, objdata.Pos, game.CoffeeMachineObject)
 			gs.AddEntity(obj)
 		}
 	}
@@ -138,10 +137,10 @@ func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Build
 	switch t {
 	case game.BarricadeBuilding:
 		data := gs.BuildingData(t)
-		building = entities.NewBarricade(gs.game, pos, data.TotHp, data.BuildingPowerRec)
+		building = NewBarricade(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	case game.MgTurretBuilding:
 		data := gs.BuildingData(t)
-		building = entities.NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
+		building = NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	default:
 		log.WithField("type", t).Error("Can't create building, unsupported type")
 	}

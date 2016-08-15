@@ -1,12 +1,11 @@
 /*
- * Surviveler game package
+ * Surviveler package
  * AI director
  */
 package surviveler
 
 import (
 	"math/rand"
-	"server/entities"
 	"server/events"
 	"server/game"
 	"server/math"
@@ -99,7 +98,7 @@ func (ai *AIDirector) addZombie(org math.Vec2) {
 	combatPower := entityData.CombatPower
 	totHP := float64(entityData.TotalHP)
 	ai.game.State().AddEntity(
-		entities.NewZombie(ai.game, org, speed, combatPower, totHP))
+		NewZombie(ai.game, org, speed, combatPower, totHP))
 }
 
 /*
