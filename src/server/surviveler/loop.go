@@ -23,7 +23,7 @@ import (
  * - gamestate tick -> pack and broadcast the current game state
  * - telnet request -> perform a game state related telnet request
  */
-func (g *survivelerGame) loop() error {
+func (g *Game) loop() error {
 	// will tick when it's time to send the gamestate to the clients
 	sendTickChan := time.NewTicker(
 		time.Millisecond * time.Duration(g.cfg.SendTickPeriod)).C

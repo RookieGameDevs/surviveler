@@ -17,7 +17,7 @@ import (
  *
  * The callback function fn is called if a path is found.
  */
-func (gs *gamestate) runPathFinder(org, dst math.Vec2, fn func(path math.Path)) {
+func (gs *GameState) runPathFinder(org, dst math.Vec2, fn func(path math.Path)) {
 	ctxLog := log.WithFields(log.Fields{"org": org, "dst": dst})
 	// run the macro-pathfinder
 	path, _, found := gs.game.Pathfinder().FindPath(org, dst)
@@ -37,7 +37,7 @@ func (gs *gamestate) runPathFinder(org, dst math.Vec2, fn func(path math.Path)) 
 /*
  * event handler for PlayerJoin events
  */
-func (gs *gamestate) onPlayerJoin(event *events.Event) {
+func (gs *GameState) onPlayerJoin(event *events.Event) {
 	evt := event.Payload.(events.PlayerJoin)
 	// we have a new player, his id will be its unique connection id
 	log.WithField("clientId", evt.Id).Info("Received a PlayerJoin event")
@@ -63,7 +63,7 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 /*
  * event handler for PlayerLeave events
  */
-func (gs *gamestate) onPlayerLeave(event *events.Event) {
+func (gs *GameState) onPlayerLeave(event *events.Event) {
 	evt := event.Payload.(events.PlayerLeave)
 	// one player less, remove him from the map
 	log.WithField("clientId", evt.Id).Info("We have one less player")
@@ -73,7 +73,7 @@ func (gs *gamestate) onPlayerLeave(event *events.Event) {
 /*
  * event handler for PlayerMove events
  */
-func (gs *gamestate) onPlayerMove(event *events.Event) {
+func (gs *GameState) onPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMove)
 	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
 
@@ -100,7 +100,7 @@ func (gs *gamestate) onPlayerMove(event *events.Event) {
 /*
  * event handler for PlayerBuild events
  */
-func (gs *gamestate) onPlayerBuild(event *events.Event) {
+func (gs *GameState) onPlayerBuild(event *events.Event) {
 	evt := event.Payload.(events.PlayerBuild)
 	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
 
@@ -153,7 +153,7 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 /*
  * event handler for PlayerRepair events
  */
-func (gs *gamestate) onPlayerRepair(event *events.Event) {
+func (gs *GameState) onPlayerRepair(event *events.Event) {
 	evt := event.Payload.(events.PlayerRepair)
 
 	ctxLog := log.WithField("evt", evt)
@@ -180,7 +180,7 @@ func (gs *gamestate) onPlayerRepair(event *events.Event) {
 /*
  * event handler for PlayerAttack events
  */
-func (gs *gamestate) onPlayerAttack(event *events.Event) {
+func (gs *GameState) onPlayerAttack(event *events.Event) {
 	evt := event.Payload.(events.PlayerAttack)
 	log.WithField("evt", evt).Info("Received PlayerAttack event")
 
@@ -196,7 +196,7 @@ func (gs *gamestate) onPlayerAttack(event *events.Event) {
 /*
  * event handler for PlayerOperate events
  */
-func (gs *gamestate) onPlayerOperate(event *events.Event) {
+func (gs *GameState) onPlayerOperate(event *events.Event) {
 	evt := event.Payload.(events.PlayerOperate)
 
 	ctxLog := log.WithField("evt", evt)
@@ -262,7 +262,7 @@ func (gs *gamestate) onPlayerOperate(event *events.Event) {
 /*
  * event handler for PlayerDeath events
  */
-func (gs *gamestate) onPlayerDeath(event *events.Event) {
+func (gs *GameState) onPlayerDeath(event *events.Event) {
 	evt := event.Payload.(events.PlayerDeath)
 	log.WithField("evt", evt).Info("Received PlayerDeath event")
 
@@ -277,7 +277,7 @@ func (gs *gamestate) onPlayerDeath(event *events.Event) {
 /*
  * event handler for ZombieDeath events
  */
-func (gs *gamestate) onZombieDeath(event *events.Event) {
+func (gs *GameState) onZombieDeath(event *events.Event) {
 	evt := event.Payload.(events.ZombieDeath)
 	log.WithField("evt", evt).Info("Received ZombieDeath event")
 
@@ -291,7 +291,7 @@ func (gs *gamestate) onZombieDeath(event *events.Event) {
 /*
  * event handler for BuildingDestroy events
  */
-func (gs *gamestate) onBuildingDestroy(event *events.Event) {
+func (gs *GameState) onBuildingDestroy(event *events.Event) {
 	evt := event.Payload.(events.BuildingDestroy)
 	log.WithField("evt", evt).Info("Received BuildingDestroy event")
 

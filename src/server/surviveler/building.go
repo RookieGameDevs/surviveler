@@ -24,7 +24,7 @@ type BuildingBase struct {
 	requiredBP   uint16  // required build power to finish construction
 	curBP        uint16  // build power already induced into the construction
 	id           uint32
-	g            Game
+	g            *Game
 	pos          math.Vec2
 	buildingType EntityType
 	isBuilt      bool
@@ -111,7 +111,7 @@ type Barricade struct {
 /*
  * NewBarricade creates a new barricade
  */
-func NewBarricade(g Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewBarricade(g *Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           InvalidID,
@@ -160,7 +160,7 @@ type MgTurret struct {
 /*
  * NewMgTurret creates a new machine-gun turret
  */
-func NewMgTurret(g Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewMgTurret(g *Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           InvalidID,

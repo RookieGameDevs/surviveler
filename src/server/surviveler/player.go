@@ -36,8 +36,8 @@ type Player struct {
 	curBuilding     Building      // building in construction
 	target          Entity
 	curObject       Object
-	g               Game
-	gamestate       GameState
+	g               *Game
+	gamestate       *GameState
 	world           *World
 	buildPower      uint16
 	combatPower     uint16
@@ -50,7 +50,7 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(g Game, spawn math.Vec2, entityType EntityType,
+func NewPlayer(g *Game, spawn math.Vec2, entityType EntityType,
 	speed, totalHP float64, buildPower, combatPower uint16) *Player {
 	p := &Player{
 		entityType:  entityType,

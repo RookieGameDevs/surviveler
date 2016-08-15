@@ -20,9 +20,9 @@ import (
 )
 
 /*
- * survivelerGame is the main game structure, entry and exit points
+ * Game is the main game structure, entry and exit points
  */
-type survivelerGame struct {
+type Game struct {
 	cfg          Config                     // configuration settings
 	server       *protocol.Server           // server core
 	clients      *protocol.ClientRegistry   // the client registry
@@ -34,7 +34,7 @@ type survivelerGame struct {
 	quitChan     chan struct{}              // to signal the game loop goroutine it must end
 	eventManager *events.Manager            // event manager
 	wg           sync.WaitGroup             // wait for the different goroutine to finish
-	state        *gamestate                 // the game state
+	state        *GameState                 // the game state
 	pathfinder   *Pathfinder                // pathfinder
 	ai           *AIDirector                // AI director
 	gameData     *gameData
@@ -43,8 +43,8 @@ type survivelerGame struct {
 /*
  * Setup initializes the different game subsystems
  */
-func NewGame(cfg Config) Game {
-	g := new(survivelerGame)
+func NewGame(cfg Config) *Game {
+	g := new(Game)
 
 	// copy configuration
 	g.cfg = cfg
@@ -133,7 +133,7 @@ func NewGame(cfg Config) Game {
 /*
  * loadAssets load the assets package
  */
-func (g *survivelerGame) loadAssets(path string) (*gameData, error) {
+func (g *Game) loadAssets(path string) (*gameData, error) {
 	if len(path) == 0 {
 		return nil, fmt.Errorf("can't start without a specified assets path")
 	}
@@ -153,7 +153,7 @@ func (g *survivelerGame) loadAssets(path string) (*gameData, error) {
 /*
  * Start starts the server and game loops
  */
-func (g *survivelerGame) Start() {
+func (g *Game) Start() {
 	// start everything
 	g.server.Start()
 
@@ -173,23 +173,23 @@ func (g *survivelerGame) Start() {
 	g.stop()
 }
 
-func (g *survivelerGame) State() GameState {
+func (g *Game) State() *GameState {
 	return g.state
 }
 
-func (g *survivelerGame) QuitChan() chan struct{} {
+func (g *Game) QuitChan() chan struct{} {
 	return g.quitChan
 }
 
-func (g *survivelerGame) PostEvent(evt *events.Event) {
+func (g *Game) PostEvent(evt *events.Event) {
 	g.eventManager.PostEvent(evt)
 }
 
-func (g *survivelerGame) Pathfinder() *Pathfinder {
+func (g *Game) Pathfinder() *Pathfinder {
 	return g.pathfinder
 }
 
-func (g *survivelerGame) WaitGroup() *sync.WaitGroup {
+func (g *Game) WaitGroup() *sync.WaitGroup {
 	return &g.wg
 }
 
@@ -200,7 +200,7 @@ func (g *survivelerGame) WaitGroup() *sync.WaitGroup {
  * blocking call to Stop that let them cleanups the various goroutines and
  * connections still opened.
  */
-func (g *survivelerGame) stop() {
+func (g *Game) stop() {
 	g.server.Stop()
 	if g.telnet != nil {
 		g.telnet.Stop()

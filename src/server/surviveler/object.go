@@ -22,14 +22,14 @@ type CoffeeMachine struct {
 	objectType EntityType
 	operatedBy Entity
 	lastHeal   time.Time
-	g          Game
-	gamestate  GameState
+	g          *Game
+	gamestate  *GameState
 }
 
 /*
  * NewCoffeeMachine creates a new object and set its initial position
  */
-func NewCoffeeMachine(g Game, pos math.Vec2, objectType EntityType) *CoffeeMachine {
+func NewCoffeeMachine(g *Game, pos math.Vec2, objectType EntityType) *CoffeeMachine {
 	cm := new(CoffeeMachine)
 	cm.pos = pos
 	cm.objectType = objectType

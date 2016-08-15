@@ -11,7 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-func (g *survivelerGame) registerMsgHandlers() {
+func (g *Game) registerMsgHandlers() {
 	g.server.RegisterMsgHandler(messages.MoveId, g.handleMove)
 	g.server.RegisterMsgHandler(messages.BuildId, g.handleBuild)
 	g.server.RegisterMsgHandler(messages.RepairId, g.handleRepair)
@@ -22,7 +22,7 @@ func (g *survivelerGame) registerMsgHandlers() {
 /*
  * handleMove processes a Move message and fires a PlayerMove event
  */
-func (g *survivelerGame) handleMove(c *network.Conn, msg interface{}) error {
+func (g *Game) handleMove(c *network.Conn, msg interface{}) error {
 	move := msg.(messages.Move)
 	log.WithField("msg", move).Info("Move message")
 
@@ -39,7 +39,7 @@ func (g *survivelerGame) handleMove(c *network.Conn, msg interface{}) error {
 /*
  * handleBuild processes a Build message and fires a PlayerBuild event
  */
-func (g *survivelerGame) handleBuild(c *network.Conn, msg interface{}) error {
+func (g *Game) handleBuild(c *network.Conn, msg interface{}) error {
 	build := msg.(messages.Build)
 	log.WithField("msg", build).Info("Build message")
 
@@ -56,7 +56,7 @@ func (g *survivelerGame) handleBuild(c *network.Conn, msg interface{}) error {
 /*
  * handleRepair processes a Repair message and fires a PlayerRepair event
  */
-func (g *survivelerGame) handleRepair(c *network.Conn, msg interface{}) error {
+func (g *Game) handleRepair(c *network.Conn, msg interface{}) error {
 	repair := msg.(messages.Repair)
 	log.WithField("msg", repair).Info("Repair message")
 
@@ -72,7 +72,7 @@ func (g *survivelerGame) handleRepair(c *network.Conn, msg interface{}) error {
 /*
  * handleAttack processes a Attack message and fires a PlayerAttack event
  */
-func (g *survivelerGame) handleAttack(c *network.Conn, msg interface{}) error {
+func (g *Game) handleAttack(c *network.Conn, msg interface{}) error {
 	attack := msg.(messages.Attack)
 	log.WithField("msg", attack).Info("Attack message")
 
@@ -88,7 +88,7 @@ func (g *survivelerGame) handleAttack(c *network.Conn, msg interface{}) error {
 /*
  * handleOperate processes a Operate message and fires a PlayerOperate event
  */
-func (g *survivelerGame) handleOperate(c *network.Conn, msg interface{}) error {
+func (g *Game) handleOperate(c *network.Conn, msg interface{}) error {
 	operate := msg.(messages.Operate)
 	log.WithField("msg", operate).Info("Operate message")
 

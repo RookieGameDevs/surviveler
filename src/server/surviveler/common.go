@@ -9,7 +9,7 @@ package surviveler
  *
  * It returns nil if ID doesn't exist or the entity is not a Player.
  */
-func (gs *gamestate) getPlayer(ID uint32) *Player {
+func (gs *GameState) getPlayer(ID uint32) *Player {
 	if e, ok := gs.entities[ID]; ok {
 		if p, ok := e.(*Player); ok {
 			return p
@@ -23,7 +23,7 @@ func (gs *gamestate) getPlayer(ID uint32) *Player {
  *
  * It returns nil if ID doesn't exist or the entity is not a Zombie.
  */
-func (gs *gamestate) getZombie(ID uint32) *Zombie {
+func (gs *GameState) getZombie(ID uint32) *Zombie {
 	if e, ok := gs.entities[ID]; ok {
 		if z, ok := e.(*Zombie); ok {
 			return z
@@ -37,7 +37,7 @@ func (gs *gamestate) getZombie(ID uint32) *Zombie {
  *
  * It returns nil if ID doesn't exist or the entity is not an Object.
  */
-func (gs *gamestate) getObject(ID uint32) Object {
+func (gs *GameState) getObject(ID uint32) Object {
 	if e, ok := gs.entities[ID]; ok {
 		if o, ok := e.(Object); ok {
 			return o
@@ -51,7 +51,7 @@ func (gs *gamestate) getObject(ID uint32) Object {
  *
  * It returns nil if ID doesn't exist or the entity is not a Building.
  */
-func (gs *gamestate) getBuilding(ID uint32) Building {
+func (gs *GameState) getBuilding(ID uint32) Building {
 	if e, ok := gs.entities[ID]; ok {
 		if b, ok := e.(Building); ok {
 			return b

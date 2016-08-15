@@ -175,7 +175,7 @@ func (req *TnSummonZombie) FromContext(c *cli.Context) error {
  * game loop, that will trigger the final handler (i.e the actual handler of the
  * request)
  */
-func (g *survivelerGame) registerTelnetHandlers() {
+func (g *Game) registerTelnetHandlers() {
 	// function that creates and returns telnet handlers on the fly
 	createHandler := func(req TelnetRequest) cli.ActionFunc {
 		return func(c *cli.Context) error {
@@ -311,7 +311,7 @@ func (g *survivelerGame) registerTelnetHandlers() {
  * perform non-blocking only operations, as the game logic is **not** updated
  * as long as the handler is in execution.
  */
-func (g *survivelerGame) telnetHandler(msg TelnetRequest) error {
+func (g *Game) telnetHandler(msg TelnetRequest) error {
 	log.WithField("msg", msg).Info("Handling a telnet game message")
 
 	switch msg.Type {

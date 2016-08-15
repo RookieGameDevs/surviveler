@@ -12,10 +12,10 @@ import (
 )
 
 type Pathfinder struct {
-	game Game
+	game *Game
 }
 
-func NewPathfinder(game Game) *Pathfinder {
+func NewPathfinder(game *Game) *Pathfinder {
 	return &Pathfinder{
 		game: game,
 	}

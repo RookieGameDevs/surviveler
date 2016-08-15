@@ -29,7 +29,7 @@ const (
 
 type Zombie struct {
 	id          uint32
-	g           Game
+	g           *Game
 	curState    int // current state
 	combatPower uint8
 	walkSpeed   float64
@@ -41,7 +41,7 @@ type Zombie struct {
 	*Movable
 }
 
-func NewZombie(g Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
+func NewZombie(g *Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
 	return &Zombie{
 		id:          InvalidID,
 		g:           g,

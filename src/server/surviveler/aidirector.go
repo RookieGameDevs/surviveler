@@ -34,7 +34,7 @@ const (
  *   time if no zombies are around
  */
 type AIDirector struct {
-	game         *survivelerGame
+	game         *Game
 	curTick      int
 	nightStart   int16
 	nightEnd     int16
@@ -45,7 +45,7 @@ type AIDirector struct {
 	entitiesData EntityDataDict
 }
 
-func NewAIDirector(game *survivelerGame, nightStart, nightEnd int16) *AIDirector {
+func NewAIDirector(game *Game, nightStart, nightEnd int16) *AIDirector {
 	log.Info("Initializing AI Director")
 	ai := new(AIDirector)
 	ai.game = game
