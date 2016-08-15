@@ -6,7 +6,6 @@
 package surviveler
 
 import (
-	"server/game"
 	"server/math"
 	"server/messages"
 	"sort"
@@ -22,18 +21,18 @@ var txCenter math.Vec2
  * gamestate is the structure that contains all the complete game state
  */
 type gamestate struct {
-	gameData    *gameData // game constants/resources coming from assets
-	gameTime    int16
-	entities    map[uint32]game.Entity // entities currently in game
-	numEntities uint32                 // number of entities currently present in the game
+	gameData    *gameData         // game constants/resources coming from assets
+	gameTime    int16             // current time in-game
+	entities    map[uint32]Entity // entities currently in game
+	numEntities uint32            // number of entities currently present in the game
 	game        *survivelerGame
-	world       *game.World
+	world       *World
 }
 
 func newGameState(g *survivelerGame, gameStart int16) *gamestate {
 	gs := new(gamestate)
 	gs.game = g
-	gs.entities = make(map[uint32]game.Entity)
+	gs.entities = make(map[uint32]Entity)
 	gs.gameTime = gameStart
 	return gs
 }
@@ -48,9 +47,9 @@ func (gs *gamestate) init(gameData *gameData) error {
 	gs.world = gameData.world
 
 	for _, objdata := range gs.gameData.mapData.UsableObjects {
-		switch game.EntityType(objdata.Type) {
-		case game.CoffeeMachineObject:
-			obj := NewCoffeeMachine(gs.game, objdata.Pos, game.CoffeeMachineObject)
+		switch EntityType(objdata.Type) {
+		case CoffeeMachineObject:
+			obj := NewCoffeeMachine(gs.game, objdata.Pos, CoffeeMachineObject)
 			gs.AddEntity(obj)
 		}
 	}
@@ -76,9 +75,9 @@ func (gs *gamestate) pack() *messages.GameState {
 
 	for id, ent := range gs.entities {
 		switch ent.(type) {
-		case game.Object:
+		case Object:
 			gsMsg.Objects[id] = ent.State()
-		case game.Building:
+		case Building:
 			gsMsg.Buildings[id] = ent.State()
 		default:
 			gsMsg.Entities[id] = ent.State()
@@ -95,11 +94,11 @@ func (gs *gamestate) allocEntityId() uint32 {
 	return gs.numEntities
 }
 
-func (gs *gamestate) World() *game.World {
+func (gs *gamestate) World() *World {
 	return gs.world
 }
 
-func (gs *gamestate) Entity(id uint32) game.Entity {
+func (gs *gamestate) Entity(id uint32) Entity {
 	if ent, ok := gs.entities[id]; ok == true {
 		return ent
 	}
@@ -112,9 +111,9 @@ func (gs *gamestate) Entity(id uint32) game.Entity {
  * It entity Id is InvalidID, an unique id is generated and assigned
  * to the entity
  */
-func (gs *gamestate) AddEntity(ent game.Entity) {
+func (gs *gamestate) AddEntity(ent Entity) {
 	id := ent.Id()
-	if id == game.InvalidID {
+	if id == InvalidID {
 		id = gs.allocEntityId()
 		ent.SetId(id)
 	}
@@ -132,13 +131,13 @@ func (gs *gamestate) RemoveEntity(id uint32) {
 	delete(gs.entities, id)
 }
 
-func (gs *gamestate) createBuilding(t game.EntityType, pos math.Vec2) game.Building {
-	var building game.Building
+func (gs *gamestate) createBuilding(t EntityType, pos math.Vec2) Building {
+	var building Building
 	switch t {
-	case game.BarricadeBuilding:
+	case BarricadeBuilding:
 		data := gs.BuildingData(t)
 		building = NewBarricade(gs.game, pos, data.TotHp, data.BuildingPowerRec)
-	case game.MgTurretBuilding:
+	case MgTurretBuilding:
 		data := gs.BuildingData(t)
 		building = NewMgTurret(gs.game, pos, data.TotHp, data.BuildingPowerRec)
 	default:
@@ -152,7 +151,7 @@ func (gs *gamestate) MapData() *MapData {
 	return gs.gameData.mapData
 }
 
-func (gs *gamestate) EntityData(et game.EntityType) *EntityData {
+func (gs *gamestate) EntityData(et EntityType) *EntityData {
 	entityData, ok := gs.gameData.entitiesData[et]
 	if !ok {
 		log.WithField("type", et).Error("No resource for this Entity Type")
@@ -160,7 +159,7 @@ func (gs *gamestate) EntityData(et game.EntityType) *EntityData {
 	return entityData
 }
 
-func (gs *gamestate) BuildingData(bt game.EntityType) *BuildingData {
+func (gs *gamestate) BuildingData(bt EntityType) *BuildingData {
 	buildingData, ok := gs.gameData.buildingsData[bt]
 	if !ok {
 		log.WithField("type", bt).Error("No resource for this Building Type")
@@ -173,7 +172,7 @@ func (gs *gamestate) GameTime() int16 {
 }
 
 type entityDist struct {
-	e game.Entity
+	e Entity
 	d float32
 }
 
@@ -192,7 +191,7 @@ func (c entityDistCollection) Swap(i, j int) {
 }
 
 func (gs *gamestate) NearestEntity(pos math.Vec2,
-	f game.EntityFilter) (game.Entity, float32) {
+	f EntityFilter) (Entity, float32) {
 	result := make(entityDistCollection, 0)
 	for _, ent := range gs.entities {
 		if f(ent) {

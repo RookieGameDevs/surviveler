@@ -1,9 +1,8 @@
 /*
- * Surviveler game package
- * grid world representation
+ * Surviveler package
+ * grid and tile definitions
  */
-
-package game
+package surviveler
 
 import (
 	"fmt"

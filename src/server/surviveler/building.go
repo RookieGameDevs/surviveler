@@ -6,7 +6,6 @@ package surviveler
 
 import (
 	"server/events"
-	"server/game"
 	"server/math"
 	"time"
 
@@ -25,13 +24,13 @@ type BuildingBase struct {
 	requiredBP   uint16  // required build power to finish construction
 	curBP        uint16  // build power already induced into the construction
 	id           uint32
-	g            game.Game
+	g            Game
 	pos          math.Vec2
-	buildingType game.EntityType
+	buildingType EntityType
 	isBuilt      bool
 }
 
-func (bb *BuildingBase) Type() game.EntityType {
+func (bb *BuildingBase) Type() EntityType {
 	return bb.buildingType
 }
 
@@ -52,8 +51,8 @@ func (bb *BuildingBase) BoundingBox() math.BoundingBox {
 	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
 }
 
-func (bb *BuildingBase) State() game.EntityState {
-	return game.BuildingState{
+func (bb *BuildingBase) State() EntityState {
+	return BuildingState{
 		Type:         bb.buildingType,
 		Xpos:         float32(bb.pos[0]),
 		Ypos:         float32(bb.pos[1]),
@@ -112,17 +111,17 @@ type Barricade struct {
 /*
  * NewBarricade creates a new barricade
  */
-func NewBarricade(g game.Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewBarricade(g Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
-			id:           game.InvalidID,
+			id:           InvalidID,
 			g:            g,
 			pos:          pos,
 			totalHP:      float64(totHP),
 			curHP:        1,
 			requiredBP:   reqBP,
 			curBP:        0,
-			buildingType: game.BarricadeBuilding,
+			buildingType: BarricadeBuilding,
 		},
 	}
 }
@@ -161,17 +160,17 @@ type MgTurret struct {
 /*
  * NewMgTurret creates a new machine-gun turret
  */
-func NewMgTurret(g game.Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewMgTurret(g Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
-			id:           game.InvalidID,
+			id:           InvalidID,
 			g:            g,
 			pos:          pos,
 			totalHP:      float64(totHP),
 			curHP:        1,
 			requiredBP:   reqBP,
 			curBP:        0,
-			buildingType: game.MgTurretBuilding,
+			buildingType: MgTurretBuilding,
 		},
 	}
 }

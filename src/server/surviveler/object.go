@@ -5,7 +5,6 @@
 package surviveler
 
 import (
-	"server/game"
 	"server/math"
 	"time"
 )
@@ -20,21 +19,21 @@ const (
 type CoffeeMachine struct {
 	id         uint32
 	pos        math.Vec2
-	objectType game.EntityType
-	operatedBy game.Entity
+	objectType EntityType
+	operatedBy Entity
 	lastHeal   time.Time
-	g          game.Game
-	gamestate  game.GameState
+	g          Game
+	gamestate  GameState
 }
 
 /*
  * NewCoffeeMachine creates a new object and set its initial position
  */
-func NewCoffeeMachine(g game.Game, pos math.Vec2, objectType game.EntityType) *CoffeeMachine {
+func NewCoffeeMachine(g Game, pos math.Vec2, objectType EntityType) *CoffeeMachine {
 	cm := new(CoffeeMachine)
 	cm.pos = pos
 	cm.objectType = objectType
-	cm.id = game.InvalidID
+	cm.id = InvalidID
 	cm.operatedBy = nil
 	cm.g = g
 	cm.gamestate = g.State()
@@ -50,18 +49,18 @@ func (cm *CoffeeMachine) SetId(id uint32) {
 	cm.id = id
 }
 
-func (cm *CoffeeMachine) Type() game.EntityType {
+func (cm *CoffeeMachine) Type() EntityType {
 	return cm.objectType
 }
 
-func (cm *CoffeeMachine) State() game.EntityState {
+func (cm *CoffeeMachine) State() EntityState {
 	var operatedById uint32
 	if cm.operatedBy == nil {
-		operatedById = game.InvalidID
+		operatedById = InvalidID
 	} else {
 		operatedById = cm.operatedBy.Id()
 	}
-	return game.ObjectState{
+	return ObjectState{
 		Type:       cm.objectType,
 		Xpos:       float32(cm.pos[0]),
 		Ypos:       float32(cm.pos[1]),
@@ -102,11 +101,11 @@ func (cm *CoffeeMachine) BoundingBox() math.BoundingBox {
 	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
 }
 
-func (cm *CoffeeMachine) OperatedBy() game.Entity {
+func (cm *CoffeeMachine) OperatedBy() Entity {
 	return cm.operatedBy
 }
 
-func (cm *CoffeeMachine) Operate(ent game.Entity) (res bool) {
+func (cm *CoffeeMachine) Operate(ent Entity) (res bool) {
 	res = true
 	if cm.operatedBy == nil {
 		cm.operatedBy = ent

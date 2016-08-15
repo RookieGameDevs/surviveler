@@ -3,7 +3,7 @@
 // Go Generic Containers
 // For more information see http://github.com/aurelien-rainone/go-gencon
 
-package game
+package surviveler
 
 type EntitySet struct {
 	set map[Entity]struct{}

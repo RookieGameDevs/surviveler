@@ -1,8 +1,8 @@
 /*
- * Surviveler game package
+ * Surviveler package
  * pathfinder implementation
  */
-package game
+package surviveler
 
 import (
 	"server/math"

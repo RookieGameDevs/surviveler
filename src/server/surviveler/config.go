@@ -1,8 +1,8 @@
 /*
- * Surviveler game package
+ * Surviveler package
  * configuration
  */
-package game
+package surviveler
 
 const DefaultLogLevel string = "Debug"
 

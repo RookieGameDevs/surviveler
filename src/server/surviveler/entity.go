@@ -1,7 +1,8 @@
 /*
- * Entity abstractions.
+ * Surviveler package
+ * entity interfaces and type definitions
  */
-package game
+package surviveler
 
 import (
 	gomath "math"

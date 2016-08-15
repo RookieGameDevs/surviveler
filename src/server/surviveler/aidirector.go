@@ -7,7 +7,6 @@ package surviveler
 import (
 	"math/rand"
 	"server/events"
-	"server/game"
 	"server/math"
 	"time"
 
@@ -89,7 +88,7 @@ func (ai *AIDirector) SummonZombie() {
 }
 
 func (ai *AIDirector) addZombie(org math.Vec2) {
-	entityData, ok := ai.entitiesData[game.ZombieEntity]
+	entityData, ok := ai.entitiesData[ZombieEntity]
 	if !ok {
 		log.Error("Can't create zombie, unsupported entity data type")
 		return

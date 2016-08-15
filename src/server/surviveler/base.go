@@ -1,4 +1,8 @@
-package game
+/*
+ * Surviveler package
+ * base interfaces
+ */
+package surviveler
 
 import (
 	"server/events"

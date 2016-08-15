@@ -1,8 +1,8 @@
 /*
- * Surviveler game package
- * utility
+ * Surviveler package
+ * common utilities
  */
-package game
+package surviveler
 
 import (
 	"fmt"

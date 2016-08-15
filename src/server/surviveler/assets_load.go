@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"server/game"
 	"server/resource"
 
 	log "github.com/Sirupsen/logrus"
@@ -22,7 +21,7 @@ const (
 
 // TODO: this map is hard-coded for now, but will be read from resources
 // in the future
-var _entityTypes = map[string]game.EntityType{}
+var _entityTypes = map[string]EntityType{}
 
 /*
  * LoadMapData loads the map data from the given package.
@@ -70,24 +69,24 @@ func newGameData(pkg resource.SurvivelerPackage) (*gameData, error) {
 	var worldBmp image.Image
 	if worldBmp, err = pkg.LoadBitmap(fname); err == nil {
 		if gd.world, err =
-			game.NewWorld(worldBmp, gd.mapData.ScaleFactor); err != nil {
+			NewWorld(worldBmp, gd.mapData.ScaleFactor); err != nil {
 			return nil, err
 		}
 	}
 
 	// TODO: this map is hard-coded for now, but will be read from resources
 	// in the future
-	_entityTypes["grunt"] = game.TankEntity
-	_entityTypes["programmer"] = game.ProgrammerEntity
-	_entityTypes["engineer"] = game.EngineerEntity
-	_entityTypes["zombie"] = game.ZombieEntity
-	_entityTypes["barricade"] = game.BarricadeBuilding
-	_entityTypes["mg_turret"] = game.MgTurretBuilding
+	_entityTypes["grunt"] = TankEntity
+	_entityTypes["programmer"] = ProgrammerEntity
+	_entityTypes["engineer"] = EngineerEntity
+	_entityTypes["zombie"] = ZombieEntity
+	_entityTypes["barricade"] = BarricadeBuilding
+	_entityTypes["mg_turret"] = MgTurretBuilding
 
 	// load entities URI map
 	var (
 		em *EntitiesData
-		t  game.EntityType
+		t  EntityType
 	)
 	if em, err = LoadEntitiesData(pkg); err != nil {
 		return nil, err
@@ -130,7 +129,7 @@ func newGameData(pkg resource.SurvivelerPackage) (*gameData, error) {
 /*
  * validateWorld performs some consistency and logical checks on the world
  */
-func (gd *gameData) validateWorld(world *game.World) error {
+func (gd *gameData) validateWorld(world *World) error {
 	// validate player spawn point
 	spawnPoints := gd.mapData.AIKeypoints.Spawn
 	for i := range spawnPoints.Players {
@@ -140,7 +139,7 @@ func (gd *gameData) validateWorld(world *game.World) error {
 				"player spawn point is out of bounds (%#v)",
 				spawnPoints.Players[i])
 		}
-		if pt.Kind&game.KindWalkable == 0 {
+		if pt.Kind&KindWalkable == 0 {
 			return fmt.Errorf(
 				"player spawn point is located on a non-walkable point: (%#v)",
 				*pt)
@@ -158,7 +157,7 @@ func (gd *gameData) validateWorld(world *game.World) error {
 				"a Zombie spawn point is out of bounds: (%#v)",
 				spawnPoints.Enemies[i])
 		}
-		if zt.Kind&game.KindWalkable == 0 {
+		if zt.Kind&KindWalkable == 0 {
 			return fmt.Errorf(
 				"a Zombie spawn point is located on a non-walkable tile: (%#v)",
 				*zt)

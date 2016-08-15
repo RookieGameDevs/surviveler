@@ -2,7 +2,7 @@
  * Surviveler game package
  * world representation
  */
-package game
+package surviveler
 
 import (
 	"bytes"

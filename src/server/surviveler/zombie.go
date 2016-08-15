@@ -7,7 +7,6 @@ package surviveler
 import (
 	"server/actions"
 	"server/events"
-	"server/game"
 	"server/math"
 	"time"
 )
@@ -30,21 +29,21 @@ const (
 
 type Zombie struct {
 	id          uint32
-	g           game.Game
+	g           Game
 	curState    int // current state
 	combatPower uint8
 	walkSpeed   float64
 	totalHP     float64
 	curHP       float64
 	timeAcc     time.Duration
-	target      game.Entity
-	world       *game.World
+	target      Entity
+	world       *World
 	*Movable
 }
 
-func NewZombie(g game.Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
+func NewZombie(g Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
 	return &Zombie{
-		id:          game.InvalidID,
+		id:          InvalidID,
 		g:           g,
 		curState:    lookingState,
 		walkSpeed:   walkSpeed,
@@ -149,7 +148,7 @@ func (z *Zombie) moveOrCollide(dt time.Duration) (state int) {
 	colliding := z.world.AABBSpatialQuery(nextBB)
 
 	var wouldCollide bool
-	colliding.Each(func(e game.Entity) bool {
+	colliding.Each(func(e Entity) bool {
 
 		if e == z {
 			// it's just me... pass
@@ -201,11 +200,11 @@ func (z *Zombie) Position() math.Vec2 {
 	return z.Pos
 }
 
-func (z *Zombie) Type() game.EntityType {
-	return game.ZombieEntity
+func (z *Zombie) Type() EntityType {
+	return ZombieEntity
 }
 
-func (z *Zombie) State() game.EntityState {
+func (z *Zombie) State() EntityState {
 	// first, compile the data depending on current action
 	var actionData interface{} = actions.Idle{}
 	var actionType actions.Type = actions.IdleId
@@ -230,8 +229,8 @@ func (z *Zombie) State() game.EntityState {
 		}
 	}
 
-	return game.MobileEntityState{
-		Type:         game.ZombieEntity,
+	return MobileEntityState{
+		Type:         ZombieEntity,
 		Xpos:         float32(z.Pos[0]),
 		Ypos:         float32(z.Pos[1]),
 		CurHitPoints: uint16(z.curHP),
@@ -240,11 +239,11 @@ func (z *Zombie) State() game.EntityState {
 	}
 }
 
-func (z *Zombie) findTarget() (game.Entity, float32) {
+func (z *Zombie) findTarget() (Entity, float32) {
 	ent, dist := z.g.State().NearestEntity(
 		z.Pos,
-		func(e game.Entity) bool {
-			return e.Type() != game.ZombieEntity
+		func(e Entity) bool {
+			return e.Type() != ZombieEntity
 		},
 	)
 	return ent, dist

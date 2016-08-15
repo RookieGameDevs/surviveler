@@ -7,7 +7,6 @@ package surviveler
 import (
 	"math/rand"
 	"server/events"
-	"server/game"
 	"server/math"
 
 	log "github.com/Sirupsen/logrus"
@@ -48,13 +47,13 @@ func (gs *gamestate) onPlayerJoin(event *events.Event) {
 		Players[rand.Intn(len(gs.gameData.mapData.AIKeypoints.Spawn.Players))]
 
 	// load entity data
-	entityData := gs.EntityData(game.EntityType(evt.Type))
+	entityData := gs.EntityData(EntityType(evt.Type))
 	if entityData == nil {
 		return
 	}
 
 	// instantiate player with settings from the resources pkg
-	p := NewPlayer(gs.game, org, game.EntityType(evt.Type),
+	p := NewPlayer(gs.game, org, EntityType(evt.Type),
 		float64(entityData.Speed), float64(entityData.TotalHP),
 		uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
 	p.SetId(evt.Id)
@@ -115,7 +114,7 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	}
 
 	// only engineers can build
-	if player.Type() != game.EngineerEntity {
+	if player.Type() != EngineerEntity {
 		gs.game.clients.Kick(evt.Id,
 			"illegal action: only engineers can build!")
 		return
@@ -131,8 +130,8 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 	}
 
 	// check if we can build here
-	tile.Entities.Each(func(ent game.Entity) bool {
-		if _, ok := ent.(game.Building); ok {
+	tile.Entities.Each(func(ent Entity) bool {
+		if _, ok := ent.(Building); ok {
 			ctxLog.Error("There's already a building on this tile")
 			return false
 		}
@@ -146,7 +145,7 @@ func (gs *gamestate) onPlayerBuild(event *events.Event) {
 
 	gs.runPathFinder(player.Position(), pos, func(p math.Path) {
 		// create the building, attach it to the tile
-		building := gs.createBuilding(game.EntityType(evt.Type), pos)
+		building := gs.createBuilding(EntityType(evt.Type), pos)
 		player.Build(building, p)
 	})
 }
@@ -216,7 +215,7 @@ func (gs *gamestate) onPlayerOperate(event *events.Event) {
 	}
 
 	var (
-		tile, draft *game.Tile
+		tile, draft *Tile
 		position    *math.Vec2
 	)
 

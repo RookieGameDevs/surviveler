@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"runtime"
 	"server/events"
-	"server/game"
 	"server/protocol"
 	"server/resource"
 	"sync"
@@ -24,7 +23,7 @@ import (
  * survivelerGame is the main game structure, entry and exit points
  */
 type survivelerGame struct {
-	cfg          game.Config                // configuration settings
+	cfg          Config                     // configuration settings
 	server       *protocol.Server           // server core
 	clients      *protocol.ClientRegistry   // the client registry
 	assets       resource.SurvivelerPackage // game assets package
@@ -36,7 +35,7 @@ type survivelerGame struct {
 	eventManager *events.Manager            // event manager
 	wg           sync.WaitGroup             // wait for the different goroutine to finish
 	state        *gamestate                 // the game state
-	pathfinder   *game.Pathfinder           // pathfinder
+	pathfinder   *Pathfinder                // pathfinder
 	ai           *AIDirector                // AI director
 	gameData     *gameData
 }
@@ -44,7 +43,7 @@ type survivelerGame struct {
 /*
  * Setup initializes the different game subsystems
  */
-func NewGame(cfg game.Config) game.Game {
+func NewGame(cfg Config) Game {
 	g := new(survivelerGame)
 
 	// copy configuration
@@ -58,10 +57,10 @@ func NewGame(cfg game.Config) game.Game {
 	if lvl, err = log.ParseLevel(g.cfg.LogLevel); err != nil {
 		log.WithFields(log.Fields{
 			"level":   g.cfg.LogLevel,
-			"default": game.DefaultLogLevel,
+			"default": DefaultLogLevel,
 		}).Warn("unknown log level, using default")
-		g.cfg.LogLevel = game.DefaultLogLevel
-		lvl, _ = log.ParseLevel(game.DefaultLogLevel)
+		g.cfg.LogLevel = DefaultLogLevel
+		lvl, _ = log.ParseLevel(DefaultLogLevel)
 	}
 	log.StandardLogger().Level = lvl
 
@@ -105,7 +104,7 @@ func NewGame(cfg game.Config) game.Game {
 	}
 
 	// initialize the pathfinder module
-	g.pathfinder = game.NewPathfinder(g)
+	g.pathfinder = NewPathfinder(g)
 
 	// init the AI director
 	g.ai = NewAIDirector(g, int16(cfg.NightStartingTime), int16(cfg.NightEndingTime))
@@ -174,7 +173,7 @@ func (g *survivelerGame) Start() {
 	g.stop()
 }
 
-func (g *survivelerGame) State() game.GameState {
+func (g *survivelerGame) State() GameState {
 	return g.state
 }
 
@@ -186,7 +185,7 @@ func (g *survivelerGame) PostEvent(evt *events.Event) {
 	g.eventManager.PostEvent(evt)
 }
 
-func (g *survivelerGame) Pathfinder() *game.Pathfinder {
+func (g *survivelerGame) Pathfinder() *Pathfinder {
 	return g.pathfinder
 }
 

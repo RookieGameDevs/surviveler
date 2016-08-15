@@ -4,10 +4,6 @@
  */
 package surviveler
 
-import (
-	"server/game"
-)
-
 /*
  * getPlayer returns the Player associated to given ID.
  *
@@ -41,9 +37,9 @@ func (gs *gamestate) getZombie(ID uint32) *Zombie {
  *
  * It returns nil if ID doesn't exist or the entity is not an Object.
  */
-func (gs *gamestate) getObject(ID uint32) game.Object {
+func (gs *gamestate) getObject(ID uint32) Object {
 	if e, ok := gs.entities[ID]; ok {
-		if o, ok := e.(game.Object); ok {
+		if o, ok := e.(Object); ok {
 			return o
 		}
 	}
@@ -55,9 +51,9 @@ func (gs *gamestate) getObject(ID uint32) game.Object {
  *
  * It returns nil if ID doesn't exist or the entity is not a Building.
  */
-func (gs *gamestate) getBuilding(ID uint32) game.Building {
+func (gs *gamestate) getBuilding(ID uint32) Building {
 	if e, ok := gs.entities[ID]; ok {
-		if b, ok := e.(game.Building); ok {
+		if b, ok := e.(Building); ok {
 			return b
 		}
 	}
