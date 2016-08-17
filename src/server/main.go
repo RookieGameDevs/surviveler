@@ -6,8 +6,7 @@ package main
 
 import (
 	"os"
-	"server/game"
-	"server/game/surviveler"
+	"server/surviveler"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/go-ini/ini"
@@ -30,7 +29,7 @@ import (
  */
 func runCliApp() error {
 	// get configuration, pre-filled with default values
-	cfg := game.NewConfig()
+	cfg := surviveler.NewConfig()
 
 	// command line interface setup
 	app := cli.NewApp()
