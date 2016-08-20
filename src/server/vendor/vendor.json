@@ -9,6 +9,12 @@
 			"revisionTime": "2016-07-16T02:56:31Z"
 		},
 		{
+			"checksumSHA1": "Sg/mXxSZIHltChI1Z+6EBNpSQk8=",
+			"path": "github.com/aurelien-rainone/gogeo",
+			"revision": "21619c14dae8921161d8cd05c0ae9542fee6ce5e",
+			"revisionTime": "2016-08-20T11:19:38Z"
+		},
+		{
 			"checksumSHA1": "hC+IHTGZmpW5OhvttqcYhowRSFY=",
 			"path": "github.com/aurelien-rainone/telgo",
 			"revision": "d703effac61fcc431109c2dcfa26dfdc4ab00b5a",
