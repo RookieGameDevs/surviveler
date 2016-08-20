@@ -1,11 +1,10 @@
-// Copyright 2014 The go-gl/mathgl Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Copyright 2016 Aurélien Rainone. All rights reserved.
+// Use of this source code is governed by MIT license.
 // license that can be found in the LICENSE file.
+//
+// Part of this code has been inspired from golang/image/math/f32
 
-// this code is shamefully ported to float64 from
-// https://github.com/golang/image/blob/master/math/f32/f32.go
-
-package math
+package gogeo
 
 import (
 	"math"

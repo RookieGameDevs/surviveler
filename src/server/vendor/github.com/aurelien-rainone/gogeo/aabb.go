@@ -1,7 +1,12 @@
-package math
+// Copyright 2016 Aurélien Rainone. All rights reserved.
+// Use of this source code is governed by MIT license.
+// license that can be found in the LICENSE file.
+//
+
+package gogeo
 
 import (
-	gomath "math"
+	"math"
 )
 
 type BoundingBoxer interface {
@@ -14,7 +19,7 @@ type BoundingBox struct {
 }
 
 func NewBoundingBox(xa, xb, ya, yb float64) BoundingBox {
-	return BoundingBox{gomath.Min(xa, xb), gomath.Max(xa, xb), gomath.Min(ya, yb), gomath.Max(ya, yb)}
+	return BoundingBox{math.Min(xa, xb), math.Max(xa, xb), math.Min(ya, yb), math.Max(ya, yb)}
 }
 
 func NewBoundingBoxFromCircle(center Vec2, radius float64) BoundingBox {

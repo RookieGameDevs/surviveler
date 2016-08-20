@@ -1,11 +1,10 @@
-// Copyright 2014 The go-gl/mathgl Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Copyright 2016 Aurélien Rainone. All rights reserved.
+// Use of this source code is governed by MIT license.
 // license that can be found in the LICENSE file.
+//
+// Part of this code has been inspired from golang/image/math/f32
 
-// this code is shamefully ported to float64 from
-// https://github.com/golang/image/blob/master/math/f32/f32.go
-
-package math
+package gogeo
 
 import (
 	"fmt"
@@ -65,12 +64,12 @@ func (v Vec2) Div(c float64) Vec2 {
 
 // Dot returns the dot product of this vector with another. There are multiple
 // ways to describe this value. One is the multiplication of their lengths and
-// cos(theta) where theta is the angle between the vectors: v.v2 =
-// |v||v2|cos(theta).
+// cos(theta) where theta is the angle between the vectors:
+// v.v2 = |v||v2|cos(theta).
 
 // The other (and what is actually done) is the sum of the element-wise
-// multiplication of all elements. So for instance, two Vec3s would yield v.x *
-// v2.x + v.y * v2.y + v.z * v2.z.
+// multiplication of all elements. So for instance, two Vec2s would yield:
+// v.x * v2.x + v.y * v2.y + v.z * v2.z.
 
 // This means that the dot product of a vector and itself is the square of its
 // Len (within the bounds of floating points error).
@@ -88,9 +87,7 @@ func (v Vec2) Dot(v2 Vec2) float64 {
 // root of the sum of the squares of all elements. E.G. for a Vec2 it's
 // math.Hypot(v[0], v[1]).
 func (v Vec2) Len() float64 {
-
 	return float64(math.Hypot(float64(v[0]), float64(v[1])))
-
 }
 
 // Normalize normalizes the vector. Normalization is (1/|v|)*v,
@@ -171,18 +168,3 @@ func (v *Vec2) Set(s string) error {
 func (v Vec2) MarshalText() (text []byte, err error) {
 	return []byte(v.String()), nil
 }
-
-// Does the vector outer product
-// of two vectors. The outer product produces an
-// 2x2 matrix. E.G. a Vec2 * Vec2 = Mat2.
-//
-// The outer product can be thought of as the "opposite"
-// of the Dot product. The Dot product treats both vectors like matrices
-// oriented such that the left one has N columns and the right has N rows.
-// So Vec3.Vec3 = Mat1x3*Mat3x1 = Mat1 = Scalar.
-//
-// The outer product orients it so they're facing "outward": Vec2*Vec3
-// = Mat2x1*Mat1x3 = Mat2x3.
-//func (v Vec2) OuterProd2(v2 Vec2) Mat2 {
-//return Mat2{v[0] * v2[0], v[1] * v2[0], v[0] * v2[1], v[1] * v2[1]}
-//}

@@ -3,7 +3,7 @@
 // Go Generic Containers
 // For more information see http://github.com/aurelien-rainone/go-gencon
 
-package math
+package gogeo
 
 // VecStack represents a stack of Vec2.
 type VecStack struct {
