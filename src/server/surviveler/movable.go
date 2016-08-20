@@ -5,9 +5,10 @@
 package surviveler
 
 import (
-	gomath "math"
-	"server/math"
+	"math"
 	"time"
+
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
 /*
@@ -23,29 +24,29 @@ const maxNextWaypoints = 2
  * alongside it
  */
 type Movable struct {
-	Pos       math.Vec2 // current position
-	Speed     float64   // speed
-	waypoints *math.VecStack
+	Pos       geo.Vec2 // current position
+	Speed     float64  // speed
+	waypoints *geo.VecStack
 }
 
 /*
  * NewMovable constructs a new movable
  */
-func NewMovable(pos math.Vec2, speed float64) *Movable {
+func NewMovable(pos geo.Vec2, speed float64) *Movable {
 	return &Movable{
 		Pos:       pos,
 		Speed:     speed,
-		waypoints: math.NewVecStack(),
+		waypoints: geo.NewVecStack(),
 	}
 }
 
-func (me *Movable) findMicroPath(wp math.Vec2) (path math.Path, found bool) {
+func (me *Movable) findMicroPath(wp geo.Vec2) (path geo.Path, found bool) {
 	// for now for simplicity, the micro path is the direct path to the next
 	// waypoint
-	return math.Path{wp}, true
+	return geo.Path{wp}, true
 }
 
-func (me Movable) ComputeMove(org math.Vec2, dt time.Duration) math.Vec2 {
+func (me Movable) ComputeMove(org geo.Vec2, dt time.Duration) geo.Vec2 {
 	// update position on the player path
 	if dst, exists := me.waypoints.Peek(); exists {
 		// compute distance to be covered as time * speed
@@ -60,7 +61,7 @@ func (me Movable) ComputeMove(org math.Vec2, dt time.Duration) math.Vec2 {
 		a := pos.Sub(org).Len()
 
 		// check against edge-cases
-		isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
+		isNan := math.IsNaN(a) || math.IsNaN(b) || math.IsNaN(dir.Len()) || math.Abs(a-b) < 1e-3
 
 		if a > b || isNan {
 			return *dst
@@ -93,7 +94,7 @@ func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
 			a := pos.Sub(me.Pos).Len()
 
 			// check against edge-cases
-			isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
+			isNan := math.IsNaN(a) || math.IsNaN(b) || math.IsNaN(dir.Len()) || math.Abs(a-b) < 1e-3
 
 			hasMoved = true
 			if a > b || isNan {
@@ -124,7 +125,7 @@ func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
  *
  * It replaces and cancel the current path, if any.
  */
-func (me *Movable) SetPath(path math.Path) {
+func (me *Movable) SetPath(path geo.Path) {
 	// empty the waypoint stack
 	for ; me.waypoints.Len() != 0; me.waypoints.Pop() {
 	}
@@ -136,8 +137,8 @@ func (me *Movable) SetPath(path math.Path) {
 	}
 }
 
-func (me *Movable) NextWaypoints() math.Path {
-	path := math.Path{}
+func (me *Movable) NextWaypoints() geo.Path {
+	path := geo.Path{}
 	for _, wp := range me.waypoints.PeekN(maxNextWaypoints) {
 		path = append(path, *wp)
 	}
@@ -148,6 +149,6 @@ func (me *Movable) HasReachedDestination() bool {
 	return me.waypoints.Len() == 0
 }
 
-func (me *Movable) BoundingBox() math.BoundingBox {
-	return math.NewBoundingBoxFromCircle(me.Pos, 0.5)
+func (me *Movable) BoundingBox() geo.BoundingBox {
+	return geo.NewBoundingBoxFromCircle(me.Pos, 0.5)
 }

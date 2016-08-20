@@ -6,10 +6,10 @@ package surviveler
 
 import (
 	"server/events"
-	"server/math"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
 /*
@@ -25,7 +25,7 @@ type BuildingBase struct {
 	curBP        uint16  // build power already induced into the construction
 	id           uint32
 	g            *Game
-	pos          math.Vec2
+	pos          geo.Vec2
 	buildingType EntityType
 	isBuilt      bool
 }
@@ -42,13 +42,13 @@ func (bb *BuildingBase) SetId(id uint32) {
 	bb.id = id
 }
 
-func (bb *BuildingBase) Position() math.Vec2 {
+func (bb *BuildingBase) Position() geo.Vec2 {
 	return bb.pos
 }
 
-func (bb *BuildingBase) BoundingBox() math.BoundingBox {
+func (bb *BuildingBase) BoundingBox() geo.BoundingBox {
 	x, y := bb.pos.Elem()
-	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
+	return geo.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
 }
 
 func (bb *BuildingBase) State() EntityState {
@@ -111,7 +111,7 @@ type Barricade struct {
 /*
  * NewBarricade creates a new barricade
  */
-func NewBarricade(g *Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewBarricade(g *Game, pos geo.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           InvalidID,
@@ -160,7 +160,7 @@ type MgTurret struct {
 /*
  * NewMgTurret creates a new machine-gun turret
  */
-func NewMgTurret(g *Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewMgTurret(g *Game, pos geo.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           InvalidID,

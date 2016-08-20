@@ -5,11 +5,11 @@
 package surviveler
 
 import (
-	"server/math"
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
-type Rect2D [2]math.Vec2
-type VecList []math.Vec2
+type Rect2D [2]geo.Vec2
+type VecList []geo.Vec2
 
 // gameData is the top-level struct containing game data
 type gameData struct {
@@ -25,9 +25,9 @@ type (
 )
 
 type MapObject struct {
-	Ref      string    `json:"ref"`      // uri of the object inside the package
-	Pos      math.Vec2 `json:"pos"`      // position of the object on the map
-	Rotation int       `json:"rotation"` // rotation of the object on the map
+	Ref      string   `json:"ref"`      // uri of the object inside the package
+	Pos      geo.Vec2 `json:"pos"`      // position of the object on the map
+	Rotation int      `json:"rotation"` // rotation of the object on the map
 }
 
 type MapUsableObject struct {

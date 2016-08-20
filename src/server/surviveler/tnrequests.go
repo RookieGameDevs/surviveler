@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io"
 	"server/events"
-	"server/math"
 	"server/messages"
 
 	log "github.com/Sirupsen/logrus"
+	geo "github.com/aurelien-rainone/gogeo"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -50,16 +50,16 @@ type TnGameState struct {
 }
 
 type TnMoveEntity struct {
-	Id   uint32    // entity id
-	Dest math.Vec2 // destination
+	Id   uint32   // entity id
+	Dest geo.Vec2 // destination
 }
 
 type TnTeleportEntity TnMoveEntity
 
 type TnBuild struct {
-	Id   uint32    // entity id
-	Type uint8     // building type
-	Pos  math.Vec2 // building position
+	Id   uint32   // entity id
+	Type uint8    // building type
+	Pos  geo.Vec2 // building position
 }
 
 type TnRepair struct {

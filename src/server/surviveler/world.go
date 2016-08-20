@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"server/math"
 
 	log "github.com/Sirupsen/logrus"
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
 /*
@@ -80,7 +80,7 @@ func (w World) Tile(x, y int) *Tile {
  * pt represents *grid* coordinates, i.e the map scale factor must be taken in
  * consideration to convert from *world* coordinates into *grid* coordinates.
  */
-func (w World) TileFromVec(pt math.Vec2) *Tile {
+func (w World) TileFromVec(pt geo.Vec2) *Tile {
 	return w.Tile(int(pt[0]), int(pt[1]))
 }
 
@@ -90,7 +90,7 @@ func (w World) TileFromVec(pt math.Vec2) *Tile {
  * pt represents *world* coordinates, i.e TileFromWorldVec performs the
  * conversion from world coordinates into grid coordinates.
  */
-func (w World) TileFromWorldVec(pt math.Vec2) *Tile {
+func (w World) TileFromWorldVec(pt geo.Vec2) *Tile {
 	pt = pt.Mul(w.GridScale)
 	return w.TileFromVec(pt)
 }
@@ -98,7 +98,7 @@ func (w World) TileFromWorldVec(pt math.Vec2) *Tile {
 /*
  * PointInBounds indicates if specific point lies in the world boundaries
  */
-func (w World) PointInBounds(pt math.Vec2) bool {
+func (w World) PointInBounds(pt geo.Vec2) bool {
 	return pt[0] >= 0 && pt[0] <= w.Width &&
 		pt[1] >= 0 && pt[1] <= w.Height
 }
@@ -122,7 +122,7 @@ func (w World) DumpGrid() {
 /*
  * IntersectingTiles returns the list of Tile intersecting with an AABB
  */
-func (w World) IntersectingTiles(bb math.BoundingBox) []*Tile {
+func (w World) IntersectingTiles(bb geo.BoundingBox) []*Tile {
 	// first thing: we need the tile that contains the center of the aabb
 	center := w.TileFromWorldVec(bb.Center())
 	tiles := []*Tile{center}
@@ -240,7 +240,7 @@ func (w *World) UpdateEntity(ent Entity) {
  * Important Note: if the query is performed by passing the bounding box of an entity,
  * the returned set will contain this entity.
  */
-func (w *World) AABBSpatialQuery(bb math.BoundingBox) *EntitySet {
+func (w *World) AABBSpatialQuery(bb geo.BoundingBox) *EntitySet {
 	// set to contain all the entities around, though not necessarily colliding
 	allEntities := NewEntitySet()
 

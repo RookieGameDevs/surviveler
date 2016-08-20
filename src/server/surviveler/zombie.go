@@ -7,8 +7,9 @@ package surviveler
 import (
 	"server/actions"
 	"server/events"
-	"server/math"
 	"time"
+
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
 /*
@@ -41,7 +42,7 @@ type Zombie struct {
 	*Movable
 }
 
-func NewZombie(g *Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
+func NewZombie(g *Game, pos geo.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
 	return &Zombie{
 		id:          InvalidID,
 		g:           g,
@@ -63,7 +64,7 @@ func (z *Zombie) SetId(id uint32) {
 	z.id = id
 }
 
-func (z *Zombie) findPathToTarget() (math.Path, bool) {
+func (z *Zombie) findPathToTarget() (geo.Path, bool) {
 	path, _, found := z.g.Pathfinder().FindPath(z.Pos, z.target.Position())
 	return path, found
 }
@@ -144,7 +145,7 @@ func (z *Zombie) moveOrCollide(dt time.Duration) (state int) {
 	//func (z *Zombie) moveOrCollide(dt time.Duration) (hasCollided bool) {
 	// check if moving would create a collision
 	nextPos := z.Movable.ComputeMove(z.Pos, dt)
-	nextBB := math.NewBoundingBoxFromCircle(nextPos, 0.5)
+	nextBB := geo.NewBoundingBoxFromCircle(nextPos, 0.5)
 	colliding := z.world.AABBSpatialQuery(nextBB)
 
 	var wouldCollide bool
@@ -196,7 +197,7 @@ func (z *Zombie) Update(dt time.Duration) {
 	}
 }
 
-func (z *Zombie) Position() math.Vec2 {
+func (z *Zombie) Position() geo.Vec2 {
 	return z.Pos
 }
 

@@ -7,10 +7,10 @@ package surviveler
 import (
 	"math/rand"
 	"server/events"
-	"server/math"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
 // This number represents the ration between the number of logic ticks for one
@@ -87,7 +87,7 @@ func (ai *AIDirector) SummonZombie() {
 	ai.zombieCount++
 }
 
-func (ai *AIDirector) addZombie(org math.Vec2) {
+func (ai *AIDirector) addZombie(org geo.Vec2) {
 	entityData, ok := ai.entitiesData[ZombieEntity]
 	if !ok {
 		log.Error("Can't create zombie, unsupported entity data type")

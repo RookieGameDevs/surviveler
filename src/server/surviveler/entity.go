@@ -5,10 +5,11 @@
 package surviveler
 
 import (
-	gomath "math"
+	"math"
 	"server/actions"
-	"server/math"
 	"time"
+
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
 //go:generate go-gencon -type Entity -cont Set -name EntitySet
@@ -44,7 +45,7 @@ const (
 )
 
 const (
-	InvalidID uint32 = gomath.MaxUint32
+	InvalidID uint32 = math.MaxUint32
 )
 
 /*
@@ -55,11 +56,11 @@ type Entity interface {
 	SetId(uint32)
 	Type() EntityType
 	State() EntityState
-	Position() math.Vec2
+	Position() geo.Vec2
 	Update(dt time.Duration)
 	DealDamage(float64) bool
 	HealDamage(float64) bool
-	math.BoundingBoxer
+	geo.BoundingBoxer
 }
 
 /*
@@ -67,7 +68,7 @@ type Entity interface {
  */
 type MobileEntity interface {
 	Entity
-	SetPath(path math.Path)
+	SetPath(path geo.Path)
 }
 
 /*

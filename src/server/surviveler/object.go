@@ -5,8 +5,9 @@
 package surviveler
 
 import (
-	"server/math"
 	"time"
+
+	geo "github.com/aurelien-rainone/gogeo"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 
 type CoffeeMachine struct {
 	id         uint32
-	pos        math.Vec2
+	pos        geo.Vec2
 	objectType EntityType
 	operatedBy Entity
 	lastHeal   time.Time
@@ -29,7 +30,7 @@ type CoffeeMachine struct {
 /*
  * NewCoffeeMachine creates a new object and set its initial position
  */
-func NewCoffeeMachine(g *Game, pos math.Vec2, objectType EntityType) *CoffeeMachine {
+func NewCoffeeMachine(g *Game, pos geo.Vec2, objectType EntityType) *CoffeeMachine {
 	cm := new(CoffeeMachine)
 	cm.pos = pos
 	cm.objectType = objectType
@@ -68,7 +69,7 @@ func (cm *CoffeeMachine) State() EntityState {
 	}
 }
 
-func (cm *CoffeeMachine) Position() math.Vec2 {
+func (cm *CoffeeMachine) Position() geo.Vec2 {
 	return cm.pos
 }
 
@@ -96,9 +97,9 @@ func (cm *CoffeeMachine) HealDamage(dmg float64) bool {
 	return true
 }
 
-func (cm *CoffeeMachine) BoundingBox() math.BoundingBox {
+func (cm *CoffeeMachine) BoundingBox() geo.BoundingBox {
 	x, y := cm.pos.Elem()
-	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
+	return geo.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
 }
 
 func (cm *CoffeeMachine) OperatedBy() Entity {
