@@ -5,41 +5,38 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 )
 
-type Point2 struct {
-	X, Y float64
-}
+type Vertex [4]float64
 
-func (p *Point2) Scale(f float64) {
-	p.X = p.X * f
-	p.Y = p.Y * f
-}
-
-func Point2From3(p Point3) Point2 {
-	return Point2{p.X, p.Y}
-}
-
-type Point3 struct {
-	X, Y, Z float64
-}
-
-func (p *Point3) Set(s []string) error {
-	if _, err := fmt.Sscanf(s[0], "%f", &p.X); err != nil {
-		return fmt.Errorf("invalid syntax \"%s\"", s)
+func (v *Vertex) Scale(f float64) {
+	for i := range v {
+		v[i] *= f
 	}
-	if _, err := fmt.Sscanf(s[1], "%f", &p.Z); err != nil {
-		return fmt.Errorf("invalid syntax \"%s\"", s)
+}
+
+func (v *Vertex) Set(s []string) error {
+	var (
+		err error
+	)
+
+	for i := range s {
+		if v[i], err = strconv.ParseFloat(s[i], 64); err != nil {
+			return fmt.Errorf("invalid syntax \"%v\": %s", s[i], err)
+		}
 	}
-	if _, err := fmt.Sscanf(s[2], "%f", &p.Y); err != nil {
-		return fmt.Errorf("invalid syntax \"%s\"", s)
-	}
+
 	return nil
 }
 
+// Triangle represents a 3-sided polygon
+//
+// NOTE: this could easily be extended to support N-sided polygons
+// by using a []Vertex instead
 type Triangle struct {
-	P1, P2, P3 Point2
+	P1, P2, P3 Vertex
 }
 
 func (t *Triangle) Scale(f float64) {
@@ -72,7 +69,7 @@ func (t Triangle) isDegenerate() bool {
 }
 
 type ObjFile struct {
-	Vertices               []Point2
+	Vertices               []Vertex
 	Triangles              []Triangle
 	MinX, MinY, MaxX, MaxY float64
 	dbg                    bool
@@ -93,13 +90,13 @@ func SetMax(a *float64, b float64) {
 }
 
 func (of *ObjFile) parseVertex(lineno int, kw string, data []string) error {
-	p3 := Point3{}
-	err := p3.Set(data)
+	v := Vertex{}
+	err := v.Set(data)
 	if err != nil {
 		return err
 	}
 	// discard the Z coordinate
-	of.Vertices = append(of.Vertices, Point2From3(p3))
+	of.Vertices = append(of.Vertices, v)
 	return nil
 }
 
