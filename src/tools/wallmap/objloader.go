@@ -78,11 +78,24 @@ func (t Triangle) MaxY() float64 {
 }
 
 func (t Triangle) isDegenerate() bool {
-	area := ((t.P2.X()-t.P1.X())*(t.P3.Y()-t.P1.Y()) -
-		(t.P3.X()-t.P1.X())*(t.P2.Y()-t.P1.Y()))
+	// find the determinant of the 3x3 matrix in which the triangle coords can
+	// be represented, it's 0 or close to 0.0, the triangle area is null and we
+	// consider the triangle as degenerate
+	det := (t.P1.X() * t.P2.Y() * t.P3.Z()) +
+		(t.P1.Y() * t.P2.Z() * t.P3.X()) +
+		(t.P1.Z() * t.P2.X() * t.P3.Y()) -
+		(t.P1.Z() * t.P2.Y() * t.P3.X()) -
+		(t.P1.Y() * t.P2.X() * t.P3.Z()) -
+		(t.P1.X() * t.P2.Z() * t.P3.Y())
+
 	// TODO: also check area with an epsilon?
-	return area == 0.0
+	return det == 0.0
 }
+
+type ObjFile struct {
+	Vertices 	// TODO: also check area with an epsilon?
+AABB
+	dbg       boo}
 
 type ObjFile struct {
 	Vertices               []Vertex
