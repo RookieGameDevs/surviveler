@@ -61,20 +61,56 @@ func (t *Triangle) Scale(f float64) {
 	t.P3.Scale(f)
 }
 
-func (t Triangle) MinX() float64 {
-	return math.Min(t.P1.X(), math.Min(t.P2.X(), t.P3.X()))
+type AABB struct {
+	MinX, MaxX float64
+	MinY, MaxY float64
+	MinZ, MaxZ float64
 }
 
-func (t Triangle) MinY() float64 {
-	return math.Min(t.P1.Y(), math.Min(t.P2.Y(), t.P3.Y()))
+// NewAABB initializes the bounding box.
+//
+// The bouding box will be valid after the first call to extend.
+func NewAABB() AABB {
+	return AABB{
+		MinX: math.MaxFloat64,
+		MinY: math.MaxFloat64,
+		MinZ: math.MaxFloat64,
+		MaxX: -math.MaxFloat64,
+		MaxY: -math.MaxFloat64,
+		MaxZ: -math.MaxFloat64,
+	}
 }
 
-func (t Triangle) MaxX() float64 {
-	return math.Max(t.P1.X(), math.Max(t.P2.X(), t.P3.X()))
+func (bb *AABB) extend(other AABB) {
+	// update the min and max for each coord
+	SetMin(&bb.MinX, other.MinX)
+	SetMin(&bb.MinY, other.MinY)
+	SetMin(&bb.MinZ, other.MinZ)
+	SetMax(&bb.MaxX, other.MaxX)
+	SetMax(&bb.MaxY, other.MaxY)
+	SetMax(&bb.MaxZ, other.MaxZ)
 }
 
-func (t Triangle) MaxY() float64 {
-	return math.Max(t.P1.Y(), math.Max(t.P2.Y(), t.P3.Y()))
+func (bb *AABB) Scale(f float64) {
+	bb.MinX *= f
+	bb.MinY *= f
+	bb.MinZ *= f
+	bb.MaxX *= f
+	bb.MaxY *= f
+	bb.MaxZ *= f
+}
+
+// AABB computes and returns the axis-aligned bounding-box
+// of the triangle.
+func (t Triangle) AABB() AABB {
+	return AABB{
+		MinX: math.Min(t.P1.X(), math.Min(t.P2.X(), t.P3.X())),
+		MinY: math.Min(t.P1.Y(), math.Min(t.P2.Y(), t.P3.Y())),
+		MinZ: math.Min(t.P1.Z(), math.Min(t.P2.Z(), t.P3.Z())),
+		MaxX: math.Max(t.P1.X(), math.Max(t.P2.X(), t.P3.X())),
+		MaxY: math.Max(t.P1.Y(), math.Max(t.P2.Y(), t.P3.Y())),
+		MaxZ: math.Max(t.P1.Z(), math.Max(t.P2.Z(), t.P3.Z())),
+	}
 }
 
 func (t Triangle) isDegenerate() bool {
@@ -93,15 +129,10 @@ func (t Triangle) isDegenerate() bool {
 }
 
 type ObjFile struct {
-	Vertices 	// TODO: also check area with an epsilon?
-AABB
-	dbg       boo}
-
-type ObjFile struct {
-	Vertices               []Vertex
-	Triangles              []Triangle
-	MinX, MinY, MaxX, MaxY float64
-	dbg                    bool
+	Vertices  []Vertex
+	Triangles []Triangle
+	AABB      AABB
+	dbg       bool
 }
 
 // SetMin checks if a > b, then a will be set to the value of b.
@@ -159,11 +190,8 @@ func (of *ObjFile) parseFace(lineno int, kw string, data []string) error {
 		P3: of.Vertices[vi[2]-1],
 	}
 
-	// track min/max bounds
-	SetMin(&of.MinX, t.MinX())
-	SetMin(&of.MinY, t.MinY())
-	SetMax(&of.MaxX, t.MaxX())
-	SetMax(&of.MaxY, t.MaxY())
+	// extend the mesh bounding box with the triangle
+	of.AABB.extend(t.AABB())
 
 	// discard degenerate triangles
 	if t.isDegenerate() {
@@ -188,10 +216,7 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 
 	// init min/max values
 	obj := ObjFile{
-		MinX: math.MaxFloat64,
-		MinY: math.MaxFloat64,
-		MaxX: -math.MaxFloat64,
-		MaxY: -math.MaxFloat64,
+		AABB: NewAABB(),
 		dbg:  dbg,
 	}
 

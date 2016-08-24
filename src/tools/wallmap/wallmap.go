@@ -45,18 +45,15 @@ func main() {
 		fmt.Println("num triangles[0]: ", len(obj.Triangles))
 		fmt.Println("triangles[0]: ", obj.Triangles[0])
 		fmt.Println("scale factor: ", *scale)
-		fmt.Println("org min: ", obj.MinX, obj.MinX)
-		fmt.Println("org max: ", obj.MaxX, obj.MaxY)
 	}
 
-	// image width, height
-	sMinX, sMaxX := float64(*scale)*obj.MinX, float64(*scale)*obj.MaxX
-	sMinY, sMaxY := float64(*scale)*obj.MinY, float64(*scale)*obj.MaxY
-	w, h := int(math.Ceil(sMaxX)), int(math.Ceil(sMaxY))
+	// get image w/h by scaling the mesh aabb by the user-defined scale factor
+	aabb := obj.AABB
+	aabb.Scale(float64(*scale))
+	offx, offy := int(math.Floor(aabb.MinX)), int(math.Floor(aabb.MinZ))
+	w, h := int(math.Ceil(aabb.MaxX)), int(math.Ceil(aabb.MaxZ))
 
 	if *dbg {
-		fmt.Println("scale min: ", sMinX, sMinY)
-		fmt.Println("scale max: ", sMaxX, sMaxY)
 		fmt.Println("image width/height: ", w, h)
 	}
 
