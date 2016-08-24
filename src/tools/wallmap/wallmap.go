@@ -53,7 +53,15 @@ func main() {
 	offx, offy := int(math.Floor(aabb.MinX)), int(math.Floor(aabb.MinZ))
 	w, h := int(math.Ceil(aabb.MaxX)), int(math.Ceil(aabb.MaxZ))
 
-	if *dbg {
+	negoff := offx < 0.0 || offy < 0.0
+	if negoff {
+		fmt.Printf("WARNING: the mesh 2D has negative offset(s), probably due to some negative coordinates: x:%d|y:%d\n", offx, offy)
+	}
+
+	if *dbg || negoff {
+		fmt.Println("mesh bounding box: ", obj.AABB)
+		fmt.Println("scaled bounding box: ", aabb)
+		fmt.Println("image x, y offset: ", offx, offy)
 		fmt.Println("image width/height: ", w, h)
 	}
 
