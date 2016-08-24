@@ -69,10 +69,10 @@ func main() {
 		t.Scale(float64(*scale))
 
 		// draw the triangle
-		dc.MoveTo(t.P1.X, t.P1.Y)
-		dc.LineTo(t.P2.X, t.P2.Y)
-		dc.LineTo(t.P3.X, t.P3.Y)
-		dc.LineTo(t.P1.X, t.P1.Y)
+		dc.MoveTo(t.P1.X(), t.P1.Y())
+		dc.LineTo(t.P2.X(), t.P2.Y())
+		dc.LineTo(t.P3.X(), t.P3.Y())
+		dc.LineTo(t.P1.X(), t.P1.Y())
 		dc.SetRGB(0, 0, 0)
 		dc.SetLineWidth(1)
 		dc.FillPreserve()

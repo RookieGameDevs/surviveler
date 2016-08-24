@@ -17,6 +17,22 @@ func (v *Vertex) Scale(f float64) {
 	}
 }
 
+func (v Vertex) X() float64 {
+	return v[0]
+}
+
+func (v Vertex) Y() float64 {
+	return v[1]
+}
+
+func (v Vertex) Z() float64 {
+	return v[2]
+}
+
+func (v Vertex) W() float64 {
+	return v[3]
+}
+
 func (v *Vertex) Set(s []string) error {
 	var (
 		err error
@@ -46,24 +62,24 @@ func (t *Triangle) Scale(f float64) {
 }
 
 func (t Triangle) MinX() float64 {
-	return math.Min(t.P1.X, math.Min(t.P2.X, t.P3.X))
+	return math.Min(t.P1.X(), math.Min(t.P2.X(), t.P3.X()))
 }
 
 func (t Triangle) MinY() float64 {
-	return math.Min(t.P1.Y, math.Min(t.P2.Y, t.P3.Y))
+	return math.Min(t.P1.Y(), math.Min(t.P2.Y(), t.P3.Y()))
 }
 
 func (t Triangle) MaxX() float64 {
-	return math.Max(t.P1.X, math.Max(t.P2.X, t.P3.X))
+	return math.Max(t.P1.X(), math.Max(t.P2.X(), t.P3.X()))
 }
 
 func (t Triangle) MaxY() float64 {
-	return math.Max(t.P1.Y, math.Max(t.P2.Y, t.P3.Y))
+	return math.Max(t.P1.Y(), math.Max(t.P2.Y(), t.P3.Y()))
 }
 
 func (t Triangle) isDegenerate() bool {
-	area := ((t.P2.X-t.P1.X)*(t.P3.Y-t.P1.Y) -
-		(t.P3.X-t.P1.X)*(t.P2.Y-t.P1.Y))
+	area := ((t.P2.X()-t.P1.X())*(t.P3.Y()-t.P1.Y()) -
+		(t.P3.X()-t.P1.X())*(t.P2.Y()-t.P1.Y()))
 	// TODO: also check area with an epsilon?
 	return area == 0.0
 }
