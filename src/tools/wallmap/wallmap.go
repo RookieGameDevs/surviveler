@@ -28,7 +28,6 @@ func main() {
 
 	objpath := ""
 	flag.Parse()
-	fmt.Println("nargs", flag.NArg())
 	if flag.NArg() > 0 {
 		objpath = flag.Arg(0)
 	} else {
