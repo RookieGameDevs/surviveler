@@ -83,12 +83,12 @@ func NewAABB() AABB {
 
 func (bb *AABB) extend(other AABB) {
 	// update the min and max for each coord
-	SetMin(&bb.MinX, other.MinX)
-	SetMin(&bb.MinY, other.MinY)
-	SetMin(&bb.MinZ, other.MinZ)
-	SetMax(&bb.MaxX, other.MaxX)
-	SetMax(&bb.MaxY, other.MaxY)
-	SetMax(&bb.MaxZ, other.MaxZ)
+	updateMin(&bb.MinX, other.MinX)
+	updateMin(&bb.MinY, other.MinY)
+	updateMin(&bb.MinZ, other.MinZ)
+	updateMax(&bb.MaxX, other.MaxX)
+	updateMax(&bb.MaxY, other.MaxY)
+	updateMax(&bb.MaxZ, other.MaxZ)
 }
 
 func (bb *AABB) Scale(f float64) {
@@ -135,15 +135,15 @@ type ObjFile struct {
 	dbg       bool
 }
 
-// SetMin checks if a > b, then a will be set to the value of b.
-func SetMin(a *float64, b float64) {
+// updateMin checks if a > b, then a will be set to the value of b.
+func updateMin(a *float64, b float64) {
 	if b < *a {
 		*a = b
 	}
 }
 
-// SetMax checks if a < b, then a will be set to the value of b.
-func SetMax(a *float64, b float64) {
+// updateMax checks if a < b, then a will be set to the value of b.
+func updateMax(a *float64, b float64) {
 	if *a < b {
 		*a = b
 	}
