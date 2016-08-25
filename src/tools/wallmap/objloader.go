@@ -136,8 +136,7 @@ func (t Triangle) isDegenerate() bool {
 		(t.P1.Y() * t.P2.X() * t.P3.Z()) -
 		(t.P1.X() * t.P2.Z() * t.P3.Y())
 
-	// TODO: also check area with an epsilon?
-	return det == 0.0
+	return math.Abs(det) < 1e-5
 }
 
 type ObjFile struct {
