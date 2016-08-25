@@ -186,14 +186,6 @@ func (of *ObjFile) parseVertex(kw string, data []string) error {
 }
 
 func (of *ObjFile) parseFace(kw string, data []string) error {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("Error in parseFace", r)
-			fmt.Println("len(of.vertices): ", len(of.vertices))
-			os.Exit(1)
-		}
-	}()
-
 	if len(data) != 3 {
 		return errors.New("only triangular faces are supported")
 	}
