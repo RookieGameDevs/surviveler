@@ -17,7 +17,7 @@ var (
 )
 
 func showUsage() {
-	fmt.Println("wallmap - Rasterize a 'walls-only 3D map' onto a bitmap")
+	fmt.Println("wallmap - Rasterize the triangular faces of an OBJ file onto a 2D image")
 	fmt.Println()
 	fmt.Println("usage:")
 	fmt.Println("  wallmap -div INT -bmp FILE OBJFILE")
