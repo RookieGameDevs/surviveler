@@ -14,15 +14,15 @@ import (
 
 var (
 	scale   = flag.Int("scale", 1, "map mesh scale factor")
-	bmpfile = flag.String("bmp", "out.bmp", "output bmp file")
+	pngfile = flag.String("png", "out.png", "output png file")
 	dbg     = flag.Bool("v", false, "verbose output")
 )
 
 func showUsage() {
-	fmt.Println("wallmap - Rasterize the triangular faces of an OBJ file onto a 2D image")
+	fmt.Println("wallmap - Rasterize the triangular faces of an OBJ file onto a PNG image")
 	fmt.Println()
 	fmt.Println("usage:")
-	fmt.Println("  wallmap -div INT -bmp FILE OBJFILE")
+	fmt.Println("  wallmap -div INT -png FILE OBJFILE")
 	flag.PrintDefaults()
 }
 
