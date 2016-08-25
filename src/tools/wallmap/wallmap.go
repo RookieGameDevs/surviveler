@@ -68,7 +68,7 @@ func main() {
 	}
 
 	dc := gg.NewContext(w, h)
-	dc.SetRGB(1, 1, 1)
+	dc.SetRGB255(255, 255, 255)
 	dc.Clear()
 
 	for _, t := range obj.Triangles() {
@@ -80,7 +80,7 @@ func main() {
 		dc.LineTo(t.P2.X(), t.P2.Z())
 		dc.LineTo(t.P3.X(), t.P3.Z())
 		dc.LineTo(t.P1.X(), t.P1.Z())
-		dc.SetRGB(0, 0, 0)
+		dc.SetRGB255(0, 0, 0)
 		dc.SetLineWidth(1)
 		dc.FillPreserve()
 		dc.Stroke()
