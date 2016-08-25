@@ -174,7 +174,7 @@ func (of ObjFile) AABB() AABB {
 	return of.aabb
 }
 
-func (of *ObjFile) parseVertex(lineno int, kw string, data []string) error {
+func (of *ObjFile) parseVertex(kw string, data []string) error {
 	v := Vertex{}
 	err := v.Set(data)
 	if err != nil {
@@ -185,18 +185,17 @@ func (of *ObjFile) parseVertex(lineno int, kw string, data []string) error {
 	return nil
 }
 
-func (of *ObjFile) parseFace(lineno int, kw string, data []string) error {
+func (of *ObjFile) parseFace(kw string, data []string) error {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Error in parseFace", r)
-			fmt.Printf("lineno: %+v | kw: +%v | data : %+v\n", lineno, kw, data)
 			fmt.Println("len(of.vertices): ", len(of.vertices))
 			os.Exit(1)
 		}
 	}()
 
 	if len(data) != 3 {
-		return fmt.Errorf("line: %d, only triangular faces are supported", lineno)
+		return errors.New("only triangular faces are supported")
 	}
 
 	var (
@@ -256,14 +255,15 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 		kw, vals := line[0], line[1:]
 		switch kw {
 		case "v":
-			err := obj.parseVertex(lineno, kw, vals)
+			err := obj.parseVertex(kw, vals)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing vertex: %v", err)
+				return nil, fmt.Errorf("error parsing vertex at line %d,\"%v\": %s", lineno, vals, err)
+
 			}
 		case "f":
-			err := obj.parseFace(lineno, kw, vals)
+			err := obj.parseFace(kw, vals)
 			if err != nil {
-				return nil, fmt.Errorf("error parsing face: %v", err)
+				return nil, fmt.Errorf("error parsing face at line %d,\"%v\": %s", lineno, vals, err)
 			}
 		default:
 			// ignore everything else
