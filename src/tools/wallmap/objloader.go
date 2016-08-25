@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -62,7 +63,7 @@ func (v *Vertex) Set(s []string) error {
 	)
 
 	if len(s) > 4 {
-		return fmt.Errorf("Vertex.Set: invalid string length")
+		return errors.New("Vertex.Set: invalid string length")
 	}
 
 	for i := range s {
