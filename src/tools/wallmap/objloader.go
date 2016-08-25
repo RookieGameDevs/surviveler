@@ -11,6 +11,18 @@ import (
 
 type Vertex [4]float64
 
+func NewVertex2D(x, y float64) Vertex {
+	return Vertex{x, y, 0, 0}
+}
+
+func NewVertex3D(x, y, z float64) Vertex {
+	return Vertex{x, y, z, 0}
+}
+
+func NewVertex4D(x, y, z, w float64) Vertex {
+	return Vertex{x, y, z, w}
+}
+
 func (v *Vertex) Scale(f float64) {
 	for i := range v {
 		v[i] *= f
