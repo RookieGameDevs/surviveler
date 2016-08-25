@@ -61,6 +61,10 @@ func (v *Vertex) Set(s []string) error {
 		err error
 	)
 
+	if len(s) > 4 {
+		return fmt.Errorf("Vertex.Set: invalid string length")
+	}
+
 	for i := range s {
 		if v[i], err = strconv.ParseFloat(s[i], 64); err != nil {
 			return fmt.Errorf("invalid syntax \"%v\": %s", s[i], err)
