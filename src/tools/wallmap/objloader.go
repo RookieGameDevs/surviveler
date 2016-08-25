@@ -269,5 +269,9 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 
 		lineno++
 	}
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error parsing file: %v", err)
+	}
+
 	return &obj, nil
 }
