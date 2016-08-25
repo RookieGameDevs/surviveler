@@ -173,20 +173,6 @@ func (of ObjFile) AABB() AABB {
 	return of.aabb
 }
 
-// updateMin checks if a > b, then a will be set to the value of b.
-func updateMin(a *float64, b float64) {
-	if b < *a {
-		*a = b
-	}
-}
-
-// updateMax checks if a < b, then a will be set to the value of b.
-func updateMax(a *float64, b float64) {
-	if *a < b {
-		*a = b
-	}
-}
-
 func (of *ObjFile) parseVertex(lineno int, kw string, data []string) error {
 	v := Vertex{}
 	err := v.Set(data)
@@ -289,4 +275,18 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 	}
 
 	return &obj, nil
+}
+
+// updateMin checks if a > b, then a will be set to the value of b.
+func updateMin(a *float64, b float64) {
+	if b < *a {
+		*a = b
+	}
+}
+
+// updateMax checks if a < b, then a will be set to the value of b.
+func updateMax(a *float64, b float64) {
+	if *a < b {
+		*a = b
+	}
 }
