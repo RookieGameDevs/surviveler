@@ -6,8 +6,10 @@ import (
 	"math"
 	"os"
 
+	"image/color"
+	"image/png"
+
 	"github.com/fogleman/gg"
-	"golang.org/x/image/bmp"
 )
 
 var (
@@ -84,16 +86,21 @@ func main() {
 		dc.Stroke()
 	}
 	fmt.Println("Rasterization completed")
-	fmt.Println("Creating", *bmpfile)
+	fmt.Println("Creating", *pngfile)
 
-	f, err := os.Create(*bmpfile)
+	f, err := os.Create(*pngfile)
 	if err != nil {
-		fmt.Println("Can't create ", *bmpfile, ": ", err)
+		fmt.Println("Can't create ", *pngfile, ": ", err)
 		os.Exit(1)
 	}
-	err = bmp.Encode(f, dc.Image())
+
+	// convert image into a black and white one
+	bw := []color.Color{color.Black, color.White}
+	gr := &Converter{dc.Image(), color.Palette(bw)}
+
+	err = png.Encode(f, gr)
 	if err != nil {
-		fmt.Println("Can't encode ", *bmpfile, ": ", err)
+		fmt.Println("Can't encode ", *pngfile, ": ", err)
 		os.Exit(1)
 	}
 }
