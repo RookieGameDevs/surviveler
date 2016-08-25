@@ -197,13 +197,18 @@ func (of *ObjFile) parseFace(lineno int, kw string, data []string) error {
 		return fmt.Errorf("line: %d, only triangular faces are supported", lineno)
 	}
 
+	var (
+		vi  [3]int
+		err error
+	)
+
 	// vertices indices
-	vi := [3]int{}
 	for i, s := range data {
 		// we are only interested in the vertex index
 		sidx := strings.Split(s, "/")[0]
-		if _, err := fmt.Sscanf(sidx, "%d", &(vi[i])); err != nil {
-			return fmt.Errorf("invalid syntax \"%s\"", s)
+		vi[i], err = strconv.Atoi(sidx)
+		if err != nil {
+			return fmt.Errorf("invalid vertex coordinate value \"%s\"", s)
 		}
 	}
 
