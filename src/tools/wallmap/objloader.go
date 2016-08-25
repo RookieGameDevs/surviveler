@@ -129,10 +129,22 @@ func (t Triangle) isDegenerate() bool {
 }
 
 type ObjFile struct {
-	Vertices  []Vertex
-	Triangles []Triangle
-	AABB      AABB
+	vertices  []Vertex
+	triangles []Triangle
+	aabb      AABB
 	dbg       bool
+}
+
+func (of ObjFile) Vertices() []Vertex {
+	return of.vertices
+}
+
+func (of ObjFile) Triangles() []Triangle {
+	return of.triangles
+}
+
+func (of ObjFile) AABB() AABB {
+	return of.aabb
 }
 
 // updateMin checks if a > b, then a will be set to the value of b.
@@ -156,7 +168,7 @@ func (of *ObjFile) parseVertex(lineno int, kw string, data []string) error {
 		return err
 	}
 	// discard the Z coordinate
-	of.Vertices = append(of.Vertices, v)
+	of.vertices = append(of.vertices, v)
 	return nil
 }
 
@@ -165,7 +177,7 @@ func (of *ObjFile) parseFace(lineno int, kw string, data []string) error {
 		if r := recover(); r != nil {
 			fmt.Println("Error in parseFace", r)
 			fmt.Printf("lineno: %+v | kw: +%v | data : %+v\n", lineno, kw, data)
-			fmt.Println("len(of.Vertices): ", len(of.Vertices))
+			fmt.Println("len(of.vertices): ", len(of.vertices))
 			os.Exit(1)
 		}
 	}()
@@ -185,13 +197,13 @@ func (of *ObjFile) parseFace(lineno int, kw string, data []string) error {
 	}
 
 	t := Triangle{
-		P1: of.Vertices[vi[0]-1],
-		P2: of.Vertices[vi[1]-1],
-		P3: of.Vertices[vi[2]-1],
+		P1: of.vertices[vi[0]-1],
+		P2: of.vertices[vi[1]-1],
+		P3: of.vertices[vi[2]-1],
 	}
 
 	// extend the mesh bounding box with the triangle
-	of.AABB.extend(t.AABB())
+	of.aabb.extend(t.AABB())
 
 	// discard degenerate triangles
 	if t.isDegenerate() {
@@ -201,7 +213,7 @@ func (of *ObjFile) parseFace(lineno int, kw string, data []string) error {
 		return nil
 	}
 
-	of.Triangles = append(of.Triangles, t)
+	of.triangles = append(of.triangles, t)
 	return nil
 }
 
@@ -216,7 +228,7 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 
 	// init min/max values
 	obj := ObjFile{
-		AABB: NewAABB(),
+		aabb: NewAABB(),
 		dbg:  dbg,
 	}
 

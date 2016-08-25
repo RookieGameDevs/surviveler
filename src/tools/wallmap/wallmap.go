@@ -42,13 +42,13 @@ func main() {
 	}
 
 	if *dbg {
-		fmt.Println("num triangles[0]: ", len(obj.Triangles))
-		fmt.Println("triangles[0]: ", obj.Triangles[0])
+		fmt.Println("num triangles[0]: ", len(obj.Triangles()))
+		fmt.Println("triangles[0]: ", obj.Triangles()[0])
 		fmt.Println("scale factor: ", *scale)
 	}
 
 	// get image w/h by scaling the mesh aabb by the user-defined scale factor
-	aabb := obj.AABB
+	aabb := obj.AABB()
 	aabb.Scale(float64(*scale))
 	offx, offy := int(math.Floor(aabb.MinX)), int(math.Floor(aabb.MinZ))
 	w, h := int(math.Ceil(aabb.MaxX)), int(math.Ceil(aabb.MaxZ))
@@ -59,7 +59,7 @@ func main() {
 	}
 
 	if *dbg || negoff {
-		fmt.Println("mesh bounding box: ", obj.AABB)
+		fmt.Println("mesh bounding box: ", obj.AABB())
 		fmt.Println("scaled bounding box: ", aabb)
 		fmt.Println("image x, y offset: ", offx, offy)
 		fmt.Println("image width/height: ", w, h)
@@ -69,7 +69,7 @@ func main() {
 	dc.SetRGB(1, 1, 1)
 	dc.Clear()
 
-	for _, t := range obj.Triangles {
+	for _, t := range obj.Triangles() {
 		// scale current triangle
 		t.Scale(float64(*scale))
 
