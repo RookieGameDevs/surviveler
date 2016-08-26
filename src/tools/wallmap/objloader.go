@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+var ErrDegenerateTriangle = errors.New("objloader: found degenerate triangle")
+
 // Vertex represents a 4D vertex.
 type Vertex [4]float64
 
@@ -216,10 +218,7 @@ func (of *ObjFile) parseFace(kw string, data []string) error {
 
 	// discard degenerate triangles
 	if t.isDegenerate() {
-		if of.dbg {
-			fmt.Println("found degenerate triangle: ", t)
-		}
-		return nil
+		return ErrDegenerateTriangle
 	}
 
 	of.triangles = append(of.triangles, t)
@@ -254,7 +253,14 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 			}
 		case "f":
 			err := obj.parseFace(kw, vals)
-			if err != nil {
+			switch err {
+			case ErrDegenerateTriangle:
+				if dbg {
+					fmt.Printf("degenerate triangle at line %d,\"%v\"\n", lineno, vals)
+				}
+			case nil:
+				break
+			default:
 				return nil, fmt.Errorf("error parsing face at line %d,\"%v\": %s", lineno, vals, err)
 			}
 		default:
