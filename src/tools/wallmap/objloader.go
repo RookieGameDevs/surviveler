@@ -232,7 +232,7 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 	}
 	defer in.Close()
 
-	lineno := 0
+	lineno := 1
 
 	// init min/max values
 	obj := ObjFile{
