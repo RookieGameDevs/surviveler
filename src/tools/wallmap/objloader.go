@@ -242,15 +242,19 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
+
 		line := strings.Split(scanner.Text(), " ")
 		kw, vals := line[0], line[1:]
+
 		switch kw {
+
 		case "v":
 			err := obj.parseVertex(kw, vals)
 			if err != nil {
 				return nil, fmt.Errorf("error parsing vertex at line %d,\"%v\": %s", lineno, vals, err)
 
 			}
+
 		case "f":
 			err := obj.parseFace(kw, vals)
 			switch err {
@@ -263,6 +267,7 @@ func ReadObjFile(path string, dbg bool) (*ObjFile, error) {
 			default:
 				return nil, fmt.Errorf("error parsing face at line %d,\"%v\": %s", lineno, vals, err)
 			}
+
 		default:
 			// ignore everything else
 		}
