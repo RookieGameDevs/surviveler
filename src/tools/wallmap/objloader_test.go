@@ -51,7 +51,7 @@ func TestDegenerateTriangle(t *testing.T) {
 		}
 		actual := triangle.isDegenerate()
 		if actual != tt.expected {
-			t.Errorf("Triangle.isDegenerate() (%v): expected %d, actual %d", triangle, tt.expected, actual)
+			t.Errorf("Triangle.isDegenerate() (%v): expected %v, actual %v", triangle, tt.expected, actual)
 		}
 	}
 }
