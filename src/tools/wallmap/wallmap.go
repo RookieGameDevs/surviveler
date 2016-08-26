@@ -44,8 +44,8 @@ func main() {
 	}
 
 	if *dbg {
-		fmt.Println("num triangles[0]: ", len(obj.Triangles()))
-		fmt.Println("triangles[0]: ", obj.Triangles()[0])
+		fmt.Println("num vertices: ", len(obj.Vertices()))
+		fmt.Println("num faces: ", len(obj.Triangles()))
 		fmt.Println("scale factor: ", *scale)
 	}
 
@@ -57,7 +57,7 @@ func main() {
 
 	negoff := offx < 0.0 || offy < 0.0
 	if negoff {
-		fmt.Printf("WARNING: the mesh 2D has negative offset(s), probably due to some negative coordinates: x:%d|y:%d\n", offx, offy)
+		fmt.Printf("WARNING: resulting 2D mesh has negative offset(s), probably due to some negative coordinates: x:%d|y:%d\n", offx, offy)
 	}
 
 	if *dbg || negoff {
