@@ -55,18 +55,6 @@ func main() {
 	offx, offy := int(math.Floor(aabb.MinX)), int(math.Floor(aabb.MinZ))
 	w, h := int(math.Ceil(aabb.MaxX)), int(math.Ceil(aabb.MaxZ))
 
-	negoff := offx < 0.0 || offy < 0.0
-	if negoff {
-		fmt.Printf("WARNING: resulting 2D mesh has negative offset(s), probably due to some negative coordinates: x:%d|y:%d\n", offx, offy)
-	}
-
-	if *dbg || negoff {
-		fmt.Println("mesh bounding box: ", obj.AABB())
-		fmt.Println("scaled bounding box: ", aabb)
-		fmt.Println("image x, y offset: ", offx, offy)
-		fmt.Println("image width/height: ", w, h)
-	}
-
 	dc := gg.NewContext(w, h)
 	dc.SetRGB255(255, 255, 255)
 	dc.Clear()
@@ -103,4 +91,14 @@ func main() {
 		fmt.Println("Can't encode ", *pngfile, ": ", err)
 		os.Exit(1)
 	}
+
+	fmt.Println("Resulting image details")
+
+	if *dbg {
+		fmt.Println("original mesh bounding box: ", obj.AABB())
+		fmt.Println("scaled mesh bounding box: ", aabb)
+	}
+	fmt.Println("x, y offset: ", offx, offy)
+	fmt.Println("scale: ", *scale)
+	fmt.Println("width/height: ", w, h)
 }
