@@ -20,6 +20,7 @@ local/
 pip-selfcheck.json
 pkg/
 .Python
-data/
 data
 pyvenv.cfg
+wiki
+.vscode
