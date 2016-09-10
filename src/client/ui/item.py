@@ -2,6 +2,41 @@
 
 from abc import ABCMeta
 from abc import abstractmethod
+from collections import OrderedDict
+from functools import partial
+
+
+class Binding:
+    """Descriptor protocol implementation for bound properties.
+    """
+
+    def __init__(self, getter, setter=None, deleter=None):
+        """Constructor.
+
+        :param getter: The getter fuction
+        :type getter: :class:`function`
+
+        :param setter: The setter function
+        :type setter: :class:`function`
+
+        :param deleter: The deleter function
+        :type deleter: :class:`function`
+        """
+        self.getter = getter
+        self.setter = setter
+        self.deleter = deleter
+
+    # Implementation of the Descriptor protocol
+    def __get__(self, obj, objtype=None):
+        return self.getter()
+
+    def __set__(self, obj, value):
+        if self.setter:
+            return self.setter(value)
+
+    def __delete__(self, obj):
+        if self.deleter:
+            return self.deleter()
 
 
 class Item(metaclass=ABCMeta):
@@ -35,6 +70,67 @@ class Item(metaclass=ABCMeta):
         self.margin = margin if self.anchor else None
 
         self.size = size
+
+        self.children = OrderedDict()
+
+    def __getattribute__(self, name):
+        """Override of the standard __getattribute__ method.
+
+        This override is needed for runtime property binding.
+
+        This method is used to check if the required item conform to the
+        Descriptor protocol and in case use it to get the actual value.
+
+        :param name: The name of the attribute
+        :type name: :class:`str`
+        """
+        value = super().__getattribute__(name)
+        if hasattr(value, '__get__'):
+            value = value.__get__(self, self.__class__)
+        return value
+
+    def __setattr__(self, name, value):
+        """Override of the standard __setattr__ method.
+
+        This override is needed for runtime property binding.
+
+        This method is used to check if the required item conform to the
+        Descriptor protocol and in case use it to set the new value.
+
+        :param name: The name of the attribute
+        :type name: :class:`str`
+
+        :param value: The new value for the bound property
+        :type value: type of the bound property
+        """
+        try:
+            obj = super().__getattribute__(name)
+        except AttributeError:
+            pass
+        else:
+            if hasattr(obj, '__set__'):
+                return obj.__set__(self, value)
+        return super().__setattr__(name, value)
+
+    def addChild(self, ref, item, **properties):
+        """Attaches a child to the item, and binds the properties.
+
+        :param ref: The name that identifies internally the child
+        :type ref: :class:`str`
+
+        :param item: The actual item to be added as child
+        :type item: :class:`ui.item.Item`
+
+        :param **properties: A mapping of the properties to be bound
+        :type **properties: :class:`dict`
+        """
+        self.children[ref] = item
+
+        for binding, prop in properties.items():
+            getter = partial(getattr, self.children[ref], prop)
+            setter = partial(setattr, self.children[ref], prop)
+            print(binding, prop, repr(getter()))
+            setattr(self, binding, Binding(getter, setter))
 
     @property
     def position(self):
