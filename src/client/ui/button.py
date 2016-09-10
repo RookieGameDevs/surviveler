@@ -48,16 +48,18 @@ class Button(Item):
         """
         super().__init__(parent, position, size, anchor, margin)
 
-        self.addChild('background', Rect(
-            self, self.position, self.size, self.anchor, self.margin,
-            background), background='color')
+        self.addChild(
+            'background',
+            Rect(self, background=background),
+            background='color')
 
-        self.addChild('label', Text(
-            self, self.position, self.size, self.anchor, self.margin,
-            font, color, text), font='font', color='color', text='text')
+        self.addChild(
+            'label',
+            Text(self, font, color, text),
+            font='font', color='color', text='text')
 
     def update(self, dt):
-        """Text update method.
+        """Button update method.
 
         NOTE: this is a noop
 
