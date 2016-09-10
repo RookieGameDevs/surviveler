@@ -42,7 +42,7 @@ class Binding:
 class Item(metaclass=ABCMeta):
     """The basic item class.
 
-    All the user interface components will inherit this abstract item class.
+    All the user interface items will inherit this abstract item class.
     """
 
     def __init__(self, parent=None, position=None, size=None, anchor=None, margin=None):
@@ -138,10 +138,10 @@ class Item(metaclass=ABCMeta):
 
         How the position is computed:
 
-          1. check if we have a parent component (otherwise the parent component
-          is the whole screen)
+          1. check if we have a parent item (otherwise the parent item is the
+          whole screen)
           2. check if we have a position (this position is going to be relative
-          to the parent component)
+          to the parent item)
           3. if position is not available check for the anchor and compute the
           margin, returning the final position of the item.
 
@@ -173,7 +173,7 @@ class Item(metaclass=ABCMeta):
 
           1. check if there is an explicitly defined width
           2. in case of not explicitly defined width, check for a parent
-          component
+          item
           3. check for the anchor, compute the margin and return the calculated
           width
 
@@ -214,7 +214,7 @@ class Item(metaclass=ABCMeta):
 
           1. check if there is an explicitly defined height
           2. in case of not explicitly defined height, check for a parent
-          component
+          item
           3. check for the anchor, compute the margin and return the calculated
           height
 
