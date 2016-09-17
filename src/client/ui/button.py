@@ -48,12 +48,12 @@ class Button(Item):
         """
         super().__init__(parent, position, size, anchor, margin)
 
-        self.addChild(
+        self.add_child(
             'background',
             Rect(self, background=background),
             background='color')
 
-        self.addChild(
+        self.add_child(
             'label',
             Text(self, font, color, text),
             font='font', color='color', text='text')

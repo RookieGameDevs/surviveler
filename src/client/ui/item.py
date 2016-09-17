@@ -112,7 +112,7 @@ class Item(metaclass=ABCMeta):
                 return obj.__set__(self, value)
         return super().__setattr__(name, value)
 
-    def addChild(self, ref, item, **properties):
+    def add_child(self, ref, item, **properties):
         """Attaches a child to the item, and binds the properties.
 
         :param ref: The name that identifies internally the child
