@@ -27,10 +27,10 @@ class Image(Item):
         :type size: :class:`tuple`
 
         :param anchor: The item anchor override
-        :type anchor: :class:`ui.item.Anchor`
+        :type anchor: :class:`ui.Anchor`
 
         :param margin: The item margin override
-        :type margin: :class:`ui.item.Margin`
+        :type margin: :class:`ui.Margin`
 
         :param image: The image
         :type image: :class:`str`

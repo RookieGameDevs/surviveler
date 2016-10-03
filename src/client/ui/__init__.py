@@ -16,13 +16,24 @@ class Anchor:
         vcenter = 'vcenter'
         hcenter = 'hcenter'
 
+    class AnchorTarget(Enum):
+        """Possible targets for anchors.
+        """
+        parent = 'parent'
+        sibling = 'sibling'
+
     def __init__(self, **anchors):
         """Constructor.
 
         TODO: add documentation.
         """
         for a in Anchor.AnchorType:
-            setattr(self, a.name, anchors.get(a.name))
+            target = None
+            try:
+                target = Anchor.AnchorTarget(anchors.get(a.name)).name
+            except ValueError:
+                pass
+            setattr(self, a.name, target)
 
 
 class Margin:
@@ -44,7 +55,7 @@ class Margin:
         """
         self.margin = margin
         for m in Margin.MarginType:
-            setattr(self, m.name, margins.get(m.name))
+            setattr(self, m.name, margins.get(m.name, 0))
 
 
 class UI:

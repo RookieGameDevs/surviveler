@@ -25,10 +25,10 @@ class Rect(Item):
         :type size: :class:`tuple`
 
         :param anchor: The item anchor override
-        :type anchor: :class:`ui.item.Anchor`
+        :type anchor: :class:`ui.Anchor`
 
         :param margin: The item margin override
-        :type margin: :class:`ui.item.Margin`
+        :type margin: :class:`ui.Margin`
 
         :param color: The background color
         :type color: :class:`tuple`
