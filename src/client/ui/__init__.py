@@ -2,7 +2,7 @@
 from enum import Enum
 
 
-class Anchor:
+class Anchor(dict):
     """Represents the sets of anchors of a specified item.
     """
 
@@ -29,22 +29,42 @@ class Anchor:
         TODO: add documentation.
         """
         for a in Anchor.AnchorType:
-            target = None
-            try:
-                target = Anchor.AnchorTarget(anchors.get(a.name)).name
-            except ValueError:
-                pass
-            setattr(self, a.name, target)
+            anc = anchors.get(a.name)
+            if anc:
+                target, t = anc.split('.')
+                try:
+                    target = Anchor.AnchorTarget(target)
+                    t = Anchor.AnchorType(t)
+                    self[a] = (target, t)
+                except ValueError:
+                    pass
 
-    def __getitem__(self, anchor_type):
-        """dict-like get implementation.
+    @classmethod
+    def fill(cls):
+        """Factory for fill-anchor.
 
-        TODO: add documentation
+        This is just a shortcut for an anchor that completely fills the parent.
+
+        :returns: The generated fill anchor
+        :rtype: :class:`Anchor`
         """
-        target = Anchor.AnchorTarget.none
-        if hasattr(self, anchor_type.name):
-            target = Anchor.AnchorTarget[getattr(self, anchor_type.name)]
-        return target
+        return cls(
+            left='parent.left',
+            right='parent.right',
+            top='parent.top',
+            bottom='parent.bottom')
+
+    @classmethod
+    def center(cls):
+        """Factory for center-anchor.
+
+        This is just a shortcut for an anchor that puts the item in the center
+        of the parent.
+
+        :returns: The generated center anchor
+        :rtype: :class:`Anchor`
+        """
+        return cls(vcenter='parent.vcenter', hcenter='parent.vcenter')
 
 
 class Margin:

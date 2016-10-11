@@ -1,6 +1,6 @@
 """Rect item module"""
 
-from .item import Item
+from . import Item
 
 
 class Rect(Item):
@@ -9,31 +9,23 @@ class Rect(Item):
     Concrete implementation of items representing rectangles.
     """
 
-    def __init__(
-            self,
-            parent, position=None, size=None, anchor=None, margin=None,
-            color=None):
+    def __init__(self, parent, **kwargs):
         """Constructor.
 
         :param parent: The parent item
         :type parent: :class:`ui.item.Item`
 
-        :param position: The item position relative to the parent
-        :type position: :class:`tuple`
-
-        :param size: The position width and height
-        :type size: :class:`tuple`
-
-        :param anchor: The item anchor override
-        :type anchor: :class:`ui.Anchor`
-
-        :param margin: The item margin override
-        :type margin: :class:`ui.Margin`
-
-        :param color: The background color
-        :type color: :class:`tuple`
+        Keyword Arguments:
+            * position (:class:`..point.Point`): The item position relative to
+                the parent
+            * width (:class:`int`): The item width
+            * height (:class:`int`): The item height
+            * anchor (:class:`..Anchor`): The item anchor override
+            * margin (:class:`..Margin`): The item margin override
+            * color (:class:`tuple`): The background color
         """
-        super().__init__(parent, position, size, anchor, margin)
+        color = kwargs.pop('color', None)
+        super().__init__(parent, **kwargs)
         self._color = color
 
     @property

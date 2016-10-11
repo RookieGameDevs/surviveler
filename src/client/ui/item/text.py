@@ -1,6 +1,6 @@
 """Text item module"""
 
-from .item import Item
+from . import Item
 
 
 class Text(Item):
@@ -9,10 +9,7 @@ class Text(Item):
     Concrete implementation of items representing texts.
     """
 
-    def __init__(
-            self,
-            parent, position=None, size=None, anchor=None, margin=None,
-            font=None, color=None, text=''):
+    def __init__(self, parent, **kwargs):
         """Constructor.
 
         FIXME: find a proper way to define fonts.
@@ -20,28 +17,21 @@ class Text(Item):
         :param parent: The parent item
         :type parent: :class:`ui.item.Item`
 
-        :param position: The item position relative to the parent
-        :type position: :class:`tuple`
-
-        :param size: The position width and height
-        :type size: :class:`tuple`
-
-        :param anchor: The item anchor override
-        :type anchor: :class:`ui.Anchor`
-
-        :param margin: The item margin override
-        :type margin: :class:`ui.Margin`
-
-        :param font: The text font
-        :type font: :class:`str`
-
-        :param color: The text color
-        :type color: :class:`tuple`
-
-        :param text: The text
-        :type text: :class:`str`
+        Keyword Arguments:
+            * position (:class:`..point.Point`): The item position relative to
+                the parent
+            * width (:class:`int`): The item width
+            * height (:class:`int`): The item height
+            * anchor (:class:`..Anchor`): The item anchor override
+            * margin (:class:`..Margin`): The item margin override
+            * color (:class:`tuple`): The background color
+            * font (:class:`str`): The text font
+            * text (:class:`str`): The text
         """
-        super().__init__(parent, position, size, anchor, margin)
+        font = kwargs.pop('font', None)
+        color = kwargs.pop('color', None)
+        text = kwargs.pop('text', '')
+        super().__init__(parent, **kwargs)
         self._font = font
         self._color = color
         self._text = text

@@ -1,7 +1,6 @@
 """The base item module"""
 
 from .binding import Binding
-from .geometry import Geometry
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import OrderedDict
@@ -14,29 +13,29 @@ class Item(metaclass=ABCMeta):
     All the user interface items will inherit this abstract item class.
     """
 
-    def __init__(self, parent, position=None, size=None, anchor=None, margin=None):
+    def __init__(self, parent, **kwargs):
         """Constructor.
 
         :param parent: The parent item
-        :type parent: :class:`ui.item.Item`
+        :type parent: :class:`Item`
 
-        :param position: The item position relative to the parent
-        :type position: :class:`tuple`
-
-        :param size: The item width and height
-        :type size: :class:`tuple`
-
-        :param anchor: The item anchor override
-        :type anchor: :class:`ui.Anchor`
-
-        :param margin: The item margin override
-        :type margin: :class:`ui.Margin`
+        Keyword Arguments:
+            * position (:class:`..point.Point`): The item position relative to
+                the parent
+            * width (:class:`int`): The item width
+            * height (:class:`int`): The item height
+            * anchor (:class:`..Anchor`): The item anchor override
+            * margin (:class:`..Margin`): The item margin override
         """
         self.parent = parent
         self.children = OrderedDict()
 
-        self._geometry = Geometry(
-            parent.geometry, position, size, anchor, margin)
+        # Geometry properties
+        self._position = kwargs.get('position')
+        self._width = kwargs.get('width')
+        self._height = kwargs.get('height')
+        self._anchor = kwargs.get('anchor')
+        self._margin = kwargs.get('margin')
 
     def __getattribute__(self, name):
         """Override of the standard __getattribute__ method.
@@ -78,13 +77,49 @@ class Item(metaclass=ABCMeta):
         return super().__setattr__(name, value)
 
     @property
-    def geometry(self):
-        """The readonly geometry of the item.
-
-        :returns: The readonly geometry of the Item
-        :rtype: :class:`ui.geometry.Geometry`
+    def position(self):
+        """TODO: add documentation
         """
-        return self._geometry
+        if self._position is not None:
+            return self._position + self.parent.position
+        elif self._anchor:
+            raise NotImplementedError
+        else:
+            return self.parent.position
+
+    @property
+    def width(self):
+        """TODO: add documentation
+        """
+        if self._width is not None:
+            return self._width
+        elif self._anchor:
+            raise NotImplementedError
+        else:
+            return 0
+
+    @property
+    def height(self):
+        """TODO: add documentation
+        """
+        if self._height is not None:
+            return self._height
+        elif self._anchor:
+            raise NotImplementedError
+        else:
+            return 0
+
+    @property
+    def anchor(self):
+        """TODO: add documentation
+        """
+        return self._anchor
+
+    @property
+    def margin(self):
+        """TODO: add documentation
+        """
+        return self._margin
 
     def get_child(self, ref):
         """Get a child by reference.

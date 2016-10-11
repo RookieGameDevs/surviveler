@@ -1,6 +1,6 @@
 """Image item module"""
 
-from .item import Item
+from . import Item
 
 
 class Image(Item):
@@ -9,33 +9,25 @@ class Image(Item):
     Concrete implementation of items representing images.
     """
 
-    def __init__(
-            self,
-            parent, position=None, size=None, anchor=None, margin=None,
-            image=None):
+    def __init__(self, parent, **kwargs):
         """Constructor.
 
-        FIXME: find a proper way to define images.
+        FIXME: find a proper way to define images
 
         :param parent: The parent item
         :type parent: :class:`ui.item.Item`
 
-        :param position: The item position relative to the parent
-        :type position: :class:`tuple`
-
-        :param size: The position width and height
-        :type size: :class:`tuple`
-
-        :param anchor: The item anchor override
-        :type anchor: :class:`ui.Anchor`
-
-        :param margin: The item margin override
-        :type margin: :class:`ui.Margin`
-
-        :param image: The image
-        :type image: :class:`str`
+        Keyword Arguments:
+            * position (:class:`..point.Point`): The item position relative to
+                the parent
+            * width (:class:`int`): The item width
+            * height (:class:`int`): The item height
+            * anchor (:class:`..Anchor`): The item anchor override
+            * margin (:class:`..Margin`): The item margin override
+            * image (:class:`str`): The image
         """
-        super().__init__(parent, position, size, anchor, margin)
+        image = kwargs.pop('image', None)
+        super().__init__(parent, **kwargs)
         self._image = image
 
     @property
