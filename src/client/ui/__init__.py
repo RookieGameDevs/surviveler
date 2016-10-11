@@ -19,6 +19,7 @@ class Anchor:
     class AnchorTarget(Enum):
         """Possible targets for anchors.
         """
+        none = 'none'
         parent = 'parent'
         sibling = 'sibling'
 
@@ -34,6 +35,16 @@ class Anchor:
             except ValueError:
                 pass
             setattr(self, a.name, target)
+
+    def __getitem__(self, anchor_type):
+        """dict-like get implementation.
+
+        TODO: add documentation
+        """
+        target = Anchor.AnchorTarget.none
+        if hasattr(self, anchor_type.name):
+            target = Anchor.AnchorTarget[getattr(self, anchor_type.name)]
+        return target
 
 
 class Margin:
@@ -67,7 +78,7 @@ class UI:
         """
         self.ui = {}
 
-    def push_item(self, data, parent=None, **overrides):
+    def push_item(self, data, parent, **overrides):
         """Creates a new item inspecting the resource and push it into the ui.
 
         :param data: The item data

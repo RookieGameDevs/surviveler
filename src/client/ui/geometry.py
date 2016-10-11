@@ -23,7 +23,9 @@ class Geometry:
         :param margin: The margin of the item the geometry is related to
         :type margin: :class:`ui.Margin`
         """
+        self.parent = parent
         self._position = position
+        self._size = size
 
         self.anchor = anchor if not position else None
         self.margin = margin if self.anchor else None
@@ -44,14 +46,7 @@ class Geometry:
         :returns: The item position.
         :rtype: :class:`tuple`
         """
-        parent_position = (
-            self.parent.absolute_position
-            if self.parent
-            # FIXME: remove this hardcoded (0, 0)
-            else (0, 0)
-        )
-
-        return parent_position + self.position
+        return self.parent.position + self.position
 
     @property
     def position(self):
@@ -62,12 +57,14 @@ class Geometry:
         """
         if self._position:
             self._position
-        else:
+        elif self.anchor:
             return (
                 # TODO: this whole calculation is to be implemented
                 (self.anchor.top + (self.margin.top or self.margin)),
                 (self.anchor.left + (self.margin.left or self.margin)),
             )
+        else:
+            return self.parent.position
 
     @property
     def width(self):
@@ -89,14 +86,14 @@ class Geometry:
         :returns: The item width.
         :rtype: :class:`int`
         """
-        if self.size:
-            return self.size[0]
+        if self._size:
+            return self._size[0]
 
         if self.anchor:
             # TODO: calculate the width using the anchor
             pass
         else:
-            return self.parent.size[0]
+            return self.parent.width
 
         # TODO: apply margin and return the width
 
@@ -120,13 +117,27 @@ class Geometry:
         :returns: The item height.
         :rtype: :class:`int`
         """
-        if self.size:
-            return self.size[1]
+        if self._size:
+            return self._size[1]
 
         if self.anchor:
             # TODO: calculate the height using the anchor
             pass
         else:
-            self.parent.size[1]
+            self.parent.height
 
         # TODO: apply margin and return the height
+
+
+class ScreenGeometry(Geometry):
+    """The geometry of the screen.
+
+    TODO: add documentation here.
+    """
+
+    def __init__(self):
+        """Constructor.
+
+        Builds the screen creating a geometry without any parent.
+        """
+        super().__init__(None)

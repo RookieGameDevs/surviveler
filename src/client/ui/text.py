@@ -11,7 +11,7 @@ class Text(Item):
 
     def __init__(
             self,
-            parent=None, position=None, size=None, anchor=None, margin=None,
+            parent, position=None, size=None, anchor=None, margin=None,
             font=None, color=None, text=''):
         """Constructor.
 

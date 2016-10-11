@@ -14,7 +14,7 @@ class Item(metaclass=ABCMeta):
     All the user interface items will inherit this abstract item class.
     """
 
-    def __init__(self, parent=None, position=None, size=None, anchor=None, margin=None):
+    def __init__(self, parent, position=None, size=None, anchor=None, margin=None):
         """Constructor.
 
         :param parent: The parent item
@@ -35,7 +35,8 @@ class Item(metaclass=ABCMeta):
         self.parent = parent
         self.children = OrderedDict()
 
-        self._geometry = Geometry(parent.geometry, position, size, anchor, margin)
+        self._geometry = Geometry(
+            parent.geometry, position, size, anchor, margin)
 
     def __getattribute__(self, name):
         """Override of the standard __getattribute__ method.
