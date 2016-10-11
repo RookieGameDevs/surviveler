@@ -1,6 +1,7 @@
 """Button item module"""
 
 from . import Item
+from .. import Anchor
 from .rect import Rect
 from .text import Text
 
@@ -39,12 +40,12 @@ class Button(Item):
 
         self.add_child(
             'background',
-            Rect(self, background=background),
+            Rect(self, background=background, anchor=Anchor.fill()),
             background='color')
 
         self.add_child(
             'label',
-            Text(self, font, color, text),
+            Text(self, font=font, color=color, text=text, anchor=Anchor.fill()),
             font='font', color='color', text='text')
 
     def update(self, dt):
