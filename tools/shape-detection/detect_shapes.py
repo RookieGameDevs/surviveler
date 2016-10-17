@@ -27,27 +27,36 @@ thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
 
 # find contours in the thresholded image and initialize the
 # shape detector
-cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
                         cv2.CHAIN_APPROX_SIMPLE)
-cnts = cnts[0] if imutils.is_cv2() else cnts[1]
+contours = contours[0] if imutils.is_cv2() else contours[1]
 sd = ShapeDetector()
 
 # loop over the contours
-for c in cnts:
+for ct in contours:
     # compute the center of the contour, then detect the name of the
     # shape using only the contour
-    M = cv2.moments(c)
+    M = cv2.moments(ct)
     cX = int((M["m10"] / M["m00"]) * ratio)
     cY = int((M["m01"] / M["m00"]) * ratio)
-    shape = sd.detect(c)
+    shape_name = sd.detect(ct)
+
+    # Get the minimal number of points to describe the shape
+    peri = cv2.arcLength(ct, True)
+    epsilon = 0.04 * peri
+    approx = cv2.approxPolyDP(ct, epsilon, True)
+    arr = approx.flatten().reshape((len(approx), 2))
+    print(shape_name)
+    print(arr.tolist())
 
     # multiply the contour (x, y)-coordinates by the resize ratio,
     # then draw the contours and the name of the shape on the image
-    c = c.astype("float")
-    c *= ratio
-    c = c.astype("int")
-    cv2.drawContours(image, [c], -1, (0, 255, 0), 2)
-    cv2.putText(image, shape, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
+    res = arr.astype("float")
+    res *= ratio
+    res = res.astype("int")
+
+    cv2.drawContours(image, [res], -1, (0, 255, 0), 2)
+    cv2.putText(image, shape_name, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
                 0.5, (255, 255, 255), 2)
 
     # show the output image
