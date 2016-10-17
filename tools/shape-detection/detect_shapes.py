@@ -2,7 +2,6 @@
 # python detect_shapes.py --image shapes_and_colors.png
 
 # import the necessary packages
-from pyimagesearch.shapedetector import ShapeDetector
 import argparse
 import imutils
 import cv2
@@ -30,7 +29,6 @@ thresh = cv2.threshold(blurred, 60, 255, cv2.THRESH_BINARY)[1]
 contours = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
                         cv2.CHAIN_APPROX_SIMPLE)
 contours = contours[0] if imutils.is_cv2() else contours[1]
-sd = ShapeDetector()
 
 # loop over the contours
 for ct in contours:
@@ -39,14 +37,12 @@ for ct in contours:
     M = cv2.moments(ct)
     cX = int((M["m10"] / M["m00"]) * ratio)
     cY = int((M["m01"] / M["m00"]) * ratio)
-    shape_name = sd.detect(ct)
 
     # Get the minimal number of points to describe the shape
     peri = cv2.arcLength(ct, True)
     epsilon = 0.04 * peri
     approx = cv2.approxPolyDP(ct, epsilon, True)
     arr = approx.flatten().reshape((len(approx), 2))
-    print(shape_name)
     print(arr.tolist())
 
     # multiply the contour (x, y)-coordinates by the resize ratio,
@@ -56,8 +52,6 @@ for ct in contours:
     res = res.astype("int")
 
     cv2.drawContours(image, [res], -1, (0, 255, 0), 2)
-    cv2.putText(image, shape_name, (cX, cY), cv2.FONT_HERSHEY_SIMPLEX,
-                0.5, (255, 255, 255), 2)
 
     # show the output image
     cv2.imshow("Image", image)
