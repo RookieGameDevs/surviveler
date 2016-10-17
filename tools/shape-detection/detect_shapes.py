@@ -2,8 +2,6 @@
 # python detect_shapes.py --image shapes_and_colors.png
 
 # import the necessary packages
-from rdp import rdp
-from numpy import array
 import argparse
 import imutils
 import cv2
@@ -47,20 +45,13 @@ for ct in contours:
     arr = approx.flatten().reshape((len(approx), 2))
     print(arr.tolist())
 
-    flat = ct.flatten().reshape((len(ct), 2))
-    print(flat)
-    #ct_tuples = [(flat[i], flat[i + 1]) for i in range(0, len(flat) - 1, 2)]
-    red = array(rdp(flat.tolist(), epsilon), flat.dtype)
-    print(red)
-    print(len(red))
-
     # multiply the contour (x, y)-coordinates by the resize ratio,
     # then draw the contours and the name of the shape on the image
-    red = red.astype("float")
-    red *= ratio
-    red = red.astype("int")
+    res = arr.astype("float")
+    res *= ratio
+    res = res.astype("int")
 
-    cv2.drawContours(image, [red], -1, (0, 255, 0), 2)
+    cv2.drawContours(image, [res], -1, (0, 255, 0), 2)
 
     # show the output image
     cv2.imshow("Image", image)
