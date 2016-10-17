@@ -52,4 +52,4 @@ for c in cnts:
 
     # show the output image
     cv2.imshow("Image", image)
-    cv2.waitKey(0)
+    cv2.waitKey(1000)
