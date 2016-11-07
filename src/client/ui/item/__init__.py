@@ -1,10 +1,15 @@
 """The base item module"""
-
+from .. import Anchor
+from ..point import Point
 from .binding import Binding
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import OrderedDict
 from functools import partial
+
+
+class ValidationError(Exception):
+    """Exception class for validation errors"""
 
 
 class Item(metaclass=ABCMeta):
@@ -30,62 +35,191 @@ class Item(metaclass=ABCMeta):
         self.parent = parent
         self.children = OrderedDict()
 
-        # Geometry properties
-        self._position = kwargs.get('position')
-        self._width = kwargs.get('width')
-        self._height = kwargs.get('height')
-        self._anchor = kwargs.get('anchor')
-        self._margin = kwargs.get('margin')
+        # Cached geometry properties
+        self._position = None
+        self._width = None
+        self._height = None
+        self._anchor = {}
+        self._margin = {}
 
-    def __getattribute__(self, name):
-        """Override of the standard __getattribute__ method.
+        # Source geometry properties
+        #   1. Position relative to the parent item
+        self._s_position = kwargs.get('position')
+        #   2. Pre-defined width
+        self._s_width = kwargs.get('width')
+        #   3. Pre-defined height
+        self._s_height = kwargs.get('height')
+        #   4. Anchor
+        self._s_anchor = kwargs.get('anchor')
+        #   5. Margin
+        self._s_margin = kwargs.get('margin')
 
-        This override is needed for runtime property binding.
+        self.validate_item()
 
-        This method is used to check if the required item conform to the
-        Descriptor protocol and in case use it to get the actual value.
-
-        :param name: The name of the attribute
-        :type name: :class:`str`
+    def validate_item(self):
+        """Check for missing positioning information.
         """
-        value = super().__getattribute__(name)
-        if hasattr(value, '__get__'):
-            value = value.__get__(self, self.__class__)
-        return value
+        # TODO: add documentation
 
-    def __setattr__(self, name, value):
-        """Override of the standard __setattr__ method.
+        AT = Anchor.AnchorType
 
-        This override is needed for runtime property binding.
+        def get(anchor, at):
+            if anchor:
+                return anchor.get(at)
 
-        This method is used to check if the required item conform to the
-        Descriptor protocol and in case use it to set the new value.
+        x_coord_available = any([
+            self._s_position is not None,
+            get(self._s_anchor, AT.left) is not None,
+            get(self._s_anchor, AT.hcenter) is not None and self._s_width is not None,
+            get(self._s_anchor, AT.right) is not None and self._s_width
+        ])
 
-        :param name: The name of the attribute
-        :type name: :class:`str`
+        y_coord_available = any([
+            self._s_position is not None,
+            get(self._s_anchor, AT.top) is not None,
+            get(self._s_anchor, AT.vcenter) is not None and self._s_height is not None,
+            get(self._s_anchor, AT.bottom) is not None and self._s_height
+        ])
 
-        :param value: The new value for the bound property
-        :type value: type of the bound property
+        width_available = any([
+            self._s_width is not None,
+            get(self._s_anchor, AT.left) is not None and get(
+                self._s_anchor, AT.right) is not None,
+            get(self._s_anchor, AT.left) is not None and get(
+                self._s_anchor, AT.hcenter) is not None,
+            get(self._s_anchor, AT.hcenter) is not None and get(
+                self._s_anchor, AT.right) is not None
+        ])
+
+        height_available = any([
+            self._s_height is not None,
+            get(self._s_anchor, AT.top) is not None and get(
+                self._s_anchor, AT.bottom) is not None,
+            get(self._s_anchor, AT.top) is not None and get(
+                self._s_anchor, AT.vcenter) is not None,
+            get(self._s_anchor, AT.vcenter) is not None and get(
+                self._s_anchor, AT.bottom) is not None
+        ])
+
+        if not all([x_coord_available, y_coord_available, width_available, height_available]):
+            raise ValidationError(
+                'Not enough information for positioning and layouting')
+
+    def bind_item(self):
+        """Bind the item and trigger the binding of the child items.
         """
-        try:
-            obj = super().__getattribute__(name)
-        except AttributeError:
-            pass
+        # Calculate the values of the configured anchors
+        if self._s_anchor is not None:
+            self.calculate_anchor()
+
+        # Calculate the width
+        if self._s_width is not None:
+            self._width = self._s_width
         else:
-            if hasattr(obj, '__set__'):
-                return obj.__set__(self, value)
-        return super().__setattr__(name, value)
+            self._width = self.calculate_width()
+
+        # Calculate the height
+        if self._s_height is not None:
+            self._height = self._s_height
+        else:
+            self._height = self.calculate_height()
+
+        # Calculate the position
+        if self._s_position is not None:
+            self._position = self._s_position + self.parent.position
+        else:
+            self._position = self.calculate_position()
+
+        # Recalculate all the anchors with the internal data for caching purpose
+        self._anchor = self.cache_anchor()
+
+        for ref, item in self.children.items():
+            item.bind_item()
+
+    def calculate_anchor(self):
+        """TODO: add documentation
+        """
+        ATget = Anchor.AnchorTarget
+        # Mapping of targets with real items
+        items = {
+            ATget.parent: self.parent,
+            ATget.sibling: self.parent.get_sibling(self)
+        }
+
+        self._anchor = {}
+        for t, (target, tt) in self._s_anchor.items():
+            self._anchor[t] = items[target].anchor[tt]
+
+    def calculate_width(self):
+        """TODO: add documentation
+        """
+        AT = Anchor.AnchorType
+        width = 0
+        if AT.left in self._anchor and AT.hcenter in self._anchor:
+            width = (self._anchor[AT.hcenter] - self._anchor[AT.left]) * 2
+        elif AT.left in self._anchor and AT.right in self._anchor:
+            width = self._anchor[AT.right] - self._anchor[AT.left]
+        elif AT.hcenter in self._anchor and AT.right in self._anchor:
+            width = (self._anchor[AT.right] - self._anchor[AT.hcenter]) * 2
+        return width
+
+    def calculate_height(self):
+        """TODO: add documentation
+        """
+        AT = Anchor.AnchorType
+        height = 0
+        if AT.top in self._anchor and AT.vcenter in self._anchor:
+            height = (self._anchor[AT.vcenter] - self._anchor[AT.top]) * 2
+        elif AT.top in self._anchor and AT.bottom in self._anchor:
+            height = self._anchor[AT.bottom] - self._anchor[AT.top]
+        elif AT.vcenter in self._anchor and AT.bottom in self._anchor:
+            height = (self._anchor[AT.bottom] - self._anchor[AT.vcenter]) * 2
+        return height
+
+    def calculate_position(self):
+        """TODO: add documentation
+        """
+        AT = Anchor.AnchorType
+
+        x = y = 0
+
+        if AT.left in self._anchor:
+            x = self._anchor[AT.left]
+        elif AT.hcenter in self._anchor:
+            x = self._anchor[AT.hcenter] - int(self._width / 2)
+        elif AT.right in self._anchor:
+            x = self._anchor[AT.right] - self._width
+
+        if AT.top in self._anchor:
+            y = self._anchor[AT.top]
+        elif AT.vcenter in self._anchor:
+            y = self._anchor[AT.vcenter] - int(self._height / 2)
+        elif AT.bottom in self._anchor:
+            y = self._anchor[AT.bottom] - self._height
+
+        return Point(x, y)
+
+    def cache_anchor(self):
+        AT = Anchor.AnchorType
+        x = self._position.x
+        y = self._position.y
+        return {
+            AT.left: x,
+            AT.hcenter: x + int(self._width / 2),
+            AT.right: x + self._width,
+            AT.top: y,
+            AT.vcenter: y + int(self._height / 2),
+            AT.bottom: y + self._height,
+        }
 
     @property
     def position(self):
         """TODO: add documentation
         """
         if self._position is not None:
-            return self._position + self.parent.position
-        elif self._anchor:
-            raise NotImplementedError
+            return self._position
         else:
-            return self.parent.position
+            raise AttributeError
 
     @property
     def width(self):
@@ -93,10 +227,8 @@ class Item(metaclass=ABCMeta):
         """
         if self._width is not None:
             return self._width
-        elif self._anchor:
-            raise NotImplementedError
         else:
-            return 0
+            raise AttributeError
 
     @property
     def height(self):
@@ -104,10 +236,8 @@ class Item(metaclass=ABCMeta):
         """
         if self._height is not None:
             return self._height
-        elif self._anchor:
-            raise NotImplementedError
         else:
-            return 0
+            raise AttributeError
 
     @property
     def anchor(self):
@@ -121,27 +251,16 @@ class Item(metaclass=ABCMeta):
         """
         return self._margin
 
-    def get_child(self, ref):
-        """Get a child by reference.
-
-        :param ref: The name that identifies internally the child
-        :type ref: :class:`str`
-
-        :returns: The item referred by ref
-        :rtype: :class:`ui.item.Item`
-        """
-        return self.children[ref]
-
     def get_sibling(self, item):
         """Get a sibling.
 
         In case there are no siblings, the parent itself is returned.
 
-        :param item: The item that are referring to the sibling.
-        :type item: :class:`ui.item.Item`
+        : param item: The item that are referring to the sibling.
+        : type item:: class: `ui.item.Item`
 
-        :returns: The sibling item (or the parent in case of no siblings)
-        :rtype: :class:`ui.item.Item`
+        : returns: The sibling item(or the parent in case of no siblings)
+        : rtype:: class: `ui.item.Item`
         """
         sibling = self
         for ref, child in self.children.items():
@@ -152,14 +271,14 @@ class Item(metaclass=ABCMeta):
     def add_child(self, ref, item, **properties):
         """Attaches a child to the item, and binds the properties.
 
-        :param ref: The name that identifies internally the child
-        :type ref: :class:`str`
+        : param ref: The name that identifies internally the child
+        : type ref:: class: `str`
 
-        :param item: The actual item to be added as child
-        :type item: :class:`ui.item.Item`
+        : param item: The actual item to be added as child
+        : type item:: class: `ui.item.Item`
 
-        :param **properties: A mapping of the properties to be bound
-        :type **properties: :class:`dict`
+        : param ** properties: A mapping of the properties to be bound
+        : type ** properties: : class: `dict`
         """
         self.children[ref] = item
 
@@ -176,7 +295,7 @@ class Item(metaclass=ABCMeta):
         This method should be implemented by subclasses of Item. It describes
         the behavior the class should have during updates.
 
-        :param dt: The time delta since last update (in seconds)
-        :type dt: :class:`float`
+        : param dt: The time delta since last update(in seconds)
+        : type dt:: class: `float`
         """
         pass
