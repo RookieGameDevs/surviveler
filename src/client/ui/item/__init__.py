@@ -1,11 +1,9 @@
 """The base item module"""
 from .. import Anchor
 from ..point import Point
-from .binding import Binding
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import OrderedDict
-from functools import partial
 
 
 class ValidationError(Exception):
@@ -233,7 +231,7 @@ class Item(metaclass=ABCMeta):
         """
         return self._margin
 
-    def add_child(self, ref, item, **properties):
+    def add_child(self, ref, item):
         """Attaches a child to the item, and binds the properties.
 
         : param ref: The name that identifies internally the child
@@ -241,17 +239,8 @@ class Item(metaclass=ABCMeta):
 
         : param item: The actual item to be added as child
         : type item:: class: `ui.item.Item`
-
-        : param ** properties: A mapping of the properties to be bound
-        : type ** properties: : class: `dict`
         """
         self.children[ref] = item
-
-        for binding, prop in properties.items():
-            getter = partial(getattr, self.children[ref], prop)
-            setter = partial(setattr, self.children[ref], prop)
-            print(binding, prop, repr(getter()))
-            setattr(self, binding, Binding(getter, setter))
 
     @abstractmethod
     def update(self, dt):

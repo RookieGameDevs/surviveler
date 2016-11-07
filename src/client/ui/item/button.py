@@ -40,13 +40,11 @@ class Button(Item):
 
         self.add_child(
             'background',
-            Rect(self, background=background, anchor=Anchor.fill()),
-            background='color')
+            Rect(self, background=background, anchor=Anchor.fill()))
 
         self.add_child(
             'label',
-            Text(self, font=font, color=color, text=text, anchor=Anchor.fill()),
-            font='font', color='color', text='text')
+            Text(self, font=font, color=color, text=text, anchor=Anchor.fill()))
 
     def update(self, dt):
         """Button update method.
