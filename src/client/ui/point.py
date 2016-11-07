@@ -64,6 +64,12 @@ class Point:
         """
         return self._x == other.x and self._y == other.y
 
+    def __repr__(self):
+        return 'Point({x}, {y})'.format(x=self._x, y=self._y)
+
+    def __str__(self):
+        return 'Point({x}, {y})'.format(x=self._x, y=self._y)
+
     @property
     def x(self):
         """Readonly x-axis coordinate
