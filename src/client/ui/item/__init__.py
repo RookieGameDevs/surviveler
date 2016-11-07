@@ -233,23 +233,6 @@ class Item(metaclass=ABCMeta):
         """
         return self._margin
 
-    def get_sibling(self, item):
-        """Get a sibling.
-
-        In case there are no siblings, the parent itself is returned.
-
-        : param item: The item that are referring to the sibling.
-        : type item:: class: `ui.item.Item`
-
-        : returns: The sibling item(or the parent in case of no siblings)
-        : rtype:: class: `ui.item.Item`
-        """
-        sibling = self
-        for ref, child in self.children.items():
-            if child == item:
-                return sibling
-            sibling = child
-
     def add_child(self, ref, item, **properties):
         """Attaches a child to the item, and binds the properties.
 
