@@ -43,16 +43,13 @@ class Item(metaclass=ABCMeta):
         self._margin = {}
 
         # Source geometry properties
-        #   1. Position relative to the parent item
-        self._s_position = kwargs.get('position')
-        #   2. Pre-defined width
-        self._s_width = kwargs.get('width')
-        #   3. Pre-defined height
-        self._s_height = kwargs.get('height')
-        #   4. Anchor
-        self._s_anchor = kwargs.get('anchor')
-        #   5. Margin
-        self._s_margin = kwargs.get('margin')
+        self._source_data = {
+            'position': kwargs.get('position'),
+            'width': kwargs.get('width'),
+            'height': kwargs.get('height'),
+            'anchor': kwargs.get('anchor'),
+            'margin': kwargs.get('margin'),
+        }
 
         self.validate_item()
 
@@ -62,71 +59,67 @@ class Item(metaclass=ABCMeta):
         # TODO: add documentation
 
         AT = Anchor.AnchorType
+        sd = self._source_data
 
         def get(anchor, at):
             if anchor:
                 return anchor.get(at)
 
         x_coord_available = any([
-            self._s_position is not None,
-            get(self._s_anchor, AT.left) is not None,
-            get(self._s_anchor, AT.hcenter) is not None and self._s_width is not None,
-            get(self._s_anchor, AT.right) is not None and self._s_width
+            sd['position'] is not None,
+            get(sd['anchor'], AT.left) is not None,
+            get(sd['anchor'], AT.hcenter) is not None and sd['width'] is not None,
+            get(sd['anchor'], AT.right) is not None and sd['width']
         ])
 
         y_coord_available = any([
-            self._s_position is not None,
-            get(self._s_anchor, AT.top) is not None,
-            get(self._s_anchor, AT.vcenter) is not None and self._s_height is not None,
-            get(self._s_anchor, AT.bottom) is not None and self._s_height
+            sd['position'] is not None,
+            get(sd['anchor'], AT.top) is not None,
+            get(sd['anchor'], AT.vcenter) is not None and sd['height'] is not None,
+            get(sd['anchor'], AT.bottom) is not None and sd['height']
         ])
 
         width_available = any([
-            self._s_width is not None,
-            get(self._s_anchor, AT.left) is not None and get(
-                self._s_anchor, AT.right) is not None,
-            get(self._s_anchor, AT.left) is not None and get(
-                self._s_anchor, AT.hcenter) is not None,
-            get(self._s_anchor, AT.hcenter) is not None and get(
-                self._s_anchor, AT.right) is not None
+            sd['width'] is not None,
+            get(sd['anchor'], AT.left) is not None and get(sd['anchor'], AT.right) is not None,
+            get(sd['anchor'], AT.left) is not None and get(sd['anchor'], AT.hcenter) is not None,
+            get(sd['anchor'], AT.hcenter) is not None and get(sd['anchor'], AT.right) is not None
         ])
 
         height_available = any([
-            self._s_height is not None,
-            get(self._s_anchor, AT.top) is not None and get(
-                self._s_anchor, AT.bottom) is not None,
-            get(self._s_anchor, AT.top) is not None and get(
-                self._s_anchor, AT.vcenter) is not None,
-            get(self._s_anchor, AT.vcenter) is not None and get(
-                self._s_anchor, AT.bottom) is not None
+            sd['height'] is not None,
+            get(sd['anchor'], AT.top) is not None and get(sd['anchor'], AT.bottom) is not None,
+            get(sd['anchor'], AT.top) is not None and get(sd['anchor'], AT.vcenter) is not None,
+            get(sd['anchor'], AT.vcenter) is not None and get(sd['anchor'], AT.bottom) is not None
         ])
 
         if not all([x_coord_available, y_coord_available, width_available, height_available]):
-            raise ValidationError(
-                'Not enough information for positioning and layouting')
+            raise ValidationError('Not enough information for positioning and layouting')
 
     def bind_item(self):
         """Bind the item and trigger the binding of the child items.
         """
+        sd = self._source_data
+
         # Calculate the values of the configured anchors
-        if self._s_anchor is not None:
+        if sd['anchor'] is not None:
             self.calculate_anchor()
 
         # Calculate the width
-        if self._s_width is not None:
-            self._width = self._s_width
+        if sd['width'] is not None:
+            self._width = sd['width']
         else:
             self._width = self.calculate_width()
 
         # Calculate the height
-        if self._s_height is not None:
-            self._height = self._s_height
+        if sd['height'] is not None:
+            self._height = sd['height']
         else:
             self._height = self.calculate_height()
 
         # Calculate the position
-        if self._s_position is not None:
-            self._position = self._s_position + self.parent.position
+        if sd['position'] is not None:
+            self._position = sd['position'] + self.parent.position
         else:
             self._position = self.calculate_position()
 
@@ -139,65 +132,63 @@ class Item(metaclass=ABCMeta):
     def calculate_anchor(self):
         """TODO: add documentation
         """
-        ATget = Anchor.AnchorTarget
         # Mapping of targets with real items
-        items = {
-            ATget.parent: self.parent,
-            ATget.sibling: self.parent.get_sibling(self)
-        }
-
         self._anchor = {}
-        for t, (target, tt) in self._s_anchor.items():
-            self._anchor[t] = items[target].anchor[tt]
+        for t, (target, tt) in self._source_data['anchor'].items():
+            item = self.parent
+            if target != 'parent':
+                item = self.parent.get_child(target)
+            self._anchor[t] = item.anchor[tt]
+
+    def _calculate_dimension(self, *anchors):
+        """TODO: add documentation
+        """
+        first, second, third = anchors
+
+        dimension = 0
+        if first in self._anchor and second in self._anchor:
+            dimension = (self._anchor[second] - self._anchor[first]) * 2
+        elif first in self._anchor and third in self._anchor:
+            dimension = self._anchor[third] - self._anchor[first]
+        elif second in self._anchor and third in self._anchor:
+            dimension = (self._anchor[third] - self._anchor[second]) * 2
+        return dimension
 
     def calculate_width(self):
         """TODO: add documentation
         """
         AT = Anchor.AnchorType
-        width = 0
-        if AT.left in self._anchor and AT.hcenter in self._anchor:
-            width = (self._anchor[AT.hcenter] - self._anchor[AT.left]) * 2
-        elif AT.left in self._anchor and AT.right in self._anchor:
-            width = self._anchor[AT.right] - self._anchor[AT.left]
-        elif AT.hcenter in self._anchor and AT.right in self._anchor:
-            width = (self._anchor[AT.right] - self._anchor[AT.hcenter]) * 2
-        return width
+        return self._calculate_dimension(AT.left, AT.hcenter, AT.right)
 
     def calculate_height(self):
         """TODO: add documentation
         """
         AT = Anchor.AnchorType
-        height = 0
-        if AT.top in self._anchor and AT.vcenter in self._anchor:
-            height = (self._anchor[AT.vcenter] - self._anchor[AT.top]) * 2
-        elif AT.top in self._anchor and AT.bottom in self._anchor:
-            height = self._anchor[AT.bottom] - self._anchor[AT.top]
-        elif AT.vcenter in self._anchor and AT.bottom in self._anchor:
-            height = (self._anchor[AT.bottom] - self._anchor[AT.vcenter]) * 2
-        return height
+        return self._calculate_dimension(AT.top, AT.vcenter, AT.bottom)
+
+    def _calculate_coord(self, dimension, *anchors):
+        """TODO: add documentation
+        """
+        first, second, third = anchors
+
+        coord = 0
+        if first in self._anchor:
+            coord = self._anchor[first]
+        elif second in self._anchor:
+            coord = self._anchor[second] - int(dimension / 2)
+        elif third in self._anchor:
+            coord = self._anchor[third] - dimension
+
+        return coord
 
     def calculate_position(self):
         """TODO: add documentation
         """
         AT = Anchor.AnchorType
 
-        x = y = 0
-
-        if AT.left in self._anchor:
-            x = self._anchor[AT.left]
-        elif AT.hcenter in self._anchor:
-            x = self._anchor[AT.hcenter] - int(self._width / 2)
-        elif AT.right in self._anchor:
-            x = self._anchor[AT.right] - self._width
-
-        if AT.top in self._anchor:
-            y = self._anchor[AT.top]
-        elif AT.vcenter in self._anchor:
-            y = self._anchor[AT.vcenter] - int(self._height / 2)
-        elif AT.bottom in self._anchor:
-            y = self._anchor[AT.bottom] - self._height
-
-        return Point(x, y)
+        return Point(
+            self._calculate_coord(self._width, AT.left, AT.hcenter, AT.right),
+            self._calculate_coord(self._height, AT.top, AT.vcenter, AT.bottom))
 
     def cache_anchor(self):
         AT = Anchor.AnchorType
@@ -216,28 +207,19 @@ class Item(metaclass=ABCMeta):
     def position(self):
         """TODO: add documentation
         """
-        if self._position is not None:
-            return self._position
-        else:
-            raise AttributeError
+        return self._position
 
     @property
     def width(self):
         """TODO: add documentation
         """
-        if self._width is not None:
-            return self._width
-        else:
-            raise AttributeError
+        return self._width
 
     @property
     def height(self):
         """TODO: add documentation
         """
-        if self._height is not None:
-            return self._height
-        else:
-            raise AttributeError
+        return self._height
 
     @property
     def anchor(self):

@@ -16,13 +16,6 @@ class Anchor(dict):
         vcenter = 'vcenter'
         hcenter = 'hcenter'
 
-    class AnchorTarget(Enum):
-        """Possible targets for anchors.
-        """
-        none = 'none'
-        parent = 'parent'
-        sibling = 'sibling'
-
     def __init__(self, **anchors):
         """Constructor.
 
@@ -32,12 +25,7 @@ class Anchor(dict):
             anc = anchors.get(a.name)
             if anc:
                 target, t = anc.split('.')
-                try:
-                    target = Anchor.AnchorTarget(target)
-                    t = Anchor.AnchorType(t)
-                    self[a] = (target, t)
-                except ValueError:
-                    pass
+                self[a] = (target, Anchor.AnchorType(t))
 
     @classmethod
     def fill(cls):
