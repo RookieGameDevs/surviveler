@@ -1,4 +1,5 @@
 from PIL import Image
+import logging
 import numpy as np
 import os
 import sys
@@ -241,32 +242,32 @@ class BlocksMap(dict):
         ret.append(v0)
         closable = False
         while True:
-            print('Vertex: {}'.format(vertex))
+            logging.debug('Vertex: {}'.format(vertex))
             vertices = self.get_next_block_vertices(vertex)
             #print('Next vertices =', vertices)
             # Cycle through new possible vertices to explore
             for v_next in vertices:
                 versor_next = tuple(np.array(v_next) - tracked[-1])
-                print('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
+                logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
 
                 # Avoid to go back
                 if not(np.array(old_versor) + np.array(versor_next)).any():
-                    print('Do not go just back to {}'.format(v_next))
+                    logging.debug('Do not go just back to {}'.format(v_next))
                     continue
 
                 if v_next not in tracked:
-                    print('Found new vertex to go: {}'.format(v_next))
+                    logging.debug('Found new vertex to go: {}'.format(v_next))
                     ret.append(v_next)
                     break
                 else:
                     if v_next == ret[0]:
                         # could close the polygon
                         closable = True
-                    print('{} in tracked {}'.format(v_next, tracked))
+                    logging.debug('{} in tracked {}'.format(v_next, tracked))
 
             if v_next in tracked:
                 if closable:
-                    print('Closing the polygon')
+                    logging.debug('Closing the polygon')
                     ret.append(first_vertex)
                 break
 
@@ -276,18 +277,18 @@ class BlocksMap(dict):
             #print('versor =', versor)
             tracked.append(v_next)
             if versor != old_versor:
-                print('changed versor')
+                logging.debug('changed versor')
                 #ret.append(vertex)
             else:
-                print('same versor')
-            print('going {}'.format(versor_name))
+                logging.debug('same versor')
+            logging.debug('going {}'.format(versor_name))
 
             vertex = v_next
             old_versor = tuple(versor)
 
-            print(ret)
+            logging.debug(ret)
         # find new contiguous free position to move vertex to
-        print(tracked)
+        logging.debug(tracked)
         ret = remove_internal_edge_points(ret)
 
         # Return a list of ret because there could be more
