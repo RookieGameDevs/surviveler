@@ -155,6 +155,26 @@ def box2vertices(xy, size):
 
 
 class Map(dict):
+def remove_internal_edge_points(vertices: List[tuple]) -> List[tuple]:
+    """
+    Leave only the points that are in the corners.
+
+    >>> points = [(0, 0), (0, 1), (0, 2), (0, 3), (-1, 3), (-2, 3), (-3, 3)]
+    >>> remove_internal_edge_points(points)
+    [(0, 0), (0, 3), (-3, 3)]
+    """
+    ret = [vertices[0]]
+    for i in range(1, len(vertices) - 1):
+        triple = vertices[i - 1: i + 2]
+        diff = np.diff(triple, axis=0)
+        if tuple(diff[0]) != tuple(diff[1]):
+            # the 3 vertices don't form a line, so get the median one
+            ret.append(vertices[i])
+
+    ret.append(vertices[-1])
+    return ret
+
+
 
     def __init__(self, data, box_size=1):
         super().__init__(data)
@@ -273,6 +293,10 @@ class Map(dict):
             print(ret)
         # find new contiguous free position to move vertex to
         print(tracked)
+        ret = remove_internal_edge_points(ret)
+
+        # Return a list of ret because there could be more
+        # disjoint paths in the future
         return [ret]
 
 
