@@ -361,3 +361,5 @@ def main(image_filepath):
 
 if __name__ == '__main__':
     main(sys.argv[1])
+    import doctest
+    doctest.testmod()
