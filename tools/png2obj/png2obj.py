@@ -154,7 +154,6 @@ def box2vertices(xy, size):
     return (((x + dx) * size, (y + dy) * size) for dy in (0, 1) for dx in (0, 1))
 
 
-class Map(dict):
 def remove_internal_edge_points(vertices: List[tuple]) -> List[tuple]:
     """
     Leave only the points that are in the corners.
@@ -175,6 +174,7 @@ def remove_internal_edge_points(vertices: List[tuple]) -> List[tuple]:
     return ret
 
 
+class BlocksMap(dict):
 
     def __init__(self, data, box_size=1):
         super().__init__(data)
