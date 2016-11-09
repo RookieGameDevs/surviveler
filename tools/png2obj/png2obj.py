@@ -217,24 +217,18 @@ class BlocksMap(dict):
         """
         ret = []
         v_boxes = self.vertex2boxes(vertex)
-        #print(v_boxes)
         versors = POSSIBLE_DIRECTIONS[v_boxes.block_matrix]
-        #print('versors =', versors)
         ret = [tuple(vertex + np.array(v)) for v in versors]
-        #print('next({}) = {}'.format(vertex, ret))
         return ret
 
     def build(self):
         ret = []
-        #start_box = find_box(self.arr)
         if not self.map:
             return []
 
         start_box = min(sorted(self.map.keys()))
 
         v0 = self.map_box(start_box)
-        #print('Start from {}'.format(v0))
-        #self.vertices[v0] = None
 
         vertex = first_vertex = v0
         tracked = [v0]
@@ -244,7 +238,6 @@ class BlocksMap(dict):
         while True:
             logging.debug('Vertex: {}'.format(vertex))
             vertices = self.get_next_block_vertices(vertex)
-            #print('Next vertices =', vertices)
             # Cycle through new possible vertices to explore
             for v_next in vertices:
                 versor_next = tuple(np.array(v_next) - tracked[-1])
@@ -271,14 +264,11 @@ class BlocksMap(dict):
                     ret.append(first_vertex)
                 break
 
-            #print(v_next)
             versor = tuple(np.array(v_next) - tracked[-1])
             versor_name = VERSOR_NAME[versor]
-            #print('versor =', versor)
             tracked.append(v_next)
             if versor != old_versor:
                 logging.debug('changed versor')
-                #ret.append(vertex)
             else:
                 logging.debug('same versor')
             logging.debug('going {}'.format(versor_name))
