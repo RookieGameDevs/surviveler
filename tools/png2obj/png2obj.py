@@ -91,63 +91,11 @@ class VertexBoxes:
         self.lower_boxes = self.boxes.downright, self.boxes.downleft
         self.left_boxes = self.boxes.upleft, self.boxes.downleft
 
-        # 2 x 2 matrix cotaining box values relative to the vertex
+        # 2 x 2 matrix cotaining box values relative to the vertex (usable for __repr__)
         self.block_matrix = (
             (self.map.get(self.boxes.upleft, 0), self.map.get(self.boxes.upright, 0)),
             (self.map.get(self.boxes.downleft, 0), self.map.get(self.boxes.downright, 0)),
         )
-
-    def __repr__(self):
-        return repr(self.block_matrix)
-
-
-def is_black(arr, xy):
-    x, y = xy
-    return arr[(y, x)] == 0
-
-
-def get_neighbours_values(arr, xy):
-    """Returns a dict containing the neighbour values per position.
-
-    :rtype: dict
-    """
-    ret = {}
-    x, y = xy
-    height, width = arr.shape
-    for dy in (-1, 0, 1):
-        for dx in (-1, 0, 1):
-            tx = x + dx
-            ty = y + dy
-            if 0 <= tx < width and 0 <= ty < height:
-                ret[(dx, dy)] = is_black(arr, (tx, ty))
-            else:
-                ret[(dx, dy)] = None
-    return ret
-
-
-def get_neighbours(arr, xy):
-    """Tells you the list of nearby black pixels.
-
-    :rtype: list
-    """
-    ret = []
-    values = get_neighbours_values(arr, xy)
-    for xy, black in values.items():
-        if black:
-            ret.append(xy)
-    return ret
-
-
-def find_box(arr):
-    for y, row in enumerate(arr):
-        for x, value in enumerate(row):
-            if is_black(arr, (x, y)):
-                return x, y
-
-
-def box2vertices(xy, size):
-    x, y = xy
-    return (((x + dx) * size, (y + dy) * size) for dy in (0, 1) for dx in (0, 1))
 
 
 def remove_internal_edge_points(vertices: List[tuple]) -> List[tuple]:
@@ -300,8 +248,3 @@ def mat2map(matrix):
             if not walkable:
                 ret[(x, y)] = 1
     return BlocksMap(ret)
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
