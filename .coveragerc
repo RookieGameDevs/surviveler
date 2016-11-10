@@ -1,0 +1,12 @@
+[run]
+parallel = true
+branch = true
+source =
+    png2obj
+omit =
+
+[report]
+show_missing = True
+
+[html]
+title = Surviveler tools test coverage
