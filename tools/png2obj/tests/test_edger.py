@@ -171,7 +171,7 @@ EXAMPLES = [
 
 
 @pytest.mark.parametrize('case', EXAMPLES, ids=lambda s: s['name'])
-def test_detect_edges(case):
+def test_detect_edges(case: dict) -> None:
     matrix = case['matrix']
     blocks_map = mat2map(matrix)
     expected = case['vertices']

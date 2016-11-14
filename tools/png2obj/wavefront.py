@@ -1,6 +1,7 @@
 """
 Module that handles the actual exporting in Wavefront .obj format.
 """
+from typing import Iterable
 from typing import List
 from typing import Tuple
 
@@ -18,15 +19,17 @@ def export_vertex(vertex: Vertex) -> str:
     return 'v ' + ' '.join(['{:.6f}'.format(p) for p in vertex])
 
 
-def export_face(face_indices):
+def export_face_indices(face_indices: Iterable[int]) -> str:
     """
-    >>> export_face((1, 5, 6, 2))
+    Note: accepts indices and not vertices.
+
+    >>> export_face_indices((1, 5, 6, 2))
     'f 1 5 6 2'
     """
     return 'f ' + ' '.join([str(vertex_index) for vertex_index in face_indices])
 
 
-def mesh2vertices(mesh: List[Face]):
+def mesh2vertices(mesh: Mesh) -> List[Vertex]:
     """
     Extracts unique vertices from mesh faces.
 
@@ -56,7 +59,7 @@ def mesh2vertices(mesh: List[Face]):
     >>> vertices[5] == v3
     True
     """
-    ret = []
+    ret = []  # type: List[Vertex]
     for face in mesh:
         for vertex in face:
             if vertex not in ret:
@@ -65,7 +68,7 @@ def mesh2vertices(mesh: List[Face]):
     return ret
 
 
-def export(mesh: List[Face]) -> str:
+def export_mesh(mesh: List[Face]) -> str:
     """
     >>> v1 = (0.0, 0.0, 0.0)
     >>> v2 = (0.0, 0.0, 5.0)
@@ -74,7 +77,7 @@ def export(mesh: List[Face]) -> str:
     >>> v5 = (1.0, 1.0, 0.0)
     >>> v6 = (1.0, 1.0, 5.0)
     >>> mesh = [(v1, v2, v3, v4), (v3, v4, v5, v6)]
-    >>> print(export(mesh))
+    >>> print(export_mesh(mesh))
     v 0.000000 0.000000 0.000000
     v 0.000000 0.000000 5.000000
     v 1.000000 1.000000 0.000000
@@ -91,8 +94,8 @@ def export(mesh: List[Face]) -> str:
         ret.append(export_vertex(vertex))
 
     for face in mesh:
-        face_indices = [vertices_list.index(vertex) + 1 for vertex in face]
-        ret.append(export_face(face_indices))
+        face_indices = tuple([vertices_list.index(vertex) + 1 for vertex in face])
+        ret.append(export_face_indices(face_indices))
 
     return '\n'.join(ret)
 

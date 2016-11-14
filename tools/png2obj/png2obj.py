@@ -4,7 +4,15 @@ import numpy as np
 import os
 import sys
 from collections import namedtuple
+from typing import Dict
+from typing import Iterable
 from typing import List
+from typing import Mapping
+from typing import Tuple
+
+Pos = Tuple[int, int]
+Vertex2D = Tuple[float, float]
+Vector2D = Vertex2D
 
 
 EXAMPLE = np.array(
@@ -35,12 +43,14 @@ UP = (0, -1)
 RIGHT = (1, 0)
 DOWN = (0, 1)
 HERE = (0, 0)
-VERSOR_NAME = {LEFT: 'left', UP: 'up', RIGHT: 'right', DOWN: 'down', HERE: 'here'}
+VERSOR_NAME = {
+    LEFT: 'left', UP: 'up', RIGHT: 'right', DOWN: 'down', HERE: 'here'
+}  # type: Dict[Vector2D, str]
 
 
 POSSIBLE_DIRECTIONS = {
     ((0, 0),
-     (0, 0)): (),
+     (0, 0)): (HERE, HERE),
     ((0, 0),
      (0, 1)): (RIGHT, DOWN),
     ((0, 0),
@@ -70,17 +80,31 @@ POSSIBLE_DIRECTIONS = {
     ((1, 1),
      (1, 0)): (RIGHT, DOWN),
     ((1, 1),
-     (1, 1)): (),
-}
+     (1, 1)): (HERE, HERE),
+}  # type: Dict[Tuple[Vector2D, Vector2D], Tuple[Vector2D, ...]]
+
+
+def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
+    """
+    >>> v1 = (-1, 2)
+    >>> v2 = (3.0, -10)
+    >>> sum_vectors(v1, v2)
+    (2.0, -8)
+    """
+    return (v1[0] + v2[0], v1[1] + v2[1])
+
+
+def scalar(vector: Vector2D, amount: float) -> Vector2D:
+    return vector[0] * amount, vector[1] * amount
 
 
 class VertexBoxes:
     """Eases the manipulation of a vertex and near squared 2x2 boxes group.
     """
-    def __init__(self, map_, xy):
+    def __init__(self, map_: 'BlocksMap', xy: Vertex2D) -> None:
         self.map = map_
         self.x, self.y = xy
-        bx, by = self.map.map_vertex(tuple(xy))
+        bx, by = self.map.map_vertex(xy)
 
         self.boxes = NearBoxes(
             upleft=(bx - 1, by - 1), upright=(bx, by - 1),  # the 2 upper boxes
@@ -98,7 +122,7 @@ class VertexBoxes:
         )
 
 
-def remove_internal_edge_points(vertices: List[tuple]) -> List[tuple]:
+def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     """
     Leave only the points that are in the corners.
 
@@ -120,35 +144,35 @@ def remove_internal_edge_points(vertices: List[tuple]) -> List[tuple]:
 
 class BlocksMap(dict):
 
-    def __init__(self, data, box_size=1):
+    def __init__(self, data: Mapping, box_size: int=1) -> None:
         super().__init__(data)
         self.map = data
         self.box_size = box_size
 
-    def map_box(self, xy):
+    def map_box(self, xy: Pos) -> Vertex2D:
         """Given a box position, returns its top-left vertex.
         """
         x, y = xy
         return x * self.box_size, y * self.box_size
 
-    def map_vertex(self, xy):
+    def map_vertex(self, xy: Vertex2D) -> Pos:
         """Given a vertex position, returns the map box whose the
         vertex is the top-left one.
         """
         x, y = xy
         return int(x / self.box_size), int(y / self.box_size)
 
-    def vertex2boxes(self, xy):
+    def vertex2boxes(self, xy: Vertex2D) -> VertexBoxes:
         """Returns the 4 neighbour map boxes (white or not)
         which share the same given vertex.
         """
         # get the box whose the vertex is the top-left
         return VertexBoxes(self, xy)
 
-    def vertex2blocks(self, xy):
-        return [box for box in self.vertex2boxes(xy) if box in self.map]
+    def vertex2blocks(self, xy: Vertex2D) -> List[VertexBoxes]:
+        return [box for box in self.vertex2boxes(xy).boxes if box in self.map]
 
-    def get_next_grid_vertices(self, vertex):
+    def get_next_grid_vertices(self, vertex: Vertex2D) -> NearVertices:
         """Returns the 4 neighbour possible vertices.
         """
         vx, vy = vertex
@@ -159,18 +183,20 @@ class BlocksMap(dict):
             left=(vx - self.box_size, vy),
         )
 
-    def get_next_block_vertices(self, vertex):
+    def get_next_block_vertices(self, vertex: Vertex2D) -> List[Vertex2D]:
         """Returns neighbour vertices which are actually block edges or vertices
         (i.e. contiguous to map walls, so not free space vertices).
         """
-        ret = []
+        ret = []  # type: List[Vertex2D]
         v_boxes = self.vertex2boxes(vertex)
         versors = POSSIBLE_DIRECTIONS[v_boxes.block_matrix]
-        ret = [tuple(vertex + np.array(v)) for v in versors]
+        #ret = [tuple(vertex + np.array(v)) for v in versors]
+        ret = [sum_vectors(vertex, v) for v in versors]
+        #ret = [v for v in versors]
         return ret
 
-    def build(self):
-        ret = []
+    def build(self) -> List[List[Vertex2D]]:
+        ret = []  # List[Vertex2D]
         if not self.map:
             return []
 
@@ -180,7 +206,7 @@ class BlocksMap(dict):
 
         vertex = first_vertex = v0
         tracked = [v0]
-        old_versor = (0, 0)  # like a `None` but supporting the array sum
+        old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
         ret.append(v0)
         closable = False
         while True:
@@ -188,7 +214,7 @@ class BlocksMap(dict):
             vertices = self.get_next_block_vertices(vertex)
             # Cycle through new possible vertices to explore
             for v_next in vertices:
-                versor_next = tuple(np.array(v_next) - tracked[-1])
+                versor_next = sum_vectors(v_next, scalar(tracked[-1], -1))
                 logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
 
                 # Avoid to go back
@@ -212,7 +238,7 @@ class BlocksMap(dict):
                     ret.append(first_vertex)
                 break
 
-            versor = tuple(np.array(v_next) - tracked[-1])
+            versor = sum_vectors(v_next, scalar(tracked[-1], -1))
             versor_name = VERSOR_NAME[versor]
             tracked.append(v_next)
             if versor != old_versor:
@@ -222,11 +248,11 @@ class BlocksMap(dict):
             logging.debug('going {}'.format(versor_name))
 
             vertex = v_next
-            old_versor = tuple(versor)
+            old_versor = versor
 
-            logging.debug(ret)
+            logging.debug(str(ret))
         # find new contiguous free position to move vertex to
-        logging.debug(tracked)
+        logging.debug(str(tracked))
         ret = remove_internal_edge_points(ret)
 
         # Return a list of ret because there could be more
@@ -239,7 +265,7 @@ map_sample = BlocksMap({
 })
 
 
-def mat2map(matrix):
+def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
     """Create a block map.
     """
     ret = {}
