@@ -169,20 +169,6 @@ class BlocksMap(dict):
         # get the box whose the vertex is the top-left
         return VertexBoxes(self, xy)
 
-    def vertex2blocks(self, xy: Vertex2D) -> List[VertexBoxes]:
-        return [box for box in self.vertex2boxes(xy).boxes if box in self.map]
-
-    def get_next_grid_vertices(self, vertex: Vertex2D) -> NearVertices:
-        """Returns the 4 neighbour possible vertices.
-        """
-        vx, vy = vertex
-        return NearVertices(
-            up=(vx, vy + self.box_size),
-            right=(vx + self.box_size, vy),
-            down=(vx, vy - self.box_size),
-            left=(vx - self.box_size, vy),
-        )
-
     def get_next_block_vertices(self, vertex: Vertex2D) -> List[Vertex2D]:
         """Returns neighbour vertices which are actually block edges or vertices
         (i.e. contiguous to map walls, so not free space vertices).
