@@ -13,6 +13,7 @@ from typing import Tuple
 Pos = Tuple[int, int]
 Vertex2D = Tuple[float, float]
 Vector2D = Vertex2D
+WallPerimeter = List[Vertex2D]
 
 
 EXAMPLE = np.array(
@@ -180,70 +181,77 @@ class BlocksMap(dict):
         ret = [sum_vectors(vertex, v) for v in versors]
         #ret = [v for v in versors]
         return ret
+    
+    def find_disjoint_boxes(self) -> List[Pos]:
+        start_boxes = []
+        # TODO: find all of them
+        start_boxes.append(min(sorted(self.map.keys())))
+        return start_boxes
 
     def build(self) -> List[List[Vertex2D]]:
-        ret = []  # List[Vertex2D]
+        ret = []  # type: List[WallPerimeter]
         if not self.map:
             return []
 
-        start_box = min(sorted(self.map.keys()))
+        for start_box in self.find_disjoint_boxes():
+            wall_perimeter = []
 
-        v0 = self.map_box(start_box)
+            v0 = self.map_box(start_box)
 
-        vertex = first_vertex = v0
-        tracked = [v0]
-        old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
-        ret.append(v0)
-        closable = False
-        while True:
-            logging.debug('Vertex: {}'.format(vertex))
-            vertices = self.get_next_block_vertices(vertex)
-            # Cycle through new possible vertices to explore
-            for v_next in vertices:
-                versor_next = sum_vectors(v_next, scalar(tracked[-1], -1))
-                logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
+            vertex = first_vertex = v0
+            tracked = [v0]
+            old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
+            wall_perimeter.append(v0)
+            closable = False
+            while True:
+                logging.debug('Vertex: {}'.format(vertex))
+                vertices = self.get_next_block_vertices(vertex)
+                # Cycle through new possible vertices to explore
+                for v_next in vertices:
+                    versor_next = sum_vectors(v_next, scalar(tracked[-1], -1))
+                    logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
 
-                # Avoid to go back
-                if not(np.array(old_versor) + np.array(versor_next)).any():
-                    logging.debug('Do not go just back to {}'.format(v_next))
-                    continue
+                    # Avoid to go back
+                    if not(np.array(old_versor) + np.array(versor_next)).any():
+                        logging.debug('Do not go just back to {}'.format(v_next))
+                        continue
 
-                if v_next not in tracked:
-                    logging.debug('Found new vertex to go: {}'.format(v_next))
-                    ret.append(v_next)
+                    if v_next not in tracked:
+                        logging.debug('Found new vertex to go: {}'.format(v_next))
+                        wall_perimeter.append(v_next)
+                        break
+                    else:
+                        if v_next == wall_perimeter[0]:
+                            # could close the polygon
+                            closable = True
+                        logging.debug('{} in tracked {}'.format(v_next, tracked))
+
+                if v_next in tracked:
+                    if closable:
+                        logging.debug('Closing the polygon')
+                        wall_perimeter.append(first_vertex)
                     break
+
+                versor = sum_vectors(v_next, scalar(tracked[-1], -1))
+                versor_name = VERSOR_NAME[versor]
+                tracked.append(v_next)
+                if versor != old_versor:
+                    logging.debug('changed versor')
                 else:
-                    if v_next == ret[0]:
-                        # could close the polygon
-                        closable = True
-                    logging.debug('{} in tracked {}'.format(v_next, tracked))
+                    logging.debug('same versor')
+                logging.debug('going {}'.format(versor_name))
 
-            if v_next in tracked:
-                if closable:
-                    logging.debug('Closing the polygon')
-                    ret.append(first_vertex)
-                break
+                vertex = v_next
+                old_versor = versor
 
-            versor = sum_vectors(v_next, scalar(tracked[-1], -1))
-            versor_name = VERSOR_NAME[versor]
-            tracked.append(v_next)
-            if versor != old_versor:
-                logging.debug('changed versor')
-            else:
-                logging.debug('same versor')
-            logging.debug('going {}'.format(versor_name))
+                logging.debug(str(wall_perimeter))
+            # find new contiguous free position to move vertex to
+            logging.debug(str(tracked))
+            wall_perimeter = remove_internal_edge_points(wall_perimeter)
 
-            vertex = v_next
-            old_versor = versor
+            ret.append(wall_perimeter)
 
-            logging.debug(str(ret))
-        # find new contiguous free position to move vertex to
-        logging.debug(str(tracked))
-        ret = remove_internal_edge_points(ret)
-
-        # Return a list of ret because there could be more
-        # disjoint paths in the future
-        return [ret]
+        return ret
 
 
 map_sample = BlocksMap({
