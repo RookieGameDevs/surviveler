@@ -197,6 +197,8 @@ class Item(metaclass=ABCMeta):
             3. Calculation the position (if not available).
             4. Cache all the anchor values.
             5. Call the binding on all the children items.
+
+        TODO: add dynamic checks on dependencies.
         """
         sd = self._source_data
 
