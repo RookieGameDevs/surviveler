@@ -216,6 +216,7 @@ class Item(metaclass=ABCMeta):
             5. Call the binding on all the children items.
 
         TODO: add dynamic checks on dependencies.
+        TODO: add checks on anchor consistency.
         """
         sd = self._source_data
 
@@ -282,7 +283,7 @@ class Item(metaclass=ABCMeta):
             if target != 'parent':
                 item = self.parent.get_child(target)
             try:
-                mt = MT(tt.value)
+                mt = MT(t.value)
                 margin = self._margin[mt]
                 if mt in {MT.right, MT.bottom}:
                     margin = -margin

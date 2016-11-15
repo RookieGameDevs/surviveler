@@ -217,3 +217,40 @@ def test_item__with_fill_anchor_and_symmetric_margin(item_cls, parent_item):
         MT.top: MARGIN,
         MT.bottom: MARGIN,
     }
+
+    assert item.width == parent_item.width - 2 * MARGIN
+    assert item.height == parent_item.height - 2 * MARGIN
+
+
+def test_item__with_complex_anchor_and_margin(item_cls, parent_item):
+    AT = Anchor.AnchorType
+    MT = Margin.MarginType
+
+    item = item_cls(
+        parent_item,
+        anchor=Anchor(
+            left='parent.left',
+            right='parent.hcenter',
+            top='parent.top',
+            bottom='parent.hcenter'),
+        margin=Margin(left=4, right=10, top=10, bottom=4))
+    parent_item.add_child('child', item)
+    parent_item.bind_item()
+
+    assert item.anchor == {
+        AT.left: 4,
+        AT.hcenter: 122,
+        AT.right: 240,
+        AT.top: 10,
+        AT.vcenter: 128,
+        AT.bottom: 246,
+    }
+    assert item.margin == {
+        MT.left: 4,
+        MT.right: 10,
+        MT.top: 10,
+        MT.bottom: 4,
+    }
+
+    assert item.width == 236
+    assert item.height == 236
