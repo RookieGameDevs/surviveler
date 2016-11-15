@@ -2,6 +2,7 @@
 
 from . import Item
 from .. import Anchor
+from .. import Margin
 from .rect import Rect
 from .text import Text
 
@@ -44,7 +45,9 @@ class Button(Item):
 
         self.add_child(
             'label',
-            Text(self, font=font, color=color, text=text, anchor=Anchor.fill()))
+            Text(
+                self, font=font, color=color, text=text,
+                anchor=Anchor.fill(), margin=Margin.symmetric(10)))
 
     def update(self, dt):
         """Button update method.
