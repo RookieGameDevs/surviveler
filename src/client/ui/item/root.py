@@ -40,7 +40,7 @@ class RootItem(Item):
         }
 
     def bind_item(self):
-        """TODO: add documentation
+        """Just starts the binding on the child items.
         """
         for ref, item in self.children.items():
             item.bind_item()
