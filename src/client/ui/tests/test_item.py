@@ -27,6 +27,59 @@ def test_item_is_abtract():
         Item()
 
 
+def test_item_with_redundant_width(item_cls, parent_item):
+    # Explicit width and two horizontal anchor values
+    with pytest.raises(ValidationError):
+        item_cls(
+            parent_item,
+            anchor=Anchor(
+                left='parent.left',
+                right='parent.right',
+                top='parent.top'),
+            width=100, height=100)
+    with pytest.raises(ValidationError):
+        item_cls(
+            parent_item,
+            anchor=Anchor(
+                left='parent.left',
+                hcenter='parent.hcenter',
+                top='parent.top'),
+            width=100, height=100)
+    with pytest.raises(ValidationError):
+        item_cls(
+            parent_item,
+            anchor=Anchor(
+                hcenter='parent.hcenter',
+                right='parent.right',
+                top='parent.top'),
+            width=100, height=100)
+    # Explicit height and two vertical anchor values
+    with pytest.raises(ValidationError):
+        item_cls(
+            parent_item,
+            anchor=Anchor(
+                top='parent.top',
+                bottom='parent.bottom',
+                left='parent.left'),
+            width=100, height=100)
+    with pytest.raises(ValidationError):
+        item_cls(
+            parent_item,
+            anchor=Anchor(
+                top='parent.top',
+                vcenter='parent.vcenter',
+                left='parent.left'),
+            width=100, height=100)
+    with pytest.raises(ValidationError):
+        item_cls(
+            parent_item,
+            anchor=Anchor(
+                vcenter='parent.vcenter',
+                bottom='parent.bottom',
+                left='parent.left'),
+            width=100, height=100)
+
+
 def test_item__without_information(item_cls, parent_item):
     with pytest.raises(ValidationError):
         item_cls(parent_item)

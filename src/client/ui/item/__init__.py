@@ -20,6 +20,7 @@ def validate_item(source_data):
         * available y coordinate (directly or via anchor)
         * width available (directly or via anchor)
         * height available (directly or via anchor)
+        * not conflicting information for width and height
 
     This method just does static validation: eventual conflicts due to
     circular dependencies will be validated at binding time.
@@ -44,7 +45,7 @@ def validate_item(source_data):
     # 2. have the left anchor defined
     # 3. have the horizontal center and the width defined
     # 4. have the right anchor and the width defined
-    x_coord_available = any([
+    x_available = any([
         sd['position'] is not None,
         get(sd['anchor'], AT.left) is not None,
         get(sd['anchor'], AT.hcenter) is not None and sd['width'] is not None,
@@ -56,7 +57,7 @@ def validate_item(source_data):
     # 2. have the top anchor defined
     # 3. have the vertical center and the height defined
     # 4. have the bottom anchor and the height defined
-    y_coord_available = any([
+    y_available = any([
         sd['position'] is not None,
         get(sd['anchor'], AT.top) is not None,
         get(sd['anchor'], AT.vcenter) is not None and sd['height'] is not None,
@@ -66,7 +67,7 @@ def validate_item(source_data):
     # For the width to be considered defined the item needs to:
     # 1. have a defined width
     # 2. have at least two horizontal anchors defined
-    width_available = any([
+    w_available = any([
         sd['width'] is not None,
         get(sd['anchor'], AT.left) is not None and get(sd['anchor'], AT.right) is not None,
         get(sd['anchor'], AT.left) is not None and get(sd['anchor'], AT.hcenter) is not None,
@@ -76,14 +77,28 @@ def validate_item(source_data):
     # For the height to be considered defined the item needs to:
     # 1. have a defined height
     # 2. have at least two vertical anchors defined
-    height_available = any([
+    h_available = any([
         sd['height'] is not None,
         get(sd['anchor'], AT.top) is not None and get(sd['anchor'], AT.bottom) is not None,
         get(sd['anchor'], AT.top) is not None and get(sd['anchor'], AT.vcenter) is not None,
         get(sd['anchor'], AT.vcenter) is not None and get(sd['anchor'], AT.bottom) is not None
     ])
 
-    if not all([x_coord_available, y_coord_available, width_available, height_available]):
+    # Assert that we are not having width conflicting information:
+    # 1. No specified width
+    # 2. Specified width and no more than one horizontal anchor value
+    non_conflicting_w = (
+        sd['width'] is None or
+        len(list(filter(lambda x: get(sd['anchor'], x), [AT.left, AT.hcenter, AT.right]))) <= 1)
+
+    # Assert that we are not having height conflicting information:
+    # 1. No specified height
+    # 2. Specified height and no more than one vertical anchor value
+    non_conflicting_h = (
+        sd['height'] is None or
+        len(list(filter(lambda x: get(sd['anchor'], x), [AT.top, AT.vcenter, AT.bottom]))) <= 1)
+
+    if not all([x_available, y_available, w_available, h_available, non_conflicting_w, non_conflicting_h]):
         raise ValidationError('Not enough information for positioning and layouting')
 
     return sd
