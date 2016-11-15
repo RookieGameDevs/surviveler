@@ -1,5 +1,6 @@
 """The base item module"""
 from .. import Anchor
+from .. import Margin
 from ..point import Point
 from abc import ABCMeta
 from abc import abstractmethod
@@ -200,7 +201,8 @@ class Item(metaclass=ABCMeta):
             'width': kwargs.get('width'),
             'height': kwargs.get('height'),
             'anchor': kwargs.get('anchor'),
-            'margin': kwargs.get('margin'),
+            # Margin defaults to 0
+            'margin': kwargs.get('margin', Margin.null()),
         })
 
     def bind_item(self):
@@ -216,6 +218,9 @@ class Item(metaclass=ABCMeta):
         TODO: add dynamic checks on dependencies.
         """
         sd = self._source_data
+
+        # Calculate the values of the configured margins
+        self._margin = self.calculate_margin()
 
         # Calculate the values of the configured anchors
         if sd['anchor'] is not None:
@@ -246,6 +251,19 @@ class Item(metaclass=ABCMeta):
         for ref, item in self.children.items():
             item.bind_item()
 
+    def calculate_margin(self):
+        """Calculate the margin values.ABCMeta
+
+        Simply fills the source data provided margins with 0s.ABCMeta
+
+        :returns: The margin values
+        :rtype: :class:`dict`
+        """
+        margin = {}
+        for m in Margin.MarginType:
+            margin[m] = self._source_data['margin'].get(m, 0)
+        return margin
+
     def calculate_anchor(self):
         """Calculate the anchor values.
 
@@ -255,13 +273,22 @@ class Item(metaclass=ABCMeta):
         :returns: The anchor values
         :rtype: :class:`dict`
         """
+        MT = Margin.MarginType
+
         # Mapping of targets with real items
         anchor = {}
         for t, (target, tt) in self._source_data['anchor'].items():
             item = self.parent
             if target != 'parent':
                 item = self.parent.get_child(target)
-            anchor[t] = item.anchor[tt]
+            try:
+                mt = MT(tt.value)
+                margin = self._margin[mt]
+                if mt in {MT.right, MT.bottom}:
+                    margin = -margin
+            except ValueError:
+                margin = 0
+            anchor[t] = item.anchor[tt] + margin
         return anchor
 
     def calculate_width(self):

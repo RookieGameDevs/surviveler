@@ -1,4 +1,5 @@
 from ui import Anchor
+from ui import Margin
 from ui.item import Item
 from ui.item import ValidationError
 from ui.item.root import RootItem
@@ -27,7 +28,7 @@ def test_item_is_abtract():
         Item()
 
 
-def test_item_with_redundant_width(item_cls, parent_item):
+def test_item__with_redundant_width_height(item_cls, parent_item):
     # Explicit width and two horizontal anchor values
     with pytest.raises(ValidationError):
         item_cls(
@@ -87,6 +88,7 @@ def test_item__without_information(item_cls, parent_item):
 
 def test_item__with_position_and_size(item_cls, parent_item):
     AT = Anchor.AnchorType
+    MT = Margin.MarginType
 
     item = item_cls(parent_item, position=Point(25, 25), width=30, height=30)
     parent_item.add_child('child', item)
@@ -99,7 +101,12 @@ def test_item__with_position_and_size(item_cls, parent_item):
         AT.vcenter: 40,
         AT.bottom: 55,
     }
-    assert item.margin == {}
+    assert item.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
     assert item.position == Point(25, 25)
     assert item.width == 30
     assert item.height == 30
@@ -107,6 +114,7 @@ def test_item__with_position_and_size(item_cls, parent_item):
 
 def test_item__sub_item_with_position_and_size(item_cls, parent_item):
     AT = Anchor.AnchorType
+    MT = Margin.MarginType
 
     item = item_cls(parent_item, position=Point(25, 25), width=30, height=30)
     parent_item.add_child('child', item)
@@ -121,19 +129,30 @@ def test_item__sub_item_with_position_and_size(item_cls, parent_item):
         AT.vcenter: 65,
         AT.bottom: 80,
     }
-    assert sub_item.margin == {}
+    assert sub_item.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
     assert sub_item.position == Point(50, 50)
     assert sub_item.width == 30
     assert sub_item.height == 30
 
 
 def test_item__with_anchor_fill(item_cls, parent_item):
+    MT = Margin.MarginType
     item = item_cls(parent_item, anchor=Anchor.fill())
     parent_item.add_child('child', item)
     parent_item.bind_item()
 
     assert item.anchor == parent_item.anchor
-    assert item._margin == {}
+    assert item.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
     assert item.position == parent_item.position
     assert item.width == parent_item.width
     assert item.height == parent_item.height
@@ -141,8 +160,15 @@ def test_item__with_anchor_fill(item_cls, parent_item):
 
 def test_item__with_cutom_anchor(item_cls, parent_item):
     AT = Anchor.AnchorType
+    MT = Margin.MarginType
 
-    item = item_cls(parent_item, anchor=Anchor(top='parent.vcenter', bottom='parent.bottom', hcenter='parent.hcenter'), width=100)
+    item = item_cls(
+        parent_item,
+        anchor=Anchor(
+            top='parent.vcenter',
+            bottom='parent.bottom',
+            hcenter='parent.hcenter'),
+        width=100)
     parent_item.add_child('child', item)
     parent_item.bind_item()
 
@@ -154,7 +180,40 @@ def test_item__with_cutom_anchor(item_cls, parent_item):
         AT.vcenter: 375,
         AT.bottom: 500,
     }
-    assert item._margin == {}
+    assert item.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
     assert item.position == Point(200, 250)
     assert item.width == 100
     assert item.height == 250
+
+
+def test_item__with_fill_anchor_and_symmetric_margin(item_cls, parent_item):
+    MARGIN = 10
+    AT = Anchor.AnchorType
+    MT = Margin.MarginType
+
+    item = item_cls(
+        parent_item,
+        anchor=Anchor.fill(),
+        margin=Margin.symmetric(MARGIN))
+    parent_item.add_child('child', item)
+    parent_item.bind_item()
+
+    assert item.anchor == {
+        AT.left: parent_item.anchor[AT.left] + MARGIN,
+        AT.hcenter: parent_item.anchor[AT.hcenter],
+        AT.right: parent_item.anchor[AT.right] - MARGIN,
+        AT.top: parent_item.anchor[AT.top] + MARGIN,
+        AT.vcenter: parent_item.anchor[AT.vcenter],
+        AT.bottom: parent_item.anchor[AT.bottom] - MARGIN,
+    }
+    assert item.margin == {
+        MT.left: MARGIN,
+        MT.right: MARGIN,
+        MT.top: MARGIN,
+        MT.bottom: MARGIN,
+    }

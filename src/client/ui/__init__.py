@@ -19,7 +19,8 @@ class Anchor(dict):
     def __init__(self, **anchors):
         """Constructor.
 
-        TODO: add documentation.
+        :param **anchors: The named anchor values
+        :type **anchors: :class:`dict`
         """
         for a in Anchor.AnchorType:
             anc = anchors.get(a.name)
@@ -55,7 +56,7 @@ class Anchor(dict):
         return cls(vcenter='parent.vcenter', hcenter='parent.vcenter')
 
 
-class Margin:
+class Margin(dict):
     """Represents the sets of margins of a specified item.
     """
 
@@ -67,14 +68,25 @@ class Margin:
         bottom = 'bottom'
         right = 'right'
 
-    def __init__(self, margin=None, **margins):
+    def __init__(self, **margins):
         """Constructor.
 
-        TODO: add documentation.
+        :param **margins: The named margin values
+        :type **margins: :class:`dict`
         """
-        self.margin = margin
         for m in Margin.MarginType:
-            setattr(self, m.name, margins.get(m.name, 0))
+            margin = margins.get(m.name)
+            if margin:
+                self[m] = margin
+
+    @classmethod
+    def null(cls):
+        return cls.symmetric(0)
+
+    @classmethod
+    def symmetric(cls, x_axis, y_axis=None):
+        y_axis = y_axis or x_axis
+        return cls(left=x_axis, right=x_axis, top=y_axis, bottom=y_axis)
 
 
 class UI:
