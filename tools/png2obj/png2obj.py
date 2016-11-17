@@ -3,6 +3,8 @@ import logging
 import numpy as np
 import os
 import sys
+from collections import OrderedDict
+from collections import deque
 from collections import namedtuple
 from typing import Dict
 from typing import Iterable
@@ -143,18 +145,42 @@ def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     return ret
 
 
+def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
+    """
+    Normalize wall perimeter to make it start from topleft.
+
+    >>> normalized_perimeter([(1, 0), (1, 1), (0, 1), (0, 0), (1, 0)])
+    [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+    """
+    minimum = min(wall_perimeter)
+    # Remove duplicates preserving order:
+    wall_perimeter = list(OrderedDict.fromkeys(wall_perimeter))
+    deq = deque(wall_perimeter)  # use deque just to use the rotate (circular shift)
+    while deq[0] != minimum:
+        deq.rotate(1)
+    # The last item must be equal to the first by convention.
+    deq.append(deq[0])
+    return list(deq)
+
+
 class BlocksMap(dict):
 
-    def __init__(self, data: Mapping, box_size: int=1) -> None:
+    def __init__(self, data: Mapping, map_size: Tuple[int, int], box_size: int=1) -> None:
         super().__init__(data)
         self.map = data
+        self.map_size = map_size
         self.box_size = box_size
 
-    def map_box(self, xy: Pos) -> Vertex2D:
-        """Given a box position, returns its top-left vertex.
+    def get_grid_vertices(self) -> Iterable[Vertex2D]:
+        """Returns an iterator for all map virtual "grid" vertices,
+        so regardless they are part of wall or not.
         """
-        x, y = xy
-        return x * self.box_size, y * self.box_size
+        width, height = self.map_size
+        for by in range(height):
+            for bx in range(width):
+                x = bx * self.box_size
+                y = by * self.box_size
+                yield (x, y)
 
     def map_vertex(self, xy: Vertex2D) -> Pos:
         """Given a vertex position, returns the map box whose the
@@ -181,30 +207,51 @@ class BlocksMap(dict):
         ret = [sum_vectors(vertex, v) for v in versors]
         #ret = [v for v in versors]
         return ret
-    
-    def find_disjoint_boxes(self) -> List[Pos]:
-        start_boxes = []
-        # TODO: find all of them
-        start_boxes.append(min(sorted(self.map.keys())))
-        return start_boxes
+
+    def vertex2blocks(self, xy: Vertex2D) -> List[VertexBoxes]:
+        return [box for box in self.vertex2boxes(xy).boxes if box in self.map]
+
+    def is_border_vertex(self, vertex: Vertex2D) -> bool:
+        """Returns True if the vertex is part of an edge or is a corner.
+        Returns false if the vertex is inner a wall or outside.
+        """
+        v_blocks = self.vertex2blocks(vertex)
+        return 0 < len(v_blocks) < 4
 
     def build(self) -> List[List[Vertex2D]]:
         ret = []  # type: List[WallPerimeter]
+        tracked_vertices = []
+        tracked_blocks = set()
         if not self.map:
             return []
 
-        for start_box in self.find_disjoint_boxes():
+        for vertex in self.get_grid_vertices():  # FIXME: not block but box
+            if not self.is_border_vertex(vertex):
+                continue
+
+            if vertex in tracked_vertices:
+                continue
+
+            # start new wall perimeter from this disjointed block
             wall_perimeter = []
 
-            v0 = self.map_box(start_box)
+            # is this vertex already tracked?
+            near_blocks = self.vertex2blocks(vertex)
+            if len(near_blocks) == 4:
+                continue
 
-            vertex = first_vertex = v0
-            tracked = [v0]
+            first_vertex = vertex
+            tracked = [vertex]
             old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
-            wall_perimeter.append(v0)
+            wall_perimeter.append(vertex)
             closable = False
             while True:
                 logging.debug('Vertex: {}'.format(vertex))
+
+                # mark near clocks as "done"
+                tracked_blocks = tracked_blocks.union(self.vertex2boxes(vertex).boxes)
+                tracked_vertices.append(vertex)
+
                 vertices = self.get_next_block_vertices(vertex)
                 # Cycle through new possible vertices to explore
                 for v_next in vertices:
@@ -235,6 +282,7 @@ class BlocksMap(dict):
                 versor = sum_vectors(v_next, scalar(tracked[-1], -1))
                 versor_name = VERSOR_NAME[versor]
                 tracked.append(v_next)
+
                 if versor != old_versor:
                     logging.debug('changed versor')
                 else:
@@ -248,15 +296,16 @@ class BlocksMap(dict):
             # find new contiguous free position to move vertex to
             logging.debug(str(tracked))
             wall_perimeter = remove_internal_edge_points(wall_perimeter)
-
+            wall_perimeter = normalized_perimeter(wall_perimeter)
             ret.append(wall_perimeter)
 
+        ret.sort()
         return ret
 
 
 map_sample = BlocksMap({
-    (1, 1): 1, (2, 1): 1,
-})
+    (1, 1): 1, (2, 1): 1
+}, map_size=(3, 3))
 
 
 def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
@@ -267,4 +316,4 @@ def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
         for x, walkable in enumerate(row):
             if not walkable:
                 ret[(x, y)] = 1
-    return BlocksMap(ret)
+    return BlocksMap(ret, map_size=(x + 1, y + 1))

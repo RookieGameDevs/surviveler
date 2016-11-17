@@ -214,6 +214,6 @@ EXAMPLES = [
 def test_detect_edges(case: dict) -> None:
     matrix = case['matrix']
     blocks_map = mat2map(matrix)
-    expected = case['vertices']
-    actual = blocks_map.build()
+    expected = sorted(case['vertices'])
+    actual = sorted(blocks_map.build())
     assert actual == expected
