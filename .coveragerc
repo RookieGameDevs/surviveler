@@ -9,4 +9,4 @@ omit =
 show_missing = True
 
 [html]
-title = Surviveler tools test coverage
+title = Surviveler png2obj test coverage
