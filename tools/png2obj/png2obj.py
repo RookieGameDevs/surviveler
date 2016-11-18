@@ -221,8 +221,8 @@ class BlocksMap(dict):
 
     def build(self) -> List[List[Vertex2D]]:
         ret = []  # type: List[WallPerimeter]
-        tracked_vertices = []
         tracked_blocks = set()
+        tracked_vertices = []  # type: List[Vertex2D]
         if not self.map:
             return []
 
