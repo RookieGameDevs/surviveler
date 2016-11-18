@@ -64,7 +64,7 @@ func (z *Zombie) SetId(id uint32) {
 	z.id = id
 }
 
-func (z *Zombie) findPathToTarget() (d2.Path, bool) {
+func (z *Zombie) findPathToTarget() (Path, bool) {
 	path, _, found := z.g.Pathfinder().FindPath(z.Pos, z.target.Position())
 	return path, found
 }

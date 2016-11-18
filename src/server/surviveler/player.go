@@ -198,7 +198,7 @@ func (p *Player) induceBuildPower() {
 /*
  * SetPath defines the path that the player must follow.
  */
-func (p *Player) SetPath(path d2.Path) {
+func (p *Player) SetPath(path Path) {
 	p.Movable.SetPath(path)
 }
 
@@ -208,7 +208,7 @@ func (p *Player) SetPath(path d2.Path) {
  * The player action stack is emptied, effectively cancelling any previous
  * player action, and defines its macro path.
  */
-func (p *Player) Move(path d2.Path) {
+func (p *Player) Move(path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
@@ -283,7 +283,7 @@ func (p *Player) State() EntityState {
  * action, that will immediately start once the player will be in contact
  * with the target building
  */
-func (p *Player) Build(b Building, path d2.Path) {
+func (p *Player) Build(b Building, path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	// fill the player action stack
@@ -303,7 +303,7 @@ func (p *Player) Build(b Building, path d2.Path) {
  * action, that will immediately start once the player will be in contact
  * with the target building
  */
-func (p *Player) Repair(b Building, path d2.Path) {
+func (p *Player) Repair(b Building, path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	// fill the player action stack
@@ -349,7 +349,7 @@ func (p *Player) Attack(e Entity) {
  * action, that will immediately start once the player will be in contact
  * with the target interactive object.
  */
-func (p *Player) Operate(o Object, path d2.Path) {
+func (p *Player) Operate(o Object, path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 

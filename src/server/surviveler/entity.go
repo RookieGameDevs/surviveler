@@ -7,7 +7,6 @@ package surviveler
 import (
 	gomath "math"
 	"server/actions"
-	"server/math"
 	"time"
 
 	"github.com/aurelien-rainone/gogeo/f32/d2"
@@ -61,7 +60,7 @@ type Entity interface {
 	Update(dt time.Duration)
 	DealDamage(float32) bool
 	HealDamage(float32) bool
-	math.BoundingBoxer
+	d2.Rectangler
 }
 
 /*
@@ -69,7 +68,7 @@ type Entity interface {
  */
 type MobileEntity interface {
 	Entity
-	SetPath(path math.Path)
+	SetPath(path Path)
 }
 
 /*

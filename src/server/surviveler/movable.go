@@ -5,11 +5,10 @@
 package surviveler
 
 import (
-	gomath "math"
-	"server/math"
 	"time"
 
 	"github.com/aurelien-rainone/gogeo/f32/d2"
+	"github.com/aurelien-rainone/math32"
 )
 
 /*
@@ -27,7 +26,7 @@ const maxNextWaypoints = 2
 type Movable struct {
 	Pos       d2.Vec2 // current position
 	Speed     float32 // speed
-	waypoints *math.VecStack
+	waypoints *VecStack
 }
 
 /*
@@ -37,11 +36,11 @@ func NewMovable(pos d2.Vec2, speed float32) *Movable {
 	return &Movable{
 		Pos:       pos,
 		Speed:     speed,
-		waypoints: math.NewVecStack(),
+		waypoints: NewVecStack(),
 	}
 }
 
-func (me *Movable) findMicroPath(wp d2.Vec2) (path d2.Path, found bool) {
+func (me *Movable) findMicroPath(wp d2.Vec2) (path Path, found bool) {
 	// for now for simplicity, the micro path is the direct path to the next
 	// waypoint
 	return d2.Path{wp}, true
@@ -62,7 +61,7 @@ func (me Movable) ComputeMove(org d2.Vec2, dt time.Duration) d2.Vec2 {
 		a := pos.Sub(org).Len()
 
 		// check against edge-cases
-		isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
+		isNan := math32.IsNaN(a) || math32.IsNaN(b) || math32.IsNaN(dir.Len()) || math32.Abs(a-b) < 1e-3
 
 		if a > b || isNan {
 			return *dst
@@ -95,7 +94,7 @@ func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
 			a := pos.Sub(me.Pos).Len()
 
 			// check against edge-cases
-			isNan := gomath.IsNaN(a) || gomath.IsNaN(b) || gomath.IsNaN(dir.Len()) || gomath.Abs(a-b) < 1e-3
+			isNan := math32.IsNaN(a) || math32.IsNaN(b) || math32.IsNaN(dir.Len()) || math32.Abs(a-b) < 1e-3
 
 			hasMoved = true
 			if a > b || isNan {
@@ -126,7 +125,7 @@ func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
  *
  * It replaces and cancel the current path, if any.
  */
-func (me *Movable) SetPath(path d2.Path) {
+func (me *Movable) SetPath(path Path) {
 	// empty the waypoint stack
 	for ; me.waypoints.Len() != 0; me.waypoints.Pop() {
 	}
@@ -138,8 +137,8 @@ func (me *Movable) SetPath(path d2.Path) {
 	}
 }
 
-func (me *Movable) NextWaypoints() d2.Path {
-	path := make(d2.Path{}, maxNextWaypoints)
+func (me *Movable) NextWaypoints() Path {
+	path := make(Path{}, maxNextWaypoints)
 	for _, wp := range me.waypoints.PeekN(maxNextWaypoints) {
 		path[i] = *wp
 	}
@@ -150,6 +149,6 @@ func (me *Movable) HasReachedDestination() bool {
 	return me.waypoints.Len() == 0
 }
 
-func (me *Movable) BoundingBox() math.BoundingBox {
-	return math.NewBoundingBoxFromCircle(me.Pos, 0.5)
+func (me *Movable) Rectangle() d2.Rectangle {
+	return d2.RectFromCircle(me.Pos, 0.5)
 }
