@@ -304,11 +304,6 @@ class BlocksMap(dict):
         return ret
 
 
-map_sample = BlocksMap({
-    (1, 1): 1, (2, 1): 1
-}, map_size=(3, 3))
-
-
 def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
     """Create a block map.
     """
