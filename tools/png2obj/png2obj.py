@@ -221,7 +221,6 @@ class BlocksMap(dict):
 
     def build(self) -> List[List[Vertex2D]]:
         ret = []  # type: List[WallPerimeter]
-        tracked_blocks = set()
         tracked_vertices = []  # type: List[Vertex2D]
         if not self.map:
             return []
@@ -250,7 +249,6 @@ class BlocksMap(dict):
                 logging.debug('Vertex: {}'.format(vertex))
 
                 # mark near clocks as "done"
-                tracked_blocks = tracked_blocks.union(self.vertex2boxes(vertex).boxes)
                 tracked_vertices.append(vertex)
 
                 vertices = self.get_next_block_vertices(vertex)
