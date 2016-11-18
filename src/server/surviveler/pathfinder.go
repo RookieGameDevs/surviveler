@@ -8,6 +8,7 @@ import (
 	"server/math"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 	astar "github.com/beefsack/go-astar"
 )
 
@@ -28,7 +29,7 @@ func NewPathfinder(game *Game) *Pathfinder {
  * graph representing the world. The grid is scaled to achieve a better
  * resolution.
  */
-func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64, found bool) {
+func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path math.Path, dist float32, found bool) {
 	world := pf.game.State().World()
 	// scale org and dst coordinates
 	scaledOrg, scaledDst := org.Mul(world.GridScale), dst.Mul(world.GridScale)
@@ -53,9 +54,9 @@ func (pf Pathfinder) FindPath(org, dst math.Vec2) (path math.Path, dist float64,
 	// - basic path smoothing (remove consecutive equal segments)
 	// - clip path segment ends to cell center
 	invScale := 1.0 / world.GridScale
-	txCenter := math.Vec2{0.5, 0.5} // tx vector to the cell center
+	txCenter := d2.Vec2{0.5, 0.5} // tx vector to the cell center
 	path = make(math.Path, 0, len(rawPath))
-	var last math.Vec2
+	var last d2.Vec2
 	for pidx := range rawPath {
 		tile := rawPath[pidx].(*Tile)
 		pt := math.FromInts(tile.X, tile.Y)

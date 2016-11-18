@@ -17,7 +17,7 @@ import (
  *
  * The callback function fn is called if a path is found.
  */
-func (gs *GameState) runPathFinder(org, dst math.Vec2, fn func(path math.Path)) {
+func (gs *GameState) runPathFinder(org, dst d2.Vec2, fn func(path math.Path)) {
 	ctxLog := log.WithFields(log.Fields{"org": org, "dst": dst})
 	// run the macro-pathfinder
 	path, _, found := gs.game.Pathfinder().FindPath(org, dst)
@@ -54,7 +54,7 @@ func (gs *GameState) onPlayerJoin(event *events.Event) {
 
 	// instantiate player with settings from the resources pkg
 	p := NewPlayer(gs.game, org, EntityType(evt.Type),
-		float64(entityData.Speed), float64(entityData.TotalHP),
+		float32(entityData.Speed), float32(entityData.TotalHP),
 		uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
 	p.SetId(evt.Id)
 	gs.AddEntity(p)
@@ -75,7 +75,7 @@ func (gs *GameState) onPlayerLeave(event *events.Event) {
  */
 func (gs *GameState) onPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMove)
-	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
+	dst := d2.NewVec(evt.Xpos, evt.Ypos)
 
 	ctxLog := log.WithFields(log.Fields{"evt": evt, "dst": dst})
 	ctxLog.Info("Received PlayerMove event")
@@ -102,7 +102,7 @@ func (gs *GameState) onPlayerMove(event *events.Event) {
  */
 func (gs *GameState) onPlayerBuild(event *events.Event) {
 	evt := event.Payload.(events.PlayerBuild)
-	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
+	dst := d2.NewVec(evt.Xpos, evt.Ypos)
 
 	ctxLog := log.WithFields(log.Fields{"evt": evt, "dst": dst})
 	ctxLog.Info("Received PlayerBuild event")
@@ -244,8 +244,8 @@ func (gs *GameState) onPlayerOperate(event *events.Event) {
 				draft = gs.world.Tile(x, y)
 				if draft.IsWalkable() {
 					position = &math.Vec2{
-						float64(x) / gs.world.GridScale,
-						float64(y) / gs.world.GridScale,
+						float32(x) / gs.world.GridScale,
+						float32(y) / gs.world.GridScale,
 					}
 				}
 			}

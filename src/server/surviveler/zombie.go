@@ -9,6 +9,8 @@ import (
 	"server/events"
 	"server/math"
 	"time"
+
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 /*
@@ -32,16 +34,16 @@ type Zombie struct {
 	g           *Game
 	curState    int // current state
 	combatPower uint8
-	walkSpeed   float64
-	totalHP     float64
-	curHP       float64
+	walkSpeed   float32
+	totalHP     float32
+	curHP       float32
 	timeAcc     time.Duration
 	target      Entity
 	world       *World
 	*Movable
 }
 
-func NewZombie(g *Game, pos math.Vec2, walkSpeed float64, combatPower uint8, totalHP float64) *Zombie {
+func NewZombie(g *Game, pos d2.Vec2, walkSpeed float32, combatPower uint8, totalHP float32) *Zombie {
 	return &Zombie{
 		id:          InvalidID,
 		g:           g,
@@ -125,7 +127,7 @@ func (z *Zombie) attack(dt time.Duration) (state int) {
 
 	if z.timeAcc >= zombieDamageInterval {
 		z.timeAcc -= zombieDamageInterval
-		if z.target.DealDamage(float64(z.combatPower)) {
+		if z.target.DealDamage(float32(z.combatPower)) {
 			state = lookingState
 		}
 	}
@@ -144,7 +146,7 @@ func (z *Zombie) moveOrCollide(dt time.Duration) (state int) {
 	//func (z *Zombie) moveOrCollide(dt time.Duration) (hasCollided bool) {
 	// check if moving would create a collision
 	nextPos := z.Movable.ComputeMove(z.Pos, dt)
-	nextBB := math.NewBoundingBoxFromCircle(nextPos, 0.5)
+	nextBB := d2.RectFromCircle(nextPos, 0.5)
 	colliding := z.world.AABBSpatialQuery(nextBB)
 
 	var wouldCollide bool
@@ -196,7 +198,7 @@ func (z *Zombie) Update(dt time.Duration) {
 	}
 }
 
-func (z *Zombie) Position() math.Vec2 {
+func (z *Zombie) Position() d2.Vec2 {
 	return z.Pos
 }
 
@@ -231,8 +233,8 @@ func (z *Zombie) State() EntityState {
 
 	return MobileEntityState{
 		Type:         ZombieEntity,
-		Xpos:         float32(z.Pos[0]),
-		Ypos:         float32(z.Pos[1]),
+		Xpos:         z.Pos[0],
+		Ypos:         z.Pos[1],
 		CurHitPoints: uint16(z.curHP),
 		ActionType:   actionType,
 		Action:       actionData,
@@ -249,7 +251,7 @@ func (z *Zombie) findTarget() (Entity, float32) {
 	return ent, dist
 }
 
-func (z *Zombie) DealDamage(damage float64) (dead bool) {
+func (z *Zombie) DealDamage(damage float32) (dead bool) {
 	if damage >= z.curHP {
 		z.curHP = 0
 		z.g.PostEvent(events.NewEvent(
@@ -262,7 +264,7 @@ func (z *Zombie) DealDamage(damage float64) (dead bool) {
 	return
 }
 
-func (z *Zombie) HealDamage(damage float64) (healthy bool) {
+func (z *Zombie) HealDamage(damage float32) (healthy bool) {
 	// FIXME: healed zombies? No thanks.
 	healthy = true
 	return
