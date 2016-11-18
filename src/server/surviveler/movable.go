@@ -8,6 +8,8 @@ import (
 	gomath "math"
 	"server/math"
 	"time"
+
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 /*
@@ -23,15 +25,15 @@ const maxNextWaypoints = 2
  * alongside it
  */
 type Movable struct {
-	Pos       math.Vec2 // current position
-	Speed     float64   // speed
+	Pos       d2.Vec2 // current position
+	Speed     float32 // speed
 	waypoints *math.VecStack
 }
 
 /*
  * NewMovable constructs a new movable
  */
-func NewMovable(pos math.Vec2, speed float64) *Movable {
+func NewMovable(pos d2.Vec2, speed float32) *Movable {
 	return &Movable{
 		Pos:       pos,
 		Speed:     speed,
@@ -39,13 +41,13 @@ func NewMovable(pos math.Vec2, speed float64) *Movable {
 	}
 }
 
-func (me *Movable) findMicroPath(wp math.Vec2) (path math.Path, found bool) {
+func (me *Movable) findMicroPath(wp d2.Vec2) (path math.Path, found bool) {
 	// for now for simplicity, the micro path is the direct path to the next
 	// waypoint
 	return math.Path{wp}, true
 }
 
-func (me Movable) ComputeMove(org math.Vec2, dt time.Duration) math.Vec2 {
+func (me Movable) ComputeMove(org d2.Vec2, dt time.Duration) d2.Vec2 {
 	// update position on the player path
 	if dst, exists := me.waypoints.Peek(); exists {
 		// compute distance to be covered as time * speed
