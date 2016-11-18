@@ -1,8 +1,6 @@
+from .extruder import extrude_wall_perimeters
+from .wavefront import export_mesh
 from PIL import Image
-import logging
-import numpy as np
-import os
-import sys
 from collections import OrderedDict
 from collections import deque
 from collections import namedtuple
@@ -11,6 +9,10 @@ from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import Tuple
+import logging
+import numpy as np
+import os
+import sys
 
 Pos = Tuple[int, int]
 Vertex2D = Tuple[float, float]
@@ -331,3 +333,22 @@ def load_png(filepath: str) -> WalkableMatrix:
             row.append(int(walkable))
         ret.append(row)
     return ret
+
+
+def png2obj(filepath: str, height: float=3) -> int:
+    matrix = load_png(filepath)
+    blocks_map = mat2map(matrix)
+    wall_perimeters = sorted(blocks_map.build())
+    mesh = extrude_wall_perimeters(wall_perimeters, height)
+    dst = filepath[:-4] + '.obj'
+    with open(dst, 'w') as fp:
+        fp.write(export_mesh(mesh))
+    return os.path.getsize(dst)
+
+
+def main(*args):
+    print(png2obj(*args))
+
+
+if __name__ == '__main__':
+    main(*sys.argv[1:])

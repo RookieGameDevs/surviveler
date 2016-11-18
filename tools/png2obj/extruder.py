@@ -9,6 +9,7 @@ Vertex = Union[Vertex2, Vertex3]
 Edge = Tuple[Vertex, Vertex]  # no 3D required here
 Face = Tuple[Vertex3, Vertex3, Vertex3, Vertex3]  # 3D here
 Mesh = List[Face]
+WallPerimeter = List[Vertex]
 
 
 def path2edges(path: List[Vertex]) -> List[Edge]:
@@ -66,6 +67,16 @@ def extrude_edge(edge: Edge, amount: float) -> Face:
 
 def extrude_path(path: List[Vertex], amount: float) -> Mesh:
     return [extrude_edge(edge, amount) for edge in path2edges(path)]
+
+
+def extrude_wall_perimeters(wall_perimeters: List[WallPerimeter], amount: float) -> Mesh:
+    """Utility which gets the output of the edge detector and returns the resulting mesh.
+    """
+    mesh = []
+    for wall in wall_perimeters:
+        mesh.extend(extrude_path(wall, amount))
+    return mesh
+
 
 # NB: Commented out since doctests are executed by pytest (--doctest-modules)
 # if __name__ == '__main__':
