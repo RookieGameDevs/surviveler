@@ -1,6 +1,11 @@
+from ..png2obj import load_png
 from ..png2obj import mat2map
+import os
 import pytest
 
+
+TEST_DIRPATH = os.path.dirname(__file__)
+SAMPLES_DIRPATH = os.path.join(TEST_DIRPATH, 'samples')
 
 EXAMPLES = [
     # Single paths
@@ -217,3 +222,13 @@ def test_detect_edges(case: dict) -> None:
     expected = sorted(case['vertices'])
     actual = sorted(blocks_map.build())
     assert actual == expected
+
+
+@pytest.mark.parametrize('case', EXAMPLES, ids=lambda s: s['name'])
+def test_png2matrix(case: dict) -> None:
+    filename = case['name'] + '.png'
+    filepath = os.path.join(SAMPLES_DIRPATH, filename)
+    if not os.path.exists(filepath):
+        pytest.skip('"{}" does not exist'.format(filepath))
+    else:
+        assert load_png(filepath) == case['matrix']

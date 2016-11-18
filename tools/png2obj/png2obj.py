@@ -16,6 +16,7 @@ Pos = Tuple[int, int]
 Vertex2D = Tuple[float, float]
 Vector2D = Vertex2D
 WallPerimeter = List[Vertex2D]
+WalkableMatrix = List[List[int]]
 
 
 EXAMPLE = np.array(
@@ -317,3 +318,17 @@ def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
             if not walkable:
                 ret[(x, y)] = 1
     return BlocksMap(ret, map_size=(x + 1, y + 1))
+
+
+def load_png(filepath: str) -> WalkableMatrix:
+    ret = []
+    img = Image.open(filepath)
+    for y in range(img.height):
+        row = []
+        for x in range(img.width):
+            pixel = img.getpixel((x, y))
+            alpha = pixel[-1] if img.mode == 'RGBA' else 255
+            walkable = alpha == 0 or pixel[:3] == (255, 255, 255)
+            row.append(int(walkable))
+        ret.append(row)
+    return ret
