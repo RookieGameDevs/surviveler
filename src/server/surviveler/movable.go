@@ -41,10 +41,10 @@ func NewMovable(pos d2.Vec2, speed float32) *Movable {
 	}
 }
 
-func (me *Movable) findMicroPath(wp d2.Vec2) (path math.Path, found bool) {
+func (me *Movable) findMicroPath(wp d2.Vec2) (path d2.Path, found bool) {
 	// for now for simplicity, the micro path is the direct path to the next
 	// waypoint
-	return math.Path{wp}, true
+	return d2.Path{wp}, true
 }
 
 func (me Movable) ComputeMove(org d2.Vec2, dt time.Duration) d2.Vec2 {
@@ -126,7 +126,7 @@ func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
  *
  * It replaces and cancel the current path, if any.
  */
-func (me *Movable) SetPath(path math.Path) {
+func (me *Movable) SetPath(path d2.Path) {
 	// empty the waypoint stack
 	for ; me.waypoints.Len() != 0; me.waypoints.Pop() {
 	}
@@ -138,10 +138,10 @@ func (me *Movable) SetPath(path math.Path) {
 	}
 }
 
-func (me *Movable) NextWaypoints() math.Path {
-	path := math.Path{}
+func (me *Movable) NextWaypoints() d2.Path {
+	path := make(d2.Path{}, maxNextWaypoints)
 	for _, wp := range me.waypoints.PeekN(maxNextWaypoints) {
-		path = append(path, *wp)
+		path[i] = *wp
 	}
 	return path
 }

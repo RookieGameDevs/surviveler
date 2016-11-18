@@ -9,6 +9,8 @@ import (
 	"server/actions"
 	"server/math"
 	"time"
+
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 //go:generate go-gencon -type Entity -cont Set -name EntitySet
@@ -55,10 +57,10 @@ type Entity interface {
 	SetId(uint32)
 	Type() EntityType
 	State() EntityState
-	Position() math.Vec2
+	Position() d2.Vec2
 	Update(dt time.Duration)
-	DealDamage(float64) bool
-	HealDamage(float64) bool
+	DealDamage(float32) bool
+	HealDamage(float32) bool
 	math.BoundingBoxer
 }
 

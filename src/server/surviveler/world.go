@@ -11,6 +11,7 @@ import (
 	"server/math"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 /*
@@ -19,8 +20,8 @@ import (
 type World struct {
 	Grid                                      // the embedded map
 	GridWidth, GridHeight int                 // grid dimensions
-	Width, Height         float64             // world dimensions
-	GridScale             float64             // the grid scale
+	Width, Height         float32             // world dimensions
+	GridScale             float32             // the grid scale
 	Entities              map[uint32]TileList // map entities to the tiles to which it is attached
 }
 
@@ -30,13 +31,13 @@ type World struct {
  * It loads the map from the provided Surviveler Package and initializes the
  * world representation from it.
  */
-func NewWorld(img image.Image, gridScale float64) (*World, error) {
+func NewWorld(img image.Image, gridScale float32) (*World, error) {
 	bounds := img.Bounds()
 	w := World{
 		GridWidth:  bounds.Max.X,
 		GridHeight: bounds.Max.Y,
-		Width:      float64(bounds.Max.X) / gridScale,
-		Height:     float64(bounds.Max.Y) / gridScale,
+		Width:      bounds.Max.X / gridScale,
+		Height:     bounds.Max.Y / gridScale,
 		GridScale:  gridScale,
 		Entities:   make(map[uint32]TileList),
 	}
@@ -80,7 +81,7 @@ func (w World) Tile(x, y int) *Tile {
  * pt represents *grid* coordinates, i.e the map scale factor must be taken in
  * consideration to convert from *world* coordinates into *grid* coordinates.
  */
-func (w World) TileFromVec(pt math.Vec2) *Tile {
+func (w World) TileFromVec(pt d2.Vec2) *Tile {
 	return w.Tile(int(pt[0]), int(pt[1]))
 }
 
@@ -90,7 +91,7 @@ func (w World) TileFromVec(pt math.Vec2) *Tile {
  * pt represents *world* coordinates, i.e TileFromWorldVec performs the
  * conversion from world coordinates into grid coordinates.
  */
-func (w World) TileFromWorldVec(pt math.Vec2) *Tile {
+func (w World) TileFromWorldVec(pt d2.Vec2) *Tile {
 	pt = pt.Mul(w.GridScale)
 	return w.TileFromVec(pt)
 }
@@ -98,7 +99,7 @@ func (w World) TileFromWorldVec(pt math.Vec2) *Tile {
 /*
  * PointInBounds indicates if specific point lies in the world boundaries
  */
-func (w World) PointInBounds(pt math.Vec2) bool {
+func (w World) PointInBounds(pt d2.Vec2) bool {
 	return pt[0] >= 0 && pt[0] <= w.Width &&
 		pt[1] >= 0 && pt[1] <= w.Height
 }

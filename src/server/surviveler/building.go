@@ -47,7 +47,7 @@ func (bb *BuildingBase) Position() d2.Vec2 {
 }
 
 func (bb *BuildingBase) BoundingBox() d2.Rectangle {
-	x, y := bb.pos.Elem()
+	x, y := bb.pos.X(), bb.pos.Y()
 	return d2.Rect(x-0.25, y-0.25, x+0.25, y+0.25)
 }
 

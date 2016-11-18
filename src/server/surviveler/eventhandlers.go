@@ -17,7 +17,7 @@ import (
  *
  * The callback function fn is called if a path is found.
  */
-func (gs *GameState) runPathFinder(org, dst d2.Vec2, fn func(path math.Path)) {
+func (gs *GameState) runPathFinder(org, dst d2.Vec2, fn func(path d2.Path)) {
 	ctxLog := log.WithFields(log.Fields{"org": org, "dst": dst})
 	// run the macro-pathfinder
 	path, _, found := gs.game.Pathfinder().FindPath(org, dst)
@@ -92,7 +92,7 @@ func (gs *GameState) onPlayerMove(event *events.Event) {
 		return
 	}
 
-	gs.runPathFinder(player.Position(), dst, func(p math.Path) {
+	gs.runPathFinder(player.Position(), dst, func(p d2.Path) {
 		player.Move(p)
 	})
 }
@@ -143,7 +143,7 @@ func (gs *GameState) onPlayerBuild(event *events.Event) {
 		Div(gs.world.GridScale).
 		Add(txCenter)
 
-	gs.runPathFinder(player.Position(), pos, func(p math.Path) {
+	gs.runPathFinder(player.Position(), pos, func(p d2.Path) {
 		// create the building, attach it to the tile
 		building := gs.createBuilding(EntityType(evt.Type), pos)
 		player.Build(building, p)
@@ -171,7 +171,7 @@ func (gs *GameState) onPlayerRepair(event *events.Event) {
 		return
 	}
 
-	gs.runPathFinder(player.Position(), building.Position(), func(p math.Path) {
+	gs.runPathFinder(player.Position(), building.Position(), func(p d2.Path) {
 		// set player action
 		player.Repair(building, p)
 	})
@@ -253,7 +253,7 @@ func (gs *GameState) onPlayerOperate(event *events.Event) {
 	}
 
 	if position != nil {
-		gs.runPathFinder(player.Position(), *position, func(p math.Path) {
+		gs.runPathFinder(player.Position(), *position, func(p d2.Path) {
 			player.Operate(object, p)
 		})
 	}

@@ -7,7 +7,6 @@ package surviveler
 import (
 	"server/actions"
 	"server/events"
-	"server/math"
 	"time"
 
 	"github.com/aurelien-rainone/gogeo/f32/d2"
@@ -65,7 +64,7 @@ func (z *Zombie) SetId(id uint32) {
 	z.id = id
 }
 
-func (z *Zombie) findPathToTarget() (math.Path, bool) {
+func (z *Zombie) findPathToTarget() (d2.Path, bool) {
 	path, _, found := z.g.Pathfinder().FindPath(z.Pos, z.target.Position())
 	return path, found
 }

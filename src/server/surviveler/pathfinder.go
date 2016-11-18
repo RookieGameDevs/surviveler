@@ -29,7 +29,7 @@ func NewPathfinder(game *Game) *Pathfinder {
  * graph representing the world. The grid is scaled to achieve a better
  * resolution.
  */
-func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path math.Path, dist float32, found bool) {
+func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path d2.Path, dist float32, found bool) {
 	world := pf.game.State().World()
 	// scale org and dst coordinates
 	scaledOrg, scaledDst := org.Mul(world.GridScale), dst.Mul(world.GridScale)
@@ -55,7 +55,7 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path math.Path, dist float32, f
 	// - clip path segment ends to cell center
 	invScale := 1.0 / world.GridScale
 	txCenter := d2.Vec2{0.5, 0.5} // tx vector to the cell center
-	path = make(math.Path, 0, len(rawPath))
+	path = make(d2.Path, 0, len(rawPath))
 	var last d2.Vec2
 	for pidx := range rawPath {
 		tile := rawPath[pidx].(*Tile)

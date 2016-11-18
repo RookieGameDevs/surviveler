@@ -4,12 +4,10 @@
  */
 package surviveler
 
-import (
-	"server/math"
-)
+import "github.com/aurelien-rainone/gogeo/f32/d2"
 
-type Rect2D [2]math.Vec2
-type VecList []math.Vec2
+type Rect2D [2]d2.Vec2
+type VecList []d2.Vec2
 
 // gameData is the top-level struct containing game data
 type gameData struct {
@@ -25,9 +23,9 @@ type (
 )
 
 type MapObject struct {
-	Ref      string    `json:"ref"`      // uri of the object inside the package
-	Pos      math.Vec2 `json:"pos"`      // position of the object on the map
-	Rotation int       `json:"rotation"` // rotation of the object on the map
+	Ref      string  `json:"ref"`      // uri of the object inside the package
+	Pos      d2.Vec2 `json:"pos"`      // position of the object on the map
+	Rotation int     `json:"rotation"` // rotation of the object on the map
 }
 
 type MapUsableObject struct {
@@ -57,7 +55,7 @@ type AIKeypoints struct {
  */
 type MapData struct {
 	Resources     ResourceList      `json:"resources"`
-	ScaleFactor   float64           `json:"scale_factor"`
+	ScaleFactor   float32           `json:"scale_factor"`
 	UsableObjects []MapUsableObject `json:"usable_objects"`
 	Objects       []MapObject       `json:"objects"`
 	AIKeypoints   AIKeypoints       `json:"ai_keypoints"`
@@ -79,7 +77,7 @@ type EntityData struct {
 	BuildingPower uint8   `json:"building_power"`
 	CombatPower   uint8   `json:"combat_power"`
 	TotalHP       uint16  `json:"tot_hp"`
-	Speed         float64 `json:"speed"`
+	Speed         float32 `json:"speed"`
 }
 
 /*
