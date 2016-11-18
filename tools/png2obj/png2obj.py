@@ -320,8 +320,14 @@ def load_png(filepath: str) -> WalkableMatrix:
         row = []
         for x in range(img.width):
             pixel = img.getpixel((x, y))
-            alpha = pixel[-1] if img.mode == 'RGBA' else 255
-            walkable = alpha == 0 or pixel[:3] == (255, 255, 255)
+            if img.mode == 'P':
+                walkable = int(pixel > 0)
+            else:
+                if img.mode == 'RGBA':
+                    alpha = pixel[3]
+                    walkable = alpha == 0 or pixel[:3] == (255, 255, 255)
+                else:
+                    walkable = pixel[:3] == (255, 255, 255)
             row.append(int(walkable))
         ret.append(row)
     return ret
