@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"server/math"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
@@ -36,8 +35,8 @@ func NewWorld(img image.Image, gridScale float32) (*World, error) {
 	w := World{
 		GridWidth:  bounds.Max.X,
 		GridHeight: bounds.Max.Y,
-		Width:      bounds.Max.X / gridScale,
-		Height:     bounds.Max.Y / gridScale,
+		Width:      float32(bounds.Max.X) / gridScale,
+		Height:     float32(bounds.Max.Y) / gridScale,
 		GridScale:  gridScale,
 		Entities:   make(map[uint32]TileList),
 	}
@@ -92,7 +91,7 @@ func (w World) TileFromVec(pt d2.Vec2) *Tile {
  * conversion from world coordinates into grid coordinates.
  */
 func (w World) TileFromWorldVec(pt d2.Vec2) *Tile {
-	pt = pt.Mul(w.GridScale)
+	pt = pt.Scale(w.GridScale)
 	return w.TileFromVec(pt)
 }
 
@@ -123,11 +122,11 @@ func (w World) DumpGrid() {
 /*
  * IntersectingTiles returns the list of Tile intersecting with an AABB
  */
-func (w World) IntersectingTiles(bb math.BoundingBox) []*Tile {
+func (w World) IntersectingTiles(bb d2.Rectangle) []*Tile {
 	// first thing: we need the tile that contains the center of the aabb
 	center := w.TileFromWorldVec(bb.Center())
 	tiles := []*Tile{center}
-	if center.BoundingBox().Contains(bb) {
+	if bb.In(center.Rectangle()) {
 		// exit now if the aabb is contained in the center tile
 		return tiles
 	}
@@ -139,22 +138,22 @@ func (w World) IntersectingTiles(bb math.BoundingBox) []*Tile {
 	down := w.Tile(center.X, center.Y+1)
 
 	// intersection with horizontal and vertical neighbour tiles
-	if left != nil && left.BoundingBox().Intersects(bb) {
+	if left != nil && left.Rectangle().Overlaps(bb) {
 		tiles = append(tiles, left)
 	} else {
 		left = nil
 	}
-	if right != nil && right.BoundingBox().Intersects(bb) {
+	if right != nil && right.Rectangle().Overlaps(bb) {
 		tiles = append(tiles, right)
 	} else {
 		right = nil
 	}
-	if up != nil && up.BoundingBox().Intersects(bb) {
+	if up != nil && up.Rectangle().Overlaps(bb) {
 		tiles = append(tiles, up)
 	} else {
 		up = nil
 	}
-	if down != nil && down.BoundingBox().Intersects(bb) {
+	if down != nil && down.Rectangle().Overlaps(bb) {
 		tiles = append(tiles, down)
 	} else {
 		down = nil
@@ -181,7 +180,7 @@ func (w World) IntersectingTiles(bb math.BoundingBox) []*Tile {
  */
 func (w *World) AttachEntity(ent Entity) {
 	// retrieve list of tiles intersecting with the entity aabb
-	tileList := w.IntersectingTiles(ent.BoundingBox())
+	tileList := w.IntersectingTiles(ent.Rectangle())
 
 	// attach this entity to all those tiles
 	w.attachTo(ent, tileList...)
@@ -241,7 +240,7 @@ func (w *World) UpdateEntity(ent Entity) {
  * Important Note: if the query is performed by passing the bounding box of an entity,
  * the returned set will contain this entity.
  */
-func (w *World) AABBSpatialQuery(bb math.BoundingBox) *EntitySet {
+func (w *World) AABBSpatialQuery(bb d2.Rectangle) *EntitySet {
 	// set to contain all the entities around, though not necessarily colliding
 	allEntities := NewEntitySet()
 
@@ -254,7 +253,7 @@ func (w *World) AABBSpatialQuery(bb math.BoundingBox) *EntitySet {
 	colliding := NewEntitySet()
 	// filter out the non-colliding entities
 	allEntities.Each(func(ent Entity) bool {
-		if ent.BoundingBox().Intersects(bb) {
+		if ent.Rectangle().Overlaps(bb) {
 			colliding.Add(ent)
 		}
 		return true
@@ -270,7 +269,7 @@ func (w *World) AABBSpatialQuery(bb math.BoundingBox) *EntitySet {
  * returned.
  */
 func (w *World) EntitySpatialQuery(ent Entity) *EntitySet {
-	set := w.AABBSpatialQuery(ent.BoundingBox())
+	set := w.AABBSpatialQuery(ent.Rectangle())
 	if !set.Contains(ent) {
 		panic("EntitySpatialQuery should have find the requesting entity... :-(")
 	}

@@ -6,10 +6,10 @@ package surviveler
 
 import (
 	"fmt"
+	"math"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
-	"github.com/aurelien-rainone/math32"
 	astar "github.com/beefsack/go-astar"
 )
 
@@ -64,7 +64,7 @@ func (t Tile) GoString() string {
 	return fmt.Sprintf("Tile{X: %d, Y: %d, Kind: %d}", t.X, t.Y, t.Kind)
 }
 
-func (t Tile) BoundingBox() d2.Rectangle {
+func (t Tile) Rectangle() d2.Rectangle {
 	return t.aabb
 }
 
@@ -142,7 +142,7 @@ func (t *Tile) PathNeighbors() []astar.Pather {
 /*
  * costFromKind returns the cost associated with a kind of tile
  */
-func costFromKind(kind TileKind) float32 {
+func costFromKind(kind TileKind) float64 {
 	switch kind {
 	case KindWalkable:
 		return 10.0
@@ -156,7 +156,7 @@ func costFromKind(kind TileKind) float32 {
 /*
  * PathNeighborCost returns the exact movement cost to reach a neighbor tile
  */
-func (t *Tile) PathNeighborCost(to astar.Pather) float32 {
+func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
 	tt := to.(*Tile)
 	cf := costFromKind(tt.Kind)
 
@@ -165,13 +165,13 @@ func (t *Tile) PathNeighborCost(to astar.Pather) float32 {
 		return cf
 	}
 	// diagonal
-	return math32.Sqrt2 * cf
+	return math.Sqrt2 * cf
 }
 
 /*
  * PathEstimatedCost estimates the movement cost required to reach a tile
  */
-func (t *Tile) PathEstimatedCost(to astar.Pather) float32 {
+func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
 	n := to.(*Tile)
-	return math32.Abs(float32(n.X-t.X)) + math32.Abs(float32(n.Y-t.Y))
+	return math.Abs(float64(n.X-t.X)) + math.Abs(float64(n.Y-t.Y))
 }

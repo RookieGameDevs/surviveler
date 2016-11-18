@@ -65,7 +65,7 @@ func (s *VecStack) Peek() (value d2.Vec2, exists bool) {
 // PeekN returns at max the N topmost item without removing them from the stack.
 func (s *VecStack) PeekN(n int) []d2.Vec2 {
 	var (
-		N   []*d2.Vec2
+		N   []d2.Vec2
 		cur *item
 	)
 	N = make([]d2.Vec2, 0, n)

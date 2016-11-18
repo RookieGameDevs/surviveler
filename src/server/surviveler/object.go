@@ -98,7 +98,7 @@ func (cm *CoffeeMachine) HealDamage(dmg float32) bool {
 }
 
 func (cm *CoffeeMachine) Rectangle() d2.Rectangle {
-	x, y := cm.pos[0], cm.Pos[1]
+	x, y := cm.pos[0], cm.pos[1]
 	return d2.Rect(x-0.25, y-0.25, x+0.25, y+0.25)
 }
 

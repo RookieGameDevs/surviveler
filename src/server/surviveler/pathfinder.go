@@ -5,8 +5,6 @@
 package surviveler
 
 import (
-	"server/math"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
 	astar "github.com/beefsack/go-astar"
@@ -32,7 +30,7 @@ func NewPathfinder(game *Game) *Pathfinder {
 func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found bool) {
 	world := pf.game.State().World()
 	// scale org and dst coordinates
-	scaledOrg, scaledDst := org.Mul(world.GridScale), dst.Mul(world.GridScale)
+	scaledOrg, scaledDst := org.Scale(world.GridScale), dst.Scale(world.GridScale)
 
 	// retrieve origin and destination tiles by rounding the scaled org/dst points down
 	porg := world.Tile(int(scaledOrg[0]), int(scaledOrg[1]))
@@ -55,11 +53,11 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found 
 	// - clip path segment ends to cell center
 	invScale := 1.0 / world.GridScale
 	txCenter := d2.Vec2{0.5, 0.5} // tx vector to the cell center
-	path = make(d2.Path, 0, len(rawPath))
+	path = make(Path, 0, len(rawPath))
 	var last d2.Vec2
 	for pidx := range rawPath {
 		tile := rawPath[pidx].(*Tile)
-		pt := math.FromInts(tile.X, tile.Y)
+		pt := d2.Vec2{float32(tile.X), float32(tile.Y)}
 		if pidx == 0 {
 			path = append(path, dst)
 		} else if pidx == len(rawPath)-1 {
@@ -70,15 +68,15 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found 
 			if pidx+1 < len(rawPath)-1 {
 				// there are at least 1 pt between the current one and the last one
 				ntile := rawPath[pidx+1].(*Tile)
-				npt := math.FromInts(ntile.X, ntile.Y)
+				npt := d2.Vec2{float32(ntile.X), float32(ntile.Y)}
 				nextDir := pt.Sub(npt)
-				if dir == nextDir {
+				if dir.Approx(nextDir) {
 					last = pt
 					continue
 				}
 			}
 			// re-scale coords when adding point to the path
-			path = append(path, pt.Add(txCenter).Mul(invScale))
+			path = append(path, pt.Add(txCenter).Scale(invScale))
 		}
 		last = pt
 	}

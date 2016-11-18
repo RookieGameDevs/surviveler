@@ -7,7 +7,6 @@ package surviveler
 import (
 	"server/actions"
 	"server/events"
-	"server/math"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -127,7 +126,7 @@ func (p *Player) Update(dt time.Duration) {
 func (p *Player) onMoveAction(dt time.Duration) {
 	// check if moving would create a collision
 	nextPos := p.Movable.ComputeMove(p.Pos, dt)
-	nextBB := math.NewBoundingBoxFromCircle(nextPos, 0.5)
+	nextBB := d2.RectFromCircle(nextPos, 0.5)
 	colliding := p.world.AABBSpatialQuery(nextBB)
 
 	var curActionEnded bool
