@@ -6,10 +6,10 @@ package surviveler
 
 import (
 	"server/events"
-	"server/math"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 /*
@@ -19,13 +19,13 @@ import (
  * etc.
  */
 type BuildingBase struct {
-	totalHP      float64 // total hit points
-	curHP        float64 // current hit points
+	totalHP      float32 // total hit points
+	curHP        float32 // current hit points
 	requiredBP   uint16  // required build power to finish construction
 	curBP        uint16  // build power already induced into the construction
 	id           uint32
 	g            *Game
-	pos          math.Vec2
+	pos          d2.Vec2
 	buildingType EntityType
 	isBuilt      bool
 }
@@ -42,13 +42,13 @@ func (bb *BuildingBase) SetId(id uint32) {
 	bb.id = id
 }
 
-func (bb *BuildingBase) Position() math.Vec2 {
+func (bb *BuildingBase) Position() d2.Vec2 {
 	return bb.pos
 }
 
-func (bb *BuildingBase) BoundingBox() math.BoundingBox {
+func (bb *BuildingBase) BoundingBox() d2.Rectangle {
 	x, y := bb.pos.Elem()
-	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
+	return d2.Rect(x-0.25, y-0.25, x+0.25, y+0.25)
 }
 
 func (bb *BuildingBase) State() EntityState {
@@ -61,7 +61,7 @@ func (bb *BuildingBase) State() EntityState {
 	}
 }
 
-func (bb *BuildingBase) DealDamage(damage float64) (dead bool) {
+func (bb *BuildingBase) DealDamage(damage float32) (dead bool) {
 	if damage >= bb.curHP {
 		bb.curHP = 0
 		bb.g.PostEvent(events.NewEvent(
@@ -74,7 +74,7 @@ func (bb *BuildingBase) DealDamage(damage float64) (dead bool) {
 	return
 }
 
-func (bb *BuildingBase) HealDamage(damage float64) (healthy bool) {
+func (bb *BuildingBase) HealDamage(damage float32) (healthy bool) {
 	healthy = true
 	return
 }
@@ -82,7 +82,7 @@ func (bb *BuildingBase) HealDamage(damage float64) (healthy bool) {
 func (bb *BuildingBase) addBuildPower(bp uint16) {
 	if !bb.isBuilt {
 		bb.curBP += bp
-		bb.curHP = bb.totalHP * (float64(bb.curBP) / float64(bb.requiredBP))
+		bb.curHP = bb.totalHP * (float32(bb.curBP) / float32(bb.requiredBP))
 		if bb.curBP >= bb.requiredBP {
 			bb.isBuilt = true
 			bb.curHP = bb.totalHP
@@ -111,13 +111,13 @@ type Barricade struct {
 /*
  * NewBarricade creates a new barricade
  */
-func NewBarricade(g *Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewBarricade(g *Game, pos d2.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           InvalidID,
 			g:            g,
 			pos:          pos,
-			totalHP:      float64(totHP),
+			totalHP:      float32(totHP),
 			curHP:        1,
 			requiredBP:   reqBP,
 			curBP:        0,
@@ -160,13 +160,13 @@ type MgTurret struct {
 /*
  * NewMgTurret creates a new machine-gun turret
  */
-func NewMgTurret(g *Game, pos math.Vec2, totHP, reqBP uint16) *MgTurret {
+func NewMgTurret(g *Game, pos d2.Vec2, totHP, reqBP uint16) *MgTurret {
 	return &MgTurret{
 		BuildingBase{
 			id:           InvalidID,
 			g:            g,
 			pos:          pos,
-			totalHP:      float64(totHP),
+			totalHP:      float32(totHP),
 			curHP:        1,
 			requiredBP:   reqBP,
 			curBP:        0,

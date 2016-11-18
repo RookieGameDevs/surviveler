@@ -11,6 +11,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 // player private action types
@@ -41,8 +42,8 @@ type Player struct {
 	world           *World
 	buildPower      uint16
 	combatPower     uint16
-	totalHP         float64
-	curHP           float64
+	totalHP         float32
+	curHP           float32
 	posDirty        bool
 	*Movable
 }
@@ -50,8 +51,8 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(g *Game, spawn math.Vec2, entityType EntityType,
-	speed, totalHP float64, buildPower, combatPower uint16) *Player {
+func NewPlayer(g *Game, spawn d2.Vec2, entityType EntityType,
+	speed, totalHP float32, buildPower, combatPower uint16) *Player {
 	p := &Player{
 		entityType:  entityType,
 		buildPower:  buildPower,
@@ -99,7 +100,7 @@ func (p *Player) Update(dt time.Duration) {
 			dist := p.target.Position().Sub(p.Pos).Len()
 			if dist < PlayerAttackDistance {
 				if time.Since(p.lastAttack) >= AttackPeriod {
-					if !p.target.DealDamage(float64(p.combatPower)) {
+					if !p.target.DealDamage(float32(p.combatPower)) {
 						p.lastAttack = time.Now()
 					} else {
 						// pop current action to get ready for next update
@@ -214,7 +215,7 @@ func (p *Player) Move(path math.Path) {
 	p.SetPath(path)
 }
 
-func (p *Player) Position() math.Vec2 {
+func (p *Player) Position() d2.Vec2 {
 	return p.Movable.Pos
 }
 
@@ -313,7 +314,7 @@ func (p *Player) Repair(b Building, path math.Path) {
 	p.SetPath(path)
 }
 
-func (p *Player) findPath(dst math.Vec2) {
+func (p *Player) findPath(dst d2.Vec2) {
 	log.Debug("Player.findPath: directly search for a path")
 	// directly search for path
 	path, _, found := p.g.Pathfinder().FindPath(p.Position(), dst)
@@ -381,7 +382,7 @@ func (p *Player) emptyActions() {
 	}
 }
 
-func (p *Player) DealDamage(damage float64) (dead bool) {
+func (p *Player) DealDamage(damage float32) (dead bool) {
 	if damage >= p.curHP {
 		p.curHP = 0
 		p.g.PostEvent(events.NewEvent(
@@ -394,7 +395,7 @@ func (p *Player) DealDamage(damage float64) (dead bool) {
 	return
 }
 
-func (p *Player) HealDamage(damage float64) (healthy bool) {
+func (p *Player) HealDamage(damage float32) (healthy bool) {
 	if damage+p.curHP >= p.totalHP {
 		p.curHP = p.totalHP
 		healthy = true
