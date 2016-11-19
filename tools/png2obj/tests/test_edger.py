@@ -1,9 +1,9 @@
-from ..extruder import extrude_path
-from ..extruder import extrude_wall_perimeters
-from ..png2obj import load_png
-from ..png2obj import mat2map
-from ..png2obj import png2obj
-from ..wavefront import export_mesh
+from extruder import extrude_path
+from extruder import extrude_wall_perimeters
+from png2obj import load_png
+from png2obj import mat2map
+from png2obj import png2obj
+from wavefront import export_mesh
 import os
 import pytest
 

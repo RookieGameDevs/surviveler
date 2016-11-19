@@ -1,5 +1,5 @@
-from .extruder import extrude_wall_perimeters
-from .wavefront import export_mesh
+from extruder import extrude_wall_perimeters
+from wavefront import export_mesh
 from PIL import Image
 from collections import OrderedDict
 from collections import deque
