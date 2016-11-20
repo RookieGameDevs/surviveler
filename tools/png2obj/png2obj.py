@@ -8,6 +8,8 @@ from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Mapping
+from typing import NamedTuple
+from typing import Set
 from typing import Tuple
 import logging
 import numpy as np
@@ -20,8 +22,14 @@ Vertex2D = Tuple[float, float]
 Vector2D = Vertex2D
 WallPerimeter = List[Vertex2D]
 WalkableMatrix = List[List[int]]
-VertexBoxes = Tuple[Pos, Pos, Pos, Pos]
-
+VertexBoxes = NamedTuple('NearBoxes',
+    [
+        ('upleft', Pos),
+        ('upright', Pos),
+        ('downright', Pos),
+        ('downleft', Pos),
+    ]
+)
 
 EXAMPLE = np.array(
     [
@@ -36,7 +44,6 @@ EXAMPLE = np.array(
 
 Box = namedtuple('Box', ['x', 'y'])
 NearVertices = namedtuple('NearVertices', ['left', 'up', 'right', 'down'])
-NearBoxes = namedtuple('NearBoxes', ['upleft', 'upright', 'downright', 'downleft'])
 
 
 ROW = np.array(
@@ -175,9 +182,9 @@ class BlocksMap(dict):
         which share the same given vertex.
         """
         bx, by = self.map_vertex(xy)
-        return NearBoxes(upleft=(bx - 1, by - 1), upright=(bx, by - 1), downleft=(bx - 1, by), downright=(bx, by))
+        return VertexBoxes(upleft=(bx - 1, by - 1), upright=(bx, by - 1), downleft=(bx - 1, by), downright=(bx, by))
 
-    def boxes2block_matrix(self, boxes: Tuple[Pos, Pos, Pos, Pos]) -> Tuple:
+    def boxes2block_matrix(self, boxes: VertexBoxes) -> Tuple[Pos, Pos]:
         return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
         #return tuple([self.map.get(box, 0) for box in boxes])
 
@@ -193,7 +200,7 @@ class BlocksMap(dict):
         #ret = [v for v in versors]
         return ret
 
-    def vertex2blocks(self, xy: Vertex2D) -> List[VertexBoxes]:
+    def vertex2blocks(self, xy: Vertex2D) -> List[Pos]:
         return [box for box in self.vertex2boxes(xy) if box in self.map]
 
     def is_border_vertex(self, vertex: Vertex2D) -> bool:
@@ -205,7 +212,7 @@ class BlocksMap(dict):
 
     def build(self) -> List[List[Vertex2D]]:
         ret = []  # type: List[WallPerimeter]
-        tracked_vertices = []  # type: List[Vertex2D]
+        tracked_vertices = set()  # type: Set[Vertex2D]
         if not self.map:
             return []
 
@@ -234,7 +241,7 @@ class BlocksMap(dict):
                 #logging.debug('Vertex: {}'.format(vertex))
 
                 # mark near clocks as "done"
-                tracked_vertices.append(vertex)
+                tracked_vertices.add(vertex)
 
                 vertices = self.get_next_block_vertices(vertex)
                 # Cycle through new possible vertices to explore
