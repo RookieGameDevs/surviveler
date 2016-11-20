@@ -252,7 +252,7 @@ class BlocksMap(dict):
                     #logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
 
                     # Avoid to go back
-                    if not(np.array(old_versor) + np.array(versor_next)).any():
+                    if sum_vectors(old_versor, versor_next) == (0.0, 0.0):
                         #logging.debug('Do not go just back to {}'.format(v_next))
                         continue
 
