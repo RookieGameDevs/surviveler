@@ -1,6 +1,8 @@
 """
 Module that handles the actual exporting in Wavefront .obj format.
 """
+from collections import OrderedDict
+from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Tuple
@@ -29,7 +31,7 @@ def export_face_indices(face_indices: Iterable[int]) -> str:
     return 'f ' + ' '.join([str(vertex_index) for vertex_index in face_indices])
 
 
-def mesh2vertices(mesh: Mesh) -> List[Vertex]:
+def mesh2vertices(mesh: Mesh) -> Dict[Vertex, int]:
     """
     Extracts unique vertices from mesh faces.
 
@@ -46,25 +48,29 @@ def mesh2vertices(mesh: Mesh) -> List[Vertex]:
 
     Checks vertex ordering.
 
-    >>> vertices[0] == v1
-    True
-    >>> vertices[1] == v2
-    True
-    >>> vertices[2] == v5
-    True
-    >>> vertices[3] == v6
-    True
-    >>> vertices[4] == v4
-    True
-    >>> vertices[5] == v3
-    True
+    >>> vertices[v1]
+    1
+    >>> vertices[v2]
+    2
+    >>> vertices[v5]
+    3
+    >>> vertices[v6]
+    4
+    >>> vertices[v4]
+    5
+    >>> vertices[v3]
+    6
     """
-    ret = []  # type: List[Vertex]
+    ret = OrderedDict()  # type: Dict[Vertex, int]
+
+    unique = set()
     for face in mesh:
         for vertex in face:
-            if vertex not in ret:
-                ret.append(vertex)
-    ret.sort()
+            unique.add(vertex)
+
+    for i, vertex in enumerate(sorted(list(unique)), 1):
+        ret[vertex] = i
+
     return ret
 
 
@@ -88,13 +94,13 @@ def export_mesh(mesh: List[Face]) -> str:
     f 6 5 3 4
     """
     ret = []
-    vertices_list = mesh2vertices(mesh)
+    vertices_indices = mesh2vertices(mesh)
 
-    for vertex in vertices_list:
+    for vertex in sorted(vertices_indices.keys()):
         ret.append(export_vertex(vertex))
 
     for face in mesh:
-        face_indices = tuple([vertices_list.index(vertex) + 1 for vertex in face])
+        face_indices = tuple([vertices_indices[vertex] for vertex in face])
         ret.append(export_face_indices(face_indices))
 
     return '\n'.join(ret)
