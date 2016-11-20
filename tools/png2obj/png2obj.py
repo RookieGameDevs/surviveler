@@ -212,23 +212,23 @@ class BlocksMap(dict):
                 continue
 
             first_vertex = vertex
-            tracked = [vertex]
             old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
             wall_perimeter.append(vertex)
             closable = False
+            wall_vertex = vertex
             while True:
-                tracked_vertices.add(vertex)
+                tracked_vertices.add(wall_vertex)
 
-                vertices = self.get_next_block_vertices(vertex)
+                vertices = self.get_next_block_vertices(wall_vertex)
                 # Cycle through new possible vertices to explore
                 for v_next in vertices:
-                    versor_next = sum_vectors(v_next, scalar(tracked[-1], -1))
+                    versor_next = sum_vectors(v_next, scalar(wall_perimeter[-1], -1))
 
                     # Avoid to go back
                     if sum_vectors(old_versor, versor_next) == (0.0, 0.0):
                         continue
 
-                    if v_next not in tracked:
+                    if v_next not in tracked_vertices:
                         wall_perimeter.append(v_next)
                         break
                     else:
@@ -236,15 +236,14 @@ class BlocksMap(dict):
                             # could close the polygon
                             closable = True
 
-                if v_next in tracked:
+                if v_next in tracked_vertices:
                     if closable:
                         wall_perimeter.append(first_vertex)
                     break
 
-                versor = sum_vectors(v_next, scalar(tracked[-1], -1))
-                tracked.append(v_next)
+                versor = sum_vectors(v_next, scalar(wall_perimeter[-1], -1))
 
-                vertex = v_next
+                wall_vertex = v_next
                 old_versor = versor
 
             wall_perimeter = remove_internal_edge_points(wall_perimeter)
