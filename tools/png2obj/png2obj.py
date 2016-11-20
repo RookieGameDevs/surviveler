@@ -206,11 +206,6 @@ class BlocksMap(dict):
             # start new wall perimeter from this disjointed block
             wall_perimeter = []
 
-            # is this vertex already tracked?
-            near_blocks = self.vertex2blocks(vertex)
-            if len(near_blocks) == 4:
-                continue
-
             first_vertex = vertex
             old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
             wall_perimeter.append(vertex)
