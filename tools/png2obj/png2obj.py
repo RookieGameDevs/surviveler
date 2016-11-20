@@ -123,9 +123,11 @@ def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     """
     ret = [vertices[0]]
     for i in range(1, len(vertices) - 1):
-        triple = vertices[i - 1: i + 2]
-        diff = np.diff(triple, axis=0)
-        if tuple(diff[0]) != tuple(diff[1]):
+        dx1 = vertices[i][0] - vertices[i - 1][0]
+        dy1 = vertices[i][1] - vertices[i - 1][1]
+        dx2 = vertices[i + 1][0] - vertices[i][0]
+        dy2 = vertices[i + 1][1] - vertices[i][1]
+        if (dx1 != dx2) or (dy1 != dy2):
             # the 3 vertices don't form a line, so get the median one
             ret.append(vertices[i])
 
