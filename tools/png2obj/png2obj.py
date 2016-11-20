@@ -13,6 +13,7 @@ import logging
 import numpy as np
 import os
 import sys
+import time
 
 Pos = Tuple[int, int]
 Vertex2D = Tuple[float, float]
@@ -338,11 +339,18 @@ def load_png(filepath: str) -> WalkableMatrix:
 def png2obj(filepath: str, height: float=3) -> int:
     matrix = load_png(filepath)
     blocks_map = mat2map(matrix)
+    print('Detecting edges...')
+    t0 = time.time()
     wall_perimeters = sorted(blocks_map.build())
+    print('{:.2f} s'.format(time.time() - t0))
     mesh = extrude_wall_perimeters(wall_perimeters, height)
     dst = filepath[:-4] + '.obj'
+    print('Exporting Wavefront...')
+    t0 = time.time()
     with open(dst, 'w') as fp:
         fp.write(export_mesh(mesh))
+    print('{:.2f} s'.format(time.time() - t0))
+    print('Done.')
     return os.path.getsize(dst)
 
 
