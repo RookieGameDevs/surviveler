@@ -104,9 +104,3 @@ def export_mesh(mesh: List[Face]) -> str:
         ret.append(export_face_indices(face_indices))
 
     return '\n'.join(ret)
-
-
-# NB: Commented out since doctests are executed by pytest (--doctest-modules)
-# if __name__ == '__main__':
-#     import doctest
-#     doctest.testmod()

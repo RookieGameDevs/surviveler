@@ -1,16 +1,13 @@
-from extruder import extrude_path
-from extruder import extrude_wall_perimeters
 from png2obj import load_png
 from png2obj import mat2map
 from png2obj import png2obj
-from wavefront import export_mesh
 import os
 import pytest
 
 
 TEST_DIRPATH = os.path.dirname(__file__)
 SAMPLES_DIRPATH = os.path.join(TEST_DIRPATH, 'samples')
-PNG_SAMPLES = [os.path.join(SAMPLES_DIRPATH, filename) for filename in os.listdir(SAMPLES_DIRPATH) if filename.endswith('.png')]  
+PNG_SAMPLES = [os.path.join(SAMPLES_DIRPATH, filename) for filename in os.listdir(SAMPLES_DIRPATH) if filename.endswith('.png')]
 
 EXAMPLES = [
     # Single paths
@@ -253,4 +250,4 @@ def test_png2obj(filepath: str):
         * save the mesh as obj
     """
     # The amount of extrusion (3) is arbitrary
-    size = png2obj(filepath, 3)
+    png2obj(filepath, 3)

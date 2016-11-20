@@ -4,15 +4,13 @@ from PIL import Image
 from collections import OrderedDict
 from collections import deque
 from collections import namedtuple
-from typing import Dict
+from typing import Dict  # noqa
 from typing import Iterable
 from typing import List
 from typing import Mapping
 from typing import NamedTuple
-from typing import Set
+from typing import Set  # noqa
 from typing import Tuple
-import logging
-import numpy as np
 import os
 import sys
 import time
@@ -31,26 +29,9 @@ VertexBoxes = NamedTuple('NearBoxes',
     ]
 )
 
-EXAMPLE = np.array(
-    [
-        [0, 0, 0, 0],
-        [0, 1, 1, 0],
-        [0, 1, 1, 0],
-        [0, 0, 0, 0],
-    ],
-    np.uint8
-)
-
 
 Box = namedtuple('Box', ['x', 'y'])
 NearVertices = namedtuple('NearVertices', ['left', 'up', 'right', 'down'])
-
-
-ROW = np.array(
-    [
-        [255, 0, 0, 0, 255],
-        [255, 255, 255, 255],
-    ])
 
 
 LEFT = (-1, 0)
@@ -188,7 +169,6 @@ class BlocksMap(dict):
 
     def boxes2block_matrix(self, boxes: VertexBoxes) -> Tuple[Pos, Pos]:
         return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
-        #return tuple([self.map.get(box, 0) for box in boxes])
 
     def get_next_block_vertices(self, vertex: Vertex2D) -> List[Vertex2D]:
         """Returns neighbour vertices which are actually block edges or vertices
@@ -197,9 +177,7 @@ class BlocksMap(dict):
         ret = []  # type: List[Vertex2D]
         v_boxes = self.vertex2boxes(vertex)
         versors = POSSIBLE_DIRECTIONS[self.boxes2block_matrix(v_boxes)]
-        #ret = [tuple(vertex + np.array(v)) for v in versors]
         ret = [sum_vectors(vertex, v) for v in versors]
-        #ret = [v for v in versors]
         return ret
 
     def vertex2blocks(self, xy: Vertex2D) -> List[Pos]:
@@ -233,61 +211,42 @@ class BlocksMap(dict):
             if len(near_blocks) == 4:
                 continue
 
-            #print('Tracking perimeter #{}...'.format(len(ret)))
             first_vertex = vertex
             tracked = [vertex]
             old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
             wall_perimeter.append(vertex)
             closable = False
             while True:
-                #logging.debug('Vertex: {}'.format(vertex))
-
-                # mark near clocks as "done"
                 tracked_vertices.add(vertex)
 
                 vertices = self.get_next_block_vertices(vertex)
                 # Cycle through new possible vertices to explore
                 for v_next in vertices:
                     versor_next = sum_vectors(v_next, scalar(tracked[-1], -1))
-                    #logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
 
                     # Avoid to go back
                     if sum_vectors(old_versor, versor_next) == (0.0, 0.0):
-                        #logging.debug('Do not go just back to {}'.format(v_next))
                         continue
 
                     if v_next not in tracked:
-                        #logging.debug('Found new vertex to go: {}'.format(v_next))
                         wall_perimeter.append(v_next)
                         break
                     else:
                         if v_next == wall_perimeter[0]:
                             # could close the polygon
                             closable = True
-                        #logging.debug('{} in tracked {}'.format(v_next, tracked))
 
                 if v_next in tracked:
                     if closable:
-                        #logging.debug('Closing the polygon')
                         wall_perimeter.append(first_vertex)
                     break
 
                 versor = sum_vectors(v_next, scalar(tracked[-1], -1))
-                versor_name = VERSOR_NAME[versor]
                 tracked.append(v_next)
-
-                # if versor != old_versor:
-                #     #logging.debug('changed versor')
-                # else:
-                #     #logging.debug('same versor')
-                #logging.debug('going {}'.format(versor_name))
 
                 vertex = v_next
                 old_versor = versor
 
-                #logging.debug(str(wall_perimeter))
-            # find new contiguous free position to move vertex to
-            #logging.debug(str(tracked))
             wall_perimeter = remove_internal_edge_points(wall_perimeter)
             wall_perimeter = normalized_perimeter(wall_perimeter)
             ret.append(wall_perimeter)

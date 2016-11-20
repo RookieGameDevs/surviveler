@@ -1,7 +1,6 @@
 from typing import List
 from typing import Tuple
 from typing import Union
-import doctest
 
 Vertex2 = Tuple[float, float]
 Vertex3 = Tuple[float, float, float]
@@ -76,8 +75,3 @@ def extrude_wall_perimeters(wall_perimeters: List[WallPerimeter], amount: float)
     for wall in wall_perimeters:
         mesh.extend(extrude_path(wall, amount))
     return mesh
-
-
-# NB: Commented out since doctests are executed by pytest (--doctest-modules)
-# if __name__ == '__main__':
-#     doctest.testmod()
