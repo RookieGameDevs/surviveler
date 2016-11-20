@@ -20,6 +20,7 @@ Vertex2D = Tuple[float, float]
 Vector2D = Vertex2D
 WallPerimeter = List[Vertex2D]
 WalkableMatrix = List[List[int]]
+VertexBoxes = Tuple[Pos, Pos, Pos, Pos]
 
 
 EXAMPLE = np.array(
@@ -105,30 +106,6 @@ def scalar(vector: Vector2D, amount: float) -> Vector2D:
     return vector[0] * amount, vector[1] * amount
 
 
-class VertexBoxes:
-    """Eases the manipulation of a vertex and near squared 2x2 boxes group.
-    """
-    def __init__(self, map_: 'BlocksMap', xy: Vertex2D) -> None:
-        self.map = map_
-        self.x, self.y = xy
-        bx, by = self.map.map_vertex(xy)
-
-        self.boxes = NearBoxes(
-            upleft=(bx - 1, by - 1), upright=(bx, by - 1),  # the 2 upper boxes
-            downleft=(bx - 1, by), downright=(bx, by),  # the 2 lower boxes
-        )
-        self.upper_boxes = self.boxes.upleft, self.boxes.upright
-        self.right_boxes = self.boxes.upright, self.boxes.downright
-        self.lower_boxes = self.boxes.downright, self.boxes.downleft
-        self.left_boxes = self.boxes.upleft, self.boxes.downleft
-
-        # 2 x 2 matrix cotaining box values relative to the vertex (usable for __repr__)
-        self.block_matrix = (
-            (self.map.get(self.boxes.upleft, 0), self.map.get(self.boxes.upright, 0)),
-            (self.map.get(self.boxes.downleft, 0), self.map.get(self.boxes.downright, 0)),
-        )
-
-
 def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     """
     Leave only the points that are in the corners.
@@ -197,8 +174,12 @@ class BlocksMap(dict):
         """Returns the 4 neighbour map boxes (white or not)
         which share the same given vertex.
         """
-        # get the box whose the vertex is the top-left
-        return VertexBoxes(self, xy)
+        bx, by = self.map_vertex(xy)
+        return NearBoxes(upleft=(bx - 1, by - 1), upright=(bx, by - 1), downleft=(bx - 1, by), downright=(bx, by))
+
+    def boxes2block_matrix(self, boxes: Tuple[Pos, Pos, Pos, Pos]) -> Tuple:
+        return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
+        #return tuple([self.map.get(box, 0) for box in boxes])
 
     def get_next_block_vertices(self, vertex: Vertex2D) -> List[Vertex2D]:
         """Returns neighbour vertices which are actually block edges or vertices
@@ -206,14 +187,14 @@ class BlocksMap(dict):
         """
         ret = []  # type: List[Vertex2D]
         v_boxes = self.vertex2boxes(vertex)
-        versors = POSSIBLE_DIRECTIONS[v_boxes.block_matrix]
+        versors = POSSIBLE_DIRECTIONS[self.boxes2block_matrix(v_boxes)]
         #ret = [tuple(vertex + np.array(v)) for v in versors]
         ret = [sum_vectors(vertex, v) for v in versors]
         #ret = [v for v in versors]
         return ret
 
     def vertex2blocks(self, xy: Vertex2D) -> List[VertexBoxes]:
-        return [box for box in self.vertex2boxes(xy).boxes if box in self.map]
+        return [box for box in self.vertex2boxes(xy) if box in self.map]
 
     def is_border_vertex(self, vertex: Vertex2D) -> bool:
         """Returns True if the vertex is part of an edge or is a corner.
@@ -228,7 +209,7 @@ class BlocksMap(dict):
         if not self.map:
             return []
 
-        for vertex in self.get_grid_vertices():  # FIXME: not block but box
+        for iv, vertex in enumerate(self.get_grid_vertices()):
             if not self.is_border_vertex(vertex):
                 continue
 
@@ -243,13 +224,14 @@ class BlocksMap(dict):
             if len(near_blocks) == 4:
                 continue
 
+            #print('Tracking perimeter #{}...'.format(len(ret)))
             first_vertex = vertex
             tracked = [vertex]
             old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
             wall_perimeter.append(vertex)
             closable = False
             while True:
-                logging.debug('Vertex: {}'.format(vertex))
+                #logging.debug('Vertex: {}'.format(vertex))
 
                 # mark near clocks as "done"
                 tracked_vertices.append(vertex)
@@ -258,26 +240,26 @@ class BlocksMap(dict):
                 # Cycle through new possible vertices to explore
                 for v_next in vertices:
                     versor_next = sum_vectors(v_next, scalar(tracked[-1], -1))
-                    logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
+                    #logging.debug('Exploring {} -> {}'.format(VERSOR_NAME[versor_next], v_next))
 
                     # Avoid to go back
                     if not(np.array(old_versor) + np.array(versor_next)).any():
-                        logging.debug('Do not go just back to {}'.format(v_next))
+                        #logging.debug('Do not go just back to {}'.format(v_next))
                         continue
 
                     if v_next not in tracked:
-                        logging.debug('Found new vertex to go: {}'.format(v_next))
+                        #logging.debug('Found new vertex to go: {}'.format(v_next))
                         wall_perimeter.append(v_next)
                         break
                     else:
                         if v_next == wall_perimeter[0]:
                             # could close the polygon
                             closable = True
-                        logging.debug('{} in tracked {}'.format(v_next, tracked))
+                        #logging.debug('{} in tracked {}'.format(v_next, tracked))
 
                 if v_next in tracked:
                     if closable:
-                        logging.debug('Closing the polygon')
+                        #logging.debug('Closing the polygon')
                         wall_perimeter.append(first_vertex)
                     break
 
@@ -285,18 +267,18 @@ class BlocksMap(dict):
                 versor_name = VERSOR_NAME[versor]
                 tracked.append(v_next)
 
-                if versor != old_versor:
-                    logging.debug('changed versor')
-                else:
-                    logging.debug('same versor')
-                logging.debug('going {}'.format(versor_name))
+                # if versor != old_versor:
+                #     #logging.debug('changed versor')
+                # else:
+                #     #logging.debug('same versor')
+                #logging.debug('going {}'.format(versor_name))
 
                 vertex = v_next
                 old_versor = versor
 
-                logging.debug(str(wall_perimeter))
+                #logging.debug(str(wall_perimeter))
             # find new contiguous free position to move vertex to
-            logging.debug(str(tracked))
+            #logging.debug(str(tracked))
             wall_perimeter = remove_internal_edge_points(wall_perimeter)
             wall_perimeter = normalized_perimeter(wall_perimeter)
             ret.append(wall_perimeter)
@@ -345,7 +327,7 @@ def png2obj(filepath: str, height: float=3) -> int:
     print('{:.2f} s'.format(time.time() - t0))
     mesh = extrude_wall_perimeters(wall_perimeters, height)
     dst = filepath[:-4] + '.obj'
-    print('Exporting Wavefront...')
+    print('Exporting mesh to Wavefront...')
     t0 = time.time()
     with open(dst, 'w') as fp:
         fp.write(export_mesh(mesh))
@@ -354,8 +336,12 @@ def png2obj(filepath: str, height: float=3) -> int:
     return os.path.getsize(dst)
 
 
-def main(*args):
-    print(png2obj(*args))
+def main(*args: str) -> None:
+    src = args[0]
+    height = 3.0
+    if len(args) == 2:
+        height = float(args[1])
+    print(png2obj(src, height))
 
 
 if __name__ == '__main__':
