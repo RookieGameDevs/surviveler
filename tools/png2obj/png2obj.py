@@ -282,7 +282,7 @@ class BlocksMap(dict):
         return ret
 
 
-def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
+def mat2map(matrix: WalkableMatrix) -> BlocksMap:
     """Creates a blocks map from a walkable matrix.
     """
     ret = {}
