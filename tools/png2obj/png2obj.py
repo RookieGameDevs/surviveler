@@ -2,15 +2,23 @@
 """
 Main module to create a Wavefront obj file from a png one.
 
+Involved steps:
+    1 - convert a png to a walkable matrix;
+    2 - find wall perimeters -> list of 2D edges;
+    3 - extrude vertically the wall perimeters -> list of 3D faces;
+    4 - export faces to obj.
+
 Python-3 only due to the type hinting (and 'super') syntax.
 
-Glossary:
+Glossary (to try to make some clearness):
     * box - an element in the walkable matrix, with coordinates (x, y)
     * block - a non-walkable box
-    * vertex - a 2/3D point in a 2/3D space
-    * wall perimeter - a closed polygon which corresponds to a wall border.
+    * vertex - a 2/3D point in a 2/3D space (used to describe wall perimeters and meshes)
+    * wall perimeter - a 2D closed planar (z=0) polygon which corresponds to the wall borders
+        (from a "top" view perspective).
         If the wall is open, you have 1 perimeter for 1 wall.
         If the wall is closed, you have an internal wall perimeter and an external one.
+        Each png or level may consists of several separated walls.
 """
 from extruder import extrude_wall_perimeters
 from wavefront import export_mesh

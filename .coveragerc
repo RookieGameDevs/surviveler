@@ -1,8 +1,6 @@
 [run]
 parallel = true
 branch = true
-source =
-    png2obj
 omit =
 
 [report]
