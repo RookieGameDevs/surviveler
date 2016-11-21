@@ -21,6 +21,8 @@ DEFAULT_EXPORT_SETTINGS = ('+x', '-z', '+y')
 def parse_readable_export_settings(
         export_settings: Tuple[str, str, str]) -> ExportSettings:
     """
+    See the doctest below:
+
     >>> parse_readable_export_settings(('+x', '-z', '+y'))
     ((0, 1), (2, -1), (1, 1))
     """
@@ -35,6 +37,8 @@ def parse_readable_export_settings(
 def export_vertex(
         vertex: Vertex, export_settings: ExportSettings) -> str:
     """
+    Builds the Wavefront row of a vertex.
+
     >>> export_vertex((-7, 3, 5), export_settings=((0, 1), (1, 1), (2, 1)))
     'v -7.000000 3.000000 5.000000'
     >>> export_vertex((2, -1, 3), export_settings=((0, 1), (2, -1), (1, 1)))  # +x, -z, +y
@@ -48,8 +52,9 @@ def export_vertex(
 
 
 def export_face_indices(face_indices: Iterable[int]) -> str:
-    """
-    Note: accepts indices and not vertices.
+    """Returns the Wavefront row representation of a face.
+
+    NB: accepts indices and NOT vertices coordinates.
 
     >>> export_face_indices((1, 5, 6, 2))
     'f 1 5 6 2'
@@ -104,6 +109,8 @@ def export_mesh(
         mesh: List[Face],
         readable_export_settings: Tuple[str, str, str]=DEFAULT_EXPORT_SETTINGS) -> str:
     """
+    Returns a Wavefront representation of a mesh (list of faces).
+
     >>> v1 = (0.0, 0.0, 0.0)
     >>> v2 = (0.0, 0.0, 5.0)
     >>> v3 = (3.0, 0.0, 5.0)

@@ -1,3 +1,6 @@
+"""
+Utility funcion for extrusion.
+"""
 from typing import List
 from typing import Tuple
 from typing import Union
@@ -13,6 +16,8 @@ WallPerimeter = List[Vertex]
 
 def path2edges(path: List[Vertex]) -> List[Edge]:
     """
+    Converts a list of vertices in a list of edges. (trivial)
+
     >>> vertices = [(0.0, 1.0), (1.0, 1.0), (1.0, -1.0)]
     >>> len(vertices)
     3
@@ -35,11 +40,12 @@ def path2edges(path: List[Vertex]) -> List[Edge]:
 
 def extrude_edge(edge: Edge, amount: float) -> Face:
     """
-    Return the 4 vertices of the face which results from
+    Returns the 4 vertices of the face which results from
     vertical extrusion of an edge.
+    The face triangulation is delegated to Blender.
 
     :param edge: the edge to extrude.
-    :param amount: how much to extrude along Z-axis.
+    :param amount: how much to extrude along the Z-axis.
 
     >>> p1 = 1.0, 2.0, 0.0
     >>> p2 = 3.0, 2.0, 0.0
@@ -65,11 +71,14 @@ def extrude_edge(edge: Edge, amount: float) -> Face:
 
 
 def extrude_path(path: List[Vertex], amount: float) -> Mesh:
+    """Returns a mesh by extruding vertically the given list of points.
+    """
     return [extrude_edge(edge, amount) for edge in path2edges(path)]
 
 
 def extrude_wall_perimeters(wall_perimeters: List[WallPerimeter], amount: float) -> Mesh:
-    """Utility which gets the output of the edge detector and returns the resulting mesh.
+    """Utility which gets the output of the edge detector (the list of wall perimeters)
+    and returns the resulting mesh, obtained by extrusion.
     """
     mesh = []
     for wall in wall_perimeters:

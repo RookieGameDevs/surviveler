@@ -1,3 +1,7 @@
+"""
+Tests for the edge detection.
+(But not only - TODO: fix filename or move tests)
+"""
 from png2obj import load_png
 from png2obj import mat2map
 from png2obj import png2obj
@@ -219,6 +223,10 @@ EXAMPLES = [
 
 @pytest.mark.parametrize('case', EXAMPLES, ids=lambda s: s['name'])
 def test_detect_edges(case: dict) -> None:
+    """
+    Test the correct "edge detection" of a walkable matrix.
+    These are the main test cases of the module.
+    """
     matrix = case['matrix']
     blocks_map = mat2map(matrix)
     expected = sorted(case['vertices'])
@@ -228,6 +236,12 @@ def test_detect_edges(case: dict) -> None:
 
 @pytest.mark.parametrize('case', EXAMPLES, ids=lambda s: s['name'])
 def test_png2matrix(case: dict) -> None:
+    """
+    Test that a png gives a correct walkable matrix.
+
+    NB: make sure that the case 'name' value mathes the relative filename.
+    If the relative png is not found, the test case is skipped
+    """
     filename = case['name'] + '.png'
     filepath = os.path.join(SAMPLES_DIRPATH, filename)
     if not os.path.exists(filepath):
@@ -238,9 +252,10 @@ def test_png2matrix(case: dict) -> None:
 
 @pytest.mark.parametrize('filepath', PNG_SAMPLES)
 def test_png2obj(filepath: str):
-    """Purpose: check that the tool does not crash for each png file in the directory,
+    """
+    Purpose: check that the tool does not crash for each png file in the directory,
     and have a quick way to build new and multiple objs per time.
-    The exact obj result is not checked.
+    NB: The exact obj result is not checked!
 
     All passes are performed for each `filepath`:
 

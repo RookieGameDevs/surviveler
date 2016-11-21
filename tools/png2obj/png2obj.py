@@ -1,3 +1,16 @@
+"""
+Main module to create a Wavefront obj file from a png one.
+
+Python-3 only due to the type hinting (and 'super') syntax.
+
+Glossary:
+    * box - an element in the walkable matrix, with coordinates (x, y)
+    * block - a non-walkable box
+    * vertex - a 2/3D point in a 2/3D space
+    * wall perimeter - a closed polygon which corresponds to a wall border.
+        If the wall is open, you have 1 perimeter for 1 wall.
+        If the wall is closed, you have an internal wall perimeter and an external one.
+"""
 from extruder import extrude_wall_perimeters
 from wavefront import export_mesh
 from PIL import Image
@@ -44,6 +57,9 @@ VERSOR_NAME = {
 }  # type: Dict[Vector2D, str]
 
 
+# A vertex ha 4 neighbour boxes, and each box can be walkable or not (block).
+# This map represents every case with relative "mouvement" possibility
+# of a vertex to track the wall perimeter.
 POSSIBLE_DIRECTIONS = {
     ((0, 0),
      (0, 0)): (HERE, HERE),
@@ -81,7 +97,8 @@ POSSIBLE_DIRECTIONS = {
 
 
 def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
-    """
+    """Sums 2 bi-dimensional vectors.
+
     >>> v1 = (-1, 2)
     >>> v2 = (3.0, -10)
     >>> sum_vectors(v1, v2)
@@ -91,12 +108,14 @@ def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
 
 
 def scalar(vector: Vector2D, amount: float) -> Vector2D:
+    """Multiplies a vector by a scalar.
+    """
     return vector[0] * amount, vector[1] * amount
 
 
 def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     """
-    Leave only the points that are in the corners.
+    Leaves only the points that are in the corners.
 
     >>> points = [(0, 0), (0, 1), (0, 2), (0, 3), (-1, 3), (-2, 3), (-3, 3)]
     >>> remove_internal_edge_points(points)
@@ -104,10 +123,12 @@ def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     """
     ret = [vertices[0]]
     for i in range(1, len(vertices) - 1):
+        # Make the diff of 3 current contiguous vertices
         dx1 = vertices[i][0] - vertices[i - 1][0]
         dy1 = vertices[i][1] - vertices[i - 1][1]
         dx2 = vertices[i + 1][0] - vertices[i][0]
         dy2 = vertices[i + 1][1] - vertices[i][1]
+        # If the 2 diffs are not equal:
         if (dx1 != dx2) or (dy1 != dy2):
             # the 3 vertices don't form a line, so get the median one
             ret.append(vertices[i])
@@ -118,7 +139,7 @@ def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
 
 def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
     """
-    Normalize wall perimeter to make it start from topleft.
+    Normalizes the wall perimeter to make it start from its topleft.
 
     >>> normalized_perimeter([(1, 0), (1, 1), (0, 1), (0, 0), (1, 0)])
     [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
@@ -135,7 +156,12 @@ def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
 
 
 class BlocksMap(dict):
+    """
+    Class to perform operation on a blocks map, a dict of non-walkable boxes
+    (not exactly a walkable matrix).
 
+    TODO: Use a walkable matrix instead, eventually.
+    """
     def __init__(self, data: Mapping, map_size: Tuple[int, int], box_size: int=1) -> None:
         super().__init__(data)
         self.map = data
@@ -144,7 +170,7 @@ class BlocksMap(dict):
 
     def get_grid_vertices(self) -> Iterable[Vertex2D]:
         """Returns an iterator for all map virtual "grid" vertices,
-        so regardless they are part of wall or not.
+        so regardless they are part of a wall or not.
         """
         width, height = self.map_size
         for by in range(height):
@@ -168,6 +194,8 @@ class BlocksMap(dict):
         return VertexBoxes(upleft=(bx - 1, by - 1), upright=(bx, by - 1), downleft=(bx - 1, by), downright=(bx, by))
 
     def boxes2block_matrix(self, boxes: VertexBoxes) -> Tuple[Pos, Pos]:
+        """Given 4 vertex boxes, returns a 2x2 tuple with walkable/non-walkable info.
+        """
         return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
 
     def get_next_block_vertices(self, vertex: Vertex2D) -> List[Vertex2D]:
@@ -181,6 +209,8 @@ class BlocksMap(dict):
         return ret
 
     def vertex2blocks(self, xy: Vertex2D) -> List[Pos]:
+        """Given a vertex, returns the non-walkable neighbour boxes.
+        """
         return [box for box in self.vertex2boxes(xy) if box in self.map]
 
     def is_border_vertex(self, vertex: Vertex2D) -> bool:
@@ -191,6 +221,8 @@ class BlocksMap(dict):
         return 0 < len(v_blocks) < 4
 
     def build(self) -> List[List[Vertex2D]]:
+        """Main method (edge detection): builds the list of wall perimeters.
+        """
         ret = []  # type: List[WallPerimeter]
         tracked_vertices = set()  # type: Set[Vertex2D]
         if not self.map:
@@ -250,7 +282,7 @@ class BlocksMap(dict):
 
 
 def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
-    """Create a block map.
+    """Creates a blocks map from a walkable matrix.
     """
     ret = {}
     for y, row in enumerate(matrix):
@@ -261,6 +293,8 @@ def mat2map(matrix: Iterable[Iterable[int]]) -> BlocksMap:
 
 
 def load_png(filepath: str) -> WalkableMatrix:
+    """Builds a walkable matrix from an image.
+    """
     ret = []
     img = Image.open(filepath)
     for y in range(img.height):
@@ -281,6 +315,12 @@ def load_png(filepath: str) -> WalkableMatrix:
 
 
 def png2obj(filepath: str, height: float=3) -> int:
+    """Main function which takes an image filepath and creates
+    a mesh (detecting edges an extruding them vertically)
+    exporting it in a wavefront obj format.
+
+    Returns the size, in byte, of the obj created.
+    """
     matrix = load_png(filepath)
     blocks_map = mat2map(matrix)
     print('Detecting edges...')
