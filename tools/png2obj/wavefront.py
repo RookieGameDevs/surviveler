@@ -11,14 +11,40 @@ Vertex = Tuple[float, float, float]
 Edge = Tuple[Vertex, Vertex]
 Face = Tuple[Vertex, Vertex, Vertex, Vertex]
 Mesh = List[Face]
+ExportSettings = Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]
+
+AXES = 'xyz'  # http://forum.wordreference.com/threads/axis-vs-axes.82527/
+RIGHT, FORWARD, UP = 0, 1, 2
+DEFAULT_EXPORT_SETTINGS = ('+x', '-z', '+y')
 
 
-def export_vertex(vertex: Vertex) -> str:
+def parse_readable_export_settings(
+        export_settings: Tuple[str, str, str]) -> ExportSettings:
     """
-    >>> export_vertex((2, -1, 3))
-    'v 2.000000 -1.000000 3.000000'
+    >>> parse_readable_export_settings(('+x', '-z', '+y'))
+    ((0, 1), (2, -1), (1, 1))
     """
-    return 'v ' + ' '.join(['{:.6f}'.format(p) for p in vertex])
+    ret = []  # type: List[Tuple[int, int]]
+    sign_dic = {'-': -1, '+': 1}
+    for s in export_settings:
+        sign, axis = sign_dic[s[0]], AXES.index(s[1])
+        ret.append((axis, sign))
+    return ret[0], ret[1], ret[2]  # just to help mypy with returned tuple length
+
+
+def export_vertex(
+        vertex: Vertex, export_settings: ExportSettings) -> str:
+    """
+    >>> export_vertex((-7, 3, 5), export_settings=((0, 1), (1, 1), (2, 1)))
+    'v -7.000000 3.000000 5.000000'
+    >>> export_vertex((2, -1, 3), export_settings=((0, 1), (2, -1), (1, 1)))  # +x, -z, +y
+    'v 2.000000 -3.000000 -1.000000'
+    """
+    # Tuple index must be an integer literal = mypy seems not support integer variables as indces for tuple
+    right = vertex[export_settings[RIGHT][0]] * export_settings[RIGHT][1]  # type: ignore
+    forward = vertex[export_settings[FORWARD][0]] * export_settings[FORWARD][1]  # type: ignore
+    up = vertex[export_settings[UP][0]] * export_settings[UP][1]  # type: ignore
+    return 'v ' + ' '.join(['{:.6f}'.format(component) for component in (right, forward, up)])
 
 
 def export_face_indices(face_indices: Iterable[int]) -> str:
@@ -74,7 +100,9 @@ def mesh2vertices(mesh: Mesh) -> Dict[Vertex, int]:
     return ret
 
 
-def export_mesh(mesh: List[Face]) -> str:
+def export_mesh(
+        mesh: List[Face],
+        readable_export_settings: Tuple[str, str, str]=DEFAULT_EXPORT_SETTINGS) -> str:
     """
     >>> v1 = (0.0, 0.0, 0.0)
     >>> v2 = (0.0, 0.0, 5.0)
@@ -83,7 +111,7 @@ def export_mesh(mesh: List[Face]) -> str:
     >>> v5 = (1.0, 1.0, 0.0)
     >>> v6 = (1.0, 1.0, 5.0)
     >>> mesh = [(v1, v2, v3, v4), (v3, v4, v5, v6)]
-    >>> print(export_mesh(mesh))
+    >>> print(export_mesh(mesh, readable_export_settings=('+x', '+y', '+z')))
     v 0.000000 0.000000 0.000000
     v 0.000000 0.000000 5.000000
     v 1.000000 1.000000 0.000000
@@ -92,12 +120,23 @@ def export_mesh(mesh: List[Face]) -> str:
     v 3.000000 0.000000 5.000000
     f 1 2 6 5
     f 6 5 3 4
+    >>> print(export_mesh(mesh, readable_export_settings=('+x', '-z', '+y')))
+    v 0.000000 -0.000000 0.000000
+    v 0.000000 -5.000000 0.000000
+    v 1.000000 -0.000000 1.000000
+    v 1.000000 -5.000000 1.000000
+    v 3.000000 -0.000000 0.000000
+    v 3.000000 -5.000000 0.000000
+    f 1 2 6 5
+    f 6 5 3 4
     """
     ret = []
-    vertices_indices = mesh2vertices(mesh)
 
+    export_settings = parse_readable_export_settings(readable_export_settings)
+
+    vertices_indices = mesh2vertices(mesh)
     for vertex in sorted(vertices_indices.keys()):
-        ret.append(export_vertex(vertex))
+        ret.append(export_vertex(vertex, export_settings))
 
     for face in mesh:
         face_indices = tuple([vertices_indices[vertex] for vertex in face])
