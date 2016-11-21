@@ -33,8 +33,8 @@ from typing import Mapping
 from typing import NamedTuple
 from typing import Set  # noqa
 from typing import Tuple
+import argparse
 import os
-import sys
 import time
 
 Pos = Tuple[int, int]
@@ -330,27 +330,33 @@ def png2obj(filepath: str, height: float=3) -> int:
 
     Returns the size, in byte, of the obj created.
     """
+    print('Loading {}...'.format(filepath))
+    t0 = time.time()
     matrix = load_png(filepath)
+    print('{:.2f} s'.format(time.time() - t0))
+
     blocks_map = mat2map(matrix)
     print('Detecting edges...')
     t0 = time.time()
     wall_perimeters = sorted(blocks_map.build())
     print('{:.2f} s'.format(time.time() - t0))
     mesh = extrude_wall_perimeters(wall_perimeters, height)
+
     dst = filepath[:-4] + '.obj'
     print('Exporting mesh to Wavefront...')
     t0 = time.time()
     with open(dst, 'w') as fp:
         fp.write(export_mesh(mesh))
     print('{:.2f} s'.format(time.time() - t0))
-    print('Done.')
-    return os.path.getsize(dst)
-
-
-def main(src: str, height: float=3) -> None:
-    obj_size = png2obj(src, height)
-    print('OBJ created ({:,} byte)'.format(obj_size))
+    obj_size = os.path.getsize(dst)
+    print('{} created ({:,} byte).'.format(dst, obj_size))
+    return obj_size
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:])
+    parser = argparse.ArgumentParser(description='png2obj: creates a 3D-level Wavefront obj from a png')
+    parser.add_argument('src', help='the source png file path')
+    parser.add_argument('--height', default=3.0, type=float,
+                        help='vertical extrusion amount [default=%(default)s]')
+    args = parser.parse_args()
+    png2obj(args.src, args.height)
