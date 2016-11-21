@@ -339,12 +339,9 @@ def png2obj(filepath: str, height: float=3) -> int:
     return os.path.getsize(dst)
 
 
-def main(*args: str) -> None:
-    src = args[0]
-    height = 3.0
-    if len(args) == 2:
-        height = float(args[1])
-    print(png2obj(src, height))
+def main(src: str, height: float=3) -> None:
+    obj_size = png2obj(src, height)
+    print('OBJ created ({:,} byte)'.format(obj_size))
 
 
 if __name__ == '__main__':
