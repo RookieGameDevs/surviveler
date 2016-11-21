@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Main module to create a Wavefront obj file from a png one.
 

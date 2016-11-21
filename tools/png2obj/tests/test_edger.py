@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tests for the edge detection.
 (But not only - TODO: fix filename or move tests)

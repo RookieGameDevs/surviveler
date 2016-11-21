@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Module that handles the actual exporting in Wavefront .obj format.
 """
