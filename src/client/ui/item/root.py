@@ -1,3 +1,5 @@
+"""Root item module"""
+
 from . import Anchor
 from . import Item
 from ..util.point import Point

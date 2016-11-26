@@ -1,4 +1,5 @@
 """The base item module"""
+
 from ..util.point import Point
 from abc import ABCMeta
 from abc import abstractmethod
