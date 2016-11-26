@@ -1,5 +1,5 @@
+from . import Anchor
 from . import Item
-from .. import Anchor
 from ..util.point import Point
 
 

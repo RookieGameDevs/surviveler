@@ -26,8 +26,8 @@ class Button(Item):
                 the parent
             * width (:class:`int`): The item width
             * height (:class:`int`): The item height
-            * anchor (:class:`..Anchor`): The item anchor override
-            * margin (:class:`..Margin`): The item margin override
+            * anchor (:class:`.Anchor`): The item anchor override
+            * margin (:class:`.Margin`): The item margin override
             * background (:class:`tuple`): The background color
             * color (:class:`tuple`): The text color
             * font (:class:`str`): The text font

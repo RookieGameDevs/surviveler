@@ -20,8 +20,8 @@ class Rect(Item):
                 the parent
             * width (:class:`int`): The item width
             * height (:class:`int`): The item height
-            * anchor (:class:`..Anchor`): The item anchor override
-            * margin (:class:`..Margin`): The item margin override
+            * anchor (:class:`.Anchor`): The item anchor override
+            * margin (:class:`.Margin`): The item margin override
             * color (:class:`tuple`): The background color
         """
         color = kwargs.pop('color', None)

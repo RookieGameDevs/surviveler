@@ -22,8 +22,8 @@ class Image(Item):
                 the parent
             * width (:class:`int`): The item width
             * height (:class:`int`): The item height
-            * anchor (:class:`..Anchor`): The item anchor override
-            * margin (:class:`..Margin`): The item margin override
+            * anchor (:class:`.Anchor`): The item anchor override
+            * margin (:class:`.Margin`): The item margin override
             * image (:class:`str`): The image
         """
         image = kwargs.pop('image', None)
