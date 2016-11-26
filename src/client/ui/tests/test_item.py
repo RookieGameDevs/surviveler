@@ -1,5 +1,6 @@
 from ui import Anchor
 from ui import Margin
+from ui.item import CyclicDependencyError
 from ui.item import Item
 from ui.item import ValidationError
 from ui.item.root import RootItem
@@ -254,3 +255,135 @@ def test_item__with_complex_anchor_and_margin(item_cls, parent_item):
 
     assert item.width == 236
     assert item.height == 236
+
+
+def test_item__with_sibling_dependencies(item_cls, parent_item):
+    AT = Anchor.AnchorType
+    MT = Margin.MarginType
+
+    item1 = item_cls(
+        parent_item,
+        anchor=Anchor(
+            left='parent.left',
+            right='parent.right',
+            top='parent.top'),
+        height=100)
+    item2 = item_cls(
+        parent_item,
+        anchor=Anchor(
+            left='parent.left',
+            right='parent.right',
+            top='item1.bottom'),
+        height=100)
+    item3 = item_cls(
+        parent_item,
+        anchor=Anchor(
+            left='parent.left',
+            right='parent.right',
+            top='item2.bottom'),
+        height=100)
+    item4 = item_cls(
+        parent_item,
+        anchor=Anchor(
+            left='parent.left',
+            right='parent.right',
+            top='item3.bottom'),
+        height=100)
+    parent_item.add_child('item3', item3)
+    parent_item.add_child('item2', item2)
+    parent_item.add_child('item1', item1)
+    parent_item.add_child('item4', item4)
+    parent_item.bind_item()
+
+    assert item1.anchor == {
+        AT.left: 0,
+        AT.hcenter: 250,
+        AT.right: 500,
+        AT.top: 0,
+        AT.vcenter: 50,
+        AT.bottom: 100,
+    }
+    assert item1.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
+
+    assert item1.width == 500
+    assert item1.height == 100
+
+    assert item2.anchor == {
+        AT.left: 0,
+        AT.hcenter: 250,
+        AT.right: 500,
+        AT.top: 100,
+        AT.vcenter: 150,
+        AT.bottom: 200,
+    }
+    assert item2.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
+
+    assert item2.width == 500
+    assert item2.height == 100
+
+    assert item3.anchor == {
+        AT.left: 0,
+        AT.hcenter: 250,
+        AT.right: 500,
+        AT.top: 200,
+        AT.vcenter: 250,
+        AT.bottom: 300,
+    }
+    assert item3.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
+
+    assert item3.width == 500
+    assert item3.height == 100
+
+    assert item4.anchor == {
+        AT.left: 0,
+        AT.hcenter: 250,
+        AT.right: 500,
+        AT.top: 300,
+        AT.vcenter: 350,
+        AT.bottom: 400,
+    }
+    assert item4.margin == {
+        MT.left: 0,
+        MT.right: 0,
+        MT.top: 0,
+        MT.bottom: 0,
+    }
+
+    assert item4.width == 500
+    assert item4.height == 100
+
+
+def test_item__with_sibling_dependencies__cyclic(item_cls, parent_item):
+    item1 = item_cls(
+        parent_item,
+        anchor=Anchor(
+            left='parent.left',
+            right='parent.right',
+            bottom='item2.top'),
+        height=100)
+    item2 = item_cls(
+        parent_item,
+        anchor=Anchor(
+            left='parent.left',
+            right='parent.right',
+            top='item1.bottom'),
+        height=100)
+    parent_item.add_child('item1', item1)
+    parent_item.add_child('item2', item2)
+    with pytest.raises(CyclicDependencyError):
+        parent_item.bind_item()

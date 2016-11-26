@@ -5,10 +5,15 @@ from ..point import Point
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import OrderedDict
+from enum import Enum
 
 
 class ValidationError(Exception):
     """Exception class for validation errors"""
+
+
+class CyclicDependencyError(Exception):
+    """Exception class for cyclic dependency errors"""
 
 
 def validate_item(source_data):
@@ -171,6 +176,13 @@ class Item(metaclass=ABCMeta):
     All the user interface items will inherit this abstract item class.
     """
 
+    class BindingState(Enum):
+        """Binding state
+        """
+        unbound = 'unbound'
+        binding = 'binding'
+        bound = 'bound'
+
     def __init__(self, parent, **kwargs):
         """Constructor.
 
@@ -187,6 +199,7 @@ class Item(metaclass=ABCMeta):
         """
         self.parent = parent
         self.children = OrderedDict()
+        self._binding_state = Item.BindingState.unbound
 
         # Cached geometry properties
         self._position = None
@@ -205,6 +218,15 @@ class Item(metaclass=ABCMeta):
             'margin': kwargs.get('margin', Margin.null()),
         })
 
+    def unbind_item(self):
+        """Unbinds the item and all of its children.
+
+        Internally just changes the binding state.
+        """
+        self._binding_state = Item.BindingState.unbound
+        for child in self.children.values():
+            child.unbind_item()
+
     def bind_item(self):
         """Bind the item and trigger the binding of the child items.
 
@@ -214,10 +236,15 @@ class Item(metaclass=ABCMeta):
             3. Calculation the position (if not available).
             4. Cache all the anchor values.
             5. Call the binding on all the children items.
-
-        TODO: add dynamic checks on dependencies.
-        TODO: add checks on anchor consistency.
         """
+        if self._binding_state == Item.BindingState.bound:
+            # The item is already bound: skip the binding process
+            return
+        if self._binding_state == Item.BindingState.binding:
+            # Cyclic dependency found: abort
+            raise CyclicDependencyError
+
+        self._binding_state = Item.BindingState.binding
         sd = self._source_data
 
         # Calculate the values of the configured margins
@@ -247,6 +274,8 @@ class Item(metaclass=ABCMeta):
 
         # Recalculate all the anchors with the internal data for caching purpose
         self._anchor = self.cache_anchor()
+
+        self._binding_state = Item.BindingState.bound
 
         # Call the bind method on each children item
         for ref, item in self.children.items():
@@ -388,6 +417,30 @@ class Item(metaclass=ABCMeta):
         """
         return self._margin
 
+    @property
+    def binding_state(self):
+        """Readonly binding state of the item
+
+        :returns: The binding state
+        :rtype: :enum:`Item.BindingState`
+        """
+        return self._margin
+
+    @property
+    def dependencies(self):
+        """The set of sibling items that this item depends on.ABCMeta
+
+        These dependencies are going to be used for anchor values.ABCMeta
+
+        :returns: The set of dependency names
+        :rtype: :class:`list`
+        """
+        return {
+            target
+            for (target, _) in self._source_data['anchor'].values()
+            if target != 'parent'
+        }
+
     def add_child(self, ref, item):
         """Attaches a child to the item, and binds the properties.
 
@@ -398,6 +451,22 @@ class Item(metaclass=ABCMeta):
         :type item: :class:`ui.item.Item`
         """
         self.children[ref] = item
+
+    def get_child(self, name):
+        """Returns the child of the appropriate name.ABCMeta
+
+        Internally cause the binding of the child.
+
+        :param name: The name of the child
+        :type name: :class:`str`
+
+        :returns: The bound child item
+        :rtype: :class:`Item`
+        """
+        child = self.children[name]
+        if child.binding_state != Item.BindingState.bound:
+            child.bind_item()
+        return child
 
     @abstractmethod
     def update(self, dt):
