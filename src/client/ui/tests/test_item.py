@@ -9,6 +9,11 @@ import pytest
 
 
 class Dummy(Item):
+    def __init__(self, *args, **kwargs):
+        test_id = kwargs.pop('test_id', None)
+        super().__init__(*args, **kwargs)
+        if test_id:
+            self.test_id = test_id
 
     def update(self, dt):
         pass
@@ -21,7 +26,9 @@ def item_cls():
 
 @pytest.fixture
 def parent_item():
-    return RootItem(500, 500)
+    item = RootItem(500, 500)
+    item.test_id = 'parent'
+    return item
 
 
 def test_item_is_abtract():
@@ -387,3 +394,64 @@ def test_item__with_sibling_dependencies__cyclic(item_cls, parent_item):
     parent_item.add_child('item2', item2)
     with pytest.raises(CyclicDependencyError):
         parent_item.bind_item()
+
+
+def test_item__traverse__no_filters(item_cls, parent_item):
+    for i in range(10):
+        tid = '{}'.format(i)
+        item = item_cls(
+            parent_item,
+            test_id=tid,
+            anchor=Anchor.fill())
+        parent_item.add_child('{}'.format(i), item)
+        for j in range(10):
+            tid = '{}-{}'.format(i, j)
+            sub_item = item_cls(
+                item,
+                test_id=tid,
+                anchor=Anchor.fill())
+            item.add_child('{}-{}'.format(i, j), sub_item)
+    parent_item.bind_item()
+
+    i = 10
+    j = 10
+    for item in parent_item.traverse():
+        if i and j:
+            assert getattr(item, 'test_id') == '{}-{}'.format(i - 1, j - 1)
+            j -= 1
+        elif i and not j:
+            assert getattr(item, 'test_id') == '{}'.format(i - 1)
+            j = 10
+            i -= 1
+        elif not i and not j:
+            assert getattr(item, 'test_id') == 'parent'
+
+
+def test_item__traverse__pos_filter(item_cls, parent_item):
+    item1 = item_cls(
+        parent_item,
+        test_id='item1',
+        anchor=Anchor(
+            top='parent.top',
+            bottom='parent.vcenter',
+            left='parent.left',
+            right='parent.hcenter'
+        ))
+    parent_item.add_child('item1', item1)
+    item2 = item_cls(
+        parent_item,
+        test_id='item2',
+        anchor=Anchor(
+            top='parent.vcenter',
+            bottom='parent.bottom',
+            left='parent.hcenter',
+            right='parent.right'
+        ))
+    parent_item.add_child('item2', item2)
+    parent_item.bind_item()
+
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(250, 250))] == ['item2', 'item1', 'parent']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(125, 125))] == ['item1', 'parent']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(375, 375))] == ['item2', 'parent']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(125, 375))] == ['parent']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(375, 125))] == ['parent']
