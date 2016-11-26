@@ -87,39 +87,3 @@ class Margin(dict):
     def symmetric(cls, x_axis, y_axis=None):
         y_axis = y_axis or x_axis
         return cls(left=x_axis, right=x_axis, top=y_axis, bottom=y_axis)
-
-
-class UI:
-    """Container of the whole UI.
-    """
-
-    def __init__(self):
-        """Constructor.
-        """
-        self.ui = {}
-
-    def push_item(self, data, parent, **overrides):
-        """Creates a new item inspecting the resource and push it into the ui.
-
-        :param data: The item data
-        :type data: :class:`dict`
-
-        :param parent: The parent item
-        :type parent: :class:`type`
-
-        :param **overrides: The overrides to apply to the item appearance
-            definition.
-        :type **overrides: :class:`dict`
-
-        :returns: The id of the item
-        :rtype: :class:`str`
-        """
-        # TODO: inspect for the proper type of the item and create it.
-        pass
-
-    def pop_item(self, item_id):
-        """Pops the item identified by the provided id
-        :param item_id: The item id
-        :type item_id: :class:`ui.item.Item`
-        """
-        pass

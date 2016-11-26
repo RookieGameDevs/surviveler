@@ -4,7 +4,7 @@ from ui.item import CyclicDependencyError
 from ui.item import Item
 from ui.item import ValidationError
 from ui.item.root import RootItem
-from ui.point import Point
+from ui.util.point import Point
 import pytest
 
 

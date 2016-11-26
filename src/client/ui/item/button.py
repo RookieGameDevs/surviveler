@@ -22,7 +22,7 @@ class Button(Item):
         :type parent: :class:`ui.item.Item`
 
         Keyword Arguments:
-            * position (:class:`..point.Point`): The item position relative to
+            * position (:class:`..util.point.Point`): The item position relative to
                 the parent
             * width (:class:`int`): The item width
             * height (:class:`int`): The item height

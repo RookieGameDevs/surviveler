@@ -1,6 +1,6 @@
 from . import Item
 from .. import Anchor
-from ..point import Point
+from ..util.point import Point
 
 
 class RootItem(Item):

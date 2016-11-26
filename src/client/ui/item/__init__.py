@@ -1,7 +1,7 @@
 """The base item module"""
 from .. import Anchor
 from .. import Margin
-from ..point import Point
+from ..util.point import Point
 from abc import ABCMeta
 from abc import abstractmethod
 from collections import OrderedDict
@@ -190,7 +190,7 @@ class Item(metaclass=ABCMeta):
         :type parent: :class:`Item`
 
         Keyword Arguments:
-            * position (:class:`..point.Point`): The item position relative to
+            * position (:class:`..util.point.Point`): The item position relative to
                 the parent
             * width (:class:`int`): The item width
             * height (:class:`int`): The item height
@@ -343,7 +343,7 @@ class Item(metaclass=ABCMeta):
         """Calculate the position using the available information.
 
         :returns: The position
-        :rtype: :class:`..Point`
+        :rtype: :class:`..util.point.Point`
         """
         AT = Anchor.AnchorType
 
@@ -377,7 +377,7 @@ class Item(metaclass=ABCMeta):
         """Readonly top-left position of the item.
 
         :returns: The position of the Item
-        :rtype: :class:`..Point`
+        :rtype: :class:`..util.point.Point`
         """
         return self._position
 
@@ -386,7 +386,7 @@ class Item(metaclass=ABCMeta):
         """Readonly width of the item.
 
         :returns: The width of the item
-        :rtype: :class:`..Point`
+        :rtype: :class:`..util.point.Point`
         """
         return self._width
 
@@ -395,7 +395,7 @@ class Item(metaclass=ABCMeta):
         """Readonly height of the item.
 
         :returns: The height of the item
-        :rtype: :class:`..Point`
+        :rtype: :class:`..util.point.Point`
         """
         return self._height
 
