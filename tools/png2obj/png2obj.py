@@ -104,6 +104,10 @@ POSSIBLE_DIRECTIONS = {
      (1, 1)): (HERE, HERE),
 }  # type: Dict[Tuple[Vector2D, Vector2D], Tuple[Vector2D, ...]]
 
+ANGLES = {LEFT: 270, UP: 0, RIGHT: 90, DOWN: 180}
+
+
+
 
 def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
     """Sums 2 bi-dimensional vectors.
@@ -146,6 +150,21 @@ def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     return ret
 
 
+def remove_contiguous_values(lst):
+    """
+    >>> lst = [1, 2, 8, 8, 8, 0, 0, 5]
+    >>> remove_contiguous_values(lst)
+    >>> lst
+    [1, 2, 8, 0, 5]
+    """
+    previous = lst[0]
+    i = 0
+    while i < len(lst) - 1:
+        if lst[i] == lst[i + 1]:
+            del lst[i]
+        else:
+            i += 1
+
 def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
     """
     Normalizes the wall perimeter to make it start from its topleft.
@@ -154,13 +173,13 @@ def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
     [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
     """
     minimum = min(wall_perimeter)
-    # Remove duplicates preserving order:
-    wall_perimeter = list(OrderedDict.fromkeys(wall_perimeter))
     deq = deque(wall_perimeter)  # use deque just to use the rotate (circular shift)
     while deq[0] != minimum:
         deq.rotate(1)
     # The last item must be equal to the first by convention.
     deq.append(deq[0])
+    # Remove contiguous duplicates, preserving order.
+    remove_contiguous_values(deq)
     return list(deq)
 
 
@@ -182,8 +201,8 @@ class BlocksMap(dict):
         so regardless they are part of a wall or not.
         """
         width, height = self.map_size
-        for by in range(height):
-            for bx in range(width):
+        for bx in range(width):
+            for by in range(height):
                 x = bx * self.box_size
                 y = by * self.box_size
                 yield (x, y)
@@ -214,7 +233,10 @@ class BlocksMap(dict):
         ret = []  # type: List[Vertex2D]
         v_boxes = self.vertex2boxes(vertex)
         versors = POSSIBLE_DIRECTIONS[self.boxes2block_matrix(v_boxes)]
+        print('Possibilities from here:')
         ret = [sum_vectors(vertex, v) for v in versors]
+        for v, p in zip(versors, ret):
+            print('{} -> {}'.format(VERSOR_NAME[v], p))
         return ret
 
     def vertex2blocks(self, xy: Vertex2D) -> List[Pos]:
@@ -233,10 +255,17 @@ class BlocksMap(dict):
         """Main method (edge detection): builds the list of wall perimeters.
         """
         ret = []  # type: List[WallPerimeter]
+
+        import turtle
+        turtle.mode('logo')
+        turtle.speed(2)
+        drawsize = int(200 / (1 + max(map(max, self.map)))) if self.map else 0
+
         tracked_vertices = set()  # type: Set[Vertex2D]
         if not self.map:
             return []
 
+        dbg_versor_names = []
         for iv, vertex in enumerate(self.get_grid_vertices()):
             if not self.is_border_vertex(vertex):
                 continue
@@ -246,41 +275,100 @@ class BlocksMap(dict):
 
             # start new wall perimeter from this disjointed block
             wall_perimeter = []
+            chessboard_cases = {}
+            chessboard_vertex = None
 
             first_vertex = vertex
             old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
+            versor = old_versor
             wall_perimeter.append(vertex)
-            closable = False
             wall_vertex = vertex
+
+            turtle.penup()
+            turtle.setpos(wall_vertex[0] * drawsize, -wall_vertex[1] * drawsize)
+            turtle.pendown()
+
             while True:
+                print('all tracked vertices =', tracked_vertices)
+                print('current wall_perimeter =', wall_perimeter)
+                print('went {} (versor = {}) to {}'.format(VERSOR_NAME[versor], versor, wall_vertex))
+                print('=== Current vertex:', wall_vertex, '===')
                 tracked_vertices.add(wall_vertex)
 
-                vertices = self.get_next_block_vertices(wall_vertex)
+                v_boxes = self.vertex2boxes(wall_vertex)
+                blocks_matrix = self.boxes2block_matrix(v_boxes)
+                versors = POSSIBLE_DIRECTIONS[blocks_matrix]
+                vertices = [sum_vectors(wall_vertex, v) for v in versors]
+                print('Possibilities from here:')
+                for v, p in zip(versors, vertices):
+                    print('{} -> {}'.format(VERSOR_NAME[v], p))
+
+                if len(vertices) == 4:
+                    print('Pay attention: I am surrounded by 4 vertices')
+                    # the vertex is the only one in common between 2 blocks
+                    # so avoid to go on in that versus (do not cross over)
+                    ahead_vertex = sum_vectors(wall_vertex, versor)
+                    print('Ahead vertex to remove: ', ahead_vertex)
+                    vertices.remove(ahead_vertex)
+                    print(ahead_vertex, 'removed')
+
+                    if wall_vertex not in chessboard_cases:
+                        chessboard_cases[wall_vertex] = 0
+                        print('updating chessboard_cases: {}'.format(chessboard_cases))
+                    else:
+                        print('revisiting tne cross...')
+                        chessboard_cases[wall_vertex] += 1
+                
+
                 # Cycle through new possible vertices to explore
+                chessboard_vertex = None
+                closable = False
                 for v_next in vertices:
                     versor_next = sum_vectors(v_next, scalar(wall_perimeter[-1], -1))
+                    print('\texploring possibility {} ({})'.format(v_next, VERSOR_NAME[versor_next]))
 
                     # Avoid to go back
-                    if sum_vectors(old_versor, versor_next) == (0.0, 0.0):
+                    if sum_vectors(versor, versor_next) == (0.0, 0.0):
+                        print('\t\tdo not go back...')
                         continue
 
                     if v_next not in tracked_vertices:
-                        wall_perimeter.append(v_next)
+                        print('adding {} to perimeter'.format(v_next))
                         break
                     else:
+                        print('\t\t{} already tracked...'.format(v_next))
+                        # In the corner case we need to re-visit a tracked vertex!
+                        if v_next in chessboard_cases and chessboard_cases[v_next] == 0:
+                            print('but it is a chessboard_vertex!')
+                            chessboard_vertex = v_next
+
                         if v_next == wall_perimeter[0]:
                             # could close the polygon
-                            closable = True
+                            closable = v_next
+                else:
+                    if chessboard_vertex:
+                        print('it is indeed a chessboard case')
+                        v_next = chessboard_vertex
+                    elif closable:
+                        v_next = first_vertex
+                        print('closing!')
+                    else:
+                        print('closed')
+                        break
 
-                if v_next in tracked_vertices:
-                    if closable:
-                        wall_perimeter.append(first_vertex)
-                    break
+                    versor_next = sum_vectors(v_next, scalar(wall_perimeter[-1], -1))
 
-                versor = sum_vectors(v_next, scalar(wall_perimeter[-1], -1))
+                wall_perimeter.append(v_next)
+                print('adding vertex', v_next)
 
-                wall_vertex = v_next
                 old_versor = versor
+                versor = versor_next
+                dbg_versor_names.append(VERSOR_NAME[versor])
+                print('turns =', dbg_versor_names)
+                wall_vertex = wall_perimeter[-1]
+
+                turtle.setheading(ANGLES[versor_next])
+                turtle.fd(drawsize)
 
             wall_perimeter = remove_internal_edge_points(wall_perimeter)
             wall_perimeter = normalized_perimeter(wall_perimeter)
