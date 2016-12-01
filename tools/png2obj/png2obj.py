@@ -23,9 +23,9 @@ Glossary (to try to make some clearness):
 from extruder import extrude_wall_perimeters
 from wavefront import export_mesh
 from PIL import Image
-from collections import OrderedDict
 from collections import deque
 from collections import namedtuple
+from collections import Counter
 from typing import Dict  # noqa
 from typing import Iterable
 from typing import List
@@ -61,17 +61,22 @@ UP = (0, -1)
 RIGHT = (1, 0)
 DOWN = (0, 1)
 HERE = (0, 0)
+STILL = (0, 0)
 VERSOR_NAME = {
     LEFT: 'left', UP: 'up', RIGHT: 'right', DOWN: 'down', HERE: 'here'
 }  # type: Dict[Vector2D, str]
+
+# Angles for the turtle
+ANGLES = {LEFT: 270, UP: 0, RIGHT: 90, DOWN: 180}  # type: Dict[Vertex2D, int]
 
 
 # A vertex ha 4 neighbour boxes, and each box can be walkable or not (block).
 # This map represents every case with relative "mouvement" possibility
 # of a vertex to track the wall perimeter.
+
 POSSIBLE_DIRECTIONS = {
     ((0, 0),
-     (0, 0)): (HERE, HERE),
+     (0, 0)): (),
     ((0, 0),
      (0, 1)): (RIGHT, DOWN),
     ((0, 0),
@@ -101,12 +106,44 @@ POSSIBLE_DIRECTIONS = {
     ((1, 1),
      (1, 0)): (RIGHT, DOWN),
     ((1, 1),
-     (1, 1)): (HERE, HERE),
+     (1, 1)): (),
 }  # type: Dict[Tuple[Vector2D, Vector2D], Tuple[Vector2D, ...]]
 
-ANGLES = {LEFT: 270, UP: 0, RIGHT: 90, DOWN: 180}
 
-
+RULES = {
+    ((0, 0),
+     (0, 0)): {STILL: STILL, UP: UP, LEFT: LEFT, RIGHT: RIGHT, DOWN: DOWN},  # XXX
+    ((0, 0),
+     (0, 1)): {STILL: RIGHT, UP: RIGHT, LEFT: DOWN},
+    ((0, 0),
+     (1, 0)): {STILL: DOWN, UP: LEFT, RIGHT: DOWN},
+    ((0, 0),
+     (1, 1)): {STILL: RIGHT, RIGHT: RIGHT, LEFT: LEFT},
+    ((0, 1),
+     (0, 0)): {STILL: UP, LEFT: UP, DOWN: RIGHT},
+    ((0, 1),
+     (0, 1)): {STILL: UP, UP: UP, DOWN: DOWN},
+    ((0, 1),
+     (1, 0)): {STILL: RIGHT, UP: RIGHT, LEFT: DOWN, RIGHT: UP, DOWN: LEFT},
+    ((0, 1),
+     (1, 1)): {STILL: UP, RIGHT: UP, DOWN: LEFT},
+    ((1, 0),
+     (0, 0)): {STILL: LEFT, RIGHT: UP, DOWN: LEFT},
+    ((1, 0),
+     (0, 1)): {STILL: RIGHT, UP: LEFT, DOWN: RIGHT, LEFT: UP, RIGHT: DOWN},
+    ((1, 0),
+     (1, 0)): {STILL: UP, UP: UP, DOWN: DOWN},
+    ((1, 0),
+     (1, 1)): {STILL: RIGHT, LEFT: UP, DOWN: RIGHT},
+    ((1, 1),
+     (0, 0)): {STILL: RIGHT, LEFT: LEFT, RIGHT: RIGHT},
+    ((1, 1),
+     (0, 1)): {STILL: LEFT, UP: LEFT, RIGHT: DOWN},
+    ((1, 1),
+     (1, 0)): {STILL: RIGHT, UP: RIGHT, LEFT: DOWN},
+    ((1, 1),
+     (1, 1)): {STILL: STILL, UP: STILL, DOWN: STILL, LEFT: STILL, RIGHT: STILL},  # XXX
+}  # type: Dict[Tuple[Vector2D, Vector2D], Dict[Vector2D, Vector2D]]
 
 
 def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
@@ -150,20 +187,20 @@ def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     return ret
 
 
-def remove_contiguous_values(lst):
+def remove_contiguous_values(lst: List[Tuple[float, float]]) -> None:
     """
     >>> lst = [1, 2, 8, 8, 8, 0, 0, 5]
     >>> remove_contiguous_values(lst)
     >>> lst
     [1, 2, 8, 0, 5]
     """
-    previous = lst[0]
     i = 0
     while i < len(lst) - 1:
         if lst[i] == lst[i + 1]:
             del lst[i]
         else:
             i += 1
+
 
 def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
     """
@@ -178,9 +215,10 @@ def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
         deq.rotate(1)
     # The last item must be equal to the first by convention.
     deq.append(deq[0])
+    ret = list(deq)
     # Remove contiguous duplicates, preserving order.
-    remove_contiguous_values(deq)
-    return list(deq)
+    remove_contiguous_values(ret)
+    return ret
 
 
 class BlocksMap(dict):
@@ -256,107 +294,67 @@ class BlocksMap(dict):
         """
         ret = []  # type: List[WallPerimeter]
 
+        print('\n{:,}'.format(len(self.map)))
+
         import turtle
         turtle.mode('logo')
-        turtle.speed(2)
-        drawsize = int(200 / (1 + max(map(max, self.map)))) if self.map else 0
+        turtle.speed(9)
+        drawsize = int(200 / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
 
-        tracked_vertices = set()  # type: Set[Vertex2D]
         if not self.map:
             return []
 
+        tracked_vertices = Counter()  # type: Dict[Vertex2D, int]
         dbg_versor_names = []
+
         for iv, vertex in enumerate(self.get_grid_vertices()):
-            if not self.is_border_vertex(vertex):
+            v_boxes = self.vertex2boxes(vertex)
+            blocks_matrix = self.boxes2block_matrix(v_boxes)
+            versors = POSSIBLE_DIRECTIONS[blocks_matrix]
+            n_versors = len(versors)
+            if n_versors == 0:
+                # not a border verdex
+                # inside 4 blocks or 4 empty cells
                 continue
 
-            if vertex in tracked_vertices:
+            n_passes = tracked_vertices[vertex]
+            if n_versors == 4:
+                # should pass by here exactly 2 times
+                if n_passes > 1:
+                    continue
+
+            elif n_passes > 0:
                 continue
 
             # start new wall perimeter from this disjointed block
             wall_perimeter = []
-            chessboard_cases = {}
-            chessboard_vertex = None
 
             first_vertex = vertex
-            old_versor = (0.0, 0.0)  # like a `None` but supporting the array sum
+            old_versor = (0, 0)  # like a `None` but supporting the array sum
             versor = old_versor
             wall_perimeter.append(vertex)
             wall_vertex = vertex
 
-            turtle.penup()
-            turtle.setpos(wall_vertex[0] * drawsize, -wall_vertex[1] * drawsize)
-            turtle.pendown()
+            if len(self.map) < 200:
+                # Don't draw with turtle
+                turtle.penup()
+                turtle.setpos(wall_vertex[0] * drawsize, -wall_vertex[1] * drawsize)
+                turtle.pendown()
 
             while True:
                 print('all tracked vertices =', tracked_vertices)
                 print('current wall_perimeter =', wall_perimeter)
                 print('went {} (versor = {}) to {}'.format(VERSOR_NAME[versor], versor, wall_vertex))
                 print('=== Current vertex:', wall_vertex, '===')
-                tracked_vertices.add(wall_vertex)
 
                 v_boxes = self.vertex2boxes(wall_vertex)
                 blocks_matrix = self.boxes2block_matrix(v_boxes)
                 versors = POSSIBLE_DIRECTIONS[blocks_matrix]
-                vertices = [sum_vectors(wall_vertex, v) for v in versors]
-                print('Possibilities from here:')
-                for v, p in zip(versors, vertices):
-                    print('{} -> {}'.format(VERSOR_NAME[v], p))
+                tracked_vertices[wall_vertex] += (1 if len(versors) == 4 else 2)
 
-                if len(vertices) == 4:
-                    print('Pay attention: I am surrounded by 4 vertices')
-                    # the vertex is the only one in common between 2 blocks
-                    # so avoid to go on in that versus (do not cross over)
-                    ahead_vertex = sum_vectors(wall_vertex, versor)
-                    print('Ahead vertex to remove: ', ahead_vertex)
-                    vertices.remove(ahead_vertex)
-                    print(ahead_vertex, 'removed')
-
-                    if wall_vertex not in chessboard_cases:
-                        chessboard_cases[wall_vertex] = 0
-                        print('updating chessboard_cases: {}'.format(chessboard_cases))
-                    else:
-                        print('revisiting tne cross...')
-                        chessboard_cases[wall_vertex] += 1
-                
-
-                # Cycle through new possible vertices to explore
-                chessboard_vertex = None
-                closable = False
-                for v_next in vertices:
-                    versor_next = sum_vectors(v_next, scalar(wall_perimeter[-1], -1))
-                    print('\texploring possibility {} ({})'.format(v_next, VERSOR_NAME[versor_next]))
-
-                    # Avoid to go back
-                    if sum_vectors(versor, versor_next) == (0.0, 0.0):
-                        print('\t\tdo not go back...')
-                        continue
-
-                    if v_next not in tracked_vertices:
-                        print('adding {} to perimeter'.format(v_next))
-                        break
-                    else:
-                        print('\t\t{} already tracked...'.format(v_next))
-                        # In the corner case we need to re-visit a tracked vertex!
-                        if v_next in chessboard_cases and chessboard_cases[v_next] == 0:
-                            print('but it is a chessboard_vertex!')
-                            chessboard_vertex = v_next
-
-                        if v_next == wall_perimeter[0]:
-                            # could close the polygon
-                            closable = v_next
-                else:
-                    if chessboard_vertex:
-                        print('it is indeed a chessboard case')
-                        v_next = chessboard_vertex
-                    elif closable:
-                        v_next = first_vertex
-                        print('closing!')
-                    else:
-                        print('closed')
-                        break
-
-                    versor_next = sum_vectors(v_next, scalar(wall_perimeter[-1], -1))
+                versor_next = RULES[blocks_matrix][versor]
+                print('versor_next = {} ({})'.format(versor_next, VERSOR_NAME[versor_next]))
+                v_next = sum_vectors(wall_vertex, versor_next)
 
                 wall_perimeter.append(v_next)
                 print('adding vertex', v_next)
@@ -367,8 +365,13 @@ class BlocksMap(dict):
                 print('turns =', dbg_versor_names)
                 wall_vertex = wall_perimeter[-1]
 
-                turtle.setheading(ANGLES[versor_next])
-                turtle.fd(drawsize)
+                if len(self.map) < 200:
+                    turtle.setheading(ANGLES[versor_next])
+                    turtle.fd(drawsize)
+
+                if wall_vertex == first_vertex:
+                    print('Starter vertex reached.')
+                    break
 
             wall_perimeter = remove_internal_edge_points(wall_perimeter)
             wall_perimeter = normalized_perimeter(wall_perimeter)
