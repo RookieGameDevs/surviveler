@@ -157,12 +157,6 @@ def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
     return (v1[0] + v2[0], v1[1] + v2[1])
 
 
-def scalar(vector: Vector2D, amount: float) -> Vector2D:
-    """Multiplies a vector by a scalar.
-    """
-    return vector[0] * amount, vector[1] * amount
-
-
 def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
     """
     Leaves only the points that are in the corners.
@@ -263,31 +257,6 @@ class BlocksMap(dict):
         """Given 4 vertex boxes, returns a 2x2 tuple with walkable/non-walkable info.
         """
         return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
-
-    def get_next_block_vertices(self, vertex: Vertex2D) -> List[Vertex2D]:
-        """Returns neighbour vertices which are actually block edges or vertices
-        (i.e. contiguous to map walls, so not free space vertices).
-        """
-        ret = []  # type: List[Vertex2D]
-        v_boxes = self.vertex2boxes(vertex)
-        versors = POSSIBLE_DIRECTIONS[self.boxes2block_matrix(v_boxes)]
-        print('Possibilities from here:')
-        ret = [sum_vectors(vertex, v) for v in versors]
-        for v, p in zip(versors, ret):
-            print('{} -> {}'.format(VERSOR_NAME[v], p))
-        return ret
-
-    def vertex2blocks(self, xy: Vertex2D) -> List[Pos]:
-        """Given a vertex, returns the non-walkable neighbour boxes.
-        """
-        return [box for box in self.vertex2boxes(xy) if box in self.map]
-
-    def is_border_vertex(self, vertex: Vertex2D) -> bool:
-        """Returns True if the vertex is part of an edge or is a corner.
-        Returns false if the vertex is inner a wall or outside.
-        """
-        v_blocks = self.vertex2blocks(vertex)
-        return 0 < len(v_blocks) < 4
 
     def build(self) -> List[List[Vertex2D]]:
         """Main method (edge detection): builds the list of wall perimeters.
