@@ -36,6 +36,7 @@ from typing import Tuple
 import argparse
 import os
 import time
+import turtle
 
 Pos = Tuple[int, int]
 Vertex2D = Tuple[float, float]
@@ -258,23 +259,20 @@ class BlocksMap(dict):
         """
         return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
 
-    def build(self) -> List[List[Vertex2D]]:
+    def build(self, debug: bool=False) -> List[List[Vertex2D]]:
         """Main method (edge detection): builds the list of wall perimeters.
         """
         ret = []  # type: List[WallPerimeter]
 
-        print('\n{:,}'.format(len(self.map)))
-
-        import turtle
-        turtle.mode('logo')
-        turtle.speed(9)
-        drawsize = int(200 / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
+        if debug:
+            turtle.mode('logo')
+            turtle.speed(9)
+            drawsize = int(300 / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
 
         if not self.map:
             return []
 
         tracked_vertices = Counter()  # type: Dict[Vertex2D, int]
-        dbg_versor_names = []
 
         for iv, vertex in enumerate(self.get_grid_vertices()):
             v_boxes = self.vertex2boxes(vertex)
@@ -304,42 +302,31 @@ class BlocksMap(dict):
             wall_perimeter.append(vertex)
             wall_vertex = vertex
 
-            if len(self.map) < 200:
-                # Don't draw with turtle
+            if debug:
                 turtle.penup()
                 turtle.setpos(wall_vertex[0] * drawsize, -wall_vertex[1] * drawsize)
                 turtle.pendown()
 
             while True:
-                print('all tracked vertices =', tracked_vertices)
-                print('current wall_perimeter =', wall_perimeter)
-                print('went {} (versor = {}) to {}'.format(VERSOR_NAME[versor], versor, wall_vertex))
-                print('=== Current vertex:', wall_vertex, '===')
-
                 v_boxes = self.vertex2boxes(wall_vertex)
                 blocks_matrix = self.boxes2block_matrix(v_boxes)
                 versors = POSSIBLE_DIRECTIONS[blocks_matrix]
                 tracked_vertices[wall_vertex] += (1 if len(versors) == 4 else 2)
 
                 versor_next = RULES[blocks_matrix][versor]
-                print('versor_next = {} ({})'.format(versor_next, VERSOR_NAME[versor_next]))
                 v_next = sum_vectors(wall_vertex, versor_next)
 
                 wall_perimeter.append(v_next)
-                print('adding vertex', v_next)
 
                 old_versor = versor
                 versor = versor_next
-                dbg_versor_names.append(VERSOR_NAME[versor])
-                print('turns =', dbg_versor_names)
                 wall_vertex = wall_perimeter[-1]
 
-                if len(self.map) < 200:
+                if debug:
                     turtle.setheading(ANGLES[versor_next])
                     turtle.fd(drawsize)
 
                 if wall_vertex == first_vertex:
-                    print('Starter vertex reached.')
                     break
 
             wall_perimeter = remove_internal_edge_points(wall_perimeter)
@@ -383,7 +370,7 @@ def load_png(filepath: str) -> WalkableMatrix:
     return ret
 
 
-def png2obj(filepath: str, height: float=3) -> int:
+def png2obj(filepath: str, height: float=3, turtle: bool=False) -> int:
     """Main function which takes an image filepath and creates
     a mesh (detecting edges an extruding them vertically)
     exporting it in a wavefront obj format.
@@ -398,7 +385,7 @@ def png2obj(filepath: str, height: float=3) -> int:
     blocks_map = mat2map(matrix)
     print('Detecting edges...')
     t0 = time.time()
-    wall_perimeters = sorted(blocks_map.build())
+    wall_perimeters = sorted(blocks_map.build(debug=turtle))
     print('{:.2f} s'.format(time.time() - t0))
     mesh = extrude_wall_perimeters(wall_perimeters, height)
 
@@ -418,5 +405,6 @@ if __name__ == '__main__':
     parser.add_argument('src', help='the source png file path')
     parser.add_argument('--height', default=3.0, type=float,
                         help='vertical extrusion amount [default=%(default)s]')
+    parser.add_argument('--debug', 'show steps graphically for debugging')
     args = parser.parse_args()
-    png2obj(args.src, args.height)
+    png2obj(args.src, args.height, turtle=args.turtle)
