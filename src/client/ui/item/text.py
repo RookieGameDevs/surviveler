@@ -24,6 +24,7 @@ class Text(Item):
             * height (:class:`int`): The item height
             * anchor (:class:`.Anchor`): The item anchor override
             * margin (:class:`.Margin`): The item margin override
+            * on (:class:`dict`): The dictionary containing the listeners
             * color (:class:`tuple`): The background color
             * font (:class:`str`): The text font
             * text (:class:`str`): The text

@@ -455,3 +455,46 @@ def test_item__traverse__pos_filter(item_cls, parent_item):
     assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(375, 375))] == ['item2', 'parent']
     assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(125, 375))] == ['parent']
     assert [getattr(i, 'test_id') for i in parent_item.traverse(pos=Point(375, 125))] == ['parent']
+
+
+def test_item__traverse__pos_and_listen_filter(item_cls, parent_item):
+    item1 = item_cls(
+        parent_item,
+        test_id='item1',
+        on={
+            'event1': lambda: False,
+        },
+        anchor=Anchor(
+            top='parent.top',
+            bottom='parent.vcenter',
+            left='parent.left',
+            right='parent.hcenter'
+        ))
+    parent_item.add_child('item1', item1)
+    item2 = item_cls(
+        parent_item,
+        test_id='item2',
+        on={
+            'event2': lambda: False,
+        },
+        anchor=Anchor(
+            top='parent.vcenter',
+            bottom='parent.bottom',
+            left='parent.hcenter',
+            right='parent.right'
+        ))
+    parent_item.add_child('item2', item2)
+    parent_item.bind_item()
+
+    # Localized items that handles event1
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event1', pos=Point(250, 250))] == ['item1']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event1', pos=Point(125, 125))] == ['item1']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event1', pos=Point(375, 375))] == []
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event1', pos=Point(125, 375))] == []
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event1', pos=Point(375, 125))] == []
+    # Localized items that handles event2
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event2', pos=Point(250, 250))] == ['item2']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event2', pos=Point(125, 125))] == []
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event2', pos=Point(375, 375))] == ['item2']
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event2', pos=Point(125, 375))] == []
+    assert [getattr(i, 'test_id') for i in parent_item.traverse(listen_to='event2', pos=Point(375, 125))] == []

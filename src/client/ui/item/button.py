@@ -28,6 +28,7 @@ class Button(Item):
             * height (:class:`int`): The item height
             * anchor (:class:`.Anchor`): The item anchor override
             * margin (:class:`.Margin`): The item margin override
+            * on (:class:`dict`): The dictionary containing the listeners
             * background (:class:`tuple`): The background color
             * color (:class:`tuple`): The text color
             * font (:class:`str`): The text font

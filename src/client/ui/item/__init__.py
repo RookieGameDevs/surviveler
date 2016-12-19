@@ -283,6 +283,7 @@ class Item(metaclass=ABCMeta):
             * height (:class:`int`): The item height
             * anchor (:class:`.Anchor`): The item anchor override
             * margin (:class:`.Margin`): The item margin override
+            * on (:class:`dict`): The dictionary containing the listeners
         """
         self.parent = parent
         self.children = OrderedDict()
@@ -305,6 +306,9 @@ class Item(metaclass=ABCMeta):
             'margin': kwargs.get('margin', Margin.null()),
         })
 
+        # Event listeners
+        self._on = kwargs.get('on', {})
+
     def traverse(self, listen_to=None, pos=None):
         x, y = self._position.x, self._position.y
         w, h = self._width, self._height
@@ -314,8 +318,12 @@ class Item(metaclass=ABCMeta):
             part = chain.from_iterable(
                 c.traverse(listen_to, pos) for c in reversed(self.children.values()))
             # TODO: check if the item itself is eligible
-            part = chain(part, [self])
+            if not listen_to or listen_to in self._on:
+                part = chain(part, [self])
         return part
+
+    def handle(self, event):
+        return self._on.get(event, lambda: False)
 
     def unbind_item(self):
         """Unbinds the item and all of its children.
