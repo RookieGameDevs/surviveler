@@ -322,6 +322,9 @@ class Item(metaclass=ABCMeta):
                 part = chain(part, [self])
         return part
 
+    def on(self, event, handler):
+        self._on[event] = handler
+
     def handle(self, event):
         return self._on.get(event, lambda: False)
 
