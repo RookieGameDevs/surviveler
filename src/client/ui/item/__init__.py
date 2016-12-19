@@ -305,17 +305,14 @@ class Item(metaclass=ABCMeta):
             'margin': kwargs.get('margin', Margin.null()),
         })
 
-    def traverse(self, name=None, listen_to=None, pos=None):
+    def traverse(self, listen_to=None, pos=None):
         x, y = self._position.x, self._position.y
         w, h = self._width, self._height
         part = []
         if not pos or (x <= pos.x <= x + w and y <= pos.y <= y + h):
             # Continue traversal
-            part = chain(
-                *[
-                    c.traverse(name, listen_to, pos)
-                    for c in reversed(self.children.values())
-                ])
+            part = chain.from_iterable(
+                c.traverse(listen_to, pos) for c in reversed(self.children.values()))
             # TODO: check if the item itself is eligible
             part = chain(part, [self])
         return part

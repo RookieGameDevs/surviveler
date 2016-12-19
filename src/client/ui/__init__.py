@@ -24,8 +24,10 @@ class UI:
 
     def mouse_click_event_handler(self):
         ET = EventType
-        return (lambda button, state, pos:
-            self.dispatch(ET.mouse_click, button=button, state=state, pos=pos))
+        return (
+            lambda button, state, pos:
+            self.dispatch(ET.mouse_click, button=button, state=state, pos=pos)
+        )
 
     def mouse_move_event_handler(self):
         ET = EventType
