@@ -36,11 +36,16 @@ from typing import Tuple
 import argparse
 import os
 import time
+import triangle
 import turtle
 
 Pos = Tuple[int, int]
+Versor2D = Tuple[int, int]
 Vertex2D = Tuple[float, float]
 Vector2D = Vertex2D
+Vertex3D = Tuple[float, float, float]
+Triangle2D = Tuple[Vertex2D, Vertex2D, Vertex2D]
+Triangle3D = Tuple[Vertex3D, Vertex3D, Vertex3D]
 WallPerimeter = List[Vertex2D]
 WalkableMatrix = List[List[int]]
 VertexBoxes = NamedTuple('NearBoxes',
@@ -144,7 +149,7 @@ RULES = {
      (1, 0)): {STILL: RIGHT, UP: RIGHT, LEFT: DOWN},
     ((1, 1),
      (1, 1)): {STILL: STILL, UP: STILL, DOWN: STILL, LEFT: STILL, RIGHT: STILL},  # XXX
-}  # type: Dict[Tuple[Vector2D, Vector2D], Dict[Vector2D, Vector2D]]
+}  # type: Dict[Tuple[Vector2D, Vector2D], Dict[Versor2D, Versor2D]]
 
 
 def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
@@ -213,6 +218,34 @@ def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
     ret = list(deq)
     # Remove contiguous duplicates, preserving order.
     remove_contiguous_values(ret)
+    return ret
+
+
+def matrix2holes(matrix: List[List[int]]) -> List[Vertex2D]:
+    ret = []
+    for y, row in enumerate(matrix):
+        for x, walkable in enumerate(row):
+            if walkable:
+                ret.append((x + 0.5, y + 0.5))
+    return ret
+
+
+def triangulate_wall(wall: WallPerimeter, holes: List[Vertex2D]) -> List[Triangle2D]:
+    """
+    Creates the top horizontal surface of the wall.
+    """
+    ret = []
+    segments = [(i, i + 1) for i in range(0, len(wall) - 2)]
+    dic = dict(vertices=wall[:-1], segments=segments, holes=holes)
+    tri = triangle.triangulate(dic, 'pc')
+    for triangle_indices in tri['triangles']:
+        face = []
+        for vertex_index in triangle_indices:
+            vertex = tri['vertices'][vertex_index]
+            assert len(vertex) == 2, 'Expected a Vertex2D. Got: {}'.format(vertex)
+            vertex = (vertex[0], vertex[1])
+            face.append(vertex)
+        ret.append((face[0], face[1], face[2]))
     return ret
 
 
@@ -387,7 +420,24 @@ def png2obj(filepath: str, height: float=3, turtle: bool=False) -> int:
     t0 = time.time()
     wall_perimeters = sorted(blocks_map.build(debug=turtle))
     print('{:.2f} s'.format(time.time() - t0))
+
     mesh = extrude_wall_perimeters(wall_perimeters, height)
+    print(mesh)
+
+    print('Triangulation...')
+    t0 = time.time()
+    horizontal_faces = []  # type: List[Triangle3D]
+    holes = matrix2holes(matrix)
+    # Fill the horizontal wall surfaces at the set `height`.
+    for wall in wall_perimeters:
+        for face2D in triangulate_wall(wall, holes):
+            h_face = []
+            print(horizontal_faces, face2D)
+            for v2D in face2D:
+                h_face.append((v2D[0], v2D[1], height))
+            horizontal_faces.append((h_face[0], h_face[1], h_face[2]))
+    mesh.extend(horizontal_faces)
+    print('{:.2f} s'.format(time.time() - t0))
 
     dst = filepath[:-4] + '.obj'
     print('Exporting mesh to Wavefront...')
@@ -405,6 +455,6 @@ if __name__ == '__main__':
     parser.add_argument('src', help='the source png file path')
     parser.add_argument('--height', default=3.0, type=float,
                         help='vertical extrusion amount [default=%(default)s]')
-    parser.add_argument('--debug', 'show steps graphically for debugging')
+    parser.add_argument('--turtle', help='show steps graphically for debugging')
     args = parser.parse_args()
     png2obj(args.src, args.height, turtle=args.turtle)

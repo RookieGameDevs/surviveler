@@ -52,7 +52,7 @@ def export_vertex(
     return 'v ' + ' '.join(['{:.6f}'.format(component) for component in (right, forward, up)])
 
 
-def export_face_indices(face_indices: Iterable[int]) -> str:
+def export_face_indices(face_indices: Iterable[int], zero_index: bool=False) -> str:
     """Returns the Wavefront row representation of a face.
 
     NB: accepts indices and NOT vertices coordinates.
@@ -60,7 +60,7 @@ def export_face_indices(face_indices: Iterable[int]) -> str:
     >>> export_face_indices((1, 5, 6, 2))
     'f 1 5 6 2'
     """
-    return 'f ' + ' '.join([str(vertex_index) for vertex_index in face_indices])
+    return 'f ' + ' '.join([str(vertex_index + zero_index) for vertex_index in face_indices])
 
 
 def mesh2vertices(mesh: Mesh) -> Dict[Vertex, int]:
@@ -151,3 +151,72 @@ def export_mesh(
         ret.append(export_face_indices(face_indices))
 
     return '\n'.join(ret)
+
+
+def create_wavefront(
+        vertices: List[Vertex]=[],
+        faces: List[Tuple[int, ...]]=[],
+        zero_index: bool=False,
+        triangulate_result: dict=None,
+        readable_export_settings: Tuple[str, str, str]=DEFAULT_EXPORT_SETTINGS,
+        dst: str=None) -> str:
+    """
+    >>> vertices = [(0, 0, 0), (2, 0, 0), (2, 1, 0), (2, 0, 1)]
+    >>> faces = [(0, 1, 2), (0, 1, 3)]
+    >>> wf.create_wavefront(vertices=vertices, faces=faces, zero_index=True, dst='mesh.obj')
+    Vertex 0: (0, 0, 0)
+    Vertex 1: (2, 0, 0)
+    Vertex 2: (2, 1, 0)
+    Vertex 3: (2, 0, 1)
+    Face 0: (0, 1, 2)
+    Face 1: (0, 1, 3)
+    'v 0.000000 0.000000 0.000000\nv 2.000000 0.000000 0.000000\nv 2.000000 0.000000 1.000000\nv 2.000000 1.000000 0.000000\nf 1 2 3\nf 1 2 4'
+    """
+
+    ret_list = []
+    errors = []
+    unique_vertices = []  # type: List[Vertex]
+
+    if triangulate_result:
+        # Use `vertices` and `faces` from the result of triangulation
+        # overwriting `vertices` and `faces` with `vertices` and `triangles`,
+        # and setting `zero_index` to True.
+        faces = triangulate_result['triangles']
+        vertices = []
+        for v in triangulate_result['vertices']:
+            if len(v) == 3:
+                vertices.append(v)
+            elif len(v) == 2:
+                vertices.append((v[0], v[1], 0.0))
+            else:
+                raise Exception('Invalid length vertex: {}'.format(v))
+
+        zero_index = True
+
+    export_settings = parse_readable_export_settings(readable_export_settings)
+
+    # Export vertices
+    for i, vertex in enumerate(vertices):
+        print('Vertex {}: {}'.format(i, vertex))
+        ret_list.append(export_vertex(vertex, export_settings=export_settings))
+        if vertex in unique_vertices:
+            print('WARNING: duplicated vertex {}: {}'.format(i, vertex))
+        else:
+            unique_vertices.append(vertex)
+
+    # Export faces
+    for i, face in enumerate(faces):
+        print('Face {}: {}'.format(i, face))
+        if 0 in face and not zero_index:
+            msg = 'ERROR: face #{i}={face} is a 0-index face, but zero_index is {zero_index}'.format(i=i, face=face, zero_index=zero_index)
+            print(msg)
+            errors.append(face)
+        ret_list.append(export_face_indices(face, zero_index=zero_index))
+
+    assert not errors, '{} zero_index face errors occurred: {}'.format(len(errors), errors)
+
+    ret = '\n'.join(ret_list)
+    if dst:
+        with open(dst, 'w') as fp:
+            fp.write(ret)
+    return ret
