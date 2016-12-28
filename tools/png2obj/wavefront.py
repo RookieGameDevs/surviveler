@@ -163,14 +163,19 @@ def create_wavefront(
     """
     >>> vertices = [(0, 0, 0), (2, 0, 0), (2, 1, 0), (2, 0, 1)]
     >>> faces = [(0, 1, 2), (0, 1, 3)]
-    >>> wf.create_wavefront(vertices=vertices, faces=faces, zero_index=True, dst='mesh.obj')
+    >>> print(create_wavefront(vertices=vertices, faces=faces, zero_index=True, dst='mesh.obj'))
     Vertex 0: (0, 0, 0)
     Vertex 1: (2, 0, 0)
     Vertex 2: (2, 1, 0)
     Vertex 3: (2, 0, 1)
     Face 0: (0, 1, 2)
     Face 1: (0, 1, 3)
-    'v 0.000000 0.000000 0.000000\nv 2.000000 0.000000 0.000000\nv 2.000000 0.000000 1.000000\nv 2.000000 1.000000 0.000000\nf 1 2 3\nf 1 2 4'
+    v 0.000000 0.000000 0.000000
+    v 2.000000 0.000000 0.000000
+    v 2.000000 0.000000 1.000000
+    v 2.000000 1.000000 0.000000
+    f 1 2 3
+    f 1 2 4
     """
 
     ret_list = []
