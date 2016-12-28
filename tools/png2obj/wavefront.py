@@ -16,7 +16,7 @@ ExportSettings = Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]
 
 AXES = 'xyz'  # http://forum.wordreference.com/threads/axis-vs-axes.82527/
 RIGHT, FORWARD, UP = 0, 1, 2
-DEFAULT_EXPORT_SETTINGS = ('+x', '-z', '+y')
+DEFAULT_EXPORT_SETTINGS = ('+x', '+z', '+y')
 
 
 def parse_readable_export_settings(
