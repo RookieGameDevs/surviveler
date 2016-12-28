@@ -26,6 +26,7 @@ from PIL import Image
 from collections import deque
 from collections import namedtuple
 from collections import Counter
+from collections import OrderedDict
 from typing import Dict  # noqa
 from typing import Iterable
 from typing import List
@@ -230,14 +231,95 @@ def matrix2holes(matrix: List[List[int]]) -> List[Vertex2D]:
     return ret
 
 
-def triangulate_wall(wall: WallPerimeter, holes: List[Vertex2D]) -> List[Triangle2D]:
+def list_to_index_map(the_list: list) -> OrderedDict:
+    ret = OrderedDict()
+    assert len(set(the_list)) == len(the_list), 'Error: the list contains duplicated elements'
+    for i, element in enumerate(the_list):
+        ret[element] = i
+    return ret
+
+
+def wall_perimeters_to_unique_vertices(wall_perimeters: List[WallPerimeter]) -> List[Vertex2D]:
     """
-    Creates the top horizontal surface of the wall.
+    >>> ret = wall_perimeters_to_unique_vertices([[(0, 0), (3, 0)], [(0, 1), (3, 0)]])
+    >>> len(ret)
+    3
+    >>> ret[0]
+    (0, 0)
+    >>> ret[1]
+    (3, 0)
+    >>> ret[2]
+    (0, 1)
     """
     ret = []
-    segments = [(i, i + 1) for i in range(0, len(wall) - 2)]
-    dic = dict(vertices=wall[:-1], segments=segments, holes=holes)
+    for wall in wall_perimeters:
+        for vertex in wall:
+            if not vertex in ret:
+                ret.append(vertex)
+    return ret
+
+
+def triangulate_walls(wall_perimeters: List[WallPerimeter], holes: List[Vertex2D]) -> List[Triangle2D]:
+    """
+    Creates the top horizontal surface of the walls.
+    """
+    ret = []
+
+    # Fill the horizontal wall surfaces at the set `height`.
+    unique_vertices = wall_perimeters_to_unique_vertices(wall_perimeters)
+    vertices_indices = list_to_index_map(unique_vertices)
+    segments = []
+    v_segments = []
+    i = 0
+
+    for wall in wall_perimeters:
+        assert wall[0] == wall[-1], 'The wall must be closed'
+
+        # create wall segments, mapped to unique vertices
+        for i in range(len(wall) - 1):
+            va = wall[i]
+            vb = wall[i + 1]
+            v_segments.append((va, vb))
+            segments.append((vertices_indices[va], vertices_indices[vb]))
+
+    # check that match walls
+    i = 0
+    for iw, wall in enumerate(wall_perimeters):
+        for ie in range(len(wall) -1):
+            wall_vertex0 = wall[ie]
+            wall_vertex1 = wall[ie + 1]
+            wall_edge = wall_vertex0, wall_vertex1
+
+            segment = segments[i]
+            va = unique_vertices[segment[0]]
+            vb = unique_vertices[segment[1]]
+            va_vb = va, vb
+            assert va_vb == wall_edge, '{} != {}'.format(va_vb, wall_edge)
+
+            i += 1
+
+    dic = dict(vertices=unique_vertices, segments=segments)
+    if holes:
+        dic['holes'] = holes  # otherwise triangulate might crash
+
+    if not dic['vertices']:
+        return []
+
+    # <DEBUGGIBNG triangle.triangulate (export input parameters)>
+    import pickle
+    with open('dic.pkl', 'wb') as fp:
+        pickle.dump(dic, fp)
+    import pprint
+    with open('dic.py', 'w') as fp:
+        s = pprint.pformat(dic)
+        fp.write('dic = {}'.format(s))
+    # </ DEBUGGING>
+
+    # ========= CALL THE C TRIANGLE LIBRARY ==========
     tri = triangle.triangulate(dic, 'pc')
+    # ================================================
+
+    # Now just convert triangles indices in triangles vertices
     for triangle_indices in tri['triangles']:
         face = []
         for vertex_index in triangle_indices:
@@ -428,14 +510,13 @@ def png2obj(filepath: str, height: float=3, turtle: bool=False) -> int:
     t0 = time.time()
     horizontal_faces = []  # type: List[Triangle3D]
     holes = matrix2holes(matrix)
-    # Fill the horizontal wall surfaces at the set `height`.
-    for wall in wall_perimeters:
-        for face2D in triangulate_wall(wall, holes):
-            h_face = []
-            print(horizontal_faces, face2D)
-            for v2D in face2D:
-                h_face.append((v2D[0], v2D[1], height))
-            horizontal_faces.append((h_face[0], h_face[1], h_face[2]))
+
+    horizontal_faces = []
+    for face2D in triangulate_walls(wall_perimeters, holes):
+        h_face = []
+        for v2D in face2D:
+            h_face.append((v2D[0], v2D[1], height))
+        horizontal_faces.append((h_face[0], h_face[1], h_face[2]))
     mesh.extend(horizontal_faces)
     print('{:.2f} s'.format(time.time() - t0))
 
