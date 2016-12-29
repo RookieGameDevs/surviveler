@@ -310,6 +310,22 @@ class Item(metaclass=ABCMeta):
         self._on = kwargs.get('on', {})
 
     def traverse(self, listen_to=None, pos=None):
+        """Traverses the item subtree.
+
+        This method permits to traverse the whole subtree in an efficient way
+        using iterators.
+
+        Filtering is possible using the listen_to and pos.
+
+        :param listen_to: An event that the item is required to be listening to
+        :type listen_to: :class:`..EventType`
+
+        :param pos: The position filter.
+        :type pos: :class:`..util.Point`
+
+        :returns: Iterator with the filtered item, in priority order.
+        :rtype: :class:`iter`
+        """
         x, y = self._position.x, self._position.y
         w, h = self._width, self._height
         part = []
@@ -323,10 +339,34 @@ class Item(metaclass=ABCMeta):
         return part
 
     def on(self, event, handler):
+        """Attaches a listener to an event.
+
+        The handler function should take the payload parameter (dict) and return
+        a boolean. True means that the ui should stop propagating the event,
+        while False means that the event should be forwarded.
+
+        :param event: The event that the item is listening to.
+        :type event: :class:`..EventType`
+
+        :param handler: The event handler
+        :type handler: :class:`function`
+        """
         self._on[event] = handler
 
-    def handle(self, event):
-        return self._on.get(event, lambda: False)
+    def handle(self, event_type, payload):
+        """Handle an event using the registered handler.
+
+        :param event_type: The evet that the item is handling.
+        :type event_type: :class:`..EventType`
+
+        :param payload: The payload of the event.
+        :type payload: :class:`dict`
+
+        :returns: False if the event needs to be propagated, True otherwise
+        :rtype: :class:`bool`
+        """
+        handler = self._on.get(event_type, lambda payload: False)
+        return handler(payload)
 
     def unbind_item(self):
         """Unbinds the item and all of its children.
