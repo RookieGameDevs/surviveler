@@ -37,6 +37,11 @@ class UI:
         """
         return self._root.add_child(*args, **kwargs)
 
+    def bind_item(self):
+        """Forward the bind_item call as it is to the root item.
+        """
+        return self._root.bind_item()
+
     def dispatch(self, event_type, pos=None, payload=None):
         """Traverses the item tree and dispatches the event properly.
 

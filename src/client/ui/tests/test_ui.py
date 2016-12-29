@@ -42,7 +42,7 @@ def test_ui__click_event__single_listener(ui_object, item_cls):
         height=30,
         on={ET.mouse_click: lambda payload: True})
     ui_object.root.add_child('child', item)
-    ui_object.root.bind_item()
+    ui_object.bind_item()
 
     assert click_event_handler('left', 'pressed', Point(30, 30)) is True
     assert click_event_handler('left', 'pressed', Point(20, 20)) is False
@@ -89,7 +89,7 @@ def test_ui__click_event__propagation(ui_object, item_cls):
     ui_object.add_child('item1', item1)
     item1.add_child('item2', item2)
     item2.add_child('item3', item3)
-    ui_object.root.bind_item()
+    ui_object.bind_item()
 
     assert click_event_handler('left', 'pressed', Point(30, 30)) is True
     assert items == ['handler3', 'handler2']
