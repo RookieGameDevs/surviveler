@@ -32,6 +32,11 @@ class UI:
         """
         return self._root
 
+    def add_child(self, *args, **kwargs):
+        """Forward the add_child call as it is to the root item.
+        """
+        return self._root.add_child(*args, **kwargs)
+
     def dispatch(self, event_type, pos=None, payload=None):
         """Traverses the item tree and dispatches the event properly.
 

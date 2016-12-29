@@ -86,9 +86,9 @@ def test_ui__click_event__propagation(ui_object, item_cls):
         height=10,
         on={ET.mouse_click: handler3})
 
-    item2.add_child('item3', item3)
+    ui_object.add_child('item1', item1)
     item1.add_child('item2', item2)
-    ui_object.root.add_child('item1', item1)
+    item2.add_child('item3', item3)
     ui_object.root.bind_item()
 
     assert click_event_handler('left', 'pressed', Point(30, 30)) is True
