@@ -536,6 +536,6 @@ if __name__ == '__main__':
     parser.add_argument('src', help='the source png file path')
     parser.add_argument('--height', default=3.0, type=float,
                         help='vertical extrusion amount [default=%(default)s]')
-    parser.add_argument('--turtle', help='show steps graphically for debugging')
+    parser.add_argument('--turtle', type=bool, default=False, help='show steps graphically for debugging')
     args = parser.parse_args()
     png2obj(args.src, args.height, turtle=args.turtle)
