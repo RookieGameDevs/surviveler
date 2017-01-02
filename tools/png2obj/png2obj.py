@@ -223,11 +223,38 @@ def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
 
 
 def matrix2holes(matrix: List[List[int]]) -> List[Vertex2D]:
+    """
+    Returns the points that will be the holes passed to the triangle.triangulate.
+
+    Currently returns all the cells around the walls.
+    """
+    def next_to_wall(x, y):
+        """
+        Returns True if the cell (x, y) is next to a wall.
+        """
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == dy == 0:
+                    continue
+                cx = x + dx
+                cy = y + dy
+                if 0 <= cx < len(matrix[0]) and 0 <= cy < len(matrix):
+                    near_walkable = matrix[y + dy][x + dx]
+                    if not near_walkable:
+                        return True
+
     ret = []
+    special = any([-1 in row for row in matrix])
     for y, row in enumerate(matrix):
         for x, walkable in enumerate(row):
             if walkable:
-                ret.append((x + 0.5, y + 0.5))
+                hx, hy = x + 0.5, y + 0.5
+                if special:
+                    if walkable == -1:  # marker for a manual hole
+                        print('Special hole in', hx, hy)
+                        ret.append((hx, hy))
+                elif walkable and next_to_wall(x, y):
+                    ret.append((hx, hy))
     return ret
 
 
