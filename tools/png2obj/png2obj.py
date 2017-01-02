@@ -153,6 +153,8 @@ RULES = {
 }  # type: Dict[Tuple[Vector2D, Vector2D], Dict[Versor2D, Versor2D]]
 
 
+DRAW_SIZE = 300
+
 def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
     """Sums 2 bi-dimensional vectors.
 
@@ -409,7 +411,7 @@ class BlocksMap(dict):
         if debug:
             turtle.mode('logo')
             turtle.speed(9)
-            drawsize = int(300 / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
+            drawsize = int(DRAW_SIZE / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
 
         if not self.map:
             return []
