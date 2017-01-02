@@ -507,6 +507,11 @@ def load_png(filepath: str) -> WalkableMatrix:
                     walkable = alpha == 0 or pixel[:3] == (255, 255, 255)
                 else:
                     walkable = pixel[:3] == (255, 255, 255)
+
+                # special reddish marker (temporary)
+                if pixel[0] > pixel[1] and pixel[0] > pixel[2]:
+                    print('reddish in', x, y)
+                    walkable = -1
             row.append(int(walkable))
         ret.append(row)
     return ret
