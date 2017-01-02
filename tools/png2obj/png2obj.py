@@ -410,7 +410,7 @@ class BlocksMap(dict):
 
         if debug:
             turtle.mode('logo')
-            turtle.speed(9)
+            turtle.speed(11)
             drawsize = int(DRAW_SIZE / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
 
         if not self.map:
