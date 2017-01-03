@@ -38,7 +38,7 @@ import argparse
 import os
 import time
 import triangle
-import turtle
+import turtle as logo
 
 Pos = Tuple[int, int]
 Versor2D = Tuple[int, int]
@@ -403,14 +403,14 @@ class BlocksMap(dict):
         """
         return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
 
-    def build(self, debug: bool=False) -> List[List[Vertex2D]]:
+    def build(self, turtle: bool=False) -> List[List[Vertex2D]]:
         """Main method (edge detection): builds the list of wall perimeters.
         """
         ret = []  # type: List[WallPerimeter]
 
-        if debug:
-            turtle.mode('logo')
-            turtle.speed(11)
+        if turtle:
+            logo.mode('logo')
+            logo.speed(11)
             drawsize = int(DRAW_SIZE / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
 
         if not self.map:
@@ -446,10 +446,10 @@ class BlocksMap(dict):
             wall_perimeter.append(vertex)
             wall_vertex = vertex
 
-            if debug:
-                turtle.penup()
-                turtle.setpos(wall_vertex[0] * drawsize, -wall_vertex[1] * drawsize)
-                turtle.pendown()
+            if turtle:
+                logo.penup()
+                logo.setpos(wall_vertex[0] * drawsize - drawsize, -wall_vertex[1] * drawsize + drawsize)
+                logo.pendown()
 
             while True:
                 v_boxes = self.vertex2boxes(wall_vertex)
@@ -466,9 +466,9 @@ class BlocksMap(dict):
                 versor = versor_next
                 wall_vertex = wall_perimeter[-1]
 
-                if debug:
-                    turtle.setheading(ANGLES[versor_next])
-                    turtle.fd(drawsize)
+                if turtle:
+                    logo.setheading(ANGLES[versor_next])
+                    logo.fd(drawsize)
 
                 if wall_vertex == first_vertex:
                     break
@@ -519,11 +519,11 @@ def load_png(filepath: str) -> WalkableMatrix:
     return ret
 
 
-def matrix2obj(matrix, dst, height=1):
+def matrix2obj(matrix, dst, height=1, turtle=False):
     blocks_map = mat2map(matrix)
     print('Detecting edges...')
     t0 = time.time()
-    wall_perimeters = sorted(blocks_map.build(debug=turtle))
+    wall_perimeters = sorted(blocks_map.build(turtle=turtle))
     print('{:.2f} s'.format(time.time() - t0))
 
     mesh = extrude_wall_perimeters(wall_perimeters, height)
@@ -565,7 +565,7 @@ def png2obj(filepath: str, height: float=3, turtle: bool=False) -> int:
     print('{:.2f} s'.format(time.time() - t0))
 
     dst = filepath[:-4] + '.obj'
-    return matrix2obj(matrix, dst, height)
+    return matrix2obj(matrix, dst, height, turtle=turtle)
 
 
 if __name__ == '__main__':
