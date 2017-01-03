@@ -527,7 +527,6 @@ def matrix2obj(matrix, dst, height=1):
     print('{:.2f} s'.format(time.time() - t0))
 
     mesh = extrude_wall_perimeters(wall_perimeters, height)
-    print(mesh)
 
     print('Triangulation...')
     t0 = time.time()
