@@ -1,7 +1,8 @@
 [run]
 parallel = true
 branch = true
-omit =
+source = .
+omit = ~/.virtualenvs
 
 [report]
 show_missing = True
