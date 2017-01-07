@@ -6,6 +6,7 @@ Involved steps:
     1 - convert a png to a walkable matrix;
     2 - find wall perimeters -> list of 2D edges;
     3 - extrude vertically the wall perimeters -> list of 3D faces;
+    4 - create the top horizontal wall surfaces; [WIP: currently uses triangle which crashes in some cases]
     4 - export faces to obj.
 
 Python-3 only due to the type hinting (and 'super') syntax.
@@ -35,7 +36,9 @@ from typing import NamedTuple
 from typing import Set  # noqa
 from typing import Tuple
 import argparse
+import json
 import os
+import pprint
 import time
 import triangle
 import turtle as logo
@@ -335,13 +338,11 @@ def triangulate_walls(wall_perimeters: List[WallPerimeter], holes: List[Vertex2D
         return []
 
     # <DEBUGGIBNG triangle.triangulate (export input parameters)>
-    import pickle
-    with open('dic.pkl', 'wb') as fp:
-        pickle.dump(dic, fp)
-    import pprint
     with open('dic.py', 'w') as fp:
         s = pprint.pformat(dic)
         fp.write('dic = {}'.format(s))
+    with open('dic.json', 'w') as fp:
+        json.dump(dic, fp, indent=4)
     # </ DEBUGGING>
 
     # ========= CALL THE C TRIANGLE LIBRARY ==========
