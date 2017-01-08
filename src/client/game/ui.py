@@ -4,14 +4,17 @@ from game.events import ActorStatusChange
 from game.events import GameModeChange
 from game.events import TimeUpdate
 from math import pi
-from matlib import Vec
+from matlib.vec import Vec
 from renderer.camera import OrthoCamera
-from renderer.font import Font
-from renderer.geometry import GeometryNode
-from renderer.mesh import Rect
+from renderer.primitives import Rect
+from renderer.scene import MeshNode
 from renderer.scene import Scene
-from renderer.text import TextNode
-from renderer.texture import Texture
+from renderer.scene import TextNode
+from renderlib.core import Material
+from renderlib.core import MeshRenderProps
+from renderlib.core import TextRenderProps
+from renderlib.text import Text
+from renderlib.texture import Texture
 import logging
 
 
@@ -42,20 +45,13 @@ class HealthBar:
             mesh = Rect(self.w, self.h)
             resource.userdata['mesh'] = mesh
 
-        shader = resource['shader']
+        material = Material()
+        material.color = Vec(0.2, 0.4, 1, 1)
 
-        params = {
-            'width': float(self.w),
-            'value': self._value,
-            'bg_color': Vec(0, 0, 0, 1),
-            'fg_color': Vec(0.2, 0.4, 1, 1),
-        }
+        props = MeshRenderProps()
+        props.material = material
 
-        self.node = GeometryNode(
-            mesh,
-            shader,
-            params=params,
-            enable_light=False)
+        self.node = MeshNode(mesh, props)
 
     @property
     def value(self):
@@ -74,7 +70,7 @@ class HealthBar:
         :type v: :class:`float`
         """
         self._value = float(v)
-        self.node.params['value'] = self._value
+        # TODO: change the visual appearance of the healthbar
 
 
 class Avatar:
@@ -86,21 +82,17 @@ class Avatar:
         self.h = resource.data['height']
 
         mesh = Rect(self.w, self.h)
-        texture = Texture.from_image(resource[ref])
-        shader = resource['shader']
+        texture = Texture.from_image(
+            resource[ref],
+            Texture.TextureType.texture_rectangle)
 
-        params = {
-            'tex': texture,
-            'width': self.w,
-            'height': self.h,
-        }
+        material = Material()
+        material.texture = texture
 
-        self.node = GeometryNode(
-            mesh,
-            shader,
-            params=params,
-            textures=[texture],
-            enable_light=False)
+        props = MeshRenderProps()
+        props.material = material
+
+        self.node = MeshNode(mesh, props)
 
 
 class UI:
@@ -125,34 +117,29 @@ class UI:
         self.camera = OrthoCamera(
             -self.w / 2, +self.w / 2,
             +self.h / 2, -self.h / 2,
-            0, 1)
+            0,
+            1)
 
-        self.font = Font(resource['font'], 14)
-        self.shader = resource['shader']
-        self.color = Vec(0.7, 0.7, 0.7)
+        font = resource['font'].get_size(14)
+        props = TextRenderProps()
+        props.color = Vec(1, 1, 1, 1)
 
         # Mode node
         self.game_mode_node = self.scene.root.add_child(TextNode(
-            self.font,
-            self.shader,
-            Context.GameMode.default.value,
-            self.color))
+            Text(font, Context.GameMode.default.value),
+            props))
         self.transform(self.game_mode_node, self.w * 0.85, 20)
 
         # FPS counter
         self.fps_counter_node = self.scene.root.add_child(TextNode(
-            self.font,
-            self.shader,
-            'FPS',
-            self.color))
+            Text(font, 'FPS'),
+            props))
         self.transform(self.fps_counter_node, self.w * 0.85, 0)
 
         # clock
         self.clock = self.scene.root.add_child(TextNode(
-            self.font,
-            self.shader,
-            '--:--',
-            self.color))
+            Text(font, '--:--'),
+            props))
         self.transform(self.clock, self.w * 0.5, 0)
 
         avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
@@ -165,7 +152,8 @@ class UI:
         # healthbar
         self.health_bar = HealthBar(
             resource['health_bar'],
-            avatar_res.data['width'], resource['health_bar'].data['height'])
+            avatar_res.data['width'],
+            resource['health_bar'].data['height'])
         self.scene.root.add_child(self.health_bar.node)
         self.transform(self.health_bar.node, 0, avatar_res.data['width'] + 5)
 
@@ -183,9 +171,10 @@ class UI:
         """
         tx = x - self.w / 2
         ty = self.h / 2 - y
-        node.transform.identity()
+        node.transform.ident()
         node.transform.translatev(Vec(tx, ty, -0.5))
-        node.transform.rotatev(Vec(1, 0, 0), pi / 2)
+        # TODO: is this needed?
+        # node.transform.rotatev(Vec(1, 0, 0), pi / 2)
 
     def set_fps(self, number):
         """Set the current frame rate in FPS widget.
@@ -193,7 +182,7 @@ class UI:
         :param number: Number of frames per second to visualize.
         :type number: int
         """
-        self.fps_counter_node.text = 'FPS: {}'.format(number)
+        self.fps_counter_node.text.string = 'FPS: {}'.format(number)
 
     def set_mode(self, mode=None):
         """Set the current game mode on the game mode widget.
@@ -201,7 +190,7 @@ class UI:
         :param number: The game mode: None in case of default
         :type number: :enum:`context.Context.GameMode`
         """
-        self.game_mode_node.text = '{}'.format(mode.value)
+        self.game_mode_node.text.string = '{}'.format(mode.value)
 
     def set_clock(self, hour, minute):
         """Set the time in clock widget.
@@ -212,7 +201,7 @@ class UI:
         :param minute: Minute.
         :type minute: int
         """
-        self.clock.text = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
+        self.clock.text.string = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
 
     def render(self):
         """Render the user interface."""
