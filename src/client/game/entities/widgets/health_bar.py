@@ -49,7 +49,6 @@ class HealthBar(Entity):
 
         t = renderable.transform
         t.translatev(Vec(-self.w / 2, self.y_offset, 0))
-        t.rotatev(Vec(1, 0, 0), pi / 2)
 
         super().__init__(renderable)
 
@@ -77,4 +76,5 @@ class HealthBar(Entity):
         t = self[Renderable].transform
         t.ident()
         t.translatev(Vec(-self.w / 2, self.y_offset, 0))
-        t.rotatev(Vec(1, 0, 0), angle)
+        # TODO: fix rotation
+        # t.rotatev(Vec(1, 0, 0), angle / 2)
