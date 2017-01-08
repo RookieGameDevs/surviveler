@@ -9,7 +9,9 @@ from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import GameModeChange
 from game.events import GameModeToggle
-from matlib import Vec
+from matlib.vec import Vec
+from renderlib.core import Material
+from renderlib.core import MeshRenderProps
 from utils import in_matrix
 from utils import to_matrix
 from utils import to_scene
@@ -50,21 +52,20 @@ class BuildingTemplate(Entity):
         self.matrix = matrix
         self.scale_factor = scale_factor
 
-        shader = resource['shader']
+        # create material
+        material = Material()
+        # TODO: use proper colors from BUILDABLE_COLOR and NON_BUILDABLE_COLOR
+        material.color = Vec(1, 1, 1, 1)
+        material.opacity = 1.0
+
+        # create render props container
+        props = MeshRenderProps()
+        props.material = material
+
         mesh = resource['model_complete']
 
-        # shader params
-        params = dict({
-            'color_specular': Vec(1, 1, 1, 1),
-        }, **self.BUILDABLE_COLOR)
-
         # create components
-        renderable = Renderable(
-            parent_node,
-            mesh,
-            shader,
-            params,
-            enable_light=True)
+        renderable = Renderable(parent_node, mesh, props)
 
         # initialize entity
         super().__init__(renderable)
@@ -94,9 +95,9 @@ class BuildingTemplate(Entity):
             self[Renderable].node.params.update(self.BUILDABLE_COLOR)
 
         t = self[Renderable].transform
-        t.identity()
-        t.translate(to_scene(x, y))
-        t.scale(Vec(1.05, 1.05, 1.05))
+        t.ident()
+        t.translatev(to_scene(x, y))
+        t.scalev(Vec(1.05, 1.05, 1.05))
 
 
 @subscriber(GameModeToggle)

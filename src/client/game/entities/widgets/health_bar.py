@@ -2,8 +2,9 @@ from context import Context
 from game.components import Renderable
 from game.entities.entity import Entity
 from math import pi
-from matlib import Vec
-from renderer.mesh import Rect
+from matlib.vec import Vec
+from renderer.primitives import Rect
+from renderlib.core import MeshRenderProps
 import logging
 import math
 
@@ -41,25 +42,14 @@ class HealthBar(Entity):
             mesh = Rect(self.w, self.h)
             resource.userdata['mesh'] = mesh
 
-        shader = resource['shader']
+        props = MeshRenderProps()
+        props.color = Vec(0.2, 0.4, 1)
 
-        params = {
-            'width': float(self.w),
-            'value': value,
-            'bg_color': Vec(0, 0, 0, 1),
-            'fg_color': Vec(0.2, 0.4, 1, 1),
-        }
-
-        renderable = Renderable(
-            parent_node,
-            mesh,
-            shader,
-            params,
-            enable_light=False)
+        renderable = Renderable(parent_node, mesh, props)
 
         t = renderable.transform
-        t.translate(Vec(-self.w / 2, self.y_offset, 0))
-        t.rotate(Vec(1, 0, 0), pi / 2)
+        t.translatev(Vec(-self.w / 2, self.y_offset, 0))
+        t.rotatev(Vec(1, 0, 0), pi / 2)
 
         super().__init__(renderable)
 
@@ -104,6 +94,6 @@ class HealthBar(Entity):
         # Find the angle between the camera and the health bar, then rotate it.
         angle = math.acos(z_axis.dot(direction))
         t = self[Renderable].transform
-        t.identity()
-        t.translate(Vec(-self.w / 2, self.y_offset, 0))
-        t.rotate(Vec(1, 0, 0), angle)
+        t.ident()
+        t.translatev(Vec(-self.w / 2, self.y_offset, 0))
+        t.rotatev(Vec(1, 0, 0), angle)

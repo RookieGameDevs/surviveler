@@ -12,3 +12,7 @@ class OpenGLError(Exception):
 
 class ShaderError(Exception):
     """Shader compile/link/access error."""
+
+
+class ResourceError(Exception):
+    """Resource loading error."""

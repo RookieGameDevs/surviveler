@@ -1,5 +1,5 @@
 from game.components import Component
-from renderer.geometry import GeometryNode
+from renderer.scene import MeshNode
 
 
 class Renderable(Component):
@@ -9,37 +9,16 @@ class Renderable(Component):
     the node.
     """
 
-    def __init__(
-            self, parent_node, mesh, shader, params=None, textures=None,
-            enable_light=False, animation=None):
+    def __init__(self, parent_node, mesh, props):
         """Constructor.
 
-        :param parent_node: Parent node of the new game node.
-        :type parent_node: :class:`renderer.scene.SceneNode`
-
         :param mesh: The mesh.
-        :type mesh: :class:`renderer.Mesh`
+        :type mesh: :class:`renderlib.mesh.Mesh`
 
-        :param shader: The shader program.
-        :type shader: :class:`surrender.Shader`
-
-        :param params: The parameters mapping to pass during rendering to the
-            shader program.
-        :type params: mapping
-
-        :param textures: Textures to apply to the mesh.
-        :type textures: list of :class:`renderer.Texture`
-
-        :param enable_light: Enable lighting for the renderable.
-        :type enable_light: bool
+        :param props: Mesh rendering properties container.
+        :type props: :class:`renderlib.core.MeshRenderProps`
         """
-        self.node = GeometryNode(
-            mesh,
-            shader,
-            params=params,
-            textures=textures,
-            enable_light=enable_light,
-            animation=animation)
+        self.node = MeshNode(mesh, props)
         parent_node.add_child(self.node)
 
     @property
@@ -49,19 +28,3 @@ class Renderable(Component):
     @transform.setter
     def transform(self, value):
         self.node.transform = value
-
-    @property
-    def animate(self):
-        return self.node.animate
-
-    @animate.setter
-    def animate(self, value):
-        self.node.animate = value
-
-    @property
-    def animation(self):
-        return self.node.anim_inst
-
-    @animation.setter
-    def animation(self, anim_inst):
-        self.node.anim_inst = anim_inst

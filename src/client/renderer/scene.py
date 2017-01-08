@@ -1,4 +1,6 @@
-from matlib import Mat
+from matlib.mat import Mat
+from renderlib.core import render_mesh
+from renderlib.core import render_text
 
 
 class SceneRenderContext:
@@ -158,10 +160,10 @@ class RootNode(SceneNode):
         self.t = Mat()
 
         def render_all(node, parent_transform):
-            self.t.identity()
+            self.t.ident()
             self.t *= parent_transform
             self.t *= node.transform
-            new_t = Mat(self.t)
+            new_t = Mat() * self.t
             node.render(ctx, new_t)
 
             for child in node.children:
@@ -169,3 +171,60 @@ class RootNode(SceneNode):
 
         for child in self.children:
             render_all(child, self.transform)
+
+
+class MeshNode(SceneNode):
+    """A node for attaching geometry (mesh) to the scene."""
+
+    def __init__(self, mesh, props):
+        """Constructor.
+
+        :param mesh: Instance of the mesh to render.
+        :type mesh: :class:`renderlib.mesh.Mesh`
+
+        :param props: Instance of mesh rendering properties container.
+        :tyep props: :class:`renderlib.core.MeshRenderProps`
+        """
+        super().__init__()
+        self.mesh = mesh
+        self.props = props
+
+    def render(self, ctx, transform):
+        self.props.model = transform
+        self.props.view = ctx.modelview
+        self.props.projection = ctx.projection
+        render_mesh(self.mesh, self.props)
+
+
+class TextNode(SceneNode):
+    """A node for rendering text."""
+
+    def __init__(self, text, props):
+        """Constructor.
+
+        :param text: Text renderable instance.
+        :type text: :class:`renderlib.text.Text`
+
+        :param props: Text rendering properties container.
+        :type text: :class:`renderlib.core.TextRenderProps`
+        """
+        super().__init__()
+        self.text = text
+        self.props = props
+
+    def render(self, ctx, transform):
+        self.props.model = transform
+        self.props.view = ctx.modelview
+        self.props.projection = ctx.projection
+        render_text(self.text, self.props)
+
+
+class LightNode(SceneNode):
+    """Light source node."""
+
+    def __init__(self, light):
+        super().__init__()
+        self.light = light
+
+    def render(self, ctx, transform):
+        self.light.transform = ctx.projection * ctx.modelview * transform

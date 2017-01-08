@@ -12,10 +12,12 @@ from game.events import ActorStatusChange
 from math import atan
 from math import copysign
 from math import pi
-from matlib import Vec
-from renderer.texture import Texture
+from matlib.vec import Vec
 from renderer.scene import SceneNode
-from surrender import AnimationInstance
+from renderlib.animation import AnimationInstance
+from renderlib.core import Material
+from renderlib.core import MeshRenderProps
+from renderlib.texture import Texture
 from utils import to_scene
 import logging
 
@@ -67,11 +69,11 @@ class Actor(Entity):
         ActorType.zombie: (pi, 0.05),
     }
 
-    def init_animations(self, mesh_data):
+    def init_animations(self, mesh):
         self.animations = {}
         for i in range(3):
             try:
-                self.animations[i] = AnimationInstance(mesh_data.animations[i])
+                self.animations[i] = AnimationInstance(mesh.animations[i])
             except IndexError:
                 self.animations[i] = None
 
@@ -93,27 +95,29 @@ class Actor(Entity):
         # the health bar.
         self._health = health
 
-        shader = resource['shader']
-        mesh = resource['model']['mesh']
-        md = resource['model']['mesh_data']
+        mesh = resource['model']
 
         # root transformation to apply to the mesh
-        self.transform = md.transform
+        self.transform = mesh.transform
 
         # instantiate animations
-        self.init_animations(md)
+        self.init_animations(mesh)
         self.current_anim = self.animations[action_anim_index(ActionType.idle)]
 
-        texture = Texture.from_image(resource['texture'])
+        # create a 2D texture from texture image
+        texture = Texture.from_image(
+            resource['texture'],
+            Texture.TextureType.texture_2d)
 
-        # shader params
-        params = {
-            'tex': texture,
-            'opacity': 1.0,
-            'color_ambient': Vec(0, 0, 0, 1),
-            'color_diffuse': Vec(0, 0, 0, 1),
-            'color_specular': Vec(0.1, 0.1, 0.1, 1),
-        }
+        # create a material
+        material = Material()
+        material.texture = texture
+        material.opacity = 1.0
+
+        # rendering props
+        props = MeshRenderProps()
+        props.material = material
+        props.animation = self.current_anim
 
         # Initialize movable component
         movable = Movable((0.0, 0.0))
@@ -123,7 +127,7 @@ class Actor(Entity):
         # something better here.
         self.group_node = SceneNode()
         g_transform = self.group_node.transform
-        g_transform.translate(to_scene(*movable.position))
+        g_transform.translatev(to_scene(*movable.position))
         parent_node.add_child(self.group_node)
 
         self.health_bar = HealthBar(
@@ -131,17 +135,7 @@ class Actor(Entity):
             resource.data.get('hb_y_offset'))
 
         # create components
-        renderable = Renderable(
-            self.group_node,
-            mesh,
-            shader,
-            params,
-            textures=[texture],
-            enable_light=True,
-            animation=self.current_anim)
-
-        # by default, start with playing animation
-        renderable.animate = True
+        renderable = Renderable(self.group_node, mesh, props)
 
         # initialize actor
         super().__init__(renderable, movable)
@@ -260,16 +254,16 @@ class Actor(Entity):
         # FIXME: I don't like the idea of saving the group node here. We need
         # something better here.
         g_t = self.group_node.transform
-        g_t.identity()
-        g_t.translate(to_scene(x, y))
+        g_t.ident()
+        g_t.translatev(to_scene(x, y))
 
         rot, scale = self.TRANSFORMS[self.actor_type]
         t = self[Renderable].transform
-        t.identity()
+        t.ident()
         t *= self.transform
-        t.rotate(Vec(0, 1, 0), rot)  # FIXME
-        t.rotate(Vec(0, 1, 0), -self.heading)
-        t.scale(Vec(scale, scale, scale))
+        t.rotatev(Vec(0, 1, 0), rot)  # FIXME
+        t.rotatev(Vec(0, 1, 0), -self.heading)
+        t.scalev(Vec(scale, scale, scale))
 
         self.orientate()
 

@@ -1,3 +1,4 @@
+# from game.ui import UI
 from context import Context
 from events import send_event
 from game.actions import ray_cast
@@ -8,18 +9,18 @@ from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import PlayerJoin
 from game.gamestate import process_gamestate
-from game.ui import UI
 from itertools import count
-from matlib import Vec
+from matlib.vec import Vec
 from network import Message
 from network import MessageField as MF
 from network import MessageType as MT
 from network import get_message_handlers
 from network import message_handler
 from renderer.camera import PerspCamera
-from renderer.light import Light
-from renderer.light import LightNode
+from renderer.scene import LightNode
 from renderer.scene import Scene
+from renderlib.core import Light
+from unittest.mock import MagicMock
 from utils import as_utf8
 from utils import tstamp
 import logging
@@ -83,14 +84,15 @@ class Client:
         context.map = self.setup_map(context)
 
         # Setup UI
-        ui_res = context.res_mgr.get('/ui')
-        player_data = {
-            'name': context.character_name,
-            'type': context.character_type,
-            'avatar': context.character_avatar,
-            'avatar_res': c_res['avatar'],
-        }
-        context.ui = UI(ui_res, player_data, self.renderer)
+        # ui_res = context.res_mgr.get('/ui')
+        # player_data = {
+        #     'name': context.character_name,
+        #     'type': context.character_type,
+        #     'avatar': context.character_avatar,
+        #     'avatar_res': c_res['avatar'],
+        # }
+        # context.ui = UI(ui_res, player_data, self.renderer)
+        context.ui = MagicMock()  # TODO: remove this
         self.context = context
 
         # Client status variable
@@ -119,7 +121,7 @@ class Client:
 
         light = Light()
         light_node = scene.root.add_child(LightNode(light))
-        light_node.transform.translate(Vec(0, 10, 10))
+        light_node.transform.translatev(Vec(0, 10, 10))
 
         return scene
 

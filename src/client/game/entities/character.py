@@ -8,9 +8,11 @@ from game.events import ActorStatusChange
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
 from game.events import CharacterJoin
-from matlib import Vec
-from renderer.font import Font
-from renderer.text import TextNode
+from matlib.vec import Vec
+from renderer.scene import TextNode
+from renderlib.core import TextRenderProps
+from renderlib.font import Font
+from renderlib.text import Text
 import logging
 import math
 
@@ -35,25 +37,23 @@ class Label:
         """
         context = Context.get_instance()
 
-        self.font = Font(resource['font'], 14)
-        self.shader = resource['font_shader']
-        self.color = Vec(0.7, 0.7, 0.7, 0)
+        font = resource['font'].get_size(14)
+        text = Text(font, name)
 
-        self.node = parent_node.add_child(TextNode(
-            self.font,
-            self.shader,
-            name,
-            self.color))
+        props = TextRenderProps()
+        props.color = Vec(0.7, 0.7, 0.7, 0)
+
+        self.node = parent_node.add_child(TextNode(text, props))
 
         self.ratio = context.ratio
-        text_w = self.node.width
+        text_w = self.node.text.width
         self.translation = Vec(-text_w * context.ratio * 0.5, 3.5, 0)
         self.scale = Vec(context.ratio, context.ratio, context.ratio)
 
         t = self.node.transform
-        t.translate(self.translation)
-        t.rotate(Vec(1, 0, 0), math.pi / 2)
-        t.scale(self.scale)
+        t.translatev(self.translation)
+        t.rotatev(Vec(1, 0, 0), math.pi / 2)
+        t.scalev(self.scale)
 
     @property
     def text(self):
@@ -80,10 +80,10 @@ class Label:
         self.scale = Vec(self.ratio, self.ratio, self.ratio)
 
         t = self.node.transform
-        t.identity()
-        t.translate(self.translation)
-        t.rotate(Vec(1, 0, 0), math.pi / 2)
-        t.scale(self.scale)
+        t.ident()
+        t.translatev(self.translation)
+        t.rotatev(Vec(1, 0, 0), math.pi / 2)
+        t.scalev(self.scale)
 
     def update(self):
         """Update the rotation of the label to always be pointing to the camera.
@@ -98,10 +98,10 @@ class Label:
         # NOTE: also scaling and tranlsation are applied here.
         angle = math.acos(z_axis.dot(direction))
         t = self.node.transform
-        t.identity()
-        t.translate(self.translation)
-        t.rotate(Vec(1, 0, 0), angle)
-        t.scale(self.scale)
+        t.ident()
+        t.translatev(self.translation)
+        t.rotatev(Vec(1, 0, 0), angle)
+        t.scalev(self.scale)
 
 
 class Character(Actor):
@@ -124,7 +124,7 @@ class Character(Actor):
         super().__init__(resource, actor_type, health, parent_node)
 
         self._name = name
-        # self.name_node = Label(resource, name, self.group_node)
+        self.name_node = Label(resource, name, self.group_node)
 
     @property
     def name(self):
@@ -133,11 +133,11 @@ class Character(Actor):
     @name.setter
     def name(self, name):
         self._name = name
-        # self.name_node.text = name
+        self.name_node.text.string = name
 
     def update(self, dt):
         super().update(dt)
-        # self.name_node.update()
+        self.name_node.update()
 
 
 @subscriber(ActorSpawn)

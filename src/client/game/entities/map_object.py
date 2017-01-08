@@ -6,11 +6,13 @@ from game.entities.entity import Entity
 from game.events import EntityPick
 from game.events import ObjectSpawn
 from math import pi
-from matlib import Vec
+from matlib.vec import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
-from renderer.texture import Texture
+from renderlib.core import Material
+from renderlib.core import MeshRenderProps
+from renderlib.texture import Texture
 from utils import to_scene
 import logging
 
@@ -43,34 +45,26 @@ class MapObject(Entity):
         :type parent_node: :class:`renderer.scene.SceneNode`
         """
         mesh = resource['model']
-        shader = resource['shader']
-        texture = Texture.from_image(resource['texture'])
+        texture = Texture.from_image(
+            resource['texture'],
+            Texture.TextureType.texture_2d)
 
-        # shader params
-        params = {
-            'tex': texture,
-            'animate': 0,
-            'opacity': 1.0,
-            'color_ambient': Vec(0, 0, 0, 1),
-            'color_diffuse': Vec(0, 0, 0, 1),
-            'color_specular': Vec(0.1, 0.1, 0.1, 1),
-        }
+        material = Material()
+        material.texture = texture
+        material.opacity = 1.0
 
-        renderable = Renderable(
-            parent_node,
-            mesh,
-            shader,
-            params,
-            textures=[texture],
-            enable_light=True)
+        props = MeshRenderProps()
+        props.material = material
+
+        renderable = Renderable(parent_node, mesh, props)
 
         super().__init__(renderable)
 
-        self[Renderable].transform.translate(
+        self[Renderable].transform.translatev(
             to_scene(*parameters['pos']))
 
         if 'rotation' in parameters:
-            self[Renderable].transform.rotate(
+            self[Renderable].transform.rotatev(
                 Y_AXIS, parameters['rotation'] * pi / 180)
 
         # FIXME: hardcoded bounding box

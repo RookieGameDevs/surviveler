@@ -1,6 +1,6 @@
 from abc import ABC
-from matlib import Mat
-from matlib import Vec
+from matlib.mat import Mat
+from matlib.vec import Vec
 
 
 class Camera(ABC):
@@ -24,8 +24,8 @@ class Camera(ABC):
         :type center: :class:`matlib.Vec`
         """
         self.position = center
-        self.translate_mat.identity()
-        self.translate_mat.translate(-center)
+        self.translate_mat.ident()
+        self.translate_mat.translatev(-center)
 
     def look_at(self, eye, center, up=None):
         """Sets up camera look transformation.
@@ -40,8 +40,8 @@ class Camera(ABC):
         :type up: :class:`matlib.Vec`
         """
         up = up or Vec(0, 1, 0)
-        self.modelview_mat.identity()
-        self.modelview_mat.lookat(eye, center, up)
+        self.modelview_mat.ident()
+        self.modelview_mat.lookatv(eye, center, up)
 
     def unproject(self, vx, vy, vz, vw, vh):
         """Unprojects a point in viewport coordinates into world coordinates.
@@ -71,7 +71,7 @@ class Camera(ABC):
         v_clip = Vec(x_ndc, y_ndc, z_ndc, w_ndc)
 
         m = self.projection * self.modelview
-        m.invert()
+        m.inverse()
 
         out = m * v_clip
         out.w = 1.0 / out.w

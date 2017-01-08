@@ -1,6 +1,6 @@
 from events import send_event
-from game.entities.actor import ActorType
 from game.entities.actor import ActionType
+from game.entities.actor import ActorType
 from game.entities.building import BuildingType
 from game.events import ActorActionChange
 from game.events import ActorDisappear

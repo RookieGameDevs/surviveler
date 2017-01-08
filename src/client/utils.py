@@ -1,5 +1,5 @@
 from datetime import datetime
-from matlib import Vec
+from matlib.vec import Vec
 import math
 
 

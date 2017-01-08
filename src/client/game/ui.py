@@ -184,8 +184,8 @@ class UI:
         tx = x - self.w / 2
         ty = self.h / 2 - y
         node.transform.identity()
-        node.transform.translate(Vec(tx, ty, -0.5))
-        node.transform.rotate(Vec(1, 0, 0), pi / 2)
+        node.transform.translatev(Vec(tx, ty, -0.5))
+        node.transform.rotatev(Vec(1, 0, 0), pi / 2)
 
     def set_fps(self, number):
         """Set the current frame rate in FPS widget.

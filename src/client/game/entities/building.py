@@ -8,12 +8,14 @@ from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
 from game.events import EntityPick
-from matlib import Vec
+from matlib.vec import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
 from renderer.scene import SceneNode
-from renderer.texture import Texture
+from renderlib.core import Material
+from renderlib.core import MeshRenderProps
+from renderlib.texture import Texture
 from utils import to_scene
 import logging
 
@@ -55,32 +57,34 @@ class Building(Entity):
         self._progress = progress
         self.completed = completed
 
-        shader = resource['shader']
-        texture = Texture.from_image(resource['texture'])
+        # create texture
+        texture = Texture.from_image(
+            resource['texture'],
+            Texture.TextureType.texture_2d)
         self.mesh_project = resource['model_project']
         self.mesh_complete = resource['model_complete']
+
+        # create material
+        material = Material()
+        material.texture = texture
+        material.opacity = 1.0
+
+        # create render props
+        props = MeshRenderProps()
+        props.material = material
 
         # Setup the group node and add the health bar
         group_node = SceneNode()
         g_transform = group_node.transform
-        g_transform.translate(to_scene(*position))
+        g_transform.translatev(to_scene(*position))
         parent_node.add_child(group_node)
 
         self.health_bar = HealthBar(
             resource['health_bar'], progress[0] / progress[1], group_node)
 
-        params = {
-            'tex': texture,
-        }
 
         # create components
-        renderable = Renderable(
-            group_node,
-            self.mesh,
-            shader,
-            params,
-            textures=[texture],
-            enable_light=True)
+        renderable = Renderable(group_node, self.mesh, props)
 
         # initialize entity
         super().__init__(renderable)
