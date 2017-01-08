@@ -67,7 +67,6 @@ class Building(Entity):
         # create material
         material = Material()
         material.texture = texture
-        material.opacity = 1.0
 
         # create render props
         props = MeshRenderProps()

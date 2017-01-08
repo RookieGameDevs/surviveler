@@ -51,7 +51,6 @@ class BuildingTemplate(Entity):
         # create material
         material = Material()
         material.color = self.BUILDABLE_COLOR
-        material.opacity = 1.0
 
         # create render props container
         props = MeshRenderProps()

@@ -25,7 +25,6 @@ class Terrain(Entity):
 
         material = Material()
         material.texture = texture
-        material.opacity = 1.0
 
         props = MeshRenderProps()
         props.material = material

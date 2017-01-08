@@ -5,6 +5,7 @@ from math import acos
 from math import pi
 from matlib.vec import Vec
 from renderer.primitives import Rect
+from renderlib.core import Material
 from renderlib.core import MeshRenderProps
 import logging
 
@@ -31,7 +32,7 @@ class HealthBar(Entity):
             defaults to the resource value
         :type y_offset: :class:`float`
         """
-        self.value = value
+        self._value = value
         self.w = resource.data['width']
         self.h = resource.data['height']
         self.y_offset = y_offset or resource.data['y_offset']
@@ -41,9 +42,11 @@ class HealthBar(Entity):
             mesh = Rect(self.w, self.h)
             resource.userdata['mesh'] = mesh
 
+        material = Material()
+        material.color = Vec(0.2, 0.4, 1)
+
         props = MeshRenderProps()
-        props.color = Vec(0.2, 0.4, 1)
-        props.opacity = 1.0
+        props.material = material
 
         renderable = Renderable(parent_node, mesh, props)
 
@@ -51,6 +54,25 @@ class HealthBar(Entity):
         t.translatev(Vec(-self.w / 2, self.y_offset, 0))
 
         super().__init__(renderable)
+
+    @property
+    def value(self):
+        """Returns the value [0,1] of that is currently displayed.
+
+        :returns: The value of the health bar
+        :rtype: :class:`float`
+        """
+        return self._value
+
+    @value.setter
+    def value(self, v):
+        """Sets the value [0,1] to be displayed.
+
+        :param v: The value of the health bar
+        :type v: :class:`float`
+        """
+        # TODO: change the visual appearance of the healthbar
+        self._value = float(v)
 
     def destroy(self):
         """Removes itself from the scene.

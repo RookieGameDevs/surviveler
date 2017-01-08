@@ -112,7 +112,6 @@ class Actor(Entity):
         # create a material
         material = Material()
         material.texture = texture
-        material.opacity = 1.0
 
         # rendering props
         props = MeshRenderProps()
