@@ -31,8 +31,7 @@ class HealthBar(Entity):
             defaults to the resource value
         :type y_offset: :class:`float`
         """
-        self._value = float(value)
-
+        self.value = value
         self.w = resource.data['width']
         self.h = resource.data['height']
         self.y_offset = y_offset or resource.data['y_offset']
@@ -44,6 +43,7 @@ class HealthBar(Entity):
 
         props = MeshRenderProps()
         props.color = Vec(0.2, 0.4, 1)
+        props.opacity = 1.0
 
         renderable = Renderable(parent_node, mesh, props)
 
@@ -52,25 +52,6 @@ class HealthBar(Entity):
         t.rotatev(Vec(1, 0, 0), pi / 2)
 
         super().__init__(renderable)
-
-    @property
-    def value(self):
-        """Returns the value [0,1] of that is currently displayed.
-
-        :returns: The value of the health bar
-        :rtype: :class:`float`
-        """
-        return self._value
-
-    @value.setter
-    def value(self, v):
-        """Sets the value [0,1] to be displayed.
-
-        :param v: The value of the health bar
-        :type v: :class:`float`
-        """
-        self._value = float(v)
-        self[Renderable].node.params['value'] = self._value
 
     def destroy(self):
         """Removes itself from the scene.
