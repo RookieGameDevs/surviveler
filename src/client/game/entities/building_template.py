@@ -23,15 +23,9 @@ LOG = logging.getLogger(__name__)
 class BuildingTemplate(Entity):
     """Game entity which represents a building template."""
 
-    BUILDABLE_COLOR = {
-        'color_ambient': Vec(0.0, 0.6, 0.2, 1),
-        'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
-    }
+    BUILDABLE_COLOR = Vec(0.0, 0.8, 0.4, 1)
 
-    NON_BUILDABLE_COLOR = {
-        'color_ambient': Vec(0.8, 0.0, 0.1, 1),
-        'color_diffuse': Vec(1, 0.0, 0.2, 1),
-    }
+    NON_BUILDABLE_COLOR = Vec(1, 0.0, 0.2, 1)
 
     def __init__(self, resource, matrix, scale_factor, parent_node):
         """Constructor.
@@ -52,17 +46,16 @@ class BuildingTemplate(Entity):
         self.matrix = matrix
         self.scale_factor = scale_factor
 
+        mesh = resource['model_complete']
+
         # create material
         material = Material()
-        # TODO: use proper colors from BUILDABLE_COLOR and NON_BUILDABLE_COLOR
-        material.color = Vec(1, 1, 1, 1)
+        material.color = self.BUILDABLE_COLOR
         material.opacity = 1.0
 
         # create render props container
         props = MeshRenderProps()
         props.material = material
-
-        mesh = resource['model_complete']
 
         # create components
         renderable = Renderable(parent_node, mesh, props)
@@ -90,9 +83,9 @@ class BuildingTemplate(Entity):
 
         m_x, m_y = to_matrix(x, y, self.scale_factor)
         if not in_matrix(self.matrix, m_x, m_y) or not self.matrix[m_y][m_x]:
-            self[Renderable].node.params.update(self.NON_BUILDABLE_COLOR)
+            self[Renderable].node.props.material.color = self.NON_BUILDABLE_COLOR
         else:
-            self[Renderable].node.params.update(self.BUILDABLE_COLOR)
+            self[Renderable].node.props.material.color = self.BUILDABLE_COLOR
 
         t = self[Renderable].transform
         t.ident()
