@@ -1,12 +1,12 @@
 from context import Context
 from game.components import Renderable
 from game.entities.entity import Entity
+from math import acos
 from math import pi
 from matlib.vec import Vec
 from renderer.primitives import Rect
 from renderlib.core import MeshRenderProps
 import logging
-import math
 
 
 LOG = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ class HealthBar(Entity):
         z_axis = Vec(0, 0, 1)
 
         # Find the angle between the camera and the health bar, then rotate it.
-        angle = math.acos(z_axis.dot(direction))
+        angle = acos(z_axis.dot(direction))
         t = self[Renderable].transform
         t.ident()
         t.translatev(Vec(-self.w / 2, self.y_offset, 0))
