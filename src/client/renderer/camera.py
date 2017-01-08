@@ -70,8 +70,7 @@ class Camera(ABC):
         w_ndc = 1.0
         v_clip = Vec(x_ndc, y_ndc, z_ndc, w_ndc)
 
-        m = self.projection * self.modelview
-        m.inverse()
+        m = (self.projection * self.modelview).inverse()
 
         out = m * v_clip
         out.w = 1.0 / out.w
