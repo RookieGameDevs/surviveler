@@ -1,5 +1,6 @@
 from matlib.mat import Mat
 from renderlib.core import render_mesh
+from renderlib.core import render_quad
 from renderlib.core import render_text
 
 
@@ -217,6 +218,45 @@ class TextNode(SceneNode):
         self.props.view = ctx.modelview
         self.props.projection = ctx.projection
         render_text(self.text, self.props)
+
+
+class QuadNode(SceneNode):
+    """A node for rendering 2D quads."""
+
+    def __init__(self, size, props):
+        """Constructor.
+
+        :param size: Size of the quad.
+        :type size: tuple or list
+
+        :param props: Quad rendering properties container.
+        :type props: :class:`renderlib.core.QuadRenderProps`
+        """
+        super().__init__()
+        self._width, self._height = size
+        self.props = props
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, w):
+        self._width = w
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, h):
+        self._height = h
+
+    def render(self, ctx, transform):
+        self.props.model = transform
+        self.props.view = ctx.modelview
+        self.props.projection = ctx.projection
+        render_quad(self.width, self.height, self.props)
 
 
 class LightNode(SceneNode):

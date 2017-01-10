@@ -1,4 +1,5 @@
 from exceptions import ConfigError
+from renderlib.core import renderer_clear
 from renderlib.core import renderer_init
 from renderlib.core import renderer_present
 from renderlib.core import renderer_shutdown
@@ -84,7 +85,7 @@ class Renderer:
 
     def clear(self):
         """Clear buffers."""
-        # TODO
+        renderer_clear()
 
     def present(self):
         """Present updated buffers to screen."""

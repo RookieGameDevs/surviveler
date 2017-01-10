@@ -8,10 +8,10 @@ from matlib.vec import Vec
 from renderer.camera import OrthoCamera
 from renderer.primitives import Rect
 from renderer.scene import MeshNode
+from renderer.scene import QuadNode
 from renderer.scene import Scene
 from renderer.scene import TextNode
-from renderlib.core import Material
-from renderlib.core import MeshRenderProps
+from renderlib.core import QuadRenderProps
 from renderlib.core import TextRenderProps
 from renderlib.text import Text
 from renderlib.texture import Texture
@@ -40,18 +40,10 @@ class HealthBar:
         self.w = width
         self.h = height
 
-        mesh = resource.userdata.get('mesh')
-        if not mesh:
-            mesh = Rect(self.w, self.h)
-            resource.userdata['mesh'] = mesh
+        props = QuadRenderProps()
+        props.color = Vec(0.2, 0.4, 1, 1)
 
-        material = Material()
-        material.color = Vec(0.2, 0.4, 1, 1)
-
-        props = MeshRenderProps()
-        props.material = material
-
-        self.node = MeshNode(mesh, props)
+        self.node = QuadNode((width, height), props)
 
     @property
     def value(self):
@@ -81,18 +73,14 @@ class Avatar:
         self.w = resource.data['width']
         self.h = resource.data['height']
 
-        mesh = Rect(self.w, self.h)
         texture = Texture.from_image(
             resource[ref],
             Texture.TextureType.texture_rectangle)
 
-        material = Material()
-        material.texture = texture
+        props = QuadRenderProps()
+        props.texture = texture
 
-        props = MeshRenderProps()
-        props.material = material
-
-        self.node = MeshNode(mesh, props)
+        self.node = QuadNode((self.w, self.h), props)
 
 
 class UI:
@@ -120,7 +108,7 @@ class UI:
             0,
             1)
 
-        font = resource['font'].get_size(14)
+        font = resource['font'].get_size(16)
         props = TextRenderProps()
         props.color = Vec(1, 1, 1, 1)
 
