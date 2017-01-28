@@ -1,3 +1,0 @@
-[submodule "src/client/deps/renderlib"]
-	path = src/client/deps/renderlib
-	url = git@github.com:RookieGameDevs/renderlib.git
