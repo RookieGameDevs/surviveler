@@ -158,17 +158,12 @@ class RootNode(SceneNode):
     """
 
     def render(self, ctx, transform=None):
-        self.t = Mat()
-
         def render_all(node, parent_transform):
-            self.t.ident()
-            self.t *= parent_transform
-            self.t *= node.transform
-            new_t = Mat() * self.t
-            node.render(ctx, new_t)
+            t = parent_transform * node.transform
+            node.render(ctx, t)
 
             for child in node.children:
-                render_all(child, new_t)
+                render_all(child, t)
 
         for child in self.children:
             render_all(child, self.transform)
@@ -191,7 +186,7 @@ class MeshNode(SceneNode):
         self.props = props
 
     def render(self, ctx, transform):
-        self.props.model = transform
+        self.props.model = transform * self.mesh.transform
         self.props.view = ctx.modelview
         self.props.projection = ctx.projection
         render_mesh(self.mesh, self.props)

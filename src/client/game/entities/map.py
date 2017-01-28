@@ -31,7 +31,7 @@ class Map(Entity):
 
         props = MeshRenderProps()
         props.material = material
-        props.receive_shadows = True
+        props.receive_shadows = False
         props.cast_shadows = False
         props.light = Context.get_instance().light
         renderable = Renderable(parent_node, mesh, props)
