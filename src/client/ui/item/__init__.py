@@ -270,11 +270,8 @@ class Item(metaclass=ABCMeta):
         binding = 'binding'
         bound = 'bound'
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor.
-
-        :param parent: The parent item
-        :type parent: :class:`Item`
 
         Keyword Arguments:
             * position (:class:`..util.point.Point`): The item position relative to
@@ -284,8 +281,9 @@ class Item(metaclass=ABCMeta):
             * anchor (:class:`.Anchor`): The item anchor override
             * margin (:class:`.Margin`): The item margin override
             * on (:class:`dict`): The dictionary containing the listeners
+            * children (:class:`dict`): The dictionary of children
         """
-        self.parent = parent
+        self.parent = None
         self.children = OrderedDict()
         self._binding_state = Item.BindingState.unbound
 
@@ -308,6 +306,9 @@ class Item(metaclass=ABCMeta):
 
         # Event listeners
         self._on = kwargs.get('on', {})
+
+        for ref, child in kwargs.get('children', {}).items():
+            self.add_child(ref, child)
 
     def traverse(self, listen_to=None, pos=None):
         """Traverses the item subtree.
@@ -601,6 +602,7 @@ class Item(metaclass=ABCMeta):
         :type item: :class:`ui.item.Item`
         """
         self.children[ref] = item
+        item.parent = self
 
     def get_child(self, name):
         """Returns the child of the appropriate name.ABCMeta

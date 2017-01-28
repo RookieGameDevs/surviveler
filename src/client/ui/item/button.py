@@ -1,8 +1,8 @@
 """Button item module"""
 
 from . import Item
-from .. import Anchor
-from .. import Margin
+from . import Anchor
+from . import Margin
 from .rect import Rect
 from .text import Text
 
@@ -13,13 +13,10 @@ class Button(Item):
     A simple button with colored background a text.
     """
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor.
 
         FIXME: find a proper way to define fonts.
-
-        :param parent: The parent item
-        :type parent: :class:`ui.item.Item`
 
         Keyword Arguments:
             * position (:class:`..util.point.Point`): The item position relative to
@@ -38,17 +35,17 @@ class Button(Item):
         font = kwargs.pop('font', None)
         color = kwargs.pop('color', None)
         text = kwargs.pop('text', None)
-        super().__init__(parent, **kwargs)
+        super().__init__(**kwargs)
 
         self.add_child(
             'background',
-            Rect(self, background=background, anchor=Anchor.fill()))
+            Rect(background=background, anchor=Anchor.fill()))
 
         self.add_child(
             'label',
             Text(
-                self, font=font, color=color, text=text,
-                anchor=Anchor.fill(), margin=Margin.symmetric(10)))
+                font=font, color=color, text=text, anchor=Anchor.fill(),
+                margin=Margin.symmetric(10)))
 
     def update(self, dt):
         """Button update method.

@@ -18,7 +18,7 @@ class RootItem(Item):
         :param height: The screen height
         :type height: :class:`int`
         """
-        super().__init__(self, position=Point(0, 0), width=width, height=height)
+        super().__init__(position=Point(0, 0), width=width, height=height)
 
         # Root stays in 0, 0
         self._position = Point(0, 0)

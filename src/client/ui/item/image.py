@@ -9,13 +9,10 @@ class Image(Item):
     Concrete implementation of items representing images.
     """
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor.
 
         FIXME: find a proper way to define images
-
-        :param parent: The parent item
-        :type parent: :class:`ui.item.Item`
 
         Keyword Arguments:
             * position (:class:`..util.point.Point`): The item position relative to
@@ -28,7 +25,7 @@ class Image(Item):
             * image (:class:`str`): The image
         """
         image = kwargs.pop('image', None)
-        super().__init__(parent, **kwargs)
+        super().__init__(**kwargs)
         self._image = image
 
     @property

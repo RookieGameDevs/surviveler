@@ -9,13 +9,10 @@ class Text(Item):
     Concrete implementation of items representing texts.
     """
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor.
 
         FIXME: find a proper way to define fonts.
-
-        :param parent: The parent item
-        :type parent: :class:`ui.item.Item`
 
         Keyword Arguments:
             * position (:class:`..util.point.Point`): The item position relative to
@@ -32,7 +29,7 @@ class Text(Item):
         font = kwargs.pop('font', None)
         color = kwargs.pop('color', None)
         text = kwargs.pop('text', '')
-        super().__init__(parent, **kwargs)
+        super().__init__(**kwargs)
         self._font = font
         self._color = color
         self._text = text

@@ -40,7 +40,6 @@ def test_item__with_redundant_width_height(item_cls, parent_item):
     # Explicit width and two horizontal anchor values
     with pytest.raises(ValidationError):
         item_cls(
-            parent_item,
             anchor=Anchor(
                 left='parent.left',
                 right='parent.right',
@@ -48,7 +47,6 @@ def test_item__with_redundant_width_height(item_cls, parent_item):
             width=100, height=100)
     with pytest.raises(ValidationError):
         item_cls(
-            parent_item,
             anchor=Anchor(
                 left='parent.left',
                 hcenter='parent.hcenter',
@@ -56,7 +54,6 @@ def test_item__with_redundant_width_height(item_cls, parent_item):
             width=100, height=100)
     with pytest.raises(ValidationError):
         item_cls(
-            parent_item,
             anchor=Anchor(
                 hcenter='parent.hcenter',
                 right='parent.right',
@@ -65,7 +62,6 @@ def test_item__with_redundant_width_height(item_cls, parent_item):
     # Explicit height and two vertical anchor values
     with pytest.raises(ValidationError):
         item_cls(
-            parent_item,
             anchor=Anchor(
                 top='parent.top',
                 bottom='parent.bottom',
@@ -73,7 +69,6 @@ def test_item__with_redundant_width_height(item_cls, parent_item):
             width=100, height=100)
     with pytest.raises(ValidationError):
         item_cls(
-            parent_item,
             anchor=Anchor(
                 top='parent.top',
                 vcenter='parent.vcenter',
@@ -81,7 +76,6 @@ def test_item__with_redundant_width_height(item_cls, parent_item):
             width=100, height=100)
     with pytest.raises(ValidationError):
         item_cls(
-            parent_item,
             anchor=Anchor(
                 vcenter='parent.vcenter',
                 bottom='parent.bottom',
@@ -91,14 +85,14 @@ def test_item__with_redundant_width_height(item_cls, parent_item):
 
 def test_item__without_information(item_cls, parent_item):
     with pytest.raises(ValidationError):
-        item_cls(parent_item)
+        item_cls()
 
 
 def test_item__with_position_and_size(item_cls, parent_item):
     AT = Anchor.AnchorType
     MT = Margin.MarginType
 
-    item = item_cls(parent_item, position=Point(25, 25), width=30, height=30)
+    item = item_cls(position=Point(25, 25), width=30, height=30)
     parent_item.add_child('child', item)
     parent_item.bind_item()
     assert item.anchor == {
@@ -124,9 +118,9 @@ def test_item__sub_item_with_position_and_size(item_cls, parent_item):
     AT = Anchor.AnchorType
     MT = Margin.MarginType
 
-    item = item_cls(parent_item, position=Point(25, 25), width=30, height=30)
+    item = item_cls(position=Point(25, 25), width=30, height=30)
     parent_item.add_child('child', item)
-    sub_item = item_cls(item, position=Point(25, 25), width=30, height=30)
+    sub_item = item_cls(position=Point(25, 25), width=30, height=30)
     item.add_child('child', sub_item)
     parent_item.bind_item()
     assert sub_item.anchor == {
@@ -150,7 +144,7 @@ def test_item__sub_item_with_position_and_size(item_cls, parent_item):
 
 def test_item__with_anchor_fill(item_cls, parent_item):
     MT = Margin.MarginType
-    item = item_cls(parent_item, anchor=Anchor.fill())
+    item = item_cls(anchor=Anchor.fill())
     parent_item.add_child('child', item)
     parent_item.bind_item()
 
@@ -171,7 +165,6 @@ def test_item__with_cutom_anchor(item_cls, parent_item):
     MT = Margin.MarginType
 
     item = item_cls(
-        parent_item,
         anchor=Anchor(
             top='parent.vcenter',
             bottom='parent.bottom',
@@ -205,7 +198,6 @@ def test_item__with_fill_anchor_and_symmetric_margin(item_cls, parent_item):
     MT = Margin.MarginType
 
     item = item_cls(
-        parent_item,
         anchor=Anchor.fill(),
         margin=Margin.symmetric(MARGIN))
     parent_item.add_child('child', item)
@@ -235,7 +227,6 @@ def test_item__with_complex_anchor_and_margin(item_cls, parent_item):
     MT = Margin.MarginType
 
     item = item_cls(
-        parent_item,
         anchor=Anchor(
             left='parent.left',
             right='parent.hcenter',
@@ -269,28 +260,24 @@ def test_item__with_sibling_dependencies(item_cls, parent_item):
     MT = Margin.MarginType
 
     item1 = item_cls(
-        parent_item,
         anchor=Anchor(
             left='parent.left',
             right='parent.right',
             top='parent.top'),
         height=100)
     item2 = item_cls(
-        parent_item,
         anchor=Anchor(
             left='parent.left',
             right='parent.right',
             top='item1.bottom'),
         height=100)
     item3 = item_cls(
-        parent_item,
         anchor=Anchor(
             left='parent.left',
             right='parent.right',
             top='item2.bottom'),
         height=100)
     item4 = item_cls(
-        parent_item,
         anchor=Anchor(
             left='parent.left',
             right='parent.right',
@@ -377,14 +364,12 @@ def test_item__with_sibling_dependencies(item_cls, parent_item):
 
 def test_item__with_sibling_dependencies__cyclic(item_cls, parent_item):
     item1 = item_cls(
-        parent_item,
         anchor=Anchor(
             left='parent.left',
             right='parent.right',
             bottom='item2.top'),
         height=100)
     item2 = item_cls(
-        parent_item,
         anchor=Anchor(
             left='parent.left',
             right='parent.right',
@@ -400,14 +385,12 @@ def test_item__traverse__no_filters(item_cls, parent_item):
     for i in range(10):
         tid = '{}'.format(i)
         item = item_cls(
-            parent_item,
             test_id=tid,
             anchor=Anchor.fill())
         parent_item.add_child('{}'.format(i), item)
         for j in range(10):
             tid = '{}-{}'.format(i, j)
             sub_item = item_cls(
-                item,
                 test_id=tid,
                 anchor=Anchor.fill())
             item.add_child('{}-{}'.format(i, j), sub_item)
@@ -429,7 +412,6 @@ def test_item__traverse__no_filters(item_cls, parent_item):
 
 def test_item__traverse__pos_filter(item_cls, parent_item):
     item1 = item_cls(
-        parent_item,
         test_id='item1',
         anchor=Anchor(
             top='parent.top',
@@ -439,7 +421,6 @@ def test_item__traverse__pos_filter(item_cls, parent_item):
         ))
     parent_item.add_child('item1', item1)
     item2 = item_cls(
-        parent_item,
         test_id='item2',
         anchor=Anchor(
             top='parent.vcenter',
@@ -459,7 +440,6 @@ def test_item__traverse__pos_filter(item_cls, parent_item):
 
 def test_item__traverse__pos_and_listen_filter(item_cls, parent_item):
     item1 = item_cls(
-        parent_item,
         test_id='item1',
         on={
             'event1': lambda: False,
@@ -472,7 +452,6 @@ def test_item__traverse__pos_and_listen_filter(item_cls, parent_item):
         ))
     parent_item.add_child('item1', item1)
     item2 = item_cls(
-        parent_item,
         test_id='item2',
         on={
             'event2': lambda: False,
@@ -502,7 +481,6 @@ def test_item__traverse__pos_and_listen_filter(item_cls, parent_item):
 
 def test_item__traverse__pos_and_listen_filter__deferred_handler(item_cls, parent_item):
     item1 = item_cls(
-        parent_item,
         test_id='item1',
 
         anchor=Anchor(
@@ -514,7 +492,6 @@ def test_item__traverse__pos_and_listen_filter__deferred_handler(item_cls, paren
     parent_item.add_child('item1', item1)
     item1.on('event1', lambda: False)
     item2 = item_cls(
-        parent_item,
         test_id='item2',
         anchor=Anchor(
             top='parent.vcenter',

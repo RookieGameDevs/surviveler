@@ -9,7 +9,7 @@ class Rect(Item):
     Concrete implementation of items representing rectangles.
     """
 
-    def __init__(self, parent, **kwargs):
+    def __init__(self, **kwargs):
         """Constructor.
 
         :param parent: The parent item
@@ -26,7 +26,7 @@ class Rect(Item):
             * color (:class:`tuple`): The background color
         """
         color = kwargs.pop('color', None)
-        super().__init__(parent, **kwargs)
+        super().__init__(**kwargs)
         self._color = color
 
     @property
