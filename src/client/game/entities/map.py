@@ -1,3 +1,4 @@
+from context import Context
 from game.components import Renderable
 from game.entities.entity import Entity
 from game.entities.map_object import MapObject
@@ -26,9 +27,13 @@ class Map(Entity):
 
         material = Material()
         material.texture = texture
+        material.receive_light = True
 
         props = MeshRenderProps()
         props.material = material
+        props.receive_shadows = True
+        props.cast_shadows = False
+        props.light = Context.get_instance().light
         renderable = Renderable(parent_node, mesh, props)
 
         super().__init__(renderable)

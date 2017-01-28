@@ -1,3 +1,4 @@
+from context import Context
 from enum import IntEnum
 from enum import unique
 from events import subscriber
@@ -51,9 +52,13 @@ class MapObject(Entity):
 
         material = Material()
         material.texture = texture
+        material.receive_light = True
 
         props = MeshRenderProps()
         props.material = material
+        props.cast_shadows = True
+        props.receive_shadows = True
+        props.light = Context.get_instance().light
 
         renderable = Renderable(parent_node, mesh, props)
 

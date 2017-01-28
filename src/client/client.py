@@ -10,6 +10,7 @@ from game.events import PlayerJoin
 from game.gamestate import process_gamestate
 from game.ui import UI
 from itertools import count
+from matlib.mat import Mat
 from matlib.vec import Vec
 from network import Message
 from network import MessageField as MF
@@ -76,7 +77,8 @@ class Client:
         context.matrix = map_res['matrix']
         context.scale_factor = map_res.data['scale_factor']
 
-        # Setup scene, camera, terrain and map
+        # Setup lights, scene, camera, terrain and map
+        context.light = self.setup_light()
         context.scene = self.setup_scene(context)
         context.camera, context.ratio = self.setup_camera(context)
         context.terrain = self.setup_terrain(context)
@@ -117,9 +119,8 @@ class Client:
         """
         scene = Scene()
 
-        light = Light()
-        light_node = scene.root.add_child(LightNode(light))
-        light_node.transform.translatev(Vec(0, 10, 10))
+        # light_node = scene.root.add_child(LightNode(context.light))
+        # light_node.transform.translatev(Vec(0, 10, 10))
 
         return scene
 
@@ -181,6 +182,16 @@ class Client:
 
         ratio = (p1 - p2).mag() / w
         return camera, ratio
+
+    def setup_light(self):
+        light = Light()
+        light.direction = Vec(-5, -5, -5)
+        light.direction.norm()
+        light.color = Vec(1, 1, 1)
+        light.ambient_intensity = 0.3
+        light.diffuse_intensity = 1.0
+
+        return light
 
     @property
     def syncing(self):

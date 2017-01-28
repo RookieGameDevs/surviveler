@@ -1,3 +1,4 @@
+from context import Context
 from game.components import Renderable
 from game.entities.entity import Entity
 from matlib.vec import Vec
@@ -28,6 +29,9 @@ class Terrain(Entity):
 
         props = MeshRenderProps()
         props.material = material
+        props.receive_shadows = True
+        props.cast_shadows = False
+        props.light = Context.get_instance().light
 
         renderable = Renderable(parent_node, mesh, props)
 

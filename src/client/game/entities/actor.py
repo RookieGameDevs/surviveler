@@ -1,3 +1,4 @@
+from context import Context
 from enum import IntEnum
 from enum import unique
 from events import subscriber
@@ -112,11 +113,15 @@ class Actor(Entity):
         # create a material
         material = Material()
         material.texture = texture
+        material.receive_light = True
 
         # rendering props
         props = MeshRenderProps()
         props.material = material
         props.animation = self.current_anim
+        props.receive_shadows = True
+        props.cast_shadows = True
+        props.light = Context.get_instance().light
 
         # Initialize movable component
         movable = Movable((0.0, 0.0))

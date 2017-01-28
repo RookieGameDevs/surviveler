@@ -267,4 +267,20 @@ class LightNode(SceneNode):
         self.light = light
 
     def render(self, ctx, transform):
-        self.light.transform = ctx.projection * ctx.modelview * transform
+        aspect = ctx.renderer.width / ctx.renderer.height
+        proj = Mat()
+        proj.ortho(
+            -5,
+            +5,
+            +5 * aspect,
+            -5 * aspect,
+            0,
+            10)
+
+        view = Mat()
+        view.lookat(
+            0, 5, 5,
+            0, 0, 0,
+            0, 1, 0)
+
+        self.light.transform = proj * view * transform

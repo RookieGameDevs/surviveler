@@ -3,6 +3,8 @@ from events import subscriber
 from game.entities.actor import ActorType
 from game.entities.character import Character
 from game.events import ActorSpawn
+from renderer.scene import LightNode
+from game.components import Renderable
 from utils import to_scene
 import logging
 
@@ -68,6 +70,10 @@ def player_spawn(evt):
         player = Player(resource, evt.actor_type, name, (evt.cur_hp, tot), context.scene.root)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
+        # Create a light node and make it child of the player
+        light_node = LightNode(context.light)
+        light_node.transform.translate(5, 5, 5)
+        player[Renderable].node.add_child(light_node)
 
 
 @subscriber(ActorSpawn)
