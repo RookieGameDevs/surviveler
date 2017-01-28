@@ -242,7 +242,7 @@ class Actor(Entity):
         :type action_type: :class:`game.entities.actor.ActionType`
         """
         anim = self.animations[action_anim_index(action_type)]
-        self[Renderable].animation = self.current_anim = anim
+        self[Renderable].node.props.animation = self.current_anim = anim
 
     def update(self, dt):
         """Update the character.
