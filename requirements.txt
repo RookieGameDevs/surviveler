@@ -2,3 +2,5 @@ click==6.7
 msgpack-python==0.4.8
 Pillow==4.0.0
 PySDL2==0.9.5
+matlib==0.1.5
+renderlib==0.1.2
