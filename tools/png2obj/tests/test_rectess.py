@@ -124,8 +124,8 @@ def get_polygon(vertices, indices):
 def test_cover(case):
     polygon = [case['vertices'][i] for i in case['perimeter']]
     if polygon:
-        tu.draw_polygon(polygon, zoom=60, speed=1)
+        tu.draw_polygon(polygon, zoom=60, speed=3)
     for face in case['expected']:
-        tu.draw_polygon([case['vertices'][i] for i in face], zoom=60, speed=1, color=tu.get_random_color())
+        tu.draw_polygon([case['vertices'][i] for i in face], zoom=60, speed=3, color=tu.get_random_color())
     tu.clear()
 
