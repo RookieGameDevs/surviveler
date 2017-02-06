@@ -120,6 +120,7 @@ def get_polygon(vertices, indices):
     return [vertices[i] for i in vertices]
 
 
+@pytest.mark.skip('blender will cover the walls')
 @pytest.mark.parametrize('case', TEST_CASES, ids=lambda s: s['description'])
 def test_cover(case):
     polygon = [case['vertices'][i] for i in case['perimeter']]
