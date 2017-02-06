@@ -361,128 +361,119 @@ def triangulate_walls(wall_perimeters: List[WallPerimeter], holes: List[Vertex2D
     return ret
 
 
-class BlocksMap(dict):
+def build_walls(walls_map: Mapping, map_size: Tuple[int, int], box_size: int=1, turtle=False) -> List[List[Vertex2D]]:
     """
-    Class to perform operation on a blocks map, a dict of non-walkable boxes
-    (not exactly a walkable matrix).
+    Main function (edge detection): builds the list of wall perimeters.
 
-    TODO: Use a walkable matrix instead, eventually.
+    TODO: Use a walkable matrix instead of walls_map.
     """
-    def __init__(self, data: Mapping, map_size: Tuple[int, int], box_size: int=1) -> None:
-        super().__init__(data)
-        self.map = data
-        self.map_size = map_size
-        self.box_size = box_size
 
-    def get_grid_vertices(self) -> Iterable[Vertex2D]:
+    def get_grid_vertices() -> Iterable[Vertex2D]:
         """Returns an iterator for all map virtual "grid" vertices,
         so regardless they are part of a wall or not.
         """
-        width, height = self.map_size
+        width, height = map_size
         for bx in range(width):
             for by in range(height):
-                x = bx * self.box_size
-                y = by * self.box_size
+                x = bx * box_size
+                y = by * box_size
                 yield (x, y)
 
-    def map_vertex(self, xy: Vertex2D) -> Pos:
+    def map_vertex(xy: Vertex2D) -> Pos:
         """Given a vertex position, returns the map box whose the
         vertex is the top-left one.
         """
         x, y = xy
-        return int(x / self.box_size), int(y / self.box_size)
+        return int(x / box_size), int(y / box_size)
 
-    def vertex2boxes(self, xy: Vertex2D) -> VertexBoxes:
+    def vertex2boxes(xy: Vertex2D) -> VertexBoxes:
         """Returns the 4 neighbour map boxes (white or not)
         which share the same given vertex.
         """
-        bx, by = self.map_vertex(xy)
+        bx, by = map_vertex(xy)
         return VertexBoxes(upleft=(bx - 1, by - 1), upright=(bx, by - 1), downleft=(bx - 1, by), downright=(bx, by))
 
-    def boxes2block_matrix(self, boxes: VertexBoxes) -> Tuple[Pos, Pos]:
+    def boxes2block_matrix(boxes: VertexBoxes) -> Tuple[Pos, Pos]:
         """Given 4 vertex boxes, returns a 2x2 tuple with walkable/non-walkable info.
         """
-        return ((self.map.get(boxes.upleft, 0), self.map.get(boxes.upright, 0)), (self.map.get(boxes.downleft, 0), self.map.get(boxes.downright, 0)))
+        return ((walls_map.get(boxes.upleft, 0), walls_map.get(boxes.upright, 0)), (walls_map.get(boxes.downleft, 0), walls_map.get(boxes.downright, 0)))
 
-    def build(self, turtle: bool=False) -> List[List[Vertex2D]]:
-        """Main method (edge detection): builds the list of wall perimeters.
-        """
-        ret = []  # type: List[WallPerimeter]
+    ret = []  # type: List[WallPerimeter]
+
+    if turtle:
+        logo.mode('logo')
+        logo.speed(11)
+        drawsize = int(DRAW_SIZE / (1 + max(map(max, walls_map)))) if walls_map else 0  # type: ignore
+
+    if not walls_map:
+        return []
+
+    tracked_vertices = Counter()  # type: Dict[Vertex2D, int]
+
+    for iv, vertex in enumerate(get_grid_vertices()):
+        v_boxes = vertex2boxes(vertex)
+        blocks_matrix = boxes2block_matrix(v_boxes)
+        versors = POSSIBLE_DIRECTIONS[blocks_matrix]
+        n_versors = len(versors)
+        if n_versors == 0:
+            # not a border verdex
+            # inside 4 blocks or 4 empty cells
+            continue
+
+        n_passes = tracked_vertices[vertex]
+        if n_versors == 4:
+            # should pass by here exactly 2 times
+            if n_passes > 1:
+                continue
+
+        elif n_passes > 0:
+            continue
+
+        # start new wall perimeter from this disjointed block
+        wall_perimeter = []
+
+        first_vertex = vertex
+        old_versor = (0, 0)  # like a `None` but supporting the array sum
+        versor = old_versor
+        wall_perimeter.append(vertex)
+        wall_vertex = vertex
 
         if turtle:
-            logo.mode('logo')
-            logo.speed(11)
-            drawsize = int(DRAW_SIZE / (1 + max(map(max, self.map)))) if self.map else 0  # type: ignore
+            logo.penup()
+            logo.setpos(wall_vertex[0] * drawsize - drawsize, -wall_vertex[1] * drawsize + drawsize)
+            logo.pendown()
 
-        if not self.map:
-            return []
-
-        tracked_vertices = Counter()  # type: Dict[Vertex2D, int]
-
-        for iv, vertex in enumerate(self.get_grid_vertices()):
-            v_boxes = self.vertex2boxes(vertex)
-            blocks_matrix = self.boxes2block_matrix(v_boxes)
+        while True:
+            v_boxes = vertex2boxes(wall_vertex)
+            blocks_matrix = boxes2block_matrix(v_boxes)
             versors = POSSIBLE_DIRECTIONS[blocks_matrix]
-            n_versors = len(versors)
-            if n_versors == 0:
-                # not a border verdex
-                # inside 4 blocks or 4 empty cells
-                continue
+            tracked_vertices[wall_vertex] += (1 if len(versors) == 4 else 2)
 
-            n_passes = tracked_vertices[vertex]
-            if n_versors == 4:
-                # should pass by here exactly 2 times
-                if n_passes > 1:
-                    continue
+            versor_next = RULES[blocks_matrix][versor]
+            v_next = sum_vectors(wall_vertex, versor_next)
 
-            elif n_passes > 0:
-                continue
+            wall_perimeter.append(v_next)
 
-            # start new wall perimeter from this disjointed block
-            wall_perimeter = []
-
-            first_vertex = vertex
-            old_versor = (0, 0)  # like a `None` but supporting the array sum
-            versor = old_versor
-            wall_perimeter.append(vertex)
-            wall_vertex = vertex
+            old_versor = versor
+            versor = versor_next
+            wall_vertex = wall_perimeter[-1]
 
             if turtle:
-                logo.penup()
-                logo.setpos(wall_vertex[0] * drawsize - drawsize, -wall_vertex[1] * drawsize + drawsize)
-                logo.pendown()
+                logo.setheading(ANGLES[versor_next])
+                logo.fd(drawsize)
 
-            while True:
-                v_boxes = self.vertex2boxes(wall_vertex)
-                blocks_matrix = self.boxes2block_matrix(v_boxes)
-                versors = POSSIBLE_DIRECTIONS[blocks_matrix]
-                tracked_vertices[wall_vertex] += (1 if len(versors) == 4 else 2)
+            if wall_vertex == first_vertex:
+                break
 
-                versor_next = RULES[blocks_matrix][versor]
-                v_next = sum_vectors(wall_vertex, versor_next)
+        wall_perimeter = remove_internal_edge_points(wall_perimeter)
+        wall_perimeter = normalized_perimeter(wall_perimeter)
+        ret.append(wall_perimeter)
 
-                wall_perimeter.append(v_next)
-
-                old_versor = versor
-                versor = versor_next
-                wall_vertex = wall_perimeter[-1]
-
-                if turtle:
-                    logo.setheading(ANGLES[versor_next])
-                    logo.fd(drawsize)
-
-                if wall_vertex == first_vertex:
-                    break
-
-            wall_perimeter = remove_internal_edge_points(wall_perimeter)
-            wall_perimeter = normalized_perimeter(wall_perimeter)
-            ret.append(wall_perimeter)
-
-        ret.sort()
-        return ret
+    ret.sort()
+    return ret
 
 
-def mat2map(matrix: WalkableMatrix) -> BlocksMap:
+def mat2map(matrix: WalkableMatrix) -> Mapping:
     """Creates a blocks map from a walkable matrix.
     """
     ret = {}
@@ -490,7 +481,7 @@ def mat2map(matrix: WalkableMatrix) -> BlocksMap:
         for x, walkable in enumerate(row):
             if not walkable:
                 ret[(x, y)] = 1
-    return BlocksMap(ret, map_size=(x + 1, y + 1))
+    return ret, (x + 1, y + 1)
 
 
 def load_png(filepath: str) -> WalkableMatrix:
@@ -521,10 +512,10 @@ def load_png(filepath: str) -> WalkableMatrix:
 
 
 def matrix2obj(matrix, dst, height=1, turtle=False):
-    blocks_map = mat2map(matrix)
+    blocks_map, map_size = mat2map(matrix)
     print('Detecting edges...')
     t0 = time.time()
-    wall_perimeters = sorted(blocks_map.build(turtle=turtle))
+    wall_perimeters = sorted(build_walls(blocks_map, map_size=map_size, turtle=turtle))
     print('{:.2f} s'.format(time.time() - t0))
 
     mesh = extrude_wall_perimeters(wall_perimeters, height)

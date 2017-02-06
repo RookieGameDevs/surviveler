@@ -3,6 +3,7 @@
 Tests for the edge detection.
 (But not only - TODO: fix filename or move tests)
 """
+from png2obj import build_walls
 from png2obj import load_png
 from png2obj import mat2map
 from png2obj import png2obj
@@ -328,9 +329,9 @@ def test_detect_edges(case: dict) -> None:
     These are the main test cases of the module.
     """
     matrix = case['matrix']
-    blocks_map = mat2map(matrix)
+    blocks_map, map_size = mat2map(matrix)
     expected = sorted(case['vertices'])
-    actual = sorted(blocks_map.build())
+    actual = sorted(build_walls(blocks_map, map_size=map_size))
     assert actual == expected
 
 
