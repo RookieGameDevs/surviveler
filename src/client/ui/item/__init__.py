@@ -284,6 +284,7 @@ class Item(metaclass=ABCMeta):
             * children (:class:`dict`): The dictionary of children
         """
         self.parent = None
+
         self.children = OrderedDict()
         self._binding_state = Item.BindingState.unbound
 
@@ -346,13 +347,19 @@ class Item(metaclass=ABCMeta):
         a boolean. True means that the ui should stop propagating the event,
         while False means that the event should be forwarded.
 
+        Returns the item itself (so that on statements can be chained).
+
         :param event: The event that the item is listening to.
         :type event: :class:`..EventType`
 
         :param handler: The event handler
         :type handler: :class:`function`
+
+        :returns: The item itself
+        :rtype: :class:`.Item`
         """
         self._on[event] = handler
+        return self
 
     def handle(self, event_type, payload):
         """Handle an event using the registered handler.

@@ -2,13 +2,13 @@ from ui import UI
 from ui.item import Anchor
 from ui.item.button import Button
 from ui.item.rect import Rect
-from ui.item.root import RootItem
 from ui.item.text import Text
+from ui.util.point import Point
 import pytest
 
 
 @pytest.fixture
-def host_join_item_factory():
+def host_join_menu():
     return Rect(
         width=300,
         height=100,
@@ -63,10 +63,55 @@ def ui_instance():
     return UI(500, 500)
 
 
-def test_ui(ui_instance):
-    assert isinstance(ui_instance._root, RootItem)
-
-
-def test_host_join(ui_instance, host_join_item_factory):
-    ui_instance.add_child('host_join', host_join_item_factory)
+def test_host_join__creation(ui_instance, host_join_menu):
+    ui_instance.add_child('host_join', host_join_menu)
     ui_instance.bind_item()
+
+
+def test_host_join__click_on_quit_button(ui_instance, host_join_menu):
+    ui_instance.add_child('host_join', host_join_menu)
+    ui_instance.bind_item()
+
+    click = ui_instance.mouse_click_event_handler()
+    click('left', 'up', Point(75, 150))
+    # TODO: click on the quit button
+    # TODO: proper event is triggered
+    pass
+
+
+def test_host_join__click_on_join_button__no_host(ui_instance, host_join_menu):
+    ui_instance.add_child('host_join', host_join_menu)
+    ui_instance.bind_item()
+    # TODO: click on the join button
+    # TODO: nothing happens
+    pass
+
+
+def test_host_join__keyboard_input__no_focus(ui_instance, host_join_menu):
+    ui_instance.add_child('host_join', host_join_menu)
+    ui_instance.bind_item()
+    # TODO: write some text without clicking on the input field
+    # TODO: nothing happens
+    pass
+
+
+def test_host_join__keyboard_input__focus(ui_instance, host_join_menu):
+    ui_instance.add_child('host_join', host_join_menu)
+    ui_instance.bind_item()
+    # TODO: click on the input field
+    # TODO: the input field has focus
+    # TODO: write the hostname
+    # TODO: the text into the field is changed accordingly
+    pass
+
+
+def test_host_join__click_on_join_button(ui_instance, host_join_menu):
+    ui_instance.add_child('host_join', host_join_menu)
+    ui_instance.bind_item()
+    # TODO: click on the input field
+    # TODO: the input field has focus
+    # TODO: write the hostname
+    # TODO: the text into the field is changed accordingly
+    # TODO: click on the join Button
+    # TODO: the proper event is triggered
+    pass
