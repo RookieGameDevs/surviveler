@@ -21,13 +21,10 @@ Glossary (to try to make some clearness):
         If the wall is closed, you have an internal wall perimeter and an external one.
         Each png or level may consists of several separated walls.
 """
-from extruder import extrude_wall_perimeters
-from wavefront import export_mesh
-from PIL import Image
-from collections import deque
-from collections import namedtuple
 from collections import Counter
 from collections import OrderedDict
+from collections import deque
+from collections import namedtuple
 from typing import Dict  # noqa
 from typing import Iterable
 from typing import List
@@ -40,8 +37,16 @@ import json
 import os
 import pprint
 import time
-import triangle
 import turtle as logo
+
+# 3rd parties
+from PIL import Image
+import triangle
+
+# Own modules
+from extruder import extrude_wall_perimeters
+from wavefront import export_mesh
+
 
 Pos = Tuple[int, int]
 Versor2D = Tuple[int, int]
