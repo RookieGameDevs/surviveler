@@ -84,45 +84,9 @@ ANGLES = {LEFT: 270, UP: 0, RIGHT: 90, DOWN: 180}  # type: Dict[Vertex2D, int]
 # This map represents every case with relative "mouvement" possibility
 # of a vertex to track the wall perimeter.
 
-POSSIBLE_DIRECTIONS = {
-    ((0, 0),
-     (0, 0)): (),
-    ((0, 0),
-     (0, 1)): (RIGHT, DOWN),
-    ((0, 0),
-     (1, 0)): (LEFT, DOWN),
-    ((0, 0),
-     (1, 1)): (LEFT, RIGHT),
-    ((0, 1),
-     (0, 0)): (UP, RIGHT),
-    ((0, 1),
-     (0, 1)): (UP, DOWN),
-    ((0, 1),
-     (1, 0)): (LEFT, UP, RIGHT, DOWN),
-    ((0, 1),
-     (1, 1)): (LEFT, UP),
-    ((1, 0),
-     (0, 0)): (LEFT, UP),
-    ((1, 0),
-     (0, 1)): (LEFT, UP, RIGHT, DOWN),
-    ((1, 0),
-     (1, 0)): (UP, DOWN),
-    ((1, 0),
-     (1, 1)): (UP, RIGHT),
-    ((1, 1),
-     (0, 0)): (LEFT, RIGHT),
-    ((1, 1),
-     (0, 1)): (LEFT, DOWN),
-    ((1, 1),
-     (1, 0)): (RIGHT, DOWN),
-    ((1, 1),
-     (1, 1)): (),
-}  # type: Dict[Tuple[Vector2D, Vector2D], Tuple[Vector2D, ...]]
-
-
 RULES = {
     ((0, 0),
-     (0, 0)): {STILL: STILL, UP: UP, LEFT: LEFT, RIGHT: RIGHT, DOWN: DOWN},  # XXX
+     (0, 0)): {},
     ((0, 0),
      (0, 1)): {STILL: RIGHT, UP: RIGHT, LEFT: DOWN},
     ((0, 0),
@@ -152,11 +116,12 @@ RULES = {
     ((1, 1),
      (1, 0)): {STILL: RIGHT, UP: RIGHT, LEFT: DOWN},
     ((1, 1),
-     (1, 1)): {STILL: STILL, UP: STILL, DOWN: STILL, LEFT: STILL, RIGHT: STILL},  # XXX
+     (1, 1)): {},
 }  # type: Dict[Tuple[Vector2D, Vector2D], Dict[Versor2D, Versor2D]]
 
 
 DRAW_SIZE = 300
+
 
 def sum_vectors(v1: Vector2D, v2: Vector2D) -> Vector2D:
     """Sums 2 bi-dimensional vectors.
@@ -286,7 +251,7 @@ def wall_perimeters_to_unique_vertices(wall_perimeters: List[WallPerimeter]) -> 
     ret = []
     for wall in wall_perimeters:
         for vertex in wall:
-            if not vertex in ret:
+            if vertex not in ret:
                 ret.append(vertex)
     return ret
 
@@ -413,9 +378,9 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], box_size: int=1, 
     for iv, vertex in enumerate(get_grid_vertices()):
         v_boxes = vertex2boxes(vertex)
         blocks_matrix = boxes2block_matrix(v_boxes)
-        versors = POSSIBLE_DIRECTIONS[blocks_matrix]
-        n_versors = len(versors)
-        if n_versors == 0:
+        versors = RULES[blocks_matrix]
+        n_versors = len(versors) - 1  # remove still
+        if n_versors == -1:
             # not a border verdex
             # inside 4 blocks or 4 empty cells
             continue
@@ -446,12 +411,13 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], box_size: int=1, 
         while True:
             v_boxes = vertex2boxes(wall_vertex)
             blocks_matrix = boxes2block_matrix(v_boxes)
-            versors = POSSIBLE_DIRECTIONS[blocks_matrix]
-            tracked_vertices[wall_vertex] += (1 if len(versors) == 4 else 2)
+            versors = RULES[blocks_matrix]
 
-            versor_next = RULES[blocks_matrix][versor]
+            # Trick to handle the "chessboard" case.
+            tracked_vertices[wall_vertex] += (1 if len(versors) == 5 else 2)
+
+            versor_next = versors[versor]
             v_next = sum_vectors(wall_vertex, versor_next)
-
             wall_perimeter.append(v_next)
 
             old_versor = versor
