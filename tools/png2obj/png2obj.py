@@ -12,8 +12,8 @@ Involved steps:
 Python-3 only due to the type hinting (and 'super') syntax.
 
 Glossary (to try to make some clearness):
-    * box - an element in the walkable matrix, with coordinates (x, y)
-    * block - a non-walkable box
+    * cell - an element in the walkable matrix, with coordinates (x, y)
+    * block - a non-walkable cell
     * vertex - a 2/3D point in a 2/3D space (used to describe wall perimeters and meshes)
     * wall perimeter - a 2D closed planar (z=0) polygon which corresponds to the wall borders
         (from a "top" view perspective).
@@ -57,7 +57,7 @@ Triangle2D = Tuple[Vertex2D, Vertex2D, Vertex2D]
 Triangle3D = Tuple[Vertex3D, Vertex3D, Vertex3D]
 WallPerimeter = List[Vertex2D]
 WalkableMatrix = List[List[int]]
-VertexBoxes = NamedTuple('NearBoxes',
+VertexCells = NamedTuple('NearCells',
     [
         ('upleft', Pos),
         ('upright', Pos),
@@ -67,7 +67,7 @@ VertexBoxes = NamedTuple('NearBoxes',
 )
 
 
-Box = namedtuple('Box', ['x', 'y'])
+Cell = namedtuple('Cell', ['x', 'y'])
 NearVertices = namedtuple('NearVertices', ['left', 'up', 'right', 'down'])
 
 
@@ -85,7 +85,7 @@ VERSOR_NAME = {
 ANGLES = {LEFT: 270, UP: 0, RIGHT: 90, DOWN: 180}  # type: Dict[Vertex2D, int]
 
 
-# A vertex ha 4 neighbour boxes, and each box can be walkable or not (block).
+# A vertex ha 4 neighbour cells, and each cell can be walkable or not (block).
 # This map represents every case with relative "mouvement" possibility
 # of a vertex to track the wall perimeter.
 
@@ -331,7 +331,7 @@ def triangulate_walls(wall_perimeters: List[WallPerimeter], holes: List[Vertex2D
     return ret
 
 
-def build_walls(walls_map: Mapping, map_size: Tuple[int, int], box_size: int=1, turtle=False) -> List[List[Vertex2D]]:
+def build_walls(walls_map: Mapping, map_size: Tuple[int, int], cell_size: int=1, turtle=False) -> List[List[Vertex2D]]:
     """
     Main function (edge detection): builds the list of wall perimeters.
 
@@ -345,28 +345,28 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], box_size: int=1, 
         width, height = map_size
         for bx in range(width):
             for by in range(height):
-                x = bx * box_size
-                y = by * box_size
+                x = bx * cell_size
+                y = by * cell_size
                 yield (x, y)
 
     def map_vertex(xy: Vertex2D) -> Pos:
-        """Given a vertex position, returns the map box whose the
+        """Given a vertex position, returns the map cell whose the
         vertex is the top-left one.
         """
         x, y = xy
-        return int(x / box_size), int(y / box_size)
+        return int(x / cell_size), int(y / cell_size)
 
-    def vertex2boxes(xy: Vertex2D) -> VertexBoxes:
-        """Returns the 4 neighbour map boxes (white or not)
+    def vertex2cells(xy: Vertex2D) -> VertexCells:
+        """Returns the 4 neighbour map cells (white or not)
         which share the same given vertex.
         """
         bx, by = map_vertex(xy)
-        return VertexBoxes(upleft=(bx - 1, by - 1), upright=(bx, by - 1), downleft=(bx - 1, by), downright=(bx, by))
+        return VertexCells(upleft=(bx - 1, by - 1), upright=(bx, by - 1), downleft=(bx - 1, by), downright=(bx, by))
 
-    def boxes2block_matrix(boxes: VertexBoxes) -> Tuple[Pos, Pos]:
-        """Given 4 vertex boxes, returns a 2x2 tuple with walkable/non-walkable info.
+    def cells2block_matrix(cells: VertexCells) -> Tuple[Pos, Pos]:
+        """Given 4 vertex cells, returns a 2x2 tuple with walkable/non-walkable info.
         """
-        return ((walls_map.get(boxes.upleft, 0), walls_map.get(boxes.upright, 0)), (walls_map.get(boxes.downleft, 0), walls_map.get(boxes.downright, 0)))
+        return ((walls_map.get(cells.upleft, 0), walls_map.get(cells.upright, 0)), (walls_map.get(cells.downleft, 0), walls_map.get(cells.downright, 0)))
 
     ret = []  # type: List[WallPerimeter]
 
@@ -381,8 +381,8 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], box_size: int=1, 
     tracked_vertices = Counter()  # type: Dict[Vertex2D, int]
 
     for iv, vertex in enumerate(get_grid_vertices()):
-        v_boxes = vertex2boxes(vertex)
-        blocks_matrix = boxes2block_matrix(v_boxes)
+        v_cells = vertex2cells(vertex)
+        blocks_matrix = cells2block_matrix(v_cells)
         versors = RULES[blocks_matrix]
         n_versors = len(versors) - 1  # remove still
         if n_versors == -1:
@@ -414,8 +414,8 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], box_size: int=1, 
             logo.pendown()
 
         while True:
-            v_boxes = vertex2boxes(wall_vertex)
-            blocks_matrix = boxes2block_matrix(v_boxes)
+            v_cells = vertex2cells(wall_vertex)
+            blocks_matrix = cells2block_matrix(v_cells)
             versors = RULES[blocks_matrix]
 
             # Trick to handle the "chessboard" case.
