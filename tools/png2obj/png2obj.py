@@ -6,7 +6,6 @@ Involved steps:
     1 - convert a png to a walkable matrix;
     2 - find wall perimeters -> list of 2D edges;
     3 - extrude vertically the wall perimeters -> list of 3D faces;
-    4 - create the top horizontal wall surfaces; [WIP: currently uses triangle which crashes in some cases]
     4 - export faces to obj.
 
 Python-3 only due to the type hinting (and 'super') syntax.
@@ -33,15 +32,12 @@ from typing import NamedTuple
 from typing import Set  # noqa
 from typing import Tuple
 import argparse
-import json
 import os
-import pprint
 import time
 import turtle as logo
 
 # 3rd parties
 from PIL import Image
-import triangle
 
 # Own modules
 from extruder import extrude_wall_perimeters
@@ -197,42 +193,6 @@ def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
     return ret
 
 
-def matrix2holes(matrix: List[List[int]]) -> List[Vertex2D]:
-    """
-    Returns the points that will be the holes passed to the triangle.triangulate.
-
-    Currently returns all the cells around the walls.
-    """
-    def next_to_wall(x, y):
-        """
-        Returns True if the cell (x, y) is next to a wall.
-        """
-        for dx in (-1, 0, 1):
-            for dy in (-1, 0, 1):
-                if dx == dy == 0:
-                    continue
-                cx = x + dx
-                cy = y + dy
-                if 0 <= cx < len(matrix[0]) and 0 <= cy < len(matrix):
-                    near_walkable = matrix[y + dy][x + dx]
-                    if not near_walkable:
-                        return True
-
-    ret = []
-    special = any([-1 in row for row in matrix])
-    for y, row in enumerate(matrix):
-        for x, walkable in enumerate(row):
-            if walkable:
-                hx, hy = x + 0.5, y + 0.5
-                if special:
-                    if walkable == -1:  # marker for a manual hole
-                        print('Special hole in', hx, hy)
-                        ret.append((hx, hy))
-                elif walkable and next_to_wall(x, y):
-                    ret.append((hx, hy))
-    return ret
-
-
 def list_to_index_map(the_list: list) -> OrderedDict:
     ret = OrderedDict()
     assert len(set(the_list)) == len(the_list), 'Error: the list contains duplicated elements'
@@ -258,76 +218,6 @@ def wall_perimeters_to_unique_vertices(wall_perimeters: List[WallPerimeter]) -> 
         for vertex in wall:
             if vertex not in ret:
                 ret.append(vertex)
-    return ret
-
-
-def triangulate_walls(wall_perimeters: List[WallPerimeter], holes: List[Vertex2D]) -> List[Triangle2D]:
-    """
-    Creates the top horizontal surface of the walls.
-    """
-    ret = []
-
-    # Fill the horizontal wall surfaces at the set `height`.
-    unique_vertices = wall_perimeters_to_unique_vertices(wall_perimeters)
-    vertices_indices = list_to_index_map(unique_vertices)
-    segments = []
-    v_segments = []
-    i = 0
-
-    for wall in wall_perimeters:
-        assert wall[0] == wall[-1], 'The wall must be closed'
-
-        # create wall segments, mapped to unique vertices
-        for i in range(len(wall) - 1):
-            va = wall[i]
-            vb = wall[i + 1]
-            v_segments.append((va, vb))
-            segments.append((vertices_indices[va], vertices_indices[vb]))
-
-    # check that match walls
-    i = 0
-    for iw, wall in enumerate(wall_perimeters):
-        for ie in range(len(wall) -1):
-            wall_vertex0 = wall[ie]
-            wall_vertex1 = wall[ie + 1]
-            wall_edge = wall_vertex0, wall_vertex1
-
-            segment = segments[i]
-            va = unique_vertices[segment[0]]
-            vb = unique_vertices[segment[1]]
-            va_vb = va, vb
-            assert va_vb == wall_edge, '{} != {}'.format(va_vb, wall_edge)
-
-            i += 1
-
-    dic = dict(vertices=unique_vertices, segments=segments)
-    if holes:
-        dic['holes'] = holes  # otherwise triangulate might crash
-
-    if not dic['vertices']:
-        return []
-
-    # <DEBUGGIBNG triangle.triangulate (export input parameters)>
-    with open('dic.py', 'w') as fp:
-        s = pprint.pformat(dic)
-        fp.write('dic = {}'.format(s))
-    with open('dic.json', 'w') as fp:
-        json.dump(dic, fp, indent=4)
-    # </ DEBUGGING>
-
-    # ========= CALL THE C TRIANGLE LIBRARY ==========
-    tri = triangle.triangulate(dic, 'pc')
-    # ================================================
-
-    # Now just convert triangles indices in triangles vertices
-    for triangle_indices in tri['triangles']:
-        face = []
-        for vertex_index in triangle_indices:
-            vertex = tri['vertices'][vertex_index]
-            assert len(vertex) == 2, 'Expected a Vertex2D. Got: {}'.format(vertex)
-            vertex = (vertex[0], vertex[1])
-            face.append(vertex)
-        ret.append((face[0], face[1], face[2]))
     return ret
 
 
@@ -490,20 +380,6 @@ def matrix2obj(matrix, dst, height=1, turtle=False):
     print('{:.2f} s'.format(time.time() - t0))
 
     mesh = extrude_wall_perimeters(wall_perimeters, height)
-
-    print('Triangulation...')
-    t0 = time.time()
-    horizontal_faces = []  # type: List[Triangle3D]
-    holes = matrix2holes(matrix)
-
-    horizontal_faces = []
-    for face2D in triangulate_walls(wall_perimeters, holes):
-        h_face = []
-        for v2D in face2D:
-            h_face.append((v2D[0], v2D[1], height))
-        horizontal_faces.append((h_face[0], h_face[1], h_face[2]))
-    mesh.extend(horizontal_faces)
-    print('{:.2f} s'.format(time.time() - t0))
 
     print('Exporting mesh to Wavefront...')
     t0 = time.time()
