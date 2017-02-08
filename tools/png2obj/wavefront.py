@@ -15,7 +15,7 @@ Mesh = List[Face]
 ExportSettings = Tuple[Tuple[int, int], Tuple[int, int], Tuple[int, int]]
 
 AXES = 'xyz'  # http://forum.wordreference.com/threads/axis-vs-axes.82527/
-RIGHT, FORWARD, UP = 0, 1, 2
+X_RIGHT, Y_FORWARD, Z_UP = 0, 1, 2
 DEFAULT_EXPORT_SETTINGS = ('+x', '+z', '+y')
 
 
@@ -46,9 +46,9 @@ def export_vertex(
     'v 2.000000 -3.000000 -1.000000'
     """
     # Tuple index must be an integer literal = mypy seems not support integer variables as indces for tuple
-    right = vertex[export_settings[RIGHT][0]] * export_settings[RIGHT][1]  # type: ignore
-    forward = vertex[export_settings[FORWARD][0]] * export_settings[FORWARD][1]  # type: ignore
-    up = vertex[export_settings[UP][0]] * export_settings[UP][1]  # type: ignore
+    right = vertex[export_settings[X_RIGHT][0]] * export_settings[X_RIGHT][1]  # type: ignore
+    forward = vertex[export_settings[Y_FORWARD][0]] * export_settings[Y_FORWARD][1]  # type: ignore
+    up = vertex[export_settings[Z_UP][0]] * export_settings[Z_UP][1]  # type: ignore
     return 'v ' + ' '.join(['{:.6f}'.format(component) for component in (right, forward, up)])
 
 
