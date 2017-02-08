@@ -3,13 +3,11 @@ from events import subscriber
 from game.events import ActorStatusChange
 from game.events import GameModeChange
 from game.events import TimeUpdate
-from math import pi
 from matlib.vec import Vec
 from renderer.camera import OrthoCamera
-from renderer.primitives import Rect
-from renderer.scene import MeshNode
 from renderer.scene import QuadNode
 from renderer.scene import Scene
+from renderer.scene import SceneNode
 from renderer.scene import TextNode
 from renderlib.core import QuadRenderProps
 from renderlib.core import TextRenderProps
@@ -24,26 +22,54 @@ LOG = logging.getLogger(__name__)
 class HealthBar:
     """User interface healthbar.
     """
-    def __init__(self, resource, width, height):
+
+    def __init__(self, resource, value=1.0):
         """Constructor.
-
-        :param width: The width of the healthbar
-        :type width: :class:`float`
-
-        :param height: The height of the healthbar
-        :type height: :class:`float`
 
         :param resource: The resource for the healthbar
         :type resource: :class:`loaders.Resource`
+
+        :param value: Initial health bar value.
+        :tyep value: float
         """
-        self._value = 1.0
-        self.w = width
-        self.h = height
+        self.resource = resource
+        self._value = value
 
-        props = QuadRenderProps()
-        props.color = Vec(0.2, 0.4, 1, 1)
+        width = resource.data['width']
+        height = resource.data['height']
+        left, right, top, bottom = resource.data['borders']
 
-        self.node = QuadNode((width, height), props)
+        fg_texture = Texture.from_image(
+            resource['fg_texture'],
+            Texture.TextureType.texture_rectangle)
+        bg_texture = Texture.from_image(
+            resource['bg_texture'],
+            Texture.TextureType.texture_rectangle)
+
+        fg_props = QuadRenderProps()
+        fg_props.texture = fg_texture
+        fg_props.borders.left = left
+        fg_props.borders.right = right
+        fg_props.borders.top = top
+        fg_props.borders.bottom = bottom
+
+        bg_props = QuadRenderProps()
+        bg_props.texture = bg_texture
+        bg_props.borders.left = left
+        bg_props.borders.right = right
+        bg_props.borders.top = top
+        bg_props.borders.bottom = bottom
+
+        # container node
+        self.node = SceneNode()
+
+        # add background node with a little Z offset
+        bg_node = QuadNode((width, height), bg_props)
+        bg_node.transform.translate(0, 0, -0.1)
+        self.node.add_child(bg_node)
+
+        # add foreground node on top of it
+        self.node.add_child(QuadNode((width, height), fg_props))
 
     @property
     def value(self):
@@ -62,7 +88,8 @@ class HealthBar:
         :type v: :class:`float`
         """
         self._value = float(v)
-        # TODO: change the visual appearance of the healthbar
+        # change the width of foreground node
+        self.node.children[1].width = self.resource.data['width'] * v
 
 
 class Avatar:
@@ -138,10 +165,7 @@ class UI:
         self.transform(self.avatar.node, 0, 0)
 
         # healthbar
-        self.health_bar = HealthBar(
-            resource['health_bar'],
-            avatar_res.data['width'],
-            resource['health_bar'].data['height'])
+        self.health_bar = HealthBar(resource['health_bar'])
         self.scene.root.add_child(self.health_bar.node)
         self.transform(self.health_bar.node, 0, avatar_res.data['width'] + 5)
 
