@@ -33,9 +33,14 @@ from typing import Mapping
 from typing import NamedTuple
 from typing import Set  # noqa
 from typing import Tuple
-import os
+import pprint
 import time
 import turtle as logo
+
+# Blender stuff
+import bpy
+from bpy.props import CollectionProperty, StringProperty
+from bpy_extras import image_utils
 
 
 Pos = Tuple[int, int]
@@ -219,21 +224,12 @@ def wall_perimeters_to_verts_edges(wall_perimeters: List[WallPerimeter]) -> Tupl
         for vertex in wall:
             if vertex not in verts:
                 verts.append(vertex)
-    for i, vert in enumerate(verts):
-        print(i, vert)
 
-    for wall in wall_perimeters:
-        print('Wall =', wall)
+    for iw, wall in enumerate(wall_perimeters):
         for i in range(0, len(wall) - 1):
             vertex_i = wall[i]
             vertex_i1 = wall[i + 1]
-            print(i, vertex_i, i + 1, vertex_i1)
             edges.append((verts.index(vertex_i), verts.index(vertex_i1)))
-            print(edges)
-        # print('Adding last one')
-        # # NB: assume that the last wall vertex must be linked with the first one:
-        # edges.append((edges[-1][1], verts.index(wall[0])))
-        print(':', edges)
 
     return verts, edges
 
@@ -445,9 +441,6 @@ def png2obj(filepath: str, height: float=3, turtle: bool=False) -> int:
     return matrix2obj(matrix, dst, height, turtle=turtle)
 
 
-import bpy
-from bpy.props import CollectionProperty, StringProperty
-from bpy_extras import image_utils
 
 bl_info = {
     'name': 'png2obj',
@@ -484,10 +477,8 @@ class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        # text
         layout.label(text='png loader')
 
-        # print(dir(bpy.context.scene))
         # operator button
         # OBJECT_OT_CustomButton => object.CustomButton
         layout.operator('object.custombutton')
@@ -496,7 +487,6 @@ class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
 
         # prop is a variable to to set or get name of the variable.
         layout.prop(context.scene, 'MyString')
-        # print(dir(context.scene)) # this will display the list that you should able to see
         # operator button
         # OBJECT_OT_CustomPath => object.png2obj
         layout.operator('object.png2obj')
@@ -512,8 +502,6 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         print('I should act on {}'.format(context.scene.MyString))
 
         matrix = bpy_png2matrix(context.scene.MyString)
-        import pprint
-        pprint.pprint(matrix)
 
         blocks_map, map_size = mat2map(matrix)
 
@@ -521,12 +509,8 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         wall_perimeters = sorted(build_walls(blocks_map, map_size=map_size, turtle=False))
         verts2D, edges = wall_perimeters_to_verts_edges(wall_perimeters)
         verts = add_3D(verts2D)
-        print(verts)
-        print(edges)
 
         wall_width = 3
-
-        # Load the png to obtain verts and edges
 
         # ============== Example data ======================
         # verts = [
@@ -587,8 +571,8 @@ class OBJECT_OT_custompath(bpy.types.Operator):
         )
 
     def execute(self, context):
-        #set the string path fo the file here.
-        #this is a variable created from the top to start it
+        # Set the string path fo the file here.
+        # This is a variable created from the top to start it
         bpy.context.scene.MyString = self.properties.filepath
 
         print('*************SELECTED FILES ***********')
