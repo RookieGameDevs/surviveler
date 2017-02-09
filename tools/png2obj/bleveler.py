@@ -368,15 +368,17 @@ def bpy_png2matrix(filepath: str) -> WalkableMatrix:
     channels = img.channels
     assert channels == 4, 'Only images with alpha channels are supported (so far)!'
     ipx = 0
-    for y in range(img.size[0]):
+    for y in range(img.size[1]):
         row = []
-        for x in range(img.size[1]):
-            alpha = img.pixels[ipx + 3]  # remove .
-            row.append(int(alpha))
-            print(ipx, x, y, img.pixels[ipx: ipx + 4], alpha)
+        for x in range(img.size[0]):
+            color = img.pixels[ipx: ipx + 3]
+            alpha = img.pixels[ipx + 3]  # remove '.'
+            walkable = (alpha == 0 or color == (1, 1, 1))
+            # 1 => obstacle
+            row.append(int(not walkable))
             ipx += 4
         ret.append(row)
-    return list(reversed(ret))
+    return ret
 
 
 bl_info = {
