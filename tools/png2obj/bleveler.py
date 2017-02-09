@@ -362,33 +362,6 @@ def mat2map(matrix: WalkableMatrix, wall=1) -> Mapping:
     return ret, (x + 1, y + 1)
 
 
-def load_png(filepath: str) -> WalkableMatrix:
-    """Builds a walkable matrix from an image.
-    """
-    ret = []
-    img = Image.open(filepath)
-    for y in range(img.height):
-        row = []
-        for x in range(img.width):
-            pixel = img.getpixel((x, y))
-            if img.mode == 'P':
-                walkable = int(pixel > 0)
-            else:
-                if img.mode == 'RGBA':
-                    alpha = pixel[3]
-                    walkable = alpha == 0 or pixel[:3] == (255, 255, 255)
-                else:
-                    walkable = pixel[:3] == (255, 255, 255)
-
-                # special reddish marker (temporary)
-                if pixel[0] > pixel[1] and pixel[0] > pixel[2]:
-                    print('reddish in', x, y)
-                    walkable = -1
-            row.append(int(walkable))
-        ret.append(row)
-    return ret
-
-
 def bpy_png2matrix(filepath: str) -> WalkableMatrix:
     ret = []
     img = image_utils.load_image(filepath)
@@ -404,42 +377,6 @@ def bpy_png2matrix(filepath: str) -> WalkableMatrix:
             ipx += 4
         ret.append(row)
     return list(reversed(ret))
-
-
-def matrix2obj(matrix, dst, height=1, turtle=False):
-    blocks_map, map_size = mat2map(matrix)
-    print('Detecting edges...')
-    t0 = time.time()
-    wall_perimeters = sorted(build_walls(blocks_map, map_size=map_size, turtle=turtle))
-    print('{:.2f} s'.format(time.time() - t0))
-
-    mesh = extrude_wall_perimeters(wall_perimeters, height)
-
-    print('Exporting mesh to Wavefront...')
-    t0 = time.time()
-    with open(dst, 'w') as fp:
-        fp.write(export_mesh(mesh))
-    print('{:.2f} s'.format(time.time() - t0))
-    obj_size = os.path.getsize(dst)
-    print('{} created ({:,} byte).'.format(dst, obj_size))
-    return obj_size
-
-
-def png2obj(filepath: str, height: float=3, turtle: bool=False) -> int:
-    """Main function which takes an image filepath and creates
-    a mesh (detecting edges an extruding them vertically)
-    exporting it in a wavefront obj format.
-
-    Returns the size, in byte, of the obj created.
-    """
-    print('Loading {}...'.format(filepath))
-    t0 = time.time()
-    matrix = load_png(filepath)
-    print('{:.2f} s'.format(time.time() - t0))
-
-    dst = filepath[:-4] + '.obj'
-    return matrix2obj(matrix, dst, height, turtle=turtle)
-
 
 
 bl_info = {
