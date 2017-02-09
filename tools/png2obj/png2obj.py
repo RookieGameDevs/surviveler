@@ -201,24 +201,38 @@ def list_to_index_map(the_list: list) -> OrderedDict:
     return ret
 
 
-def wall_perimeters_to_unique_vertices(wall_perimeters: List[WallPerimeter]) -> List[Vertex2D]:
+def wall_perimeters_to_verts_edges(wall_perimeters: List[WallPerimeter]) -> Tuple[List[Vertex2D], List[Tuple[int, int]]]:
     """
-    >>> ret = wall_perimeters_to_unique_vertices([[(0, 0), (3, 0)], [(0, 1), (3, 0)]])
-    >>> len(ret)
-    3
-    >>> ret[0]
-    (0, 0)
-    >>> ret[1]
-    (3, 0)
-    >>> ret[2]
-    (0, 1)
+    Return a (a, b) tuple in which:
+    * a -- unique vertices
+    * b -- list of vertex indices couples
+
+    >>> verts, edges = wall_perimeters_to_verts_edges([[(0, 0), (3, 0), (3, 1), (0, 1), (0, 0)], [(3, 1), (4, 1), (4, 2), (3, 2), (3, 1)]])
+    >>> len(verts)
+    7
+    >>> verts.count((3, 1))
+    1
+    >>> verts
+    [(0, 0), (3, 0), (3, 1), (0, 1), (4, 1), (4, 2), (3, 2)]
+    >>> edges
+    [(0, 1), (1, 2), (2, 3), (3, 0), (2, 4), (4, 5), (5, 6), (6, 2)]
     """
-    ret = []
+    # TODO: speed-up with dict for vertex indices
+    verts = []
+    edges = []
+
     for wall in wall_perimeters:
         for vertex in wall:
-            if vertex not in ret:
-                ret.append(vertex)
-    return ret
+            if vertex not in verts:
+                verts.append(vertex)
+
+    for wall in wall_perimeters:
+        for i in range(0, len(wall) - 1):
+            vertex_i = wall[i]
+            vertex_i1 = wall[i + 1]
+            edges.append((verts.index(vertex_i), verts.index(vertex_i1)))
+
+    return verts, edges
 
 
 def build_walls(walls_map: Mapping, map_size: Tuple[int, int], cell_size: int=1, turtle=False) -> List[List[Vertex2D]]:
