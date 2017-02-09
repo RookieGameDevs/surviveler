@@ -37,7 +37,7 @@ import turtle as logo
 
 # Blender stuff
 import bpy
-from bpy.props import CollectionProperty, StringProperty
+from bpy.props import StringProperty
 from bpy_extras import image_utils
 
 
@@ -392,16 +392,10 @@ bl_info = {
     'tracker_url': '',
 }
 
-bpy.types.Scene.MyString = StringProperty(name='file path',
-    attr='custompath',  # this a variable that will set or get from the scene
-    description='simple file path string',
-    maxlen=1024,
-    default='')  # this set the text
 
-
-bpy.types.Scene.MyPath = StringProperty(name='file path',
+bpy.types.Scene.ImagePath = StringProperty(name='Image file',
     attr='custompath',  # this a variable that will set or get from the scene
-    description='simple file path',
+    description='The image to use to generate the level',
     maxlen=1024,
     subtype='FILE_PATH',
     default='')  # this set the text
@@ -410,44 +404,36 @@ bpy.types.Scene.MyPath = StringProperty(name='file path',
 class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
-    bl_label = 'Level loader'
+    bl_label = 'Surviveler level generator'
 
     def draw(self, context):
-        layout = self.layout
-        layout.label(text='png loader')
+        self.layout.label(text='Select png to use as level base')  # Text above the button
+
+        self.layout.prop(context.scene, 'ImagePath')
 
         # operator button
         # OBJECT_OT_CustomButton => object.CustomButton
-        layout.operator('object.custombutton')
-
-        self.layout.prop(context.scene, 'MyPath')
-
-        # prop is a variable to to set or get name of the variable.
-        layout.prop(context.scene, 'MyString')
-        # operator button
-        # OBJECT_OT_CustomPath => object.png2obj
-        layout.operator('object.png2obj')
+        self.layout.operator('object.custombutton')
 
 
 class OBJECT_OT_custombutton(bpy.types.Operator):
     bl_idname = 'object.custombutton'
-    bl_label = 'Do it'
-    __doc__ = 'Simple Custom Button'
+    bl_label = 'Generate'
+    __doc__ = 'It will load the image and create the level mesh from the file.'
 
     def invoke(self, context, event):
-        print('Custom Button pressed......')
-        print('I should act on {}'.format(context.scene.MyString))
+        wall_height = 3  # TODO: parametrize from GUI
 
-        matrix = bpy_png2matrix(context.scene.MyString)
-
+        file_path = context.scene.ImagePath
+        matrix = bpy_png2matrix(file_path)
         blocks_map, map_size = mat2map(matrix)
 
         print('Detecting edges...')
         wall_perimeters = sorted(build_walls(blocks_map, map_size=map_size, turtle=False))
         verts2D, edges = wall_perimeters_to_verts_edges(wall_perimeters)
         verts = add_3D(verts2D)
-
-        wall_width = 3
+        faces = []
+        print('Found {:,} vertices and {:,} edges'.format(len(verts), len(edges)))
 
         # ============== Example data ======================
         # verts = [
@@ -458,13 +444,12 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         #     (0, 1), (1, 2), (2, 3), (3, 0),
         #     (4, 5), (5, 6), (6, 7), (7, 4),
         # ]
-        faces = []
 
         mesh_data = bpy.data.meshes.new("cube_mesh_data")
         mesh_data.from_pydata(verts, edges, faces)
         mesh_data.update()
 
-        obj = bpy.data.objects.new("My_Object", mesh_data)
+        obj = bpy.data.objects.new("Level", mesh_data)
 
         scene = bpy.context.scene
         scene.objects.link(obj)
@@ -476,69 +461,25 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         # Switch to edit mode
         bpy.ops.object.editmode_toggle()
 
-        # bpy.ops.mesh.select_all(action='TOGGLE')
-        bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={'value': (0, 0, wall_width)})
+        # Extrude vertically
+        bpy.ops.mesh.extrude_region_move(TRANSFORM_OT_translate={'value': (0, 0, wall_height)})
 
         # Fill upper horizontal wall surfaces (triangulate)
         bpy.ops.mesh.fill()
-        # ==================================================
 
         bpy.ops.object.editmode_toggle()
         return {'FINISHED'}
 
 
-class OBJECT_OT_custompath(bpy.types.Operator):
-    bl_idname = 'object.png2obj'
-    bl_label = 'Load level image'
-    __doc__ = 'This will create a mesh'
-
-    filename_ext = '.png'
-    filter_glob = StringProperty(default='*.png', options={'HIDDEN'})
-
-    # This can be look into the one of the export or import python file.
-    # Need to set a path so so we can get the file name and path
-    filepath = StringProperty(
-        name='File Path',
-        description='Filepath used for importing png files',
-        maxlen=1024,
-        default='')
-    files = CollectionProperty(
-        name='File Path',
-        type=bpy.types.OperatorFileListElement,
-        )
-
-    def execute(self, context):
-        # Set the string path fo the file here.
-        # This is a variable created from the top to start it
-        bpy.context.scene.MyString = self.properties.filepath
-
-        print('*************SELECTED FILES ***********')
-        for file in self.files:
-            print(file.name)
-
-        print('FILEPATH %s' % self.properties.filepath)  # display the file name and current path
-        return {'FINISHED'}
-
-    def draw(self, context):
-        self.layout.operator('file.select_all_toggle')
-
-    def invoke(self, context, event):
-        wm = context.window_manager
-        wm.fileselect_add(self)
-        return {'RUNNING_MODAL'}
-
-
 def register():
     bpy.utils.register_class(VIEW3D_PT_custompathmenupanel)
     bpy.utils.register_class(OBJECT_OT_custombutton)
-    bpy.utils.register_class(OBJECT_OT_custompath)
     print('register')
 
 
 def unregister():
     bpy.utils.register_class(VIEW3D_PT_custompathmenupanel)
     bpy.utils.register_class(OBJECT_OT_custombutton)
-    bpy.utils.register_class(OBJECT_OT_custompath)
     print('unregister')
 
 if __name__ == '__main__':
