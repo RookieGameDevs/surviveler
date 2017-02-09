@@ -8,7 +8,7 @@ Involved steps:
     1 - convert a png to a walkable matrix;
     2 - find wall perimeters -> list of 2D edges;
     3 - extrude vertically the wall perimeters -> list of 3D faces;
-    4 - export faces to obj.
+    4 - fill top horizontal wall faces.
 
 Python-3 only due to the type hinting (and 'super') syntax.
 
@@ -33,8 +33,6 @@ from typing import Mapping
 from typing import NamedTuple
 from typing import Set  # noqa
 from typing import Tuple
-import pprint
-import time
 import turtle as logo
 
 # Blender stuff
@@ -80,7 +78,7 @@ VERSOR_NAME = {
 ANGLES = {LEFT: 270, UP: 0, RIGHT: 90, DOWN: 180}  # type: Dict[Vertex2D, int]
 
 
-# A vertex ha 4 neighbour cells, and each cell can be walkable or not (block).
+# Each vertex has 4 neighbour cells, and each cell can be walkable or not (block).
 # This map represents every case with relative "mouvement" possibility
 # of a vertex to track the wall perimeter.
 
@@ -389,7 +387,7 @@ bl_info = {
     'blender': (2, 7, 8),
     'location': 'View3D > Object > Move4 Object',
     'description': 'Create a mesh from a bitmap',
-    'warning': '',
+    'warning': 'alpha',
     'wiki_url': '',
     'tracker_url': '',
 }
