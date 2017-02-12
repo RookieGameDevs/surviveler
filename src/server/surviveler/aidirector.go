@@ -7,10 +7,10 @@ package surviveler
 import (
 	"math/rand"
 	"server/events"
-	"server/math"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 // This number represents the ration between the number of logic ticks for one
@@ -87,7 +87,7 @@ func (ai *AIDirector) SummonZombie() {
 	ai.zombieCount++
 }
 
-func (ai *AIDirector) addZombie(org math.Vec2) {
+func (ai *AIDirector) addZombie(org d2.Vec2) {
 	entityData, ok := ai.entitiesData[ZombieEntity]
 	if !ok {
 		log.Error("Can't create zombie, unsupported entity data type")
@@ -95,7 +95,7 @@ func (ai *AIDirector) addZombie(org math.Vec2) {
 	}
 	speed := entityData.Speed
 	combatPower := entityData.CombatPower
-	totHP := float64(entityData.TotalHP)
+	totHP := float32(entityData.TotalHP)
 	ai.game.State().AddEntity(
 		NewZombie(ai.game, org, speed, combatPower, totHP))
 }

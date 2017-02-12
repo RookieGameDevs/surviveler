@@ -7,10 +7,10 @@ package surviveler
 import (
 	"server/actions"
 	"server/events"
-	"server/math"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 // player private action types
@@ -41,8 +41,8 @@ type Player struct {
 	world           *World
 	buildPower      uint16
 	combatPower     uint16
-	totalHP         float64
-	curHP           float64
+	totalHP         float32
+	curHP           float32
 	posDirty        bool
 	*Movable
 }
@@ -50,8 +50,8 @@ type Player struct {
 /*
  * NewPlayer creates a new player and set its initial position and speed
  */
-func NewPlayer(g *Game, spawn math.Vec2, entityType EntityType,
-	speed, totalHP float64, buildPower, combatPower uint16) *Player {
+func NewPlayer(g *Game, spawn d2.Vec2, entityType EntityType,
+	speed, totalHP float32, buildPower, combatPower uint16) *Player {
 	p := &Player{
 		entityType:  entityType,
 		buildPower:  buildPower,
@@ -99,7 +99,7 @@ func (p *Player) Update(dt time.Duration) {
 			dist := p.target.Position().Sub(p.Pos).Len()
 			if dist < PlayerAttackDistance {
 				if time.Since(p.lastAttack) >= AttackPeriod {
-					if !p.target.DealDamage(float64(p.combatPower)) {
+					if !p.target.DealDamage(float32(p.combatPower)) {
 						p.lastAttack = time.Now()
 					} else {
 						// pop current action to get ready for next update
@@ -126,7 +126,7 @@ func (p *Player) Update(dt time.Duration) {
 func (p *Player) onMoveAction(dt time.Duration) {
 	// check if moving would create a collision
 	nextPos := p.Movable.ComputeMove(p.Pos, dt)
-	nextBB := math.NewBoundingBoxFromCircle(nextPos, 0.5)
+	nextBB := d2.RectFromCircle(nextPos, 0.5)
 	colliding := p.world.AABBSpatialQuery(nextBB)
 
 	var curActionEnded bool
@@ -197,7 +197,7 @@ func (p *Player) induceBuildPower() {
 /*
  * SetPath defines the path that the player must follow.
  */
-func (p *Player) SetPath(path math.Path) {
+func (p *Player) SetPath(path Path) {
 	p.Movable.SetPath(path)
 }
 
@@ -207,14 +207,14 @@ func (p *Player) SetPath(path math.Path) {
  * The player action stack is emptied, effectively cancelling any previous
  * player action, and defines its macro path.
  */
-func (p *Player) Move(path math.Path) {
+func (p *Player) Move(path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	p.actions.Push(actions.New(actions.MoveId, struct{}{}))
 	p.SetPath(path)
 }
 
-func (p *Player) Position() math.Vec2 {
+func (p *Player) Position() d2.Vec2 {
 	return p.Movable.Pos
 }
 
@@ -282,7 +282,7 @@ func (p *Player) State() EntityState {
  * action, that will immediately start once the player will be in contact
  * with the target building
  */
-func (p *Player) Build(b Building, path math.Path) {
+func (p *Player) Build(b Building, path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	// fill the player action stack
@@ -302,7 +302,7 @@ func (p *Player) Build(b Building, path math.Path) {
  * action, that will immediately start once the player will be in contact
  * with the target building
  */
-func (p *Player) Repair(b Building, path math.Path) {
+func (p *Player) Repair(b Building, path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 	// fill the player action stack
@@ -313,7 +313,7 @@ func (p *Player) Repair(b Building, path math.Path) {
 	p.SetPath(path)
 }
 
-func (p *Player) findPath(dst math.Vec2) {
+func (p *Player) findPath(dst d2.Vec2) {
 	log.Debug("Player.findPath: directly search for a path")
 	// directly search for path
 	path, _, found := p.g.Pathfinder().FindPath(p.Position(), dst)
@@ -348,7 +348,7 @@ func (p *Player) Attack(e Entity) {
  * action, that will immediately start once the player will be in contact
  * with the target interactive object.
  */
-func (p *Player) Operate(o Object, path math.Path) {
+func (p *Player) Operate(o Object, path Path) {
 	// empty action stack, this cancel any current action(s)
 	p.emptyActions()
 
@@ -381,7 +381,7 @@ func (p *Player) emptyActions() {
 	}
 }
 
-func (p *Player) DealDamage(damage float64) (dead bool) {
+func (p *Player) DealDamage(damage float32) (dead bool) {
 	if damage >= p.curHP {
 		p.curHP = 0
 		p.g.PostEvent(events.NewEvent(
@@ -394,7 +394,7 @@ func (p *Player) DealDamage(damage float64) (dead bool) {
 	return
 }
 
-func (p *Player) HealDamage(damage float64) (healthy bool) {
+func (p *Player) HealDamage(damage float32) (healthy bool) {
 	if damage+p.curHP >= p.totalHP {
 		p.curHP = p.totalHP
 		healthy = true

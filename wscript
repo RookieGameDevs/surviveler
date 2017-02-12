@@ -43,7 +43,7 @@ def configure(cfg):
             args = args + ' --ldflags'
 
         cfg.check_cfg(
-            path='python3-config',
+            path='python-config',
             args=args,
             package='',
             uselib_store='python')

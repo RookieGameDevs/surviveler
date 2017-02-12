@@ -5,8 +5,9 @@
 package surviveler
 
 import (
-	"server/math"
 	"time"
+
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 
 type CoffeeMachine struct {
 	id         uint32
-	pos        math.Vec2
+	pos        d2.Vec2
 	objectType EntityType
 	operatedBy Entity
 	lastHeal   time.Time
@@ -29,7 +30,7 @@ type CoffeeMachine struct {
 /*
  * NewCoffeeMachine creates a new object and set its initial position
  */
-func NewCoffeeMachine(g *Game, pos math.Vec2, objectType EntityType) *CoffeeMachine {
+func NewCoffeeMachine(g *Game, pos d2.Vec2, objectType EntityType) *CoffeeMachine {
 	cm := new(CoffeeMachine)
 	cm.pos = pos
 	cm.objectType = objectType
@@ -68,7 +69,7 @@ func (cm *CoffeeMachine) State() EntityState {
 	}
 }
 
-func (cm *CoffeeMachine) Position() math.Vec2 {
+func (cm *CoffeeMachine) Position() d2.Vec2 {
 	return cm.pos
 }
 
@@ -86,19 +87,19 @@ func (cm *CoffeeMachine) Update(dt time.Duration) {
 	}
 }
 
-func (cm *CoffeeMachine) DealDamage(dmg float64) bool {
+func (cm *CoffeeMachine) DealDamage(dmg float32) bool {
 	// NOTE: no damage to clickable objects
 	return false
 }
 
-func (cm *CoffeeMachine) HealDamage(dmg float64) bool {
+func (cm *CoffeeMachine) HealDamage(dmg float32) bool {
 	// NOTE: no damage to clickable objects
 	return true
 }
 
-func (cm *CoffeeMachine) BoundingBox() math.BoundingBox {
-	x, y := cm.pos.Elem()
-	return math.NewBoundingBox(x-0.25, x+0.25, y-0.25, y+0.25)
+func (cm *CoffeeMachine) Rectangle() d2.Rectangle {
+	x, y := cm.pos[0], cm.pos[1]
+	return d2.Rect(x-0.25, y-0.25, x+0.25, y+0.25)
 }
 
 func (cm *CoffeeMachine) OperatedBy() Entity {

@@ -6,16 +6,16 @@
 package surviveler
 
 import (
-	"server/math"
 	"server/messages"
 	"sort"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 // translation from topleft of tile to its center
-var txCenter math.Vec2
+var txCenter d2.Vec2
 
 type EntityFilter func(e Entity) bool
 
@@ -57,7 +57,7 @@ func (gs *GameState) init(gameData *gameData) error {
 	}
 
 	// precompute constant, translation from corner to center of tile
-	txCenter = math.Vec2{1.0, 1.0}.Div(2.0 * gs.world.GridScale)
+	txCenter = d2.Vec2{1, 1}.Scale(1 / (2 * gs.world.GridScale))
 	return nil
 }
 
@@ -133,7 +133,7 @@ func (gs *GameState) RemoveEntity(id uint32) {
 	delete(gs.entities, id)
 }
 
-func (gs *GameState) createBuilding(t EntityType, pos math.Vec2) Building {
+func (gs *GameState) createBuilding(t EntityType, pos d2.Vec2) Building {
 	var building Building
 	switch t {
 	case BarricadeBuilding:
@@ -192,7 +192,7 @@ func (c entityDistCollection) Swap(i, j int) {
 	c[i], c[j] = c[j], c[i]
 }
 
-func (gs *GameState) NearestEntity(pos math.Vec2,
+func (gs *GameState) NearestEntity(pos d2.Vec2,
 	f EntityFilter) (Entity, float32) {
 	result := make(entityDistCollection, 0)
 	for _, ent := range gs.entities {

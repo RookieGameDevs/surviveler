@@ -47,7 +47,7 @@ type DrinkCoffee struct{}
  * Movement action payload
  */
 type Move struct {
-	Speed float64
+	Speed float32
 }
 
 /*

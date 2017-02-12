@@ -9,6 +9,30 @@
 			"revisionTime": "2016-07-16T02:56:31Z"
 		},
 		{
+			"checksumSHA1": "rwCZrvXWJz+PEVH8nS4PPZp/uN0=",
+			"path": "github.com/aurelien-rainone/gogeo/f32",
+			"revision": "608286594ee8612452f7c0c67240dc57c3560d9a",
+			"revisionTime": "2016-11-17T18:28:38Z"
+		},
+		{
+			"checksumSHA1": "W+7JDYtV9Zce1xetbW7hDQtDyaw=",
+			"path": "github.com/aurelien-rainone/gogeo/f32/d2",
+			"revision": "608286594ee8612452f7c0c67240dc57c3560d9a",
+			"revisionTime": "2016-11-17T18:28:38Z"
+		},
+		{
+			"checksumSHA1": "XzRcwvAP1prunz92FcsksZzoCJs=",
+			"path": "github.com/aurelien-rainone/gogeo/f32/d3",
+			"revision": "3e35d916bc2f440c51818f48d9310342ec6f779b",
+			"revisionTime": "2017-02-04T00:26:48Z"
+		},
+		{
+			"checksumSHA1": "WTGcxOJU4GGpQnEfdaqnyOzNxUk=",
+			"path": "github.com/aurelien-rainone/math32",
+			"revision": "4fa51acc312b8fbde60c3e9b63ac6baa524aa355",
+			"revisionTime": "2017-02-04T00:28:37Z"
+		},
+		{
 			"checksumSHA1": "hC+IHTGZmpW5OhvttqcYhowRSFY=",
 			"path": "github.com/aurelien-rainone/telgo",
 			"revision": "d703effac61fcc431109c2dcfa26dfdc4ab00b5a",

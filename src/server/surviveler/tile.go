@@ -6,10 +6,10 @@ package surviveler
 
 import (
 	"fmt"
-	gomath "math"
-	"server/math"
+	"math"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 	astar "github.com/beefsack/go-astar"
 )
 
@@ -37,11 +37,11 @@ const (
  * for commodity.
  */
 type Tile struct {
-	Kind     TileKind         // kind of tile, each kind has its own cost
-	X, Y     int              // tile position in 'grid' coordinates
-	W        *World           // reference to the map this tile is part of
-	Entities EntitySet        // Entities intersecting with this Tile
-	aabb     math.BoundingBox // pre-computed bounding box, as it won't ever change
+	Kind     TileKind     // kind of tile, each kind has its own cost
+	X, Y     int          // tile position in 'grid' coordinates
+	W        *World       // reference to the map this tile is part of
+	Entities EntitySet    // Entities intersecting with this Tile
+	aabb     d2.Rectangle // pre-computed bounding box, as it won't ever change
 }
 
 func NewTile(kind TileKind, w *World, x, y int) Tile {
@@ -51,12 +51,12 @@ func NewTile(kind TileKind, w *World, x, y int) Tile {
 		X:        x,
 		Y:        y,
 		Entities: *NewEntitySet(),
-		aabb: math.BoundingBox{
-			MinX: (float64(x) - 0.5) / w.GridScale,
-			MaxX: (float64(x) + 0.5) / w.GridScale,
-			MinY: (float64(y) - 0.5) / w.GridScale,
-			MaxY: (float64(y) + 0.5) / w.GridScale,
-		},
+		aabb: d2.Rect(
+			(float32(x)-0.5)/w.GridScale,
+			(float32(y)-0.5)/w.GridScale,
+			(float32(x)+0.5)/w.GridScale,
+			(float32(y)+0.5)/w.GridScale,
+		),
 	}
 }
 
@@ -64,7 +64,7 @@ func (t Tile) GoString() string {
 	return fmt.Sprintf("Tile{X: %d, Y: %d, Kind: %d}", t.X, t.Y, t.Kind)
 }
 
-func (t Tile) BoundingBox() math.BoundingBox {
+func (t Tile) Rectangle() d2.Rectangle {
 	return t.aabb
 }
 
@@ -165,7 +165,7 @@ func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
 		return cf
 	}
 	// diagonal
-	return gomath.Sqrt2 * cf
+	return math.Sqrt2 * cf
 }
 
 /*
@@ -173,5 +173,5 @@ func (t *Tile) PathNeighborCost(to astar.Pather) float64 {
  */
 func (t *Tile) PathEstimatedCost(to astar.Pather) float64 {
 	n := to.(*Tile)
-	return gomath.Abs(float64(n.X-t.X)) + gomath.Abs(float64(n.Y-t.Y))
+	return math.Abs(float64(n.X-t.X)) + math.Abs(float64(n.Y-t.Y))
 }

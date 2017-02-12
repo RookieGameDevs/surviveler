@@ -7,9 +7,9 @@ package surviveler
 import (
 	"math/rand"
 	"server/events"
-	"server/math"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
 /*
@@ -17,7 +17,7 @@ import (
  *
  * The callback function fn is called if a path is found.
  */
-func (gs *GameState) runPathFinder(org, dst math.Vec2, fn func(path math.Path)) {
+func (gs *GameState) runPathFinder(org, dst d2.Vec2, fn func(path Path)) {
 	ctxLog := log.WithFields(log.Fields{"org": org, "dst": dst})
 	// run the macro-pathfinder
 	path, _, found := gs.game.Pathfinder().FindPath(org, dst)
@@ -54,7 +54,7 @@ func (gs *GameState) onPlayerJoin(event *events.Event) {
 
 	// instantiate player with settings from the resources pkg
 	p := NewPlayer(gs.game, org, EntityType(evt.Type),
-		float64(entityData.Speed), float64(entityData.TotalHP),
+		float32(entityData.Speed), float32(entityData.TotalHP),
 		uint16(entityData.BuildingPower), uint16(entityData.CombatPower))
 	p.SetId(evt.Id)
 	gs.AddEntity(p)
@@ -75,7 +75,7 @@ func (gs *GameState) onPlayerLeave(event *events.Event) {
  */
 func (gs *GameState) onPlayerMove(event *events.Event) {
 	evt := event.Payload.(events.PlayerMove)
-	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
+	dst := d2.Vec2{evt.Xpos, evt.Ypos}
 
 	ctxLog := log.WithFields(log.Fields{"evt": evt, "dst": dst})
 	ctxLog.Info("Received PlayerMove event")
@@ -92,7 +92,7 @@ func (gs *GameState) onPlayerMove(event *events.Event) {
 		return
 	}
 
-	gs.runPathFinder(player.Position(), dst, func(p math.Path) {
+	gs.runPathFinder(player.Position(), dst, func(p Path) {
 		player.Move(p)
 	})
 }
@@ -102,7 +102,7 @@ func (gs *GameState) onPlayerMove(event *events.Event) {
  */
 func (gs *GameState) onPlayerBuild(event *events.Event) {
 	evt := event.Payload.(events.PlayerBuild)
-	dst := math.FromFloat32(evt.Xpos, evt.Ypos)
+	dst := d2.Vec2{evt.Xpos, evt.Ypos}
 
 	ctxLog := log.WithFields(log.Fields{"evt": evt, "dst": dst})
 	ctxLog.Info("Received PlayerBuild event")
@@ -139,11 +139,11 @@ func (gs *GameState) onPlayerBuild(event *events.Event) {
 	})
 
 	// clip building center with tile center
-	pos := math.FromInts(tile.X, tile.Y).
-		Div(gs.world.GridScale).
+	pos := d2.Vec2{float32(tile.X), float32(tile.Y)}.
+		Scale(1 / gs.world.GridScale).
 		Add(txCenter)
 
-	gs.runPathFinder(player.Position(), pos, func(p math.Path) {
+	gs.runPathFinder(player.Position(), pos, func(p Path) {
 		// create the building, attach it to the tile
 		building := gs.createBuilding(EntityType(evt.Type), pos)
 		player.Build(building, p)
@@ -171,7 +171,7 @@ func (gs *GameState) onPlayerRepair(event *events.Event) {
 		return
 	}
 
-	gs.runPathFinder(player.Position(), building.Position(), func(p math.Path) {
+	gs.runPathFinder(player.Position(), building.Position(), func(p Path) {
 		// set player action
 		player.Repair(building, p)
 	})
@@ -216,7 +216,7 @@ func (gs *GameState) onPlayerOperate(event *events.Event) {
 
 	var (
 		tile, draft *Tile
-		position    *math.Vec2
+		position    *d2.Vec2
 	)
 
 	// get the tile at object coordinates
@@ -243,9 +243,9 @@ func (gs *GameState) onPlayerOperate(event *events.Event) {
 			if x != tile.X && y != tile.Y {
 				draft = gs.world.Tile(x, y)
 				if draft.IsWalkable() {
-					position = &math.Vec2{
-						float64(x) / gs.world.GridScale,
-						float64(y) / gs.world.GridScale,
+					position = &d2.Vec2{
+						float32(x) / gs.world.GridScale,
+						float32(y) / gs.world.GridScale,
 					}
 				}
 			}
@@ -253,7 +253,7 @@ func (gs *GameState) onPlayerOperate(event *events.Event) {
 	}
 
 	if position != nil {
-		gs.runPathFinder(player.Position(), *position, func(p math.Path) {
+		gs.runPathFinder(player.Position(), *position, func(p Path) {
 			player.Operate(object, p)
 		})
 	}
