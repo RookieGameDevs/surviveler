@@ -9,6 +9,36 @@
 			"revisionTime": "2016-07-16T02:56:31Z"
 		},
 		{
+			"checksumSHA1": "gxyrp0nnb7IgIb9UgH/uVbWxe3U=",
+			"path": "github.com/aurelien-rainone/assertgo",
+			"revision": "891f93602570da62db2a103dbf265567bf0cc973",
+			"revisionTime": "2016-11-04T20:33:57Z"
+		},
+		{
+			"checksumSHA1": "NxZydgYYACVzHUCOQz0PpKLVuKs=",
+			"path": "github.com/aurelien-rainone/go-detour",
+			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
+			"revisionTime": "2017-02-11T02:04:58Z"
+		},
+		{
+			"checksumSHA1": "WuabGEWyzAHqW/z1FldHggjHjXs=",
+			"path": "github.com/aurelien-rainone/go-detour/detour",
+			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
+			"revisionTime": "2017-02-11T02:04:58Z"
+		},
+		{
+			"checksumSHA1": "qNvVJxisujsYEelcG0100OKnyTM=",
+			"path": "github.com/aurelien-rainone/go-detour/recast",
+			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
+			"revisionTime": "2017-02-11T02:04:58Z"
+		},
+		{
+			"checksumSHA1": "Q4CN2Q4fpoJNgWMDkI5jsdDZfGY=",
+			"path": "github.com/aurelien-rainone/gobj",
+			"revision": "e35c2b0ebfe09d9a5b3213971de8e5d63fa7843b",
+			"revisionTime": "2017-02-03T21:46:55Z"
+		},
+		{
 			"checksumSHA1": "rwCZrvXWJz+PEVH8nS4PPZp/uN0=",
 			"path": "github.com/aurelien-rainone/gogeo/f32",
 			"revision": "608286594ee8612452f7c0c67240dc57c3560d9a",
