@@ -21,16 +21,16 @@
 			"revisionTime": "2016-11-17T18:28:38Z"
 		},
 		{
-			"checksumSHA1": "mK3IWySXdzEeAlNGIhpvroP+GUI=",
+			"checksumSHA1": "XzRcwvAP1prunz92FcsksZzoCJs=",
 			"path": "github.com/aurelien-rainone/gogeo/f32/d3",
-			"revision": "608286594ee8612452f7c0c67240dc57c3560d9a",
-			"revisionTime": "2016-11-17T18:28:38Z"
+			"revision": "3e35d916bc2f440c51818f48d9310342ec6f779b",
+			"revisionTime": "2017-02-04T00:26:48Z"
 		},
 		{
-			"checksumSHA1": "DszWfs53NqOpwVE+ddGnRT0kUAg=",
+			"checksumSHA1": "WTGcxOJU4GGpQnEfdaqnyOzNxUk=",
 			"path": "github.com/aurelien-rainone/math32",
-			"revision": "b5e375192229cbce8b357ce2df6ad9fda33e8d3f",
-			"revisionTime": "2016-11-15T08:09:37Z"
+			"revision": "4fa51acc312b8fbde60c3e9b63ac6baa524aa355",
+			"revisionTime": "2017-02-04T00:28:37Z"
 		},
 		{
 			"checksumSHA1": "hC+IHTGZmpW5OhvttqcYhowRSFY=",
