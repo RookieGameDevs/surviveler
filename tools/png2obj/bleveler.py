@@ -363,14 +363,15 @@ def mat2map(matrix: WalkableMatrix, wall=1) -> Mapping:
 def bpy_png2matrix(filepath: str) -> WalkableMatrix:
     ret = []
     img = image_utils.load_image(filepath)
-    channels = img.channels
-    assert channels == 4, 'Only images with alpha channels are supported (so far)!'
+    assert img.channels == 4, 'Only images with alpha channels are supported (so far)!'
     ipx = 0
-    for y in range(img.size[1]):
+    width, height = img.size
+    pixels = img.pixels
+    for y in range(height):
         row = []
-        for x in range(img.size[0]):
-            color = img.pixels[ipx: ipx + 3]
-            alpha = img.pixels[ipx + 3]  # remove '.'
+        for x in range(width):
+            color = pixels[ipx: ipx + 3]
+            alpha = pixels[ipx + 3]  # remove '.'
             walkable = (alpha == 0 or color == (1, 1, 1))
             # 1 => obstacle
             row.append(int(not walkable))
