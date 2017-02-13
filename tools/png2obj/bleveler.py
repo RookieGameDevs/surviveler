@@ -381,6 +381,13 @@ def bpy_png2matrix(filepath: str) -> WalkableMatrix:
     return ret
 
 
+def scale_wall_perimeters(scalar: float, wall_perimeters: List[WallPerimeter]):
+    """
+    Scale the list of wall perimeters vertices by a `scalar` factor.
+    """
+    return [[tuple(comp * scalar for comp in v) for v in wall] for wall in wall_perimeters]
+
+
 bl_info = {
     'name': 'png2obj',
     'category': 'Import-Export',
@@ -406,6 +413,9 @@ bpy.types.Scene.ImagePath = StringProperty(name='Image file',
 bpy.types.Scene.wall_height = bpy.props.IntProperty(
     name='Walls height (m)', default=3, min=1, max=20,
     description='The absolute walls height in meters')
+bpy.types.Scene.cell_size = bpy.props.FloatProperty(
+    name='Cell size (m)', default=1, min=0, max=10,
+    description='How many meters correspond to each pixel')
 
 
 class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
@@ -416,7 +426,9 @@ class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
     def draw(self, context):
         self.layout.label(text='Select png to use as level base')  # Text above the button
 
+        # Draw properties
         self.layout.prop(context.scene, 'ImagePath')
+        self.layout.prop(context.scene, 'cell_size')
         self.layout.prop(context.scene, 'wall_height')
 
         # operator button
@@ -430,6 +442,7 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
     __doc__ = 'It will load the image and create the level mesh from the file.'
 
     def invoke(self, context, event):
+        cell_size = context.scene.cell_size
         wall_height = context.scene.wall_height
 
         file_path = context.scene.ImagePath
@@ -442,6 +455,9 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         print('Detecting edges...')
         t0 = time.time()
         wall_perimeters = sorted(build_walls(blocks_map, map_size=map_size, turtle=False))
+        if cell_size != 1:
+            wall_perimeters = scale_wall_perimeters(cell_size, wall_perimeters)
+            print('Scale:', cell_size)
         verts2D, edges = wall_perimeters_to_verts_edges(wall_perimeters)
         verts = add_3D(verts2D)
         faces = []
