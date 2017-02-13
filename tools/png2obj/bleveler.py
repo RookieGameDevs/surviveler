@@ -403,6 +403,10 @@ bpy.types.Scene.ImagePath = StringProperty(name='Image file',
     default='')  # this set the text
 
 
+bpy.types.Scene.wall_height = bpy.props.IntProperty(
+    name="Wall height", default=2, min=1, max=20)
+
+
 class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
@@ -412,6 +416,7 @@ class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
         self.layout.label(text='Select png to use as level base')  # Text above the button
 
         self.layout.prop(context.scene, 'ImagePath')
+        self.layout.prop(context.scene, 'wall_height')
 
         # operator button
         # OBJECT_OT_CustomButton => object.CustomButton
@@ -423,8 +428,10 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
     bl_label = 'Generate'
     __doc__ = 'It will load the image and create the level mesh from the file.'
 
+    wall_height = bpy.props.FloatProperty(name="Height", default=3, min=1, max=100)
+
     def invoke(self, context, event):
-        wall_height = 3  # TODO: parametrize from GUI
+        wall_height = context.scene.wall_height
 
         file_path = context.scene.ImagePath
         t0 = time.time()
