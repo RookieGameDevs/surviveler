@@ -237,7 +237,7 @@ def add_3D(vertices: List[Vertex2D], z: float=0):
     return [(v[0], v[1], z) for v in vertices]
 
 
-def build_walls(walls_map: Mapping, map_size: Tuple[int, int], cell_size: int=1, turtle=False) -> List[List[Vertex2D]]:
+def build_walls(walls_map: Mapping, map_size: Tuple[int, int], pixel_size: int=1, turtle=False) -> List[List[Vertex2D]]:
     """
     Main function (edge detection): builds the list of wall perimeters.
 
@@ -251,8 +251,8 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], cell_size: int=1,
         width, height = map_size
         for bx in range(width):
             for by in range(height):
-                x = bx * cell_size
-                y = by * cell_size
+                x = bx * pixel_size
+                y = by * pixel_size
                 yield (x, y)
 
     def map_vertex(xy: Vertex2D) -> Pos:
@@ -260,7 +260,7 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], cell_size: int=1,
         vertex is the top-left one.
         """
         x, y = xy
-        return int(x / cell_size), int(y / cell_size)
+        return int(x / pixel_size), int(y / pixel_size)
 
     def vertex2cells(xy: Vertex2D) -> VertexCells:
         """Returns the 4 neighbour map cells (white or not)
@@ -413,8 +413,8 @@ bpy.types.Scene.ImagePath = StringProperty(name='Image file',
 bpy.types.Scene.wall_height = bpy.props.IntProperty(
     name='Walls height (m)', default=3, min=1, max=20,
     description='The absolute walls height in meters')
-bpy.types.Scene.cell_size = bpy.props.FloatProperty(
-    name='Cell size (m)', default=1, min=0, max=10,
+bpy.types.Scene.pixel_size = bpy.props.FloatProperty(
+    name='Pixel size (m)', default=1, min=0, max=10,
     description='How many meters correspond to each pixel')
 
 
@@ -428,7 +428,7 @@ class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
 
         # Draw properties
         self.layout.prop(context.scene, 'ImagePath')
-        self.layout.prop(context.scene, 'cell_size')
+        self.layout.prop(context.scene, 'pixel_size')
         self.layout.prop(context.scene, 'wall_height')
 
         # operator button
@@ -442,7 +442,7 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
     __doc__ = 'It will load the image and create the level mesh from the file.'
 
     def invoke(self, context, event):
-        cell_size = context.scene.cell_size
+        pixel_size = context.scene.pixel_size
         wall_height = context.scene.wall_height
 
         file_path = context.scene.ImagePath
@@ -455,9 +455,9 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         print('Detecting edges...')
         t0 = time.time()
         wall_perimeters = sorted(build_walls(blocks_map, map_size=map_size, turtle=False))
-        if cell_size != 1:
-            wall_perimeters = scale_wall_perimeters(cell_size, wall_perimeters)
-            print('Scale:', cell_size)
+        if pixel_size != 1:
+            wall_perimeters = scale_wall_perimeters(pixel_size, wall_perimeters)
+            print('Scale:', pixel_size)
         verts2D, edges = wall_perimeters_to_verts_edges(wall_perimeters)
         verts = add_3D(verts2D)
         faces = []
