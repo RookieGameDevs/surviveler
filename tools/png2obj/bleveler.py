@@ -33,6 +33,7 @@ from typing import Mapping
 from typing import NamedTuple
 from typing import Set  # noqa
 from typing import Tuple
+import time
 import turtle as logo
 
 # Blender stuff
@@ -426,15 +427,20 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         wall_height = 3  # TODO: parametrize from GUI
 
         file_path = context.scene.ImagePath
+        t0 = time.time()
         matrix = bpy_png2matrix(file_path)
+        elapsed = time.time() - t0
+        print('Image loaded in {:.2f} s'.format(elapsed))
         blocks_map, map_size = mat2map(matrix)
 
         print('Detecting edges...')
+        t0 = time.time()
         wall_perimeters = sorted(build_walls(blocks_map, map_size=map_size, turtle=False))
         verts2D, edges = wall_perimeters_to_verts_edges(wall_perimeters)
         verts = add_3D(verts2D)
         faces = []
-        print('Found {:,} vertices and {:,} edges'.format(len(verts), len(edges)))
+        elapsed = time.time() - t0
+        print('Found {:,} vertices and {:,} edges in {:.2f} s'.format(len(verts), len(edges), elapsed))
 
         # ============== Example data ======================
         # verts = [
