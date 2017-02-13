@@ -404,7 +404,8 @@ bpy.types.Scene.ImagePath = StringProperty(name='Image file',
 
 
 bpy.types.Scene.wall_height = bpy.props.IntProperty(
-    name="Wall height", default=2, min=1, max=20)
+    name='Walls height (m)', default=3, min=1, max=20,
+    description='The absolute walls height in meters')
 
 
 class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
@@ -427,8 +428,6 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
     bl_idname = 'object.custombutton'
     bl_label = 'Generate'
     __doc__ = 'It will load the image and create the level mesh from the file.'
-
-    wall_height = bpy.props.FloatProperty(name="Height", default=3, min=1, max=100)
 
     def invoke(self, context, event):
         wall_height = context.scene.wall_height
