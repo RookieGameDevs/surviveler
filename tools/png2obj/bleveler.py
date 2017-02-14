@@ -430,7 +430,8 @@ bpy.types.Scene.pixel_size = bpy.props.FloatProperty(
 class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'TOOLS'
-    bl_label = 'Surviveler level generator'
+    bl_category = "Surviveler"
+    bl_label = 'BLEVELER: Surviveler level generator'
 
     def draw(self, context):
         self.layout.label(text='Select png to use as level base')  # Text above the button
