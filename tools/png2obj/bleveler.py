@@ -2,25 +2,25 @@
 """
 Add-on to create level mesh based on png.
 
-Main module to create a Wavefront obj file from a png one.
-
 Involved steps:
-    1 - convert a png to a walkable matrix;
-    2 - find wall perimeters -> list of 2D edges;
-    3 - extrude vertically the wall perimeters -> list of 3D faces;
-    4 - fill top horizontal wall faces.
-
-Python-3 only due to the type hinting (and 'super') syntax.
+    1 - loading (slow part): load a png --> walls matrix;
+    2 - perfect edge detection: find walls perimeters (list of 2D edges);
+    3 - scaling: scale walls perimeters vertices based on pixel size (value settable by GUI)
+    3 - extrusion (Blender API): extrude vertically the wall perimeters (value settable by GUI);
+    4 - fill/tessellation (Blender API): fill top horizontal wall faces.
 
 Glossary (to try to make some clearness):
-    * cell - an element in the walkable matrix, with coordinates (x, y)
-    * block - a non-walkable cell
+    * cell - an element in the walkable matrix, with coordinates (x, y) => corresponds to a pixel
+    * block - a non-walkable cell <==> non-white and non-transparent pixel
+    * walls matrix - a matrix where ones represent non-walkable cells, anz zeros walkable ones.
     * vertex - a 2/3D point in a 2/3D space (used to describe wall perimeters and meshes)
     * wall perimeter - a 2D closed planar (z=0) polygon which corresponds to the wall borders
         (from a "top" view perspective).
+        The edge detection returns a list of walls perimeters.
         If the wall is open, you have 1 perimeter for 1 wall.
         If the wall is closed, you have an internal wall perimeter and an external one.
         Each png or level may consists of several separated walls.
+        The concept of wall perimeter does not exist meshwide.
 """
 from collections import Counter
 from collections import OrderedDict
@@ -50,7 +50,7 @@ Vertex3D = Tuple[float, float, float]
 Triangle2D = Tuple[Vertex2D, Vertex2D, Vertex2D]
 Triangle3D = Tuple[Vertex3D, Vertex3D, Vertex3D]
 WallPerimeter = List[Vertex2D]
-WalkableMatrix = List[List[int]]
+WallsMatrix = List[List[int]]
 VertexCells = NamedTuple('NearCells',
     [
         ('upleft', Pos),
@@ -350,7 +350,7 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], pixel_size: int=1
     return ret
 
 
-def mat2map(matrix: WalkableMatrix, wall=1) -> Mapping:
+def mat2map(matrix: WallsMatrix, wall=1) -> Mapping:
     """Creates a blocks map from a walkable matrix.
     """
     ret = {}
@@ -361,7 +361,11 @@ def mat2map(matrix: WalkableMatrix, wall=1) -> Mapping:
     return ret, (x + 1, y + 1)
 
 
-def bpy_png2matrix(filepath: str) -> WalkableMatrix:
+def bpy_png2matrix(filepath: str) -> WallsMatrix:
+    """
+    Load the png and return a WallsMatrix.
+    """
+    # XXX: Is slow in Blender.
     ret = []
     img = image_utils.load_image(filepath)
     assert img.channels == 4, 'Only images with alpha channels are supported (so far)!'
@@ -388,6 +392,10 @@ def scale_wall_perimeters(scalar: float, wall_perimeters: List[WallPerimeter]):
     return [[tuple(comp * scalar for comp in v) for v in wall] for wall in wall_perimeters]
 
 
+# =================================================================================================
+#                                    BLENDER RELATED STUFF
+# =================================================================================================
+
 bl_info = {
     'name': 'png2obj',
     'category': 'Import-Export',
@@ -395,8 +403,9 @@ bl_info = {
     'version': (1, 0),
     'blender': (2, 7, 8),
     'location': 'View3D > Object > Move4 Object',
-    'description': 'Create a mesh from a bitmap',
-    'warning': 'alpha',
+    'description': 'Create a building-like mesh from a bitmap, by interpreting non-white pixels as walls.'
+        'The height of walls is settable by GUI, as well as the pixel size (scale).',
+    'warning': 'Can be slow on non-small png (> 300 x 300)',
     'wiki_url': '',
     'tracker_url': '',
 }
@@ -407,7 +416,7 @@ bpy.types.Scene.ImagePath = StringProperty(name='Image file',
     description='The image to use to generate the level',
     maxlen=1024,
     subtype='FILE_PATH',
-    default='')  # this set the text
+    default='')
 
 
 bpy.types.Scene.wall_height = bpy.props.IntProperty(
