@@ -8,6 +8,7 @@ Involved steps:
     3 - scaling: scale walls perimeters vertices based on pixel size (value settable by GUI)
     3 - extrusion (Blender API): extrude vertically the wall perimeters (value settable by GUI);
     4 - fill/tessellation (Blender API): fill top horizontal wall faces.
+    5 - floor (Blender API): create a floor (you can decide the gap between the walls and how much must be extended outside perimeter).
 
 Glossary (to try to make some clearness):
     * cell - an element in the walkable matrix, with coordinates (x, y) => corresponds to a pixel
@@ -425,6 +426,12 @@ bpy.types.Scene.wall_height = bpy.props.IntProperty(
 bpy.types.Scene.pixel_size = bpy.props.FloatProperty(
     name='Pixel size (m)', default=1, min=0, max=10,
     description='How many meters correspond to each pixel')
+bpy.types.Scene.floor_outside = bpy.props.IntProperty(
+    name='Floor outside (m)', default=0, min=0, max=100,
+    description='How many meters the floor will be extended outside the level')
+bpy.types.Scene.floor_gap = bpy.props.IntProperty(
+    name='Floor gap (mm)', default=5, min=0, max=100,
+    description='How many millimeters along the Z axis the floor will be separated from the walls base')
 
 
 class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
@@ -440,6 +447,8 @@ class VIEW3D_PT_custompathmenupanel(bpy.types.Panel):
         self.layout.prop(context.scene, 'ImagePath')
         self.layout.prop(context.scene, 'pixel_size')
         self.layout.prop(context.scene, 'wall_height')
+        self.layout.prop(context.scene, 'floor_outside')
+        self.layout.prop(context.scene, 'floor_gap')
 
         # operator button
         # OBJECT_OT_CustomButton => object.CustomButton
@@ -506,8 +515,34 @@ class OBJECT_OT_custombutton(bpy.types.Operator):
         # Fill upper horizontal wall surfaces (triangulate)
         bpy.ops.mesh.fill()
 
+        # Create the floor
+        level_width = len(matrix[0]) * pixel_size
+        level_height = len(matrix) * pixel_size
+        max_dimension = max([level_width, level_height])
+        exact_radius = max_dimension / 2
+        create_plane(
+            radius=exact_radius + context.scene.floor_outside,
+            location=(level_width / 2, level_height / 2, -context.scene.floor_gap / 1000))
+
         bpy.ops.object.editmode_toggle()
+
         return {'FINISHED'}
+
+
+def create_plane(name='Floor', location=(0, 0, 0), radius=1):
+    bpy.ops.mesh.primitive_plane_add(
+        radius=radius,
+        view_align=False,
+        enter_editmode=False,
+        location=location,
+        layers=(True, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False, False))
+
+    ob = bpy.context.object
+    ob.name = name
+    ob.show_name = True
+    me = ob.data
+    me.name = name + 'Mesh'
+    return ob
 
 
 def register():
