@@ -41,13 +41,15 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 	if err = resource.LoadJSON(pkg, mapURI, &gd.mapData); err != nil {
 		return nil, err
 	}
-	if gd.mapData.ScaleFactor == 0 {
-		return nil, errors.New("'scale_factor' can't be 0")
-	}
-	// package must contain the path to world matrix bitmap
-	fname, ok := gd.mapData.Resources["matrix"]
+	// package must contain the path to wall+floors mesh
+	fname, ok := gd.mapData.Resources["walls+floor_mesh"]
 	if !ok {
-		return nil, errors.New("'matrix' field not found in the map asset")
+		return nil, errors.New("'walls+floor' field not found in the map asset")
+	}
+
+	meshURI := path.Join("map", fname)
+	if exists, rtype := pkg.Exists(meshURI); !exists || rtype != resource.File {
+		return nil, fmt.Errorf("mesh at uri %v, no such file", meshURI)
 	}
 
 	// read and decode the bitmap from the package
