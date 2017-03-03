@@ -33,6 +33,12 @@
 			"revisionTime": "2017-02-11T02:04:58Z"
 		},
 		{
+			"checksumSHA1": "bvJwypffhogdVFMNKZc+2HjSBBA=",
+			"path": "github.com/aurelien-rainone/go-detour/sample",
+			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
+			"revisionTime": "2017-02-11T02:04:58Z"
+		},
+		{
 			"checksumSHA1": "Q4CN2Q4fpoJNgWMDkI5jsdDZfGY=",
 			"path": "github.com/aurelien-rainone/gobj",
 			"revision": "e35c2b0ebfe09d9a5b3213971de8e5d63fa7843b",
