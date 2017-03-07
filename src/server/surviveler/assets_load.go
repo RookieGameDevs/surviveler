@@ -7,12 +7,8 @@ package surviveler
 import (
 	"errors"
 	"fmt"
-	"image"
-	"io"
 	"path"
 	"server/resource"
-
-	"golang.org/x/image/bmp"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -47,28 +43,16 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 		return nil, errors.New("'walls+floor' field not found in the map asset")
 	}
 
-	meshURI := path.Join("map", fname)
-	if exists, rtype := pkg.Exists(meshURI); !exists || rtype != resource.File {
-		return nil, fmt.Errorf("mesh at uri %v, no such file", meshURI)
+	var (
+		objPath string
+	)
+	if objPath, err = pkg.FullPath(path.Join("map", fname)); err != nil {
+		return nil, fmt.Errorf("URI %s not found in assets folder, %s", path.Join("map", fname), err)
 	}
 
-	// read and decode the bitmap from the package
-	var (
-		worldBmp image.Image
-		item     resource.Item
-		f        io.ReadCloser
-	)
-	item, err = pkg.Open(fname)
+	gd.world, err = NewWorld(objPath)
 	if err != nil {
-		return nil, err
-	}
-	f, err = item.Open()
-	defer f.Close()
-	if worldBmp, err = bmp.Decode(f); err == nil {
-		if gd.world, err =
-			NewWorld(worldBmp, gd.mapData.ScaleFactor); err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("can't create world, %s", err)
 	}
 
 	// TODO: this map is hard-coded for now, but will be read from resources

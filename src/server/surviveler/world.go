@@ -7,9 +7,11 @@ package surviveler
 import (
 	"bytes"
 	"fmt"
-	"image"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/go-detour/detour"
+	"github.com/aurelien-rainone/go-detour/recast"
+	"github.com/aurelien-rainone/go-detour/sample/solomesh"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
 )
 
@@ -17,6 +19,7 @@ import (
  * World is the spatial reference on which game entities are located
  */
 type World struct {
+	NavMesh               *detour.NavMesh     // world navigation mesh
 	Grid                                      // the embedded map
 	GridWidth, GridHeight int                 // grid dimensions
 	Width, Height         float32             // world dimensions
@@ -30,32 +33,50 @@ type World struct {
  * It loads the map from the provided Surviveler Package and initializes the
  * world representation from it.
  */
-func NewWorld(img image.Image, gridScale float32) (*World, error) {
-	bounds := img.Bounds()
-	w := World{
-		GridWidth:  bounds.Max.X,
-		GridHeight: bounds.Max.Y,
-		Width:      float32(bounds.Max.X) / gridScale,
-		Height:     float32(bounds.Max.Y) / gridScale,
-		GridScale:  gridScale,
-		Entities:   make(map[uint32]TileList),
-	}
-	log.WithField("world", w).Info("Building world")
+func NewWorld(objPath string) (*World, error) {
 
-	// allocate tiles
-	var kind TileKind
-	w.Grid = make([]Tile, bounds.Max.X*bounds.Max.Y)
-	for x := bounds.Min.X; x < bounds.Max.X; x++ {
-		for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-			r, _, _, _ := img.At(x, y).RGBA()
-			if r == 0 {
-				kind = KindNotWalkable
-			} else {
-				kind = KindWalkable
-			}
-			w.Grid[x+y*w.GridWidth] = NewTile(kind, &w, x, y)
-		}
+	// TODO: NewWorld should receives a reader maybe (to allow other kinds of
+	// asset package, not just folders?)
+
+	ctx := recast.NewBuildContext(true)
+	soloMesh := solomesh.New(ctx)
+	if err := soloMesh.LoadGeometry(objPath); err != nil {
+		ctx.DumpLog("")
+		return nil, fmt.Errorf("couldn't load mesh %v, %s", objPath, err)
 	}
+	navMesh, ok := soloMesh.Build()
+	if !ok {
+		ctx.DumpLog("")
+		return nil, fmt.Errorf("couldn't build navmesh for %v", objPath)
+	}
+
+	//bounds := img.Bounds()
+	w := World{
+		NavMesh: navMesh,
+	}
+	//GridWidth:  bounds.Max.X,
+	//GridHeight: bounds.Max.Y,
+	//Width:      float32(bounds.Max.X) / gridScale,
+	//Height:     float32(bounds.Max.Y) / gridScale,
+	//GridScale:  gridScale,
+	//Entities:   make(map[uint32]TileList),
+	//}
+	//log.WithField("world", w).Info("Building world")
+
+	//// allocate tiles
+	//var kind TileKind
+	//w.Grid = make([]Tile, bounds.Max.X*bounds.Max.Y)
+	//for x := bounds.Min.X; x < bounds.Max.X; x++ {
+	//for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+	//r, _, _, _ := img.At(x, y).RGBA()
+	//if r == 0 {
+	//kind = KindNotWalkable
+	//} else {
+	//kind = KindWalkable
+	//}
+	//w.Grid[x+y*w.GridWidth] = NewTile(kind, &w, x, y)
+	//}
+	//}
 	return &w, nil
 }
 
