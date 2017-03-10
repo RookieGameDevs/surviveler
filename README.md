@@ -85,25 +85,25 @@ help is available by specifying `-h` flag when running the server:
 
 Example of server port change:
 
-    bin/server -port 12345
+    $ bin/server --port 12345
 
 Every command line flag can also be specified in a `.ini` file, which keys are
 the same than the command line flags. Inifile sections are ignored. In order to
 instruct the server to read the configuration parameters from file, provide the
-path to the ini file path with the `-config` flag, as in:
+path to the ini file with the `--config` flag, as in:
 
-    bin/server -config /home/surviveler/home-lan-party.ini
+    $ bin/server --inifile /home/surviveler/home-lan-party.ini
 
 
 ### Admin mode with the telnet server
 The embedded telnet server is enabled by setting the `telnet-port` option.
 
-    bin/server -telnet-port 2244
+    $ bin/server --telnet-port 2244
 
 To use the telnet interface, start your favourite telnet client by specifying
 the configured port:
 
-    telnet server-ip 2244
+    $ telnet server-ip 2244
 
 Issue `help` on the telnet line to have a list of available commands, then `help
 command` or `command -h` or also `command --help` which will provide you with
@@ -179,6 +179,9 @@ environment is set):
 
 Install the resulting library in local Python distribution `site-packages` folder:
 
+*NOTE*: The `${VIRTUALENV}` is expected to be the absolute path to local Python
+environment.
+
  * Linux
 ```bash
 cp build/libsurrender.so ${VIRTUALENV}/lib/surrender.so
@@ -190,16 +193,11 @@ cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surren
 cp build/libsurrender.dylib ${VIRTUALENV}/lib/surrender.so
 cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so
 ```
+On Mac OS X the final file name must have `.so` extension!
 
  * Windows
 
 *TODO*
-
-
-*NOTE*: On Mac OS X the final file name must have `.so` extension!
-
-The `${VIRTUALENV}` is expected to be the absolute path to local Python
-environment.
 
 
 ## Running
