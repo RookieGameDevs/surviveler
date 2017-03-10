@@ -58,19 +58,30 @@ You can specify a certain number of options at server startup, a short usage
 help is available by specifying `-h` flag when running the server:
 
     $ bin/server -h
-    Usage of server:
-      -config string
-            Path to ini config for using in go flags.
-      -log-level string
-            Server logging level (Debug, Info, Warning, Error) (default "Debug")
-      -logic-tick-period int
-            Period in millisecond of the ticker that updates game logic (default 10)
-      -port string
-            Server listening port (TCP) (default "1234")
-      -send-tick-period int
-            Period in millisecond of the ticker that send the gamestate to clients (default 100)
-      -telnet-port string
-            Any port different than 0 enables the telnet server (disabled by defaut)
+    NAME:
+       server - Surviveler server
+
+    USAGE:
+       server [global options] command [command options] [arguments...]
+
+    VERSION:
+       0.0.0
+
+    COMMANDS:
+    GLOBAL OPTIONS:
+       --port value                 Server listening port (TCP)
+       --log-level value            Server logging level (Debug, Info, Warning, Error)
+       --logic-tick-period value    Period in millisecond of the ticker that updates game logic (default: 0)
+       --send-tick-period value     Period in millisecond of the ticker that sends the gamestate to clients (default: 0)
+       --time-factor value          Game time speed multiplier (default: 0)
+       --night-starting-time value  The night starting time in minutes from midnight (default: 0)
+       --night-ending-time value    The night ending time in minutes from midnight (default: 0)
+       --game-starting-time value   The games tarting time in minutes from midnight (default: 0)
+       --telnet-port value          Any port different than 0 enables the telnet server (disabled by defaut)
+       --assets value               Path to the game assets package
+       --inifile value              Path to the server configuration file
+       --help, -h                   show help
+       --version, -v                print the version
 
 Example of server port change:
 
