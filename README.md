@@ -120,7 +120,7 @@ below for Bash and Fish shell users.
 ## Python virtualenv setup for bash shell
 Ensure you have `virtualenv` utility installed and then just type:
 
-    virtualenv --with-python=python3.5 .
+    virtualenv --python python3.5 .
 
 Once done, to make the just created environment active source the activation
 script:
