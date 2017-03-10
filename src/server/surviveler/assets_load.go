@@ -104,6 +104,7 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 	}
 	for name, uri := range em.Buildings {
 		var buildingData BuildingData
+		uri = path.Join(uri, "data.json")
 		err = resource.LoadJSON(pkg, uri, &buildingData)
 		if err != nil {
 			return nil, err
