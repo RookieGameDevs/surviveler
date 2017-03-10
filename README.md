@@ -58,41 +58,52 @@ You can specify a certain number of options at server startup, a short usage
 help is available by specifying `-h` flag when running the server:
 
     $ bin/server -h
-    Usage of server:
-      -config string
-            Path to ini config for using in go flags.
-      -log-level string
-            Server logging level (Debug, Info, Warning, Error) (default "Debug")
-      -logic-tick-period int
-            Period in millisecond of the ticker that updates game logic (default 10)
-      -port string
-            Server listening port (TCP) (default "1234")
-      -send-tick-period int
-            Period in millisecond of the ticker that send the gamestate to clients (default 100)
-      -telnet-port string
-            Any port different than 0 enables the telnet server (disabled by defaut)
+    NAME:
+       server - Surviveler server
+
+    USAGE:
+       server [global options] command [command options] [arguments...]
+
+    VERSION:
+       0.0.0
+
+    COMMANDS:
+    GLOBAL OPTIONS:
+       --port value                 Server listening port (TCP)
+       --log-level value            Server logging level (Debug, Info, Warning, Error)
+       --logic-tick-period value    Period in millisecond of the ticker that updates game logic (default: 0)
+       --send-tick-period value     Period in millisecond of the ticker that sends the gamestate to clients (default: 0)
+       --time-factor value          Game time speed multiplier (default: 0)
+       --night-starting-time value  The night starting time in minutes from midnight (default: 0)
+       --night-ending-time value    The night ending time in minutes from midnight (default: 0)
+       --game-starting-time value   The games tarting time in minutes from midnight (default: 0)
+       --telnet-port value          Any port different than 0 enables the telnet server (disabled by defaut)
+       --assets value               Path to the game assets package
+       --inifile value              Path to the server configuration file
+       --help, -h                   show help
+       --version, -v                print the version
 
 Example of server port change:
 
-    bin/server -port 12345
+    $ bin/server --port 12345
 
 Every command line flag can also be specified in a `.ini` file, which keys are
 the same than the command line flags. Inifile sections are ignored. In order to
 instruct the server to read the configuration parameters from file, provide the
-path to the ini file path with the `-config` flag, as in:
+path to the ini file with the `--config` flag, as in:
 
-    bin/server -config /home/surviveler/home-lan-party.ini
+    $ bin/server --inifile /home/surviveler/home-lan-party.ini
 
 
 ### Admin mode with the telnet server
 The embedded telnet server is enabled by setting the `telnet-port` option.
 
-    bin/server -telnet-port 2244
+    $ bin/server --telnet-port 2244
 
 To use the telnet interface, start your favourite telnet client by specifying
 the configured port:
 
-    telnet server-ip 2244
+    $ telnet server-ip 2244
 
 Issue `help` on the telnet line to have a list of available commands, then `help
 command` or `command -h` or also `command --help` which will provide you with
@@ -120,7 +131,7 @@ below for Bash and Fish shell users.
 ## Python virtualenv setup for bash shell
 Ensure you have `virtualenv` utility installed and then just type:
 
-    virtualenv --with-python=python3.5 .
+    virtualenv --python python3.5 .
 
 Once done, to make the just created environment active source the activation
 script:
@@ -168,13 +179,25 @@ environment is set):
 
 Install the resulting library in local Python distribution `site-packages` folder:
 
- * `cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (Linux)
- * `cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (OSX)
-
-*NOTE*: On Mac OS X the final file name must have `.so` extension!
-
-The `${VIRTUALENV}` is expected to be the absolute path to local Python
+*NOTE*: The `${VIRTUALENV}` is expected to be the absolute path to local Python
 environment.
+
+ * Linux
+```bash
+cp build/libsurrender.so ${VIRTUALENV}/lib/surrender.so
+cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so
+```
+
+ * Mac OSX
+```bash
+cp build/libsurrender.dylib ${VIRTUALENV}/lib/surrender.so
+cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so
+```
+On Mac OS X the final file name must have `.so` extension!
+
+ * Windows
+
+*TODO*
 
 
 ## Running
