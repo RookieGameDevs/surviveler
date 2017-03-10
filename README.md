@@ -168,8 +168,22 @@ environment is set):
 
 Install the resulting library in local Python distribution `site-packages` folder:
 
- * `cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (Linux)
- * `cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so` (OSX)
+ * Linux
+```bash
+cp build/libsurrender.so ${VIRTUALENV}/lib/surrender.so
+cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so
+```
+
+ * Mac OSX
+```bash
+cp build/libsurrender.dylib ${VIRTUALENV}/lib/surrender.so
+cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so
+```
+
+ * Windows
+
+*TODO*
+
 
 *NOTE*: On Mac OS X the final file name must have `.so` extension!
 
