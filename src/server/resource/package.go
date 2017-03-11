@@ -17,10 +17,6 @@ const (
 
 /*
  * Package represents a container of resources (folders or binary/text files).
- *
- * A package is the high level abstraction that represents the container, and a
- * way to read its content. The resources contained are accessed through their
- * URI, that is the relative path of the given resource, from the package root.
  */
 type Package interface {
 
@@ -28,6 +24,9 @@ type Package interface {
 	Open(URI string) (Item, error)
 }
 
+/*
+ * an Item is an element of a resource package, file or folder.
+ */
 type Item interface {
 
 	// Open returns a ReadCloser on current item.

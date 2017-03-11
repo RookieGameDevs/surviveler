@@ -13,6 +13,7 @@ type FSPackage struct {
 	root FSItem
 }
 
+// OpenFSPackage opens a filesystem package, that is, a folder.
 func OpenFSPackage(rootURI string) (Package, error) {
 	var (
 		abs string
