@@ -17,8 +17,8 @@
 		{
 			"checksumSHA1": "NxZydgYYACVzHUCOQz0PpKLVuKs=",
 			"path": "github.com/aurelien-rainone/go-detour",
-			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
-			"revisionTime": "2017-02-11T02:04:58Z"
+			"revision": "870c09206b91318365950557453c3aee4ff6300c",
+			"revisionTime": "2017-03-12T13:58:08Z"
 		},
 		{
 			"checksumSHA1": "WuabGEWyzAHqW/z1FldHggjHjXs=",
@@ -27,22 +27,22 @@
 			"revisionTime": "2017-02-11T02:04:58Z"
 		},
 		{
-			"checksumSHA1": "qNvVJxisujsYEelcG0100OKnyTM=",
+			"checksumSHA1": "nmnXxnpDFDRxe4JOZWsBbYeCw0k=",
 			"path": "github.com/aurelien-rainone/go-detour/recast",
-			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
-			"revisionTime": "2017-02-11T02:04:58Z"
+			"revision": "870c09206b91318365950557453c3aee4ff6300c",
+			"revisionTime": "2017-03-12T13:58:08Z"
 		},
 		{
 			"checksumSHA1": "bvJwypffhogdVFMNKZc+2HjSBBA=",
 			"path": "github.com/aurelien-rainone/go-detour/sample",
-			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
-			"revisionTime": "2017-02-11T02:04:58Z"
+			"revision": "870c09206b91318365950557453c3aee4ff6300c",
+			"revisionTime": "2017-03-12T13:58:08Z"
 		},
 		{
-			"checksumSHA1": "MOrTsu25IvZImXgZiMF6OQe0iX8=",
+			"checksumSHA1": "BG4IN140EY6ZT6P7F8UJyZuRFYA=",
 			"path": "github.com/aurelien-rainone/go-detour/sample/solomesh",
-			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
-			"revisionTime": "2017-02-11T02:04:58Z"
+			"revision": "870c09206b91318365950557453c3aee4ff6300c",
+			"revisionTime": "2017-03-12T13:58:08Z"
 		},
 		{
 			"checksumSHA1": "Q4CN2Q4fpoJNgWMDkI5jsdDZfGY=",
