@@ -37,20 +37,7 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 	if err = resource.LoadJSON(pkg, mapURI, &gd.mapData); err != nil {
 		return nil, err
 	}
-	// package must contain the path to wall+floors mesh
-	fname, ok := gd.mapData.Resources["walls+floor_mesh"]
-	if !ok {
-		return nil, errors.New("'walls+floor' field not found in the map asset")
-	}
-
-	var (
-		objPath string
-	)
-	if objPath, err = pkg.FullPath(path.Join("map", fname)); err != nil {
-		return nil, fmt.Errorf("URI %s not found in assets folder, %s", path.Join("map", fname), err)
-	}
-
-	gd.world, err = NewWorld(objPath)
+	gd.world, err = NewWorld(pkg, gd.mapData)
 	if err != nil {
 		return nil, fmt.Errorf("can't create world, %s", err)
 	}
@@ -68,6 +55,7 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 	var (
 		em *EntitiesData
 		t  EntityType
+		ok bool
 	)
 	em = new(EntitiesData)
 	if err = resource.LoadJSON(pkg, entitiesURI, &em); err != nil {

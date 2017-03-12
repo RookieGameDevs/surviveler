@@ -6,7 +6,9 @@ package surviveler
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"server/resource"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/go-detour/detour"
@@ -30,53 +32,38 @@ type World struct {
 /*
  * NewWorld creates a brand new world.
  *
- * It loads the map from the provided Surviveler Package and initializes the
- * world representation from it.
+ * It loads the map from the provided Package item and initializes the
+ * world with it.
  */
-func NewWorld(objPath string) (*World, error) {
+func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
+	// package must contain the path to wall+floors mesh
+	mapURI, ok := mapData.Resources["walls+floor_mesh"]
+	if !ok {
+		return nil, errors.New("'walls+floor' field not found in map assets")
+	}
 
-	// TODO: NewWorld should receives a reader maybe (to allow other kinds of
-	// asset package, not just folders?)
+	item, err := pkg.Open(mapURI)
+	if err != nil {
+		return nil, err
+	}
 
 	ctx := recast.NewBuildContext(true)
 	soloMesh := solomesh.New(ctx)
-	if err := soloMesh.LoadGeometry(objPath); err != nil {
+	r, err := item.Open()
+	if err := soloMesh.LoadGeometry(r); err != nil {
 		ctx.DumpLog("")
-		return nil, fmt.Errorf("couldn't load mesh %v, %s", objPath, err)
+		return nil, fmt.Errorf("couldn't load mesh %v, %s", mapURI, err)
 	}
+	defer r.Close()
 	navMesh, ok := soloMesh.Build()
 	if !ok {
 		ctx.DumpLog("")
-		return nil, fmt.Errorf("couldn't build navmesh for %v", objPath)
+		return nil, fmt.Errorf("couldn't build navmesh for %v", mapURI)
 	}
 
-	//bounds := img.Bounds()
 	w := World{
 		NavMesh: navMesh,
 	}
-	//GridWidth:  bounds.Max.X,
-	//GridHeight: bounds.Max.Y,
-	//Width:      float32(bounds.Max.X) / gridScale,
-	//Height:     float32(bounds.Max.Y) / gridScale,
-	//GridScale:  gridScale,
-	//Entities:   make(map[uint32]TileList),
-	//}
-	//log.WithField("world", w).Info("Building world")
-
-	//// allocate tiles
-	//var kind TileKind
-	//w.Grid = make([]Tile, bounds.Max.X*bounds.Max.Y)
-	//for x := bounds.Min.X; x < bounds.Max.X; x++ {
-	//for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-	//r, _, _, _ := img.At(x, y).RGBA()
-	//if r == 0 {
-	//kind = KindNotWalkable
-	//} else {
-	//kind = KindWalkable
-	//}
-	//w.Grid[x+y*w.GridWidth] = NewTile(kind, &w, x, y)
-	//}
-	//}
 	return &w, nil
 }
 
