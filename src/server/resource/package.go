@@ -32,7 +32,7 @@ type Item interface {
 	// Type returns the type of current file, file or directory.
 	Type() Type
 
-	// Files returns a slice of the files contained in current item, or an
-	// empty slice if current item is not a directory.
+	// Files returns a slice of the items contained in current folder, or an
+	// empty slice if current file is not a folder.
 	Files() []Item
 }
