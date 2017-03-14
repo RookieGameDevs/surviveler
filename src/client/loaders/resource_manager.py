@@ -187,6 +187,21 @@ class ResourceManager:
         return wrap
 
 
+    @classmethod
+    def dummy_handler(cls, *ext):
+        """Registers a dummy resource handler.
+
+        :param ext: One or multiple file extensions
+        :type ext: str
+        """
+        def wrap(f):
+            def dummy(manager, fp, cwd):
+                return None
+            ResourceManager.resource_handler(*ext)(dummy)
+            return dummy
+        return wrap
+
+
 @ResourceManager.resource_handler('.json')
 def load_data(manager, fp, cwd):
     """Loader for json files.
@@ -333,3 +348,6 @@ def load_mesh(manager, fp, cwd):
     """
     from renderlib.mesh import Mesh
     return Mesh.from_buffer(fp.read())
+
+@ResourceManager.dummy_handler('.yml')
+def load_yaml(manager, fp, cwd): pass
