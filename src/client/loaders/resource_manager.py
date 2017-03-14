@@ -173,11 +173,12 @@ class ResourceManager:
     def resource_handler(cls, *ext):
         """Registers a resource handler.
 
-        :param ext: The file extension
+        :param ext: One or multiple file extensions
         :type ext: str
         """
-        if ext in cls.__RESOURCE_HANDLERS:
-            raise ResourceHandlerAlreadyExists(ext)
+        for e in ext:
+            if e in cls.__RESOURCE_HANDLERS:
+                raise ResourceHandlerAlreadyExists(ext)
 
         def wrap(f):
             for e in ext:
