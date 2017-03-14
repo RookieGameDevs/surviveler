@@ -8,7 +8,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"server/resource"
+
+	yaml "gopkg.in/yaml.v2"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/go-detour/detour"
@@ -21,7 +25,8 @@ import (
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	NavMesh               *detour.NavMesh     // world navigation mesh
+	NavMesh               *detour.NavMesh     // navigation mesh
+	soloMesh              *solomesh.SoloMesh  // solo nav mesh container/rebuilder
 	Grid                                      // the embedded map
 	GridWidth, GridHeight int                 // grid dimensions
 	Width, Height         float32             // world dimensions
@@ -36,33 +41,68 @@ type World struct {
  * world with it.
  */
 func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
+	var (
+		item                       resource.Item
+		err                        error
+		mapURI, navmeshSettingsURI string
+		ok                         bool
+		r1, r2                     io.ReadCloser
+		buf                        []byte
+		settings                   solomesh.Settings
+		navMesh                    *detour.NavMesh
+	)
+
 	// package must contain the path to wall+floors mesh
-	mapURI, ok := mapData.Resources["walls+floor_mesh"]
-	if !ok {
-		return nil, errors.New("'walls+floor' field not found in map assets")
+	if mapURI, ok = mapData.Resources["walls+floor_mesh"]; !ok {
+		return nil, errors.New("'walls+floor_mesh' field not found in map assets")
 	}
 
-	item, err := pkg.Open(mapURI)
-	if err != nil {
+	navmeshSettingsURI, ok = mapData.Resources["walls+floor_meshsettings"]
+	if !ok {
+		return nil, errors.New("'walls+floor_meshsettings' field not found in map assets")
+	}
+
+	// load settings from yaml file
+	if item, err = pkg.Open(navmeshSettingsURI); err != nil {
+		return nil, err
+	}
+	if r1, err = item.Open(); err != nil {
+		return nil, err
+	}
+	defer r1.Close()
+	if buf, err = ioutil.ReadAll(r1); err != nil {
+		return nil, err
+	}
+	if err = yaml.Unmarshal(buf, &settings); err != nil {
 		return nil, err
 	}
 
 	ctx := recast.NewBuildContext(true)
 	soloMesh := solomesh.New(ctx)
-	r, err := item.Open()
-	if err := soloMesh.LoadGeometry(r); err != nil {
+
+	soloMesh.SetSettings(settings)
+
+	// load geometry
+	if item, err = pkg.Open(mapURI); err != nil {
+		return nil, err
+	}
+
+	if r2, err = item.Open(); err != nil {
+		return nil, err
+	}
+	defer r2.Close()
+	if err = soloMesh.LoadGeometry(r2); err != nil {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't load mesh %v, %s", mapURI, err)
 	}
-	defer r.Close()
-	navMesh, ok := soloMesh.Build()
-	if !ok {
+	if navMesh, ok = soloMesh.Build(); !ok {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't build navmesh for %v", mapURI)
 	}
 
 	w := World{
-		NavMesh: navMesh,
+		soloMesh: soloMesh,
+		NavMesh:  navMesh,
 	}
 	return &w, nil
 }
