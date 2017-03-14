@@ -228,13 +228,13 @@ func (w World) IntersectingTiles(bb d2.Rectangle) []*Tile {
  */
 func (w *World) AttachEntity(ent Entity) {
 	// retrieve list of tiles intersecting with the entity aabb
-	tileList := w.IntersectingTiles(ent.Rectangle())
+	//tileList := w.IntersectingTiles(ent.Rectangle())
 
 	// attach this entity to all those tiles
-	w.attachTo(ent, tileList...)
+	//w.attachTo(ent, tileList...)
 
 	// add those links to the world (for fast query by entity id)
-	w.Entities[ent.Id()] = tileList
+	//w.Entities[ent.Id()] = tileList
 }
 
 /*
@@ -242,12 +242,12 @@ func (w *World) AttachEntity(ent Entity) {
  */
 func (w *World) DetachEntity(ent Entity) {
 	// retrieve tile list for this entity
-	tileList := w.Entities[ent.Id()]
+	//tileList := w.Entities[ent.Id()]
 	// detach the entity from each of those tiles
-	w.detachFrom(ent, tileList...)
+	//w.detachFrom(ent, tileList...)
 
 	// clear the tile list for this entity
-	w.Entities[ent.Id()] = make(TileList, 0)
+	//w.Entities[ent.Id()] = make(TileList, 0)
 }
 
 func (w *World) attachTo(ent Entity, tiles ...*Tile) {
