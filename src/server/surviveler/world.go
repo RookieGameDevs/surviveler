@@ -25,13 +25,14 @@ import (
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	NavMesh               *detour.NavMesh     // navigation mesh
-	soloMesh              *solomesh.SoloMesh  // solo nav mesh container/rebuilder
-	Grid                                      // the embedded map
-	GridWidth, GridHeight int                 // grid dimensions
-	Width, Height         float32             // world dimensions
-	GridScale             float32             // the grid scale
-	Entities              map[uint32]TileList // map entities to the tiles to which it is attached
+	NavMesh               *detour.NavMesh      // navigation mesh
+	soloMesh              *solomesh.SoloMesh   // solo nav mesh container/rebuilder
+	Grid                                       // the embedded map
+	GridWidth, GridHeight int                  // grid dimensions
+	Width, Height         float32              // world dimensions
+	GridScale             float32              // the grid scale
+	Entities              map[uint32]TileList  // map entities to the tiles to which it is attached
+	MeshQuery             *detour.NavMeshQuery // navigation mesh query
 }
 
 /*
@@ -100,9 +101,14 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 		return nil, fmt.Errorf("couldn't build navmesh for %v", mapURI)
 	}
 
+	st, q := detour.NewNavMeshQuery(navMesh, 2048)
+	if detour.StatusFailed(st) {
+		return nil, st
+	}
 	w := World{
-		soloMesh: soloMesh,
-		NavMesh:  navMesh,
+		soloMesh:  soloMesh,
+		NavMesh:   navMesh,
+		MeshQuery: q,
 	}
 	return &w, nil
 }
