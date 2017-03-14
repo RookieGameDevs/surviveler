@@ -11,6 +11,8 @@ import (
 	"server/resource"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/go-detour/detour"
+	"github.com/aurelien-rainone/gogeo/f32/d3"
 )
 
 // URI of some static elements contained in a package
@@ -102,19 +104,26 @@ func newGameData(pkg resource.Package) (*gameData, error) {
  * validateWorld performs some consistency and logical checks on the world
  */
 func (gd *gameData) validateWorld(world *World) error {
+	var (
+		st detour.Status
+		q  *detour.NavMeshQuery
+		f  detour.QueryFilter = detour.NewStandardQueryFilter()
+	)
+	if st, q = detour.NewNavMeshQuery(world.NavMesh, 2048); detour.StatusFailed(st) {
+		return st
+	}
+
 	// validate player spawn point
 	spawnPoints := gd.mapData.AIKeypoints.Spawn
 	for i := range spawnPoints.Players {
-		pt := world.TileFromWorldVec(spawnPoints.Players[i])
-		if pt == nil {
+		fmt.Println("validating player spawn point", i, "=", spawnPoints.Players[i])
+		sp := d3.Vec3{spawnPoints.Players[i][0], 0, spawnPoints.Players[i][1]}
+		ext := d3.Vec3{1, 1, 1}
+		if st, ref, _ := q.FindNearestPoly(sp, ext, f); detour.StatusFailed(st) || !world.NavMesh.IsValidPolyRef(ref) {
+
 			return fmt.Errorf(
-				"player spawn point is out of bounds (%#v)",
-				spawnPoints.Players[i])
-		}
-		if pt.Kind&KindWalkable == 0 {
-			return fmt.Errorf(
-				"player spawn point is located on a non-walkable point: (%#v)",
-				*pt)
+				"invalid player spawn point (%#v), st(=%v), ref(%v)",
+				spawnPoints.Players[i], st, ref)
 		}
 	}
 
@@ -123,16 +132,12 @@ func (gd *gameData) validateWorld(world *World) error {
 		return errors.New("at least one enemy spawn point must be defined")
 	}
 	for i := range spawnPoints.Enemies {
-		zt := world.TileFromWorldVec(spawnPoints.Enemies[i])
-		if zt == nil {
+		sp := d3.Vec3{spawnPoints.Enemies[i][0], 0, spawnPoints.Enemies[i][1]}
+		ext := d3.Vec3{0, 1, 0}
+		if st, ref, _ := q.FindNearestPoly(sp, ext, f); detour.StatusFailed(st) || !world.NavMesh.IsValidPolyRef(ref) {
 			return fmt.Errorf(
-				"a Zombie spawn point is out of bounds: (%#v)",
+				"invalid zombie spawn point (%#v)",
 				spawnPoints.Enemies[i])
-		}
-		if zt.Kind&KindWalkable == 0 {
-			return fmt.Errorf(
-				"a Zombie spawn point is located on a non-walkable tile: (%#v)",
-				*zt)
 		}
 	}
 	return nil
