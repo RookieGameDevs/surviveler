@@ -135,7 +135,7 @@ func (me *Movable) SetPath(path Path) {
 	}
 
 	// fill it with waypoints from the macro-path
-	for i := range path {
+	for i := len(path) - 1; i >= 0; i-- {
 		wp := path[i]
 		me.waypoints.Push(wp)
 	}
