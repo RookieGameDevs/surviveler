@@ -154,11 +154,20 @@ func (w World) TileFromWorldVec(pt d2.Vec2) *Tile {
 }
 
 /*
- * PointInBounds indicates if specific point lies in the world boundaries
+ * PointInBounds indicates if specific point lies in a valid polygon of the
+ * navmesh.
  */
 func (w World) PointInBounds(pt d2.Vec2) bool {
-	return pt[0] >= 0 && pt[0] <= w.Width &&
-		pt[1] >= 0 && pt[1] <= w.Height
+	pt3 := d3.Vec3{pt[0], 0, pt[1]}
+	ext := d3.Vec3{0.1, 1, 0.1}
+	st, ref, _ := w.MeshQuery.FindNearestPoly(pt3, ext, w.QueryFilter)
+	if detour.StatusFailed(st) {
+		log.WithError(st).Debug("Point not in bounds")
+	}
+	if !w.NavMesh.IsValidPolyRef(ref) {
+		log.WithField("ref", ref).Debug("Invalid poly ref")
+	}
+	return detour.StatusSucceed(st) && w.NavMesh.IsValidPolyRef(ref)
 }
 
 /*
