@@ -3,8 +3,8 @@ from renderlib.core import renderer_clear
 from renderlib.core import renderer_init
 from renderlib.core import renderer_present
 from renderlib.core import renderer_shutdown
-from sdl2 import *
 import logging
+import sdl2 as sdl
 
 
 LOG = logging.getLogger(__name__)
@@ -36,28 +36,28 @@ class Renderer:
             raise ConfigError(err)
 
         # create a SDL window
-        self.win = SDL_CreateWindow(
+        self.win = sdl.SDL_CreateWindow(
             b'Surviveler',
-            SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
+            sdl.SDL_WINDOWPOS_CENTERED,
+            sdl.SDL_WINDOWPOS_CENTERED,
             width,
             height,
-            SDL_WINDOW_OPENGL)
+            sdl.SDL_WINDOW_OPENGL)
         if self.win is None:
             raise RuntimeError('failed to create SDL window')
 
         # create an OpenGL context
-        SDL_GL_SetAttribute(
-            SDL_GL_CONTEXT_PROFILE_MASK,
-            SDL_GL_CONTEXT_PROFILE_CORE)
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major)
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor)
-        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1)
-        SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24)
-        self.ctx = SDL_GL_CreateContext(self.win)
+        sdl.SDL_GL_SetAttribute(
+            sdl.SDL_GL_CONTEXT_PROFILE_MASK,
+            sdl.SDL_GL_CONTEXT_PROFILE_CORE)
+        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_CONTEXT_MAJOR_VERSION, gl_major)
+        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_CONTEXT_MINOR_VERSION, gl_minor)
+        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_DOUBLEBUFFER, 1)
+        sdl.SDL_GL_SetAttribute(sdl.SDL_GL_DEPTH_SIZE, 24)
+        self.ctx = sdl.SDL_GL_CreateContext(self.win)
 
         if self.ctx is None:
-            SDL_DestroyWindow(self.win)
+            sdl.SDL_DestroyWindow(self.win)
             raise RuntimeError('failed to initialize OpenGL context')
 
         # initialize renderer
@@ -90,12 +90,12 @@ class Renderer:
     def present(self):
         """Present updated buffers to screen."""
         renderer_present()
-        SDL_GL_SwapWindow(self.win)
+        sdl.SDL_GL_SwapWindow(self.win)
 
     def shutdown(self):
         """Shut down the renderer."""
         renderer_shutdown()
-        SDL_GL_DeleteContext(self.ctx)
+        sdl.SDL_GL_DeleteContext(self.ctx)
         self.ctx = None
-        SDL_DestroyWindow(self.win)
+        sdl.SDL_DestroyWindow(self.win)
         self.win = None
