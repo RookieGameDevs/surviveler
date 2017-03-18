@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io"
 	"server/events"
-	"server/math"
 	"server/messages"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/gogeo/f32/d2"
 	"github.com/urfave/cli"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -50,16 +50,16 @@ type TnGameState struct {
 }
 
 type TnMoveEntity struct {
-	Id   uint32    // entity id
-	Dest math.Vec2 // destination
+	Id   uint32  // entity id
+	Dest d2.Vec2 // destination
 }
 
 type TnTeleportEntity TnMoveEntity
 
 type TnBuild struct {
-	Id   uint32    // entity id
-	Type uint8     // building type
-	Pos  math.Vec2 // building position
+	Id   uint32  // entity id
+	Type uint8   // building type
+	Pos  d2.Vec2 // building position
 }
 
 type TnRepair struct {
@@ -88,8 +88,11 @@ func (req *TnMoveEntity) FromContext(c *cli.Context) error {
 		req.Id = uint32(Id)
 	}
 
+	if req.Dest == nil || len(req.Dest) < 2 {
+		req.Dest = d2.NewVec2()
+	}
 	if err := req.Dest.Set(c.String("pos")); err != nil {
-		return fmt.Errorf("invalid position vector: %s", c.String("pos"))
+		return fmt.Errorf("invalid position vector: %s, %v", c.String("pos"), err)
 	}
 	return nil
 }
@@ -118,8 +121,11 @@ func (req *TnBuild) FromContext(c *cli.Context) error {
 		req.Id = uint32(Id)
 	}
 
+	if req.Pos == nil || len(req.Pos) < 2 {
+		req.Pos = d2.NewVec2()
+	}
 	if err := req.Pos.Set(c.String("pos")); err != nil {
-		return fmt.Errorf("invalid position vector: %s", c.String("pos"))
+		return fmt.Errorf("invalid position vector: %s, %v", c.String("pos"), err)
 	}
 
 	Type := c.Int("type")
@@ -304,7 +310,7 @@ func (g *Game) registerTelnetHandlers() {
 }
 
 /*
- * telnetHandler is the unique handlers for game related telnet request.
+ * telnetHandler is the unique handler for all game related telnet requests.
  *
  * Because it is exclusively called from inside a select case of the game loop,
  * it is safe to read/write the gamestate here. However, every call should only
