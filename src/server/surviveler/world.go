@@ -308,25 +308,7 @@ func (w *World) UpdateEntity(ent Entity) {
  * the returned set will contain this entity.
  */
 func (w *World) AABBSpatialQuery(bb d2.Rectangle) *EntitySet {
-	// set to contain all the entities around, though not necessarily colliding
-	allEntities := NewEntitySet()
-
-	// loop on the intersecting tiles
-	for _, it := range w.IntersectingTiles(bb) {
-		// add all the entities attached to this tile
-		allEntities.Union(&it.Entities)
-	}
-
-	colliding := NewEntitySet()
-	// filter out the non-colliding entities
-	allEntities.Each(func(ent Entity) bool {
-		if ent.Rectangle().Overlaps(bb) {
-			colliding.Add(ent)
-		}
-		return true
-	})
-
-	return colliding
+	return NewEntitySet()
 }
 
 /*
