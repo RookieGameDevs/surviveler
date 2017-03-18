@@ -137,9 +137,12 @@ func (g *Game) loadAssets(path string) (*gameData, error) {
 	if len(path) == 0 {
 		return nil, fmt.Errorf("can't start without a specified assets path")
 	}
-	g.assets = resource.OpenAssetsFolder(g.cfg.AssetsPath)
+	pkg, err := resource.OpenFSPackage(g.cfg.AssetsPath)
+	if err != nil {
+		return nil, fmt.Errorf("can't open assets %v", g.cfg.AssetsPath)
+	}
+	g.assets = pkg
 
-	var err error
 	// load game assets
 	gameData, err := newGameData(g.assets)
 	if err != nil {

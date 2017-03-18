@@ -8,7 +8,11 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"io"
+	"path"
 	"server/resource"
+
+	"golang.org/x/image/bmp"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -23,28 +27,6 @@ const (
 // in the future
 var _entityTypes = map[string]EntityType{}
 
-/*
- * LoadMapData loads the map data from the given package.
- *
- * It decodes it into a MapData struct
- */
-func LoadMapData(pkg resource.Package) (*MapData, error) {
-	md := new(MapData)
-	err := resource.LoadJSON(pkg, mapURI, &md)
-	return md, err
-}
-
-/*
- * LoadEntitiesData loads the entities data from the given package.
- *
- * It decodes it into an EntititesData struct
- */
-func LoadEntitiesData(pkg resource.Package) (*EntitiesData, error) {
-	md := new(EntitiesData)
-	err := resource.LoadJSON(pkg, entitiesURI, &md)
-	return md, err
-}
-
 func newGameData(pkg resource.Package) (*gameData, error) {
 	var (
 		gd  *gameData
@@ -53,9 +35,10 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 	gd = new(gameData)
 	gd.entitiesData = make(EntityDataDict)
 	gd.buildingsData = make(BuildingDataDict)
+	gd.mapData = new(MapData)
 
 	// load map data and information
-	if gd.mapData, err = LoadMapData(pkg); err != nil {
+	if err = resource.LoadJSON(pkg, mapURI, &gd.mapData); err != nil {
 		return nil, err
 	}
 	if gd.mapData.ScaleFactor == 0 {
@@ -66,8 +49,20 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 	if !ok {
 		return nil, errors.New("'matrix' field not found in the map asset")
 	}
-	var worldBmp image.Image
-	if worldBmp, err = resource.LoadBitmap(pkg, fname); err == nil {
+
+	// read and decode the bitmap from the package
+	var (
+		worldBmp image.Image
+		item     resource.Item
+		f        io.ReadCloser
+	)
+	item, err = pkg.Open(fname)
+	if err != nil {
+		return nil, err
+	}
+	f, err = item.Open()
+	defer f.Close()
+	if worldBmp, err = bmp.Decode(f); err == nil {
 		if gd.world, err =
 			NewWorld(worldBmp, gd.mapData.ScaleFactor); err != nil {
 			return nil, err
@@ -88,14 +83,16 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 		em *EntitiesData
 		t  EntityType
 	)
-	if em, err = LoadEntitiesData(pkg); err != nil {
-		return nil, err
+	em = new(EntitiesData)
+	if err = resource.LoadJSON(pkg, entitiesURI, &em); err != nil {
+		return nil, fmt.Errorf("couldn't decode EntitiesData from %v: %v", entitiesURI, err)
 	}
 	for name, uri := range em.Entities {
-		var entityData EntityData
+		uri = path.Join(uri, "data.json")
+		entityData := new(EntityData)
 		err = resource.LoadJSON(pkg, uri, &entityData)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("couldn't decode EntityData from %v: %v", uri, err)
 		}
 		if t, ok = _entityTypes[name]; !ok {
 			return nil, fmt.Errorf("couldn't find type of '%s' entity", name)
@@ -103,10 +100,11 @@ func newGameData(pkg resource.Package) (*gameData, error) {
 		log.WithFields(
 			log.Fields{"name": name, "type": t, "data": entityData}).
 			Debug("Loaded EntityData")
-		gd.entitiesData[t] = &entityData
+		gd.entitiesData[t] = entityData
 	}
 	for name, uri := range em.Buildings {
 		var buildingData BuildingData
+		uri = path.Join(uri, "data.json")
 		err = resource.LoadJSON(pkg, uri, &buildingData)
 		if err != nil {
 			return nil, err

@@ -6,36 +6,22 @@ package resource
 
 import (
 	"encoding/json"
-	"image"
-
-	"golang.org/x/image/bmp"
+	"io"
 )
 
-/*
- * LoadJSON decodes a JSON resource inside a Package into an interface
- */
+// LoadJSON decodes a JSON file coming from pkg into interface i
 func LoadJSON(pkg Package, URI string, i interface{}) error {
-	exists, t := pkg.Exists(URI)
-	if exists && t == Folder {
-		URI = URI + "/data.json"
-	}
-	r, err := pkg.GetReader(URI)
+	item, err := pkg.Open(URI)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
-	decoder := json.NewDecoder(r)
-	return decoder.Decode(i)
-}
-
-/*
- * LoadBitmap loads and a bitmap image contained in a package.
- */
-func LoadBitmap(pkg Package, URI string) (image.Image, error) {
-	r, err := pkg.GetReader(URI)
+	var f io.ReadCloser
+	f, err = item.Open()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer r.Close()
-	return bmp.Decode(r)
+	defer f.Close()
+	decoder := json.NewDecoder(f)
+	err = decoder.Decode(&i)
+	return err
 }
