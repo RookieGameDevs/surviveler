@@ -17,7 +17,7 @@ import (
  *
  * The callback function fn is called if a path is found.
  */
-func (gs *GameState) runPathFinder(org, dst d2.Vec2, fn func(path Path)) {
+func (gs *GameState) runPathFinder(org, dst d2.Vec2, fn func(Path)) {
 	ctxLog := log.WithFields(log.Fields{"org": org, "dst": dst})
 	// run the macro-pathfinder
 	path, _, found := gs.game.Pathfinder().FindPath(org, dst)
