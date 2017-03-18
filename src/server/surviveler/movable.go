@@ -126,6 +126,10 @@ func (me *Movable) Move(dt time.Duration) (hasMoved bool) {
  * It replaces and cancel the current path, if any.
  */
 func (me *Movable) SetPath(path Path) {
+	// TODO: the stack implementation should let the possibility to
+	// reuse/replace one or more elements in order to not have to empty it and
+	// to re-fill.
+
 	// empty the waypoint stack
 	for ; me.waypoints.Len() != 0; me.waypoints.Pop() {
 	}
