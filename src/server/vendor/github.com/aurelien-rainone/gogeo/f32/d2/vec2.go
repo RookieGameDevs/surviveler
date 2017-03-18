@@ -2,6 +2,8 @@ package d2
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/aurelien-rainone/math32"
 )
@@ -233,8 +235,15 @@ func (v Vec2) String() string {
 }
 
 func (v *Vec2) Set(s string) error {
-	if _, err := fmt.Sscanf(s, "(%f,%f)", (*v)[0], (*v)[1]); err != nil {
-		return fmt.Errorf("invalid syntax \"%s\"", s)
+	cur := 0
+	for _, ss := range strings.Split(s, ",") {
+		fmt.Println("ss", ss)
+		if f, err := strconv.ParseFloat(ss, 32); err != nil {
+			return fmt.Errorf("error parsing %v, %v", ss, err)
+		} else {
+			(*v)[cur] = float32(f)
+			cur++
+		}
 	}
 	return nil
 }
