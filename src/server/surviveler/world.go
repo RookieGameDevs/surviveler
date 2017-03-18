@@ -19,20 +19,22 @@ import (
 	"github.com/aurelien-rainone/go-detour/recast"
 	"github.com/aurelien-rainone/go-detour/sample/solomesh"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
+	"github.com/aurelien-rainone/gogeo/f32/d3"
 )
 
 /*
  * World is the spatial reference on which game entities are located
  */
 type World struct {
-	NavMesh               *detour.NavMesh      // navigation mesh
-	soloMesh              *solomesh.SoloMesh   // solo nav mesh container/rebuilder
-	Grid                                       // the embedded map
-	GridWidth, GridHeight int                  // grid dimensions
-	Width, Height         float32              // world dimensions
-	GridScale             float32              // the grid scale
-	Entities              map[uint32]TileList  // map entities to the tiles to which it is attached
-	MeshQuery             *detour.NavMeshQuery // navigation mesh query
+	NavMesh               *detour.NavMesh             // navigation mesh
+	soloMesh              *solomesh.SoloMesh          // solo nav mesh container/rebuilder
+	Grid                                              // the embedded map
+	GridWidth, GridHeight int                         // grid dimensions
+	Width, Height         float32                     // world dimensions
+	GridScale             float32                     // the grid scale
+	Entities              map[uint32]TileList         // map entities to the tiles to which it is attached
+	MeshQuery             *detour.NavMeshQuery        // navigation mesh query
+	QueryFilter           *detour.StandardQueryFilter // navmesh query filter
 }
 
 /*
@@ -100,15 +102,17 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't build navmesh for %v", mapURI)
 	}
+	log.WithField("duration", ctx.AccumulatedTime(recast.TimerTotal)).Info("Built navmesh")
 
 	st, q := detour.NewNavMeshQuery(navMesh, 2048)
 	if detour.StatusFailed(st) {
 		return nil, st
 	}
 	w := World{
-		soloMesh:  soloMesh,
-		NavMesh:   navMesh,
-		MeshQuery: q,
+		soloMesh:    soloMesh,
+		NavMesh:     navMesh,
+		MeshQuery:   q,
+		QueryFilter: detour.NewStandardQueryFilter(),
 	}
 	return &w, nil
 }
