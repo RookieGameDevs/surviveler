@@ -6,8 +6,9 @@ package surviveler
 
 import (
 	log "github.com/Sirupsen/logrus"
+	"github.com/aurelien-rainone/go-detour/detour"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
-	astar "github.com/beefsack/go-astar"
+	"github.com/aurelien-rainone/gogeo/f32/d3"
 )
 
 type Pathfinder struct {
@@ -29,56 +30,97 @@ func NewPathfinder(game *Game) *Pathfinder {
  */
 func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found bool) {
 	world := pf.game.State().World()
-	// scale org and dst coordinates
-	scaledOrg, scaledDst := org.Scale(world.GridScale), dst.Scale(world.GridScale)
+	path = nil
 
-	// retrieve origin and destination tiles by rounding the scaled org/dst points down
-	porg := world.Tile(int(scaledOrg[0]), int(scaledOrg[1]))
-	pdst := world.Tile(int(scaledDst[0]), int(scaledDst[1]))
-	switch {
-	case porg == nil, pdst == nil:
-		log.WithFields(log.Fields{"org": org, "dst": dst}).Error("Couldn't find origin or destination Tile")
-		found = false
+	var (
+		orgRef, dstRef detour.PolyRef // references of org/dst polygon refs
+		extents        d3.Vec3        // search distance for polygon search (3 axis)
+		st             detour.Status
+		org3d, dst3d   d3.Vec3
+	)
+
+	org3d = d3.NewVec3XYZ(org[0], 0, org[1])
+	dst3d = d3.NewVec3XYZ(dst[0], 0, dst[1])
+
+	// define the extents vector for the nearest polygon query
+	extents = d3.NewVec3XYZ(0, 2, 0)
+
+	// check origin polygon
+	st, orgRef, _ = world.MeshQuery.FindNearestPoly(org3d, extents, world.QueryFilter)
+	if detour.StatusFailed(st) {
+		log.WithError(st).Debug("FindNearestPoly failed with %v\n", st)
+		return
+	} else if orgRef == 0 {
+		log.WithField("org", org).Debug("org doesn't intersect any polygons")
+		return
+	}
+	if !world.NavMesh.IsValidPolyRef(orgRef) {
+		log.WithField("orgRef", org).Debug("orgRef is not a valid polyRef")
 		return
 	}
 
-	// perform A*
-	rawPath, _, found := astar.Path(porg, pdst)
-	if !found {
+	// check destination polygon
+	st, dstRef, _ = world.MeshQuery.FindNearestPoly(dst3d, extents, world.QueryFilter)
+	if detour.StatusFailed(st) {
+		log.WithError(st).Debug("FindNearestPoly failed with %v\n", st)
+		return
+	} else if dstRef == 0 {
+		log.WithField("dst", org).Debug("dst doesn't intersect any polygons")
+		return
+	}
+	if !world.NavMesh.IsValidPolyRef(dstRef) {
+		log.WithField("dstRef", org).Debug("dstRef is not a valid polyRef")
 		return
 	}
 
-	// generate a cleaner path, in one pass:
-	// - basic path smoothing (remove consecutive equal segments)
-	// - clip path segment ends to cell center
-	invScale := 1.0 / world.GridScale
-	txCenter := d2.Vec2{0.5, 0.5} // tx vector to the cell center
-	path = make(Path, 0, len(rawPath))
-	var last d2.Vec2
-	for pidx := range rawPath {
-		tile := rawPath[pidx].(*Tile)
-		pt := d2.Vec2{float32(tile.X), float32(tile.Y)}
-		if pidx == 0 {
-			path = append(path, dst)
-		} else if pidx == len(rawPath)-1 {
-			path = append(path, org)
-		} else {
-			// basic path smoothing
-			dir := last.Sub(pt)
-			if pidx+1 < len(rawPath)-1 {
-				// there are at least 1 pt between the current one and the last one
-				ntile := rawPath[pidx+1].(*Tile)
-				npt := d2.Vec2{float32(ntile.X), float32(ntile.Y)}
-				nextDir := pt.Sub(npt)
-				if dir.Approx(nextDir) {
-					last = pt
-					continue
-				}
-			}
-			// re-scale coords when adding point to the path
-			path = append(path, pt.Add(txCenter).Scale(invScale))
-		}
-		last = pt
+	// Find a path from origin polygon to destination polygon
+	var (
+		path3d    []detour.PolyRef
+		pathCount int
+	)
+	path3d = make([]detour.PolyRef, 100)
+	pathCount, st = world.MeshQuery.FindPath(orgRef, dstRef, org3d, dst3d, world.QueryFilter, path3d)
+	if detour.StatusFailed(st) {
+		log.WithError(st).Info("query.FindPath failed")
 	}
-	return
+
+	// Find a straight path
+	var (
+		straightPath      []d3.Vec3
+		straightPathFlags []uint8
+		straightPathRefs  []detour.PolyRef
+		straightPathCount int
+		maxStraightPath   int32
+	)
+	// slices that receive the straight path
+	maxStraightPath = 100
+	straightPath = make([]d3.Vec3, maxStraightPath)
+	for i := range straightPath {
+		straightPath[i] = d3.NewVec3()
+	}
+	straightPathFlags = make([]uint8, maxStraightPath)
+	straightPathRefs = make([]detour.PolyRef, maxStraightPath)
+	straightPathCount, st = world.MeshQuery.FindStraightPath(org3d, dst3d, path3d[:pathCount], straightPath, straightPathFlags, straightPathRefs, 0)
+	if detour.StatusFailed(st) {
+		log.WithError(st).Error("query.FindStraightPath failed")
+		return
+	}
+
+	if (straightPathFlags[0] & detour.StraightPathStart) == 0 {
+		log.Error("straightPath start is not flagged StraightPathStart")
+		return
+	}
+
+	if (straightPathFlags[straightPathCount-1] & detour.StraightPathEnd) == 0 {
+		log.Error("straightPath end is not flagged StraightPathEnd")
+	}
+
+	// path found
+	path = make(Path, straightPathCount)
+	for i := 0; i < straightPathCount; i++ {
+		waypoint := d2.NewVec2XY(straightPath[i][0], straightPath[i][2])
+		path[i] = waypoint
+	}
+	log.WithField("path", path).Info("Path found")
+	return path, 0, true
 }
