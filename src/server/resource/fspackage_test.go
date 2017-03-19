@@ -47,7 +47,7 @@ func TestFSPackage_Open(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"open folder Item inside package",
+			"open directory Item inside package",
 			"a",
 			false,
 		},
@@ -94,9 +94,9 @@ func TestFSItem_Type(t *testing.T) {
 		want Type
 	}{
 		{
-			"check Folder type",
+			"check directory type",
 			"../fs/a",
-			Folder,
+			Directory,
 		},
 		{
 			"check File type",
@@ -124,7 +124,7 @@ func TestFSItem_Open(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"can't read a folder item",
+			"can't read a directory item",
 			"a",
 			nil,
 			true,

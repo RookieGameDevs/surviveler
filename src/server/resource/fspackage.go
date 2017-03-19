@@ -76,13 +76,13 @@ func (fs FSPackage) Open(URI string) (Item, error) {
 	return FSItem{root: fs.root.root, cur: URI}, nil
 }
 
-// A FSItem is a filesystem item, file or folder.
+// A FSItem is a filesystem item, file or directory.
 type FSItem struct {
 	root string // package root absolute path
 	cur  string // current element relative path from the root
 }
 
-// Type returns the type of current file, file or folder
+// Type returns the type of current file, file or directory.
 func (fs FSItem) Type() Type {
 	abs := path.Join(fs.root, fs.cur)
 	nfo, err := os.Stat(abs)
@@ -92,7 +92,7 @@ func (fs FSItem) Type() Type {
 	mode := nfo.Mode()
 	switch {
 	case mode.IsDir():
-		return Folder
+		return Directory
 	case mode.IsRegular():
 		return File
 	}
@@ -100,11 +100,11 @@ func (fs FSItem) Type() Type {
 }
 
 // Files returns a slice of the files contained in current item, or an
-// empty slice if current item is not a folder.
+// empty slice if current item is not a directory.
 func (fs FSItem) Files() []Item {
 	items := []Item{}
 	switch fs.Type() {
-	case Folder:
+	case Directory:
 		abs := path.Join(fs.root, fs.cur)
 		files, _ := ioutil.ReadDir(abs)
 		for _, f := range files {
