@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 type FSPackage struct {
@@ -35,6 +36,19 @@ func OpenFSPackage(rootURI string) (Package, error) {
 	}, nil
 }
 
+func isSlashRune(r rune) bool { return r == '/' || r == '\\' }
+
+func startsWithDotDot(v string) bool {
+	if !strings.Contains(v, "..") {
+		return false
+	}
+	for _, ent := range strings.FieldsFunc(v, isSlashRune) {
+		// we are only interested by the first field
+		return ent == ".."
+	}
+	return false
+}
+
 func (fs FSPackage) Open(URI string) (Item, error) {
 	var (
 		abs string
@@ -42,6 +56,16 @@ func (fs FSPackage) Open(URI string) (Item, error) {
 	)
 	// forge absolute file path from package root and given URI
 	abs = path.Join(fs.root.root, URI)
+
+	// check the requested URI is inside the package
+	rel, err := filepath.Rel(fs.root.root, abs)
+	if err != nil {
+		return nil, fmt.Errorf("URI (%v) must be relative to package root (%v)", URI, fs.root.root)
+	}
+	if startsWithDotDot(rel) {
+		return nil, fmt.Errorf("URI (%v) must contained in package root (%v)", URI, fs.root.root)
+	}
+
 	_, err = os.Stat(abs)
 	if err != nil {
 		return nil, err
@@ -87,12 +111,13 @@ func (fs FSItem) Open() (io.ReadCloser, error) {
 	abs := path.Join(fs.root, fs.cur)
 	switch fs.Type() {
 	case File:
-		if f, err := os.Open(abs); err != nil {
+		f, err := os.Open(abs)
+		if err != nil {
 			return nil, err
-		} else {
-			return f, nil
 		}
+		return f, nil
+
 	default:
-		return nil, fmt.Errorf("can't open package item %v for reading", abs)
+		return nil, fmt.Errorf("can't read fspackage item %v", abs)
 	}
 }
