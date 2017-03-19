@@ -1,7 +1,4 @@
-/*
- * Resource package
- * resource package implementation
- */
+// Package resource proposes interfaces and types for the loading of resource files
 package resource
 
 import "io"
@@ -10,32 +7,32 @@ import "io"
 type Type uint
 
 const (
-	Unknown Type = iota // not to be used
-	File                // File if resource if a File
-	Folder              // Folder if resource is a folder
+	unknown Type = iota
+	// File if resource if a File
+	File
+	// Folder if resource is a folder
+	Folder
 )
 
-/*
- * Package represents a container of resources (folders or binary/text files).
- */
+// A Package represents a container of resources (folders or binary/text files).
 type Package interface {
 
-	// Open returns a resource.Item that represents the package root.
+	// Open opens the package at given URI and returns the root item.
 	Open(URI string) (Item, error)
 }
 
-/*
- * an Item is an element of a resource package, file or folder.
- */
+// An Item is an element of a resource package, file or folder.
 type Item interface {
 
-	// Open returns a ReadCloser on current item.
+	// Open returns a ReadCloser on item at URI.
+	//
+	// It returns an error if current item is not a file or is not readable.
 	Open() (io.ReadCloser, error)
 
 	// Type returns the type of current file, file or folder
 	Type() Type
 
-	// Files returns a slice of the slice contained in current folder, or an
-	// empty slice if current file is not a folder.
+	// Files returns a slice of the files contained in current item, or an
+	// empty slice if current item is not a folder.
 	Files() []Item
 }

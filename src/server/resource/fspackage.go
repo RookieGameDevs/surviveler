@@ -10,11 +10,13 @@ import (
 	"strings"
 )
 
+// FSPackage implements the Package interface for loading of filesystem
+// resources (simple folders and files).
 type FSPackage struct {
 	root FSItem
 }
 
-// OpenFSPackage opens a filesystem package, that is, a folder.
+// OpenFSPackage opens a filesystem package, (i.e a folder).
 func OpenFSPackage(rootURI string) (Package, error) {
 	var (
 		abs string
@@ -49,6 +51,7 @@ func startsWithDotDot(v string) bool {
 	return false
 }
 
+// Open opens the directory at given URI and returns the root item.
 func (fs FSPackage) Open(URI string) (Item, error) {
 	var (
 		abs string
@@ -73,16 +76,18 @@ func (fs FSPackage) Open(URI string) (Item, error) {
 	return FSItem{root: fs.root.root, cur: URI}, nil
 }
 
+// A FSItem is a filesystem item, file or folder.
 type FSItem struct {
 	root string // package root absolute path
 	cur  string // current element relative path from the root
 }
 
+// Type returns the type of current file, file or folder
 func (fs FSItem) Type() Type {
 	abs := path.Join(fs.root, fs.cur)
 	nfo, err := os.Stat(abs)
 	if err != nil {
-		return Unknown
+		return unknown
 	}
 	mode := nfo.Mode()
 	switch {
@@ -91,9 +96,11 @@ func (fs FSItem) Type() Type {
 	case mode.IsRegular():
 		return File
 	}
-	return Unknown
+	return unknown
 }
 
+// Files returns a slice of the files contained in current item, or an
+// empty slice if current item is not a folder.
 func (fs FSItem) Files() []Item {
 	items := []Item{}
 	switch fs.Type() {
@@ -107,6 +114,9 @@ func (fs FSItem) Files() []Item {
 	return items
 }
 
+// Open returns a ReadCloser on item at URI.
+//
+// It returns an error if current item is not a file or is not readable.
 func (fs FSItem) Open() (io.ReadCloser, error) {
 	abs := path.Join(fs.root, fs.cur)
 	switch fs.Type() {
