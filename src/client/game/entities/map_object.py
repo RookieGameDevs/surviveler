@@ -93,6 +93,9 @@ class MapObject(Entity):
         """
         return self._position
 
+    def remove(self):
+        self.obj.remove()
+
 
 @subscriber(ObjectSpawn)
 def object_spawn(evt):

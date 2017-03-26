@@ -60,10 +60,10 @@ class BuildingTemplate(Entity):
         # create components
         self.obj = scene.add_mesh(mesh, self.props)
 
-    def destroy(self):
+    def remove(self):
         """Removes itself from the scene.
         """
-        LOG.debug('Destroying building template {}'.format(self.e_id))
+        LOG.debug('Remove building template {}'.format(self.e_id))
         self.obj.remove()
 
     def update(self, dt):
@@ -126,7 +126,7 @@ def show_building_template(evt):
         context.building_type = 0
         bt, context.building_template = context.building_template, None
         del context.entities[bt.e_id]
-        bt.destroy()
+        bt.remove()
 
 
 @subscriber(BuildingSpawn)

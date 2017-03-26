@@ -37,3 +37,6 @@ class Terrain(Entity):
     def update(self, dt):
         # NOTE: nothing to do here
         pass
+
+    def remove(self):
+        self.obj.remove()

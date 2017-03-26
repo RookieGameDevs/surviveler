@@ -184,10 +184,11 @@ class Actor(Entity):
             if self.heading < -WHOLE_ANGLE / 2:
                 self.heading = WHOLE_ANGLE + self.heading
 
-    def destroy(self):
+    def remove(self):
         """Removes itself from the scene.
         """
-        LOG.debug('Destroying character {}'.format(self.e_id))
+        LOG.debug('Remove actor {}'.format(self.e_id))
+        self.obj.remove()
 
     def set_action(self, action_type):
         """Sets current player action.

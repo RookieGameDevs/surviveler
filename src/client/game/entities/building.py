@@ -133,10 +133,10 @@ class Building(Entity):
         pos = self.position
         return l + Vec(pos[0], 0, pos[1]), m + Vec(pos[0], 0, pos[1])
 
-    def destroy(self):
+    def remove(self):
         """Removes itself from the scene.
         """
-        LOG.debug('Destroying building {}'.format(self.e_id))
+        LOG.debug('Remove building {}'.format(self.e_id))
         self.obj.remove()
 
     def update(self, dt):
@@ -190,7 +190,7 @@ def building_disappear(evt):
     if evt.srv_id in context.server_entities_map:
         e_id = context.server_entities_map.pop(evt.srv_id)
         building = context.entities.pop(e_id)
-        building.destroy()
+        building.remove()
 
 
 @subscriber(BuildingStatusChange)

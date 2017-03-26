@@ -83,7 +83,7 @@ def character_disappear(evt):
     if evt.srv_id in context.server_entities_map and is_character:
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
-        character.destroy()
+        character.remove()
 
 
 @subscriber(ActorDisappear)

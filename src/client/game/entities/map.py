@@ -57,3 +57,8 @@ class Map(Entity):
     def update(self, dt):
         # NOTE: nothing to do
         pass
+
+    def remove(self):
+        for obj in self.objects:
+            obj.remove()
+        self.obj.remove()
