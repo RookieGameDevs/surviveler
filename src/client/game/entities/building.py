@@ -1,9 +1,7 @@
 from enum import IntEnum
 from enum import unique
 from events import subscriber
-from game.components import Renderable
 from game.entities.entity import Entity
-from game.entities.widgets.health_bar import HealthBar
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
@@ -12,9 +10,8 @@ from matlib.vec import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
-from renderer.scene import SceneNode
-from renderlib.core import Material
-from renderlib.core import MeshRenderProps
+from renderlib.material import Material
+from renderlib.mesh import MeshProps
 from renderlib.texture import Texture
 from utils import to_scene
 import logging
@@ -33,11 +30,14 @@ class BuildingType(IntEnum):
 class Building(Entity):
     """Game entity which represents a building."""
 
-    def __init__(self, resource, position, progress, completed, parent_node):
+    def __init__(self, resource, scene, position, progress, completed):
         """Constructor.
 
         :param resource: The building resource
         :type resource: :class:`loaders.Resource`
+
+        :param scene: Scene to add the building bar to.
+        :type scene: :class:`renderlib.scene.Scene`
 
         :param position: The position of the building
         :type position: :class:`tuple`
@@ -47,10 +47,9 @@ class Building(Entity):
 
         :param completed: Whether the building is completed or not
         :type completed: :class:`bool`
-
-        :param parent_node: The parent node in the scene graph
-        :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        super().__init__()
+
         self._position = position
         # Progress is going to be a property used to update only when necessary
         # the health bar.
@@ -58,9 +57,7 @@ class Building(Entity):
         self.completed = completed
 
         # create texture
-        texture = Texture.from_image(
-            resource['texture'],
-            Texture.TextureType.texture_2d)
+        texture = Texture.from_image(resource['texture'], Texture.TextureType.texture_2d)
         self.mesh_project = resource['model_project']
         self.mesh_complete = resource['model_complete']
 
@@ -69,24 +66,14 @@ class Building(Entity):
         material.texture = texture
 
         # create render props
-        props = MeshRenderProps()
+        props = MeshProps()
         props.material = material
 
-        # Setup the group node and add the health bar
-        group_node = SceneNode()
-        g_transform = group_node.transform
-        g_transform.translatev(to_scene(*position))
-        parent_node.add_child(group_node)
-
-        self.health_bar = HealthBar(
-            resource['health_bar'], progress[0] / progress[1], group_node)
-
+        # add healthbar
+        # TODO
 
         # create components
-        renderable = Renderable(group_node, self.mesh, props)
-
-        # initialize entity
-        super().__init__(renderable)
+        self.obj = scene.add_mesh(self.mesh, props)
 
         # FIXME: hardcoded bounding box
         self._bounding_box = Vec(-0.5, 0, -0.5), Vec(0.5, 2, 0.5)
@@ -122,7 +109,6 @@ class Building(Entity):
         :type value: :class:`tuple`
         """
         self._progress = value
-        self.health_bar.value = value[0] / value[1]
 
     @property
     def position(self):
@@ -151,12 +137,7 @@ class Building(Entity):
         """Removes itself from the scene.
         """
         LOG.debug('Destroying building {}'.format(self.e_id))
-
-        # Destroys the health bar first.
-        self.health_bar.destroy()
-
-        node = self[Renderable].node
-        node.parent.remove_child(node)
+        self.obj.remove()
 
     def update(self, dt):
         """Updates the building.
@@ -166,11 +147,7 @@ class Building(Entity):
         :param dt: Time delta from last update.
         :type dt: float
         """
-        node = self[Renderable].node
-        node.mesh = self.mesh
-
-        # Update the health bar
-        self.health_bar.update(dt)
+        self.obj.position = to_scene(*self.position)
 
 
 @subscriber(BuildingSpawn)
@@ -199,8 +176,7 @@ def building_spawn(evt):
         tot = resource.data['tot_hp']
         # Create the building
         building = Building(
-            resource, evt.pos, (evt.cur_hp, tot), evt.completed,
-            context.scene.root)
+            resource, context.scene, evt.pos, (evt.cur_hp, tot), evt.completed)
         context.entities[building.e_id] = building
         context.server_entities_map[evt.srv_id] = building.e_id
 

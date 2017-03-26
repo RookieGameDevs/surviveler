@@ -4,14 +4,12 @@ from game.events import ActorStatusChange
 from game.events import GameModeChange
 from game.events import TimeUpdate
 from matlib.vec import Vec
-from renderer.camera import OrthoCamera
-from renderer.scene import QuadNode
-from renderer.scene import Scene
-from renderer.scene import SceneNode
-from renderer.scene import TextNode
-from renderlib.core import QuadRenderProps
-from renderlib.core import TextRenderProps
+from renderlib.camera import OrthographicCamera
+from renderlib.quad import Quad
+from renderlib.quad import QuadProps
+from renderlib.scene import Scene
 from renderlib.text import Text
+from renderlib.text import TextProps
 from renderlib.texture import Texture
 import logging
 
@@ -20,11 +18,13 @@ LOG = logging.getLogger(__name__)
 
 
 class HealthBar:
-    """User interface healthbar.
-    """
+    """User interface healthbar."""
 
-    def __init__(self, resource, value=1.0):
+    def __init__(self, scene, resource, value=1.0):
         """Constructor.
+
+        :param scene: Scene to add the healthbar to.
+        :type scene: :class:`renderlib.scene.Scene`
 
         :param resource: The resource for the healthbar
         :type resource: :class:`loaders.Resource`
@@ -46,30 +46,26 @@ class HealthBar:
             resource['bg_texture'],
             Texture.TextureType.texture_rectangle)
 
-        fg_props = QuadRenderProps()
+        fg_props = QuadProps()
         fg_props.texture = fg_texture
         fg_props.borders.left = left
         fg_props.borders.right = right
         fg_props.borders.top = top
         fg_props.borders.bottom = bottom
 
-        bg_props = QuadRenderProps()
+        bg_props = QuadProps()
         bg_props.texture = bg_texture
         bg_props.borders.left = left
         bg_props.borders.right = right
         bg_props.borders.top = top
         bg_props.borders.bottom = bottom
 
-        # container node
-        self.node = SceneNode()
+        self.bg_quad = Quad(width, height)
+        self.bg_obj = scene.add_quad(self.bg_quad, bg_props)
+        self.bg_obj.position.z = -0.1
 
-        # add background node with a little Z offset
-        bg_node = QuadNode((width, height), bg_props)
-        bg_node.transform.translate(0, 0, -0.1)
-        self.node.add_child(bg_node)
-
-        # add foreground node on top of it
-        self.node.add_child(QuadNode((width, height), fg_props))
+        self.fg_quad = Quad(width, height)
+        self.fg_obj = scene.add_quad(self.fg_quad, fg_props)
 
     @property
     def value(self):
@@ -88,15 +84,25 @@ class HealthBar:
         :type v: :class:`float`
         """
         self._value = float(v)
-        # change the width of foreground node
-        self.node.children[1].width = self.resource.data['width'] * v
+        # change the width of foreground quad
+        self.fg_quad.width = self.resource.data['width'] * v
 
 
 class Avatar:
-    """TODO: add documentation.
-    """
+    """Character avatar widget."""
 
-    def __init__(self, resource, ref):
+    def __init__(self, scene, resource, ref):
+        """Constructor.
+
+        :param scene: Scene to add the avatar widget to.
+        :type scene: :class:`renderlib.class.Scene`
+
+        :param resource: The resource for the healthbar
+        :type resource: :class:`loaders.Resource`
+
+        :param ref: Avatar reference.
+        :type ref: string
+        """
         self.w = resource.data['width']
         self.h = resource.data['height']
 
@@ -104,10 +110,9 @@ class Avatar:
             resource[ref],
             Texture.TextureType.texture_rectangle)
 
-        props = QuadRenderProps()
+        props = QuadProps()
         props.texture = texture
-
-        self.node = QuadNode((self.w, self.h), props)
+        self.obj = scene.add_quad(Quad(self.w, self.h), props)
 
 
 class UI:
@@ -129,51 +134,48 @@ class UI:
         self.w = renderer.width
         self.h = renderer.height
         self.scene = Scene()
-        self.camera = OrthoCamera(
-            -self.w / 2, +self.w / 2,
-            +self.h / 2, -self.h / 2,
-            0,
-            1)
+        self.camera = OrthographicCamera(
+            -self.w / 2, # left
+            +self.w / 2, # right
+            +self.h / 2, # top
+            -self.h / 2, # bottom
+            0,           # near
+            1)           # far
 
         font = resource['font'].get_size(16)
-        props = TextRenderProps()
+        props = TextProps()
         props.color = Vec(1, 1, 1, 1)
 
         # Mode node
-        self.game_mode_node = self.scene.root.add_child(TextNode(
-            Text(font, Context.GameMode.default.value),
-            props))
-        self.transform(self.game_mode_node, self.w * 0.85, 20)
+        self.game_mode_text = Text(font, Context.GameMode.default.value)
+        self.game_mode = self.scene.add_text(self.game_mode_text, props)
+        self.transform(self.game_mode, self.w * 0.85, 20)
 
         # FPS counter
-        self.fps_counter_node = self.scene.root.add_child(TextNode(
-            Text(font, 'FPS'),
-            props))
-        self.transform(self.fps_counter_node, self.w * 0.85, 0)
+        self.fps_counter_text = Text(font, 'FPS')
+        self.fps_counter = self.scene.add_text(self.fps_counter_text, props)
+        self.transform(self.fps_counter, self.w * 0.85, 0)
 
         # clock
-        self.clock = self.scene.root.add_child(TextNode(
-            Text(font, '--:--'),
-            props))
+        self.clock_text = Text(font, '--:--')
+        self.clock = self.scene.add_text(self.clock_text, props)
         self.transform(self.clock, self.w * 0.5, 0)
 
-        avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
-
         # avatar
-        self.avatar = Avatar(avatar_res, avatar)
-        self.scene.root.add_child(self.avatar.node)
-        self.transform(self.avatar.node, 0, 0)
+        avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
+        self.avatar = Avatar(self.scene, avatar_res, avatar)
+        self.transform(self.avatar.obj, 0, 0)
 
         # healthbar
-        self.health_bar = HealthBar(resource['health_bar'])
-        self.scene.root.add_child(self.health_bar.node)
-        self.transform(self.health_bar.node, 0, avatar_res.data['width'] + 5)
+        self.health_bar = HealthBar(self.scene, resource['health_bar'])
+        self.transform(self.health_bar.bg_obj, 0, avatar_res.data['width'] + 5)
+        self.transform(self.health_bar.fg_obj, 0, avatar_res.data['width'] + 5)
 
-    def transform(self, node, x, y):
+    def transform(self, obj, x, y):
         """Transform the UI scene node from screen space to scene space.
 
-        :param node: Scene node to transform.
-        :type node: :class:`renderer.scene.SceneNode`
+        :param obj: Scene object to transform.
+        :type obj: :class:`renderlib.scene.Object`
 
         :param x: Screen X coordinate.
         :type x: float
@@ -181,12 +183,8 @@ class UI:
         :param y: Screen Y coordinate.
         :type y: float
         """
-        tx = x - self.w / 2
-        ty = self.h / 2 - y
-        node.transform.ident()
-        node.transform.translatev(Vec(tx, ty, -0.5))
-        # TODO: is this needed?
-        # node.transform.rotatev(Vec(1, 0, 0), pi / 2)
+        obj.position.x = x - self.w / 2
+        obj.position.y = self.h / 2 - y
 
     def set_fps(self, number):
         """Set the current frame rate in FPS widget.
@@ -194,7 +192,7 @@ class UI:
         :param number: Number of frames per second to visualize.
         :type number: int
         """
-        self.fps_counter_node.text.string = 'FPS: {}'.format(number)
+        self.fps_counter_text.string = 'FPS: {}'.format(number)
 
     def set_mode(self, mode=None):
         """Set the current game mode on the game mode widget.
@@ -202,7 +200,7 @@ class UI:
         :param number: The game mode: None in case of default
         :type number: :enum:`context.Context.GameMode`
         """
-        self.game_mode_node.text.string = '{}'.format(mode.value)
+        self.game_mode_text.string = '{}'.format(mode.value)
 
     def set_clock(self, hour, minute):
         """Set the time in clock widget.
@@ -213,11 +211,11 @@ class UI:
         :param minute: Minute.
         :type minute: int
         """
-        self.clock.text.string = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
+        self.clock_text.string = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
 
     def render(self):
         """Render the user interface."""
-        self.scene.render(self.renderer, self.camera)
+        self.scene.render(self.camera)
 
 
 @subscriber(TimeUpdate)
@@ -246,5 +244,4 @@ def player_health_change(evt):
     if srv_id == context.player_id and srv_id in context.server_entities_map:
         e_id = context.server_entities_map[evt.srv_id]
         actor = context.entities[e_id]
-        actor.health = evt.new, actor.health[1]
-        context.ui.health_bar.value = evt.new / actor.health[1]
+        context.ui.health_bar.value = evt.new / actor.resource.data['tot_hp']

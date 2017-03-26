@@ -3,9 +3,7 @@ from events import subscriber
 from game.entities.actor import ActorType
 from game.entities.character import Character
 from game.events import ActorSpawn
-from renderer.scene import LightNode
-from game.components import Renderable
-from utils import to_scene
+from matlib.vec import Vec
 import logging
 
 
@@ -26,11 +24,14 @@ class Player(Character):
         """
         super(Player, self).update(dt)
 
-        x, y = self.position
+        # map player game position to world (x,y -> x,z)
+        x, z = self.position
 
-        # update camera position
+        # update camera position and orientation
         context = Context.get_instance()
-        context.camera.set_position(to_scene(x, y))
+        camera = context.camera
+        camera.position = Vec(x, 20, z + 5)
+        camera.look_at(camera.position, Vec(x, 0, z))
 
 
 @subscriber(ActorSpawn)
@@ -58,22 +59,12 @@ def player_spawn(evt):
         resource = context.res_mgr.get(
             entities.data['entities_map'].get(
                 ActorType(evt.actor_type).name,
-                '/characters/grunt'
-            )
-        )
+                '/characters/grunt'))
 
-        tot = resource.data['tot_hp']
-
-        # Search for the player name
-        name = context.character_name
         # Create the player
-        player = Player(resource, evt.actor_type, name, (evt.cur_hp, tot), context.scene.root)
+        player = Player(resource, context.scene, evt.actor_type)
         context.entities[player.e_id] = player
         context.server_entities_map[evt.srv_id] = player.e_id
-        # Create a light node and make it child of the player
-        light_node = LightNode(context.light)
-        light_node.transform.translate(5, 5, 5)
-        player[Renderable].node.add_child(light_node)
 
 
 @subscriber(ActorSpawn)

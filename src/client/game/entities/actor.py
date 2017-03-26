@@ -1,23 +1,18 @@
-from context import Context
 from enum import IntEnum
 from enum import unique
 from events import subscriber
 from game.components import Movable
-from game.components import Renderable
 from game.entities.entity import Entity
-from game.entities.widgets.health_bar import HealthBar
 from game.events import ActorActionChange
 from game.events import ActorIdle
 from game.events import ActorMove
-from game.events import ActorStatusChange
 from math import atan
 from math import copysign
 from math import pi
 from matlib.vec import Vec
-from renderer.scene import SceneNode
 from renderlib.animation import AnimationInstance
-from renderlib.core import Material
-from renderlib.core import MeshRenderProps
+from renderlib.material import Material
+from renderlib.mesh import MeshProps
 from renderlib.texture import Texture
 from utils import to_scene
 import logging
@@ -78,23 +73,20 @@ class Actor(Entity):
             except IndexError:
                 self.animations[i] = None
 
-    def __init__(self, resource, actor_type, health, parent_node):
+    def __init__(self, resource, scene, actor_type):
         """Constructor.
 
         :param resource: The character resource
         :type resource: :class:`loaders.Resource`
 
-        :param health: The current amount of hp and the total one
-        :type health: :class:`tuple`
+        :param scene: Scene to add the actor to.
+        :type scene: :class:`renderlib.scene.Scene`
 
-        :param parent_node: The parent node in the scene graph
-        :type parent_node: :class:`renderer.scene.SceneNode`
+        :param actor_type: Type of actor entity.
+        :type actor_type: :enum:`game.entities.actor.ActorType`
         """
+        self.resource = resource
         self.actor_type = actor_type
-
-        # Health is going to be a property used to update only when necessary
-        # the health bar.
-        self._health = health
 
         mesh = resource['model']
 
@@ -106,9 +98,7 @@ class Actor(Entity):
         self.current_anim = self.animations[action_anim_index(ActionType.idle)]
 
         # create a 2D texture from texture image
-        texture = Texture.from_image(
-            resource['texture'],
-            Texture.TextureType.texture_2d)
+        texture = Texture.from_image(resource['texture'], Texture.TextureType.texture_2d)
 
         # create a material
         material = Material()
@@ -116,59 +106,25 @@ class Actor(Entity):
         material.receive_light = True
 
         # rendering props
-        props = MeshRenderProps()
-        props.material = material
-        props.animation = self.current_anim
-        props.receive_shadows = True
-        props.cast_shadows = True
-        props.light = Context.get_instance().light
+        self.props = MeshProps()
+        self.props.material = material
+        self.props.animation = self.current_anim
+        self.props.receive_shadows = True
+        self.props.cast_shadows = True
+
+        # add the mesh to the scene
+        self.obj = scene.add_mesh(mesh, self.props)
 
         # Initialize movable component
         movable = Movable((0.0, 0.0))
 
-        # Setup the group node and add the health bar
-        # FIXME: I don't like the idea of saving the group node here. We need
-        # something better here.
-        self.group_node = SceneNode()
-        g_transform = self.group_node.transform
-        g_transform.translatev(to_scene(*movable.position))
-        parent_node.add_child(self.group_node)
-
-        self.health_bar = HealthBar(
-            resource['health_bar'], health[0] / health[1], self.group_node,
-            resource.data.get('hb_y_offset'))
-
-        # create components
-        renderable = Renderable(self.group_node, mesh, props)
-
         # initialize actor
-        super().__init__(renderable, movable)
+        super().__init__(movable)
 
         # FIXME: hardcoded bounding box
         self._bounding_box = Vec(-0.5, 0, -0.5), Vec(0.5, 2, 0.5)
 
         self.heading = 0.0
-
-    @property
-    def health(self):
-        """Returns the health of the character as a tuple current/total.
-
-        :returns: The health of the character
-        :rtype: :class:`tuple`
-        """
-        return self._health
-
-    @health.setter
-    def health(self, value):
-        """Sets the health of the character.
-
-        Propagate the modification to the buliding health bar.
-
-        :param value: The new health
-        :type value: :class:`tuple`
-        """
-        self._health = value
-        self.health_bar.value = value[0] / value[1]
 
     @property
     def position(self):
@@ -242,7 +198,7 @@ class Actor(Entity):
         :type action_type: :class:`game.entities.actor.ActionType`
         """
         anim = self.animations[action_anim_index(action_type)]
-        self[Renderable].node.props.animation = self.current_anim = anim
+        self.props.animation = self.current_anim = anim
 
     def update(self, dt):
         """Update the character.
@@ -255,24 +211,12 @@ class Actor(Entity):
         self[Movable].update(dt)
         x, y = self[Movable].position
 
-        # FIXME: I don't like the idea of saving the group node here. We need
-        # something better here.
-        g_t = self.group_node.transform
-        g_t.ident()
-        g_t.translatev(to_scene(x, y))
-
         rot, scale = self.TRANSFORMS[self.actor_type]
-        t = self[Renderable].transform
-        t.ident()
-        t *= self.transform
-        t.rotatev(Vec(0, 1, 0), rot)  # FIXME
-        t.rotatev(Vec(0, 1, 0), -self.heading)
-        t.scalev(Vec(scale, scale, scale))
+        self.obj.position = to_scene(x, y)
+        self.obj.rotation.rotatev(Vec(0, 1, 0), rot + -self.heading)
+        self.obj.scale = Vec(scale, scale, scale)
 
         self.orientate()
-
-        # Update the health bar
-        self.health_bar.update(dt)
 
         # play animation
         if self.current_anim:
@@ -297,18 +241,6 @@ def actor_action_change(evt):
     actor = lookup_entity(evt)
     if actor:
         actor.set_action(evt.new)
-
-
-@subscriber(ActorStatusChange)
-def actor_health_change(evt):
-    """Updates the number of hp of the actor.
-    """
-    LOG.debug('Event subscriber: {}'.format(evt))
-    context = evt.context
-    if evt.srv_id in context.server_entities_map:
-        e_id = context.server_entities_map[evt.srv_id]
-        actor = context.entities[e_id]
-        actor.health = evt.new, actor.health[1]
 
 
 @subscriber(ActorIdle)
