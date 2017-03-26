@@ -50,11 +50,10 @@ class Building(Entity):
         """
         super().__init__()
 
-        self._position = position
-        # Progress is going to be a property used to update only when necessary
-        # the health bar.
-        self._progress = progress
-        self.completed = completed
+        self.scene = scene
+        self.obj = None
+        self._position = to_scene(*position)
+        self._completed = None
 
         # create texture
         texture = Texture.from_image(resource['texture'], Texture.TextureType.texture_2d)
@@ -66,58 +65,33 @@ class Building(Entity):
         material.texture = texture
 
         # create render props
-        props = MeshProps()
-        props.material = material
+        self.props = MeshProps()
+        self.props.material = material
 
-        # add healthbar
-        # TODO
-
-        # create components
-        self.obj = scene.add_mesh(self.mesh, props)
+        # set initial building status
+        self.completed = completed
 
         # FIXME: hardcoded bounding box
         self._bounding_box = Vec(-0.5, 0, -0.5), Vec(0.5, 2, 0.5)
 
     @property
-    def mesh(self):
-        """Returns the appropriate mesh based on the building status.
-
-        :returns: The appropriate mesh
-        :rtype: :class:`renderer.Mesh`
-        """
-        if not self.completed:
-            return self.mesh_project
-        else:
-            return self.mesh_complete
-
-    @property
-    def progress(self):
-        """Returns the progress of the building as a tuple current/total.
-
-        :returns: The progress of the building
-        :rtype: :class:`tuple`
-        """
-        return self._progress
-
-    @progress.setter
-    def progress(self, value):
-        """Sets the progress of the building.
-
-        Propagate the modification to the buliding health bar.
-
-        :param value: The new progress
-        :type value: :class:`tuple`
-        """
-        self._progress = value
-
-    @property
     def position(self):
-        """The position of the entity in world coordinates.
-
-        :returns: The position
-        :rtype: :class:`tuple`
-        """
         return self._position
+
+    @property
+    def completed(self):
+        return self._completed
+
+    @completed.setter
+    def completed(self, status):
+        if status != self._completed:
+            if self.obj:
+                self.obj.remove()
+            self.obj = self.scene.add_mesh(
+                self.mesh_complete if status else self.mesh_project,
+                self.props)
+            self.obj.position = self.position
+        self._completed = status
 
     @property
     def bounding_box(self):
@@ -130,8 +104,7 @@ class Building(Entity):
         :rtype: :class:`tuple`
         """
         l, m = self._bounding_box
-        pos = self.position
-        return l + Vec(pos[0], 0, pos[1]), m + Vec(pos[0], 0, pos[1])
+        return l + self.position, m + self.position
 
     def remove(self):
         """Removes itself from the scene.
@@ -142,12 +115,11 @@ class Building(Entity):
     def update(self, dt):
         """Updates the building.
 
-        Applies the status of the building in terms of shader params and meshes.
-
         :param dt: Time delta from last update.
         :type dt: float
         """
-        self.obj.position = to_scene(*self.position)
+        # NOTE: nothing to do
+        pass
 
 
 @subscriber(BuildingSpawn)
@@ -202,7 +174,6 @@ def building_health_change(evt):
     if evt.srv_id in context.server_entities_map:
         e_id = context.server_entities_map[evt.srv_id]
         building = context.entities[e_id]
-        building.progress = evt.new, building.progress[1]
         building.completed = evt.completed
 
 
