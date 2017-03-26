@@ -188,8 +188,6 @@ class Actor(Entity):
         """Removes itself from the scene.
         """
         LOG.debug('Destroying character {}'.format(self.e_id))
-        node = self.group_node
-        node.parent.remove_child(node)
 
     def set_action(self, action_type):
         """Sets current player action.
