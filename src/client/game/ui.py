@@ -121,18 +121,23 @@ class UI:
     This class encapsulates the user interface creation and management.
     """
 
-    def __init__(self, resource, player_data, renderer):
+    def __init__(self, resource, width, height, player_data):
         """Constructor.
 
-        :param resource: The ui resource
+        :param resource: The UI resource.
         :type resource: :class:`loaders.Resource`
 
-        :param renderer: Renderer to use for UI rendering.
-        :type renderer: :class:`renderer.Renderer`
+        :param width: UI width in pixels.
+        :type width: int
+
+        :param height: UI height in pixels.
+        :type height: int
+
+        :param player_data: Player resource.
+        :type player_ddata: :class:`loaders.Resource`
         """
-        self.renderer = renderer
-        self.w = renderer.width
-        self.h = renderer.height
+        self.w = width
+        self.h = height
         self.scene = Scene()
         self.camera = OrthographicCamera(
             -self.w / 2, # left

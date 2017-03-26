@@ -9,7 +9,7 @@ from game.audio import AudioManager
 from loaders import ResourceManager
 from network import Connection
 from network import MessageProxy
-from graphics.renderer import Renderer
+from renderer import Renderer
 from sdl2 import sdlmixer
 import click
 import game.actions  # noqa

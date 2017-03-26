@@ -36,8 +36,8 @@ class Client:
         :param character: The character name
         :type character: str
 
-        :param renderer: The rederer
-        :type renderer: :class:`graphics.Renderer`
+        :param renderer: The rederer instance.
+        :type renderer: :class:`renderer.Renderer`
 
         :param proxy: The message proxy
         :type proxy: :class:`network.message.MessageProxy`
@@ -90,7 +90,7 @@ class Client:
             'avatar': context.character_avatar,
             'avatar_res': c_res['avatar'],
         }
-        context.ui = UI(ui_res, player_data, self.renderer)
+        context.ui = UI(ui_res, self.renderer.width, self.renderer.height, player_data)
         self.context = context
 
         # Client status variable
