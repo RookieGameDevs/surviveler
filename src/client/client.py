@@ -158,7 +158,7 @@ class Client:
         # Aspect ratio
         aspect = self.renderer.height / float(self.renderer.width)
 
-        camera = PerspectiveCamera(25, 1.0 / aspect, 1, 500)
+        camera = PerspectiveCamera(25, 1.0 / aspect, 16, 22)
 
         renderer_conf = context.conf['Renderer']
         w = renderer_conf.getint('width')
