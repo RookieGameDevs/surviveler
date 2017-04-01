@@ -1,3 +1,4 @@
+from exceptions import ResourceError
 from functools import partial
 from loaders import load_obj
 from utils import as_utf8
@@ -205,8 +206,8 @@ def load_data(manager, fp, cwd):
 
 
 @ResourceManager.resource_handler('.obj')
-def load_mesh(manager, fp, cwd):
-    """Loader for obj files.
+def load_obj_mesh(manager, fp, cwd):
+    """Loader for obj meshes.
 
     :param manager: The resource manager
     :type manager: :class:`loaders.ResourceManager`
@@ -220,81 +221,12 @@ def load_mesh(manager, fp, cwd):
     :returns: The resulting mesh object
     :rtype: :class:`renderer.Mesh`
     """
-    from renderer.mesh import Mesh
+    from renderlib.mesh import Mesh
     v, n, u, i = load_obj(as_utf8(fp.read()))
     return Mesh(v, i, n, u)
 
 
-@ResourceManager.resource_handler('.vert')
-def load_vert_shader_source(manager, fp, cwd):
-    """Loader for vert files.
-
-    :param manager: The resource manager
-    :type manager: :class:`loaders.ResourceManager`
-
-    :param fp: The file pointer
-    :type fp: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :returns: The resulting vert object
-    :rtype: :class:`surrender.ShaderSource`
-    """
-    from surrender import ShaderSource
-    return ShaderSource.from_buffer(fp.read(), ShaderSource.VERTEX_SHADER)
-
-
-@ResourceManager.resource_handler('.frag')
-def load_frag_shader_source(manager, fp, cwd):
-    """Loader for frag files.
-
-    :param manager: The resource manager
-    :type manager: :class:`loaders.ResourceManager`
-
-    :param fp: The file pointer
-    :type fp: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :returns: The resulting frag object
-    :rtype: :class:`surrender.ShaderSource`
-    """
-    from surrender import ShaderSource
-    return ShaderSource.from_buffer(fp.read(), ShaderSource.FRAGMENT_SHADER)
-
-
-@ResourceManager.resource_handler('.shader')
-def load_shader(manager, fp, cwd):
-    """Loader for shader files.
-
-    The shader file is just a desriptive wrapper around the vert/frag/geom files
-
-    :param manager: The resource manager
-    :type manager: :class:`loaders.ResourceManager`
-
-    :param fp: The file pointer
-    :type fp: File
-
-    :param cwd: The current working directory
-    :type cwd: str
-
-    :returns: The resulting shader program object
-    :rtype: :class:`surrender.Shader`
-    """
-    from surrender import Shader
-
-    shader_data = json.loads(as_utf8(fp.read()))
-    shaders = []
-    for r in shader_data.get('shaders', []):
-        res = manager.get(os.path.join(cwd, r))
-        shaders.append(res.data)
-
-    return Shader(*shaders)
-
-
-@ResourceManager.resource_handler('.png', '.jpg')
+@ResourceManager.resource_handler('.png', '.jpg', '.jpeg')
 def load_image(manager, fp, cwd):
     """Loader for image files.
 
@@ -307,12 +239,19 @@ def load_image(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :returns: The opened image
-    :rtype: :class:`PIL.Image`
+    :returns: The loaded image.
+    :rtype: :class:`renderlib.image.Image`
     """
-    from PIL import Image
-    img = Image.open(fp)
-    return img
+    from renderlib.image import Image
+    try:
+        codec = {
+            '.png': Image.Codec.PNG,
+            '.jpeg': Image.Codec.JPEG,
+            '.jpg': Image.Codec.JPEG,
+        }[os.path.splitext(fp.name)[-1]]
+    except (IndexError, KeyError):
+        raise ResourceError('unsupported image type')
+    return Image.from_buffer(fp.read(), codec)
 
 
 @ResourceManager.resource_handler('.ttf')
@@ -328,13 +267,23 @@ def load_font(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :returns: Simply the bytes read from file
-    :rtype: :class:`sdl2.SDL_RWops.`
+    :returns: Font loader.
+    :rtype: :class:
     """
-    from io import BytesIO
-    from sdl2 import rw_from_object
-    content = fp.read()
-    return rw_from_object(BytesIO(content))
+    from renderlib.font import Font
+    class FontLoader:
+        """Auxiliary class which generates actual Font objects for requested
+        sizes and caches them."""
+        def __init__(self, data):
+            self.data = data
+            self.cache = {}
+
+        def get_size(self, pt):
+            if pt not in self.cache:
+                self.cache[pt] = Font.from_buffer(self.data, pt)
+            return self.cache[pt]
+
+    return FontLoader(fp.read())
 
 
 @ResourceManager.resource_handler('.bmp')
@@ -350,8 +299,8 @@ def load_bitmap(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :returns: Simply the bytes read from file
-    :rtype: :class:`sdl2.SDL_RWops.`
+    :returns: Loaded bitmap as 2D byte matrix.
+    :rtype: :class:`PIL.Image`
     """
     from PIL import Image
     img = Image.open(fp)
@@ -366,8 +315,8 @@ def load_bitmap(manager, fp, cwd):
 
 
 @ResourceManager.resource_handler('.mesh')
-def load_mesh_data(manager, fp, cwd):
-    """Loader for bitmaps.
+def load_mesh(manager, fp, cwd):
+    """Loader for mesh files.
 
     :param manager: The resource manager
     :type manager: :class:`loaders.ResourceManager`
@@ -378,14 +327,8 @@ def load_mesh_data(manager, fp, cwd):
     :param cwd: The current working directory
     :type cwd: str
 
-    :returns: Simply the bytes read from file
-    :rtype: :class:`sdl2.SDL_RWops.`
+    :returns: The loaded mesh.
+    :rtype: :class:`renderlib.mesh.Mesh`
     """
-    from surrender import MeshData
-    from surrender import Mesh
-    md = MeshData.from_buffer(fp.read())
-    mesh = Mesh(md)
-    return {
-        'mesh_data': md,
-        'mesh': mesh,
-    }
+    from renderlib.mesh import Mesh
+    return Mesh.from_buffer(fp.read())

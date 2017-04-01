@@ -5,7 +5,7 @@ from events import send_event
 from events import subscriber
 from game.events import EntityPick
 from game.events import GameModeToggle
-from matlib import Vec
+from matlib.vec import Vec
 from network import Message
 from network import MessageField
 from network import MessageType

@@ -1,7 +1,6 @@
 from events import send_event
 from events import subscriber
 from game.actions import place_building_template
-from game.components import Renderable
 from game.entities.actor import ActorType
 from game.entities.building import BuildingType
 from game.entities.entity import Entity
@@ -9,7 +8,9 @@ from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import GameModeChange
 from game.events import GameModeToggle
-from matlib import Vec
+from matlib.vec import Vec
+from renderlib.material import Material
+from renderlib.mesh import MeshProps
 from utils import in_matrix
 from utils import to_matrix
 from utils import to_scene
@@ -21,60 +22,49 @@ LOG = logging.getLogger(__name__)
 class BuildingTemplate(Entity):
     """Game entity which represents a building template."""
 
-    BUILDABLE_COLOR = {
-        'color_ambient': Vec(0.0, 0.6, 0.2, 1),
-        'color_diffuse': Vec(0.0, 0.8, 0.4, 1),
-    }
+    BUILDABLE_COLOR = Vec(0.0, 0.8, 0.4, 1)
 
-    NON_BUILDABLE_COLOR = {
-        'color_ambient': Vec(0.8, 0.0, 0.1, 1),
-        'color_diffuse': Vec(1, 0.0, 0.2, 1),
-    }
+    NON_BUILDABLE_COLOR = Vec(1, 0.0, 0.2, 1)
 
-    def __init__(self, resource, matrix, scale_factor, parent_node):
+    def __init__(self, resource, scene, matrix, scale_factor):
         """Constructor.
 
         :param resource: The character resource
         :type resource: :class:`loaders.Resource`
+
+        :type scene: :class:`renderlib.scene.Scene`
+        :param scene: Scene to add the health bar to.
 
         :param matrix: The walkable matrix
         :type matrix: :class:`loaders.Resource`
 
         :param scale_factor: The scale factor of the grid.
         :type scale_factor: int
-
-        :param parent_node: The parent node in the scene graph
-        :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        super().__init__()
+
         self.pos = (0, 0)
         self.matrix = matrix
         self.scale_factor = scale_factor
 
-        shader = resource['shader']
         mesh = resource['model_complete']
 
-        # shader params
-        params = dict({
-            'color_specular': Vec(1, 1, 1, 1),
-        }, **self.BUILDABLE_COLOR)
+        # create material
+        material = Material()
+        material.color = self.BUILDABLE_COLOR
+
+        # create render props container
+        self.props = MeshProps()
+        self.props.material = material
 
         # create components
-        renderable = Renderable(
-            parent_node,
-            mesh,
-            shader,
-            params,
-            enable_light=True)
+        self.obj = scene.add_mesh(mesh, self.props)
 
-        # initialize entity
-        super().__init__(renderable)
-
-    def destroy(self):
+    def remove(self):
         """Removes itself from the scene.
         """
-        LOG.debug('Destroying building template {}'.format(self.e_id))
-        node = self[Renderable].node
-        node.parent.remove_child(node)
+        LOG.debug('Remove building template {}'.format(self.e_id))
+        self.obj.remove()
 
     def update(self, dt):
         """Update the building template.
@@ -89,14 +79,12 @@ class BuildingTemplate(Entity):
 
         m_x, m_y = to_matrix(x, y, self.scale_factor)
         if not in_matrix(self.matrix, m_x, m_y) or not self.matrix[m_y][m_x]:
-            self[Renderable].node.params.update(self.NON_BUILDABLE_COLOR)
+            self.props.material.color = self.NON_BUILDABLE_COLOR
         else:
-            self[Renderable].node.params.update(self.BUILDABLE_COLOR)
+            self.props.material.color = self.BUILDABLE_COLOR
 
-        t = self[Renderable].transform
-        t.identity()
-        t.translate(to_scene(x, y))
-        t.scale(Vec(1.05, 1.05, 1.05))
+        self.obj.position = to_scene(x, y)
+        self.obj.scale = Vec(1.05, 1.05, 1.05)
 
 
 @subscriber(GameModeToggle)
@@ -125,7 +113,7 @@ def show_building_template(evt):
 
         matrix, scale_factor = context.matrix, context.scale_factor
         building_template = BuildingTemplate(
-            resource, matrix, scale_factor, context.scene.root)
+            resource, context.scene, matrix, scale_factor)
 
         context.building_type = building_type
         context.building_template = building_template
@@ -138,7 +126,7 @@ def show_building_template(evt):
         context.building_type = 0
         bt, context.building_template = context.building_template, None
         del context.entities[bt.e_id]
-        bt.destroy()
+        bt.remove()
 
 
 @subscriber(BuildingSpawn)

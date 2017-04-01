@@ -10,16 +10,15 @@ from game.events import PlayerJoin
 from game.gamestate import process_gamestate
 from game.ui import UI
 from itertools import count
-from matlib import Vec
+from matlib.vec import Vec
 from network import Message
 from network import MessageField as MF
 from network import MessageType as MT
 from network import get_message_handlers
 from network import message_handler
-from renderer.camera import PerspCamera
-from renderer.light import Light
-from renderer.light import LightNode
-from renderer.scene import Scene
+from renderlib.camera import PerspectiveCamera
+from renderlib.light import Light
+from renderlib.scene import Scene
 from utils import as_utf8
 from utils import tstamp
 import logging
@@ -37,7 +36,7 @@ class Client:
         :param character: The character name
         :type character: str
 
-        :param renderer: The rederer
+        :param renderer: The rederer instance.
         :type renderer: :class:`renderer.Renderer`
 
         :param proxy: The message proxy
@@ -76,7 +75,8 @@ class Client:
         context.matrix = map_res['matrix']
         context.scale_factor = map_res.data['scale_factor']
 
-        # Setup scene, camera, terrain and map
+        # Setup lights, scene, camera, terrain and map
+        context.light = self.setup_light()
         context.scene = self.setup_scene(context)
         context.camera, context.ratio = self.setup_camera(context)
         context.terrain = self.setup_terrain(context)
@@ -90,7 +90,7 @@ class Client:
             'avatar': context.character_avatar,
             'avatar_res': c_res['avatar'],
         }
-        context.ui = UI(ui_res, player_data, self.renderer)
+        context.ui = UI(ui_res, self.renderer.width, self.renderer.height, player_data)
         self.context = context
 
         # Client status variable
@@ -113,14 +113,9 @@ class Client:
         :type context: :class:`context.Context`
 
         :returns: The configured scene
-        :rtype: :class:`renderer.scene.Scene`
+        :rtype: :class:`renderlib.scene.Scene`
         """
         scene = Scene()
-
-        light = Light()
-        light_node = scene.root.add_child(LightNode(light))
-        light_node.transform.translate(Vec(0, 10, 10))
-
         return scene
 
     def setup_terrain(self, context):
@@ -132,11 +127,10 @@ class Client:
         :returns: The terrain entity
         :rtype: :class:`game.terrain.Terrain`
         """
-        root = context.scene.root
         # NOTE: we are using the map resources to get the appropriate walkable
         # matrix.
         resource = context.res_mgr.get('/map')
-        terrain = Terrain(resource, root)
+        terrain = Terrain(resource, context.scene)
         context.entities[terrain.e_id] = terrain
         return terrain
 
@@ -150,7 +144,7 @@ class Client:
         :rtype: :class:`game.map.Map
         """
         resource = context.res_mgr.get('/map')
-        return Map(resource, context.scene.root)
+        return Map(resource, context.scene)
 
     def setup_camera(self, context):
         """Sets up camera.
@@ -164,13 +158,7 @@ class Client:
         # Aspect ratio
         aspect = self.renderer.height / float(self.renderer.width)
 
-        camera = PerspCamera(
-            25,
-            1.0 / aspect,
-            1,
-            500)
-
-        camera.look_at(eye=Vec(0, 20, 10), center=Vec(0, 0, 0))
+        camera = PerspectiveCamera(25, 1.0 / aspect, 16, 22)
 
         renderer_conf = context.conf['Renderer']
         w = renderer_conf.getint('width')
@@ -178,9 +166,19 @@ class Client:
 
         p1 = ray_cast(0, 0, w, h, camera)
         p2 = ray_cast(w, 0, w, h, camera)
-
         ratio = (p1 - p2).mag() / w
+
         return camera, ratio
+
+    def setup_light(self):
+        light = Light()
+        light.direction = Vec(-5, -5, -5)
+        light.direction.norm()
+        light.color = Vec(1, 1, 1)
+        light.ambient_intensity = 0.3
+        light.diffuse_intensity = 1.0
+
+        return light
 
     @property
     def syncing(self):
@@ -292,7 +290,7 @@ class Client:
 
             # rendering
             self.renderer.clear()
-            self.context.scene.render(self.renderer, self.context.camera)
+            self.context.scene.render(self.context.camera, self.context.light)
             self.context.ui.render()
             self.renderer.present()
 

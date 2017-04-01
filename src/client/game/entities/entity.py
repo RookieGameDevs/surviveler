@@ -42,6 +42,11 @@ class Entity(ABC):
         """
         pass
 
+    @abstractmethod
+    def remove(self):
+        """Remove the entity from the game."""
+        pass
+
     @property
     def position(self):
         """The position of the entity in world coordinates.

@@ -41,6 +41,7 @@ class Context:
         self.map = None
         self.terrain = None
         self.ui = None
+        self.light = None
 
         # Entity related maps
         self.server_entities_map = {}

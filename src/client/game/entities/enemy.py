@@ -45,10 +45,8 @@ def enemy_spawn(evt):
             )
         )
 
-        tot = resource.data['tot_hp']
-
         # Create the character
-        character = Enemy(resource, evt.actor_type, (evt.cur_hp, tot), context.scene.root)
+        character = Enemy(resource, context.scene, evt.actor_type)
         character.set_action(ActionType.move)
         context.entities[character.e_id] = character
         context.server_entities_map[evt.srv_id] = character.e_id
@@ -69,7 +67,7 @@ def enemy_disappear(evt):
     if evt.srv_id in context.server_entities_map and is_zombie:
         e_id = context.server_entities_map.pop(evt.srv_id)
         character = context.entities.pop(e_id)
-        character.destroy()
+        character.remove()
 
 
 @subscriber(ActorDisappear)

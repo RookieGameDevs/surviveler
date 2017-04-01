@@ -1,19 +1,18 @@
 from enum import IntEnum
 from enum import unique
 from events import subscriber
-from game.components import Renderable
 from game.entities.entity import Entity
-from game.entities.widgets.health_bar import HealthBar
 from game.events import BuildingDisappear
 from game.events import BuildingSpawn
 from game.events import BuildingStatusChange
 from game.events import EntityPick
-from matlib import Vec
+from matlib.vec import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
-from renderer.scene import SceneNode
-from renderer.texture import Texture
+from renderlib.material import Material
+from renderlib.mesh import MeshProps
+from renderlib.texture import Texture
 from utils import to_scene
 import logging
 
@@ -31,11 +30,14 @@ class BuildingType(IntEnum):
 class Building(Entity):
     """Game entity which represents a building."""
 
-    def __init__(self, resource, position, progress, completed, parent_node):
+    def __init__(self, resource, scene, position, progress, completed):
         """Constructor.
 
         :param resource: The building resource
         :type resource: :class:`loaders.Resource`
+
+        :param scene: Scene to add the building bar to.
+        :type scene: :class:`renderlib.scene.Scene`
 
         :param position: The position of the building
         :type position: :class:`tuple`
@@ -45,90 +47,51 @@ class Building(Entity):
 
         :param completed: Whether the building is completed or not
         :type completed: :class:`bool`
-
-        :param parent_node: The parent node in the scene graph
-        :type parent_node: :class:`renderer.scene.SceneNode`
         """
-        self._position = position
-        # Progress is going to be a property used to update only when necessary
-        # the health bar.
-        self._progress = progress
-        self.completed = completed
+        super().__init__()
 
-        shader = resource['shader']
-        texture = Texture.from_image(resource['texture'])
+        self.scene = scene
+        self.obj = None
+        self._position = to_scene(*position)
+        self._completed = None
+
+        # create texture
+        texture = Texture.from_image(resource['texture'], Texture.TextureType.texture_2d)
         self.mesh_project = resource['model_project']
         self.mesh_complete = resource['model_complete']
 
-        # Setup the group node and add the health bar
-        group_node = SceneNode()
-        g_transform = group_node.transform
-        g_transform.translate(to_scene(*position))
-        parent_node.add_child(group_node)
+        # create material
+        material = Material()
+        material.texture = texture
 
-        self.health_bar = HealthBar(
-            resource['health_bar'], progress[0] / progress[1], group_node)
+        # create render props
+        self.props = MeshProps()
+        self.props.material = material
 
-        params = {
-            'tex': texture,
-        }
-
-        # create components
-        renderable = Renderable(
-            group_node,
-            self.mesh,
-            shader,
-            params,
-            textures=[texture],
-            enable_light=True)
-
-        # initialize entity
-        super().__init__(renderable)
+        # set initial building status
+        self.completed = completed
 
         # FIXME: hardcoded bounding box
         self._bounding_box = Vec(-0.5, 0, -0.5), Vec(0.5, 2, 0.5)
 
     @property
-    def mesh(self):
-        """Returns the appropriate mesh based on the building status.
-
-        :returns: The appropriate mesh
-        :rtype: :class:`renderer.Mesh`
-        """
-        if not self.completed:
-            return self.mesh_project
-        else:
-            return self.mesh_complete
-
-    @property
-    def progress(self):
-        """Returns the progress of the building as a tuple current/total.
-
-        :returns: The progress of the building
-        :rtype: :class:`tuple`
-        """
-        return self._progress
-
-    @progress.setter
-    def progress(self, value):
-        """Sets the progress of the building.
-
-        Propagate the modification to the buliding health bar.
-
-        :param value: The new progress
-        :type value: :class:`tuple`
-        """
-        self._progress = value
-        self.health_bar.value = value[0] / value[1]
-
-    @property
     def position(self):
-        """The position of the entity in world coordinates.
-
-        :returns: The position
-        :rtype: :class:`tuple`
-        """
         return self._position
+
+    @property
+    def completed(self):
+        return self._completed
+
+    @completed.setter
+    def completed(self, status):
+        if status != self._completed:
+            if self.obj:
+                self.obj.remove()
+            self.obj = self.scene.add_mesh(
+                self.mesh_complete if status else self.mesh_project,
+                self.props)
+            self.obj.position = self.position
+        self._completed = status
 
     @property
     def bounding_box(self):
@@ -141,33 +104,22 @@ class Building(Entity):
         :rtype: :class:`tuple`
         """
         l, m = self._bounding_box
-        pos = self.position
-        return l + Vec(pos[0], 0, pos[1]), m + Vec(pos[0], 0, pos[1])
+        return l + self.position, m + self.position
 
-    def destroy(self):
+    def remove(self):
         """Removes itself from the scene.
         """
-        LOG.debug('Destroying building {}'.format(self.e_id))
-
-        # Destroys the health bar first.
-        self.health_bar.destroy()
-
-        node = self[Renderable].node
-        node.parent.remove_child(node)
+        LOG.debug('Remove building {}'.format(self.e_id))
+        self.obj.remove()
 
     def update(self, dt):
         """Updates the building.
 
-        Applies the status of the building in terms of shader params and meshes.
-
         :param dt: Time delta from last update.
         :type dt: float
         """
-        node = self[Renderable].node
-        node.mesh = self.mesh
-
-        # Update the health bar
-        self.health_bar.update(dt)
+        # NOTE: nothing to do
+        pass
 
 
 @subscriber(BuildingSpawn)
@@ -196,8 +148,7 @@ def building_spawn(evt):
         tot = resource.data['tot_hp']
         # Create the building
         building = Building(
-            resource, evt.pos, (evt.cur_hp, tot), evt.completed,
-            context.scene.root)
+            resource, context.scene, evt.pos, (evt.cur_hp, tot), evt.completed)
         context.entities[building.e_id] = building
         context.server_entities_map[evt.srv_id] = building.e_id
 
@@ -211,7 +162,7 @@ def building_disappear(evt):
     if evt.srv_id in context.server_entities_map:
         e_id = context.server_entities_map.pop(evt.srv_id)
         building = context.entities.pop(e_id)
-        building.destroy()
+        building.remove()
 
 
 @subscriber(BuildingStatusChange)
@@ -223,7 +174,6 @@ def building_health_change(evt):
     if evt.srv_id in context.server_entities_map:
         e_id = context.server_entities_map[evt.srv_id]
         building = context.entities[e_id]
-        building.progress = evt.new, building.progress[1]
         building.completed = evt.completed
 
 

@@ -1,5 +1,5 @@
 from game.components import Component
-from matlib import Vec
+from matlib.vec import Vec
 import logging
 
 

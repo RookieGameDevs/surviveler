@@ -15,6 +15,16 @@ to `data` directory in project's root, for example:
     ln -s /path/to/data data
 
 
+# Quick setup
+A convenience bootstrap script is provided to quickly setup the project by
+automatically downloading and building dependencies and installing client and
+server executables into a local directory. As the rest of the project, it
+requires Python 3.5 minimum, and could be executed by simply issuing the
+following command from the project's root directory:
+
+    python3.5 bootstrap.py
+
+
 # Surviveler server
 
 ## Requirements
@@ -123,23 +133,33 @@ Enjoy!
 
 
 # Surviveler client
-The client is written (mostly) in Python language and has a number of external
+The client is written in Python language and has a number of external
 dependencies. First thing to do is to create an isolated environment for
 development and install the needed dependencies. Common setup routines are given
 below for Bash and Fish shell users.
 
-## Python virtualenv setup for bash shell
+*NOTE*: Python 3.5+ is required.
+
+## Using virtualenv or `venv` Python module
 Ensure you have `virtualenv` utility installed and then just type:
 
     virtualenv --python python3.5 .
 
+The `venv` Python module could be used too for the purpose:
+
+    python3.5 -m venv .
+
 Once done, to make the just created environment active source the activation
 script:
 
+    # Bash
     . bin/activate
 
+    # Fish
+    . bin/activate.fish
 
-## Python environment setup for fish shell
+
+## Using virtualfish
 To use the fish shell at your best you should install globally virtualfish with
 
     pip install virtualfish
@@ -162,42 +182,6 @@ Once the environment is set up and active, the following command should do the
 trick.
 
     pip install -r requirements.txt
-
-
-## Building and installing C renderer package
-To build the C renderer, install these dependencies along with their development
-files using your system's package manager:
-
-  * `GLEW`
-  * `AssImp` (mesh converter dependency, optional)
-
-Build the renderer with Python support enabled (ensure the correct Python
-environment is set):
-
-    ./waf configure --with-python
-    ./waf
-
-Install the resulting library in local Python distribution `site-packages` folder:
-
-*NOTE*: The `${VIRTUALENV}` is expected to be the absolute path to local Python
-environment.
-
- * Linux
-```bash
-cp build/libsurrender.so ${VIRTUALENV}/lib/surrender.so
-cp build/python/libsurrender.so ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so
-```
-
- * Mac OSX
-```bash
-cp build/libsurrender.dylib ${VIRTUALENV}/lib/surrender.so
-cp build/python/libsurrender.dylib ${VIRTUALENV}/lib/python3.5/site-packages/surrender.so
-```
-On Mac OS X the final file name must have `.so` extension!
-
- * Windows
-
-*TODO*
 
 
 ## Running

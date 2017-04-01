@@ -1,16 +1,17 @@
 from enum import IntEnum
 from enum import unique
 from events import subscriber
-from game.components import Renderable
 from game.entities.entity import Entity
 from game.events import EntityPick
 from game.events import ObjectSpawn
 from math import pi
-from matlib import Vec
+from matlib.vec import Vec
 from network.message import Message
 from network.message import MessageField as MF
 from network.message import MessageType
-from renderer.texture import Texture
+from renderlib.material import Material
+from renderlib.mesh import MeshProps
+from renderlib.texture import Texture
 from utils import to_scene
 import logging
 
@@ -30,47 +31,41 @@ class ObjectType(IntEnum):
 class MapObject(Entity):
     """Static object on the map."""
 
-    def __init__(self, resource, parameters, parent_node):
+    def __init__(self, resource, scene, parameters):
         """Constructor.
 
         :param resource: Resource containing the object data.
         :type resource: :class:`resource_manager.Resource`
 
+        :param scene: Scene to add the health bar to.
+        :type scene: :class:`renderlib.scene.Scene`
+
         :param parameters: Parameters for the object.
         :type parameters: :class:`dict`
-
-        :param parent_node: Node to attach the object to.
-        :type parent_node: :class:`renderer.scene.SceneNode`
         """
+        super().__init__()
+
         mesh = resource['model']
-        shader = resource['shader']
-        texture = Texture.from_image(resource['texture'])
+        texture = Texture.from_image(
+            resource['texture'],
+            Texture.TextureType.texture_2d)
 
-        # shader params
-        params = {
-            'tex': texture,
-            'animate': 0,
-            'opacity': 1.0,
-            'color_ambient': Vec(0, 0, 0, 1),
-            'color_diffuse': Vec(0, 0, 0, 1),
-            'color_specular': Vec(0.1, 0.1, 0.1, 1),
-        }
+        material = Material()
+        material.texture = texture
+        material.receive_light = True
 
-        renderable = Renderable(
-            parent_node,
-            mesh,
-            shader,
-            params,
-            textures=[texture],
-            enable_light=True)
+        props = MeshProps()
+        props.material = material
+        props.cast_shadows = True
+        props.receive_shadows = True
 
-        super().__init__(renderable)
-
-        self[Renderable].transform.translate(
-            to_scene(*parameters['pos']))
+        self.obj = scene.add_mesh(mesh, props)
+        self.obj.position = to_scene(*parameters['pos'])
+        # FIXME: an added offset to match the level displacement
+        self.obj.position.z += 1
 
         if 'rotation' in parameters:
-            self[Renderable].transform.rotate(
+            self.obj.rotation.rotatev(
                 Y_AXIS, parameters['rotation'] * pi / 180)
 
         # FIXME: hardcoded bounding box
@@ -98,6 +93,9 @@ class MapObject(Entity):
         """
         return self._position
 
+    def remove(self):
+        self.obj.remove()
+
 
 @subscriber(ObjectSpawn)
 def object_spawn(evt):
@@ -112,7 +110,7 @@ def object_spawn(evt):
         {d['ref']: d for d in map_resource.data['usable_objects']}[obj_type.name],
         pos=evt.pos)
 
-    map_obj = MapObject(obj_res, obj_data, level[Renderable].node)
+    map_obj = MapObject(obj_res, context.scene, obj_data)
     level.add_object(map_obj)
 
     context.entities[map_obj.e_id] = map_obj

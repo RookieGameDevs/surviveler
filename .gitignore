@@ -22,3 +22,4 @@ pkg/
 .Python
 data/
 data
+pyvenv.cfg

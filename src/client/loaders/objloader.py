@@ -94,7 +94,7 @@ def load_obj(fp):
 
                 # clamp items array to 3 elements
                 if len(face_items) < 3:
-                    face_items.extend([-1] * (3 - len(face_items)))
+                    face_items.append([-1] * (3 - len(face_items)))
 
             except (ValueError, TypeError) as err:
                 LOG.warn('Failed to parse face {}: {}'.format(face, err))
@@ -102,15 +102,15 @@ def load_obj(fp):
 
             vert_idx = face_items[0]
             indices.append(len(indices))
-            vertices.extend(tmp_vertices[vert_idx])
+            vertices.append(tmp_vertices[vert_idx])
 
             uv_idx = face_items[1]
             if uv_idx >= 0:
-                uvs.extend(tmp_uvs[uv_idx])
+                uvs.append(tmp_uvs[uv_idx])
 
             norm_idx = face_items[2]
             if norm_idx >= 0:
-                normals.extend(tmp_normals[norm_idx])
+                normals.append(tmp_normals[norm_idx])
 
     func_map = {
         'v': parse_vertex,
