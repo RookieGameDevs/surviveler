@@ -19,10 +19,10 @@ to `data` directory in project's root, for example:
 A convenience bootstrap script is provided to quickly setup the project by
 automatically downloading and building dependencies and installing client and
 server executables into a local directory. As the rest of the project, it
-requires Python 3.6 minimum, and could be executed by simply issuing the
+requires Python 3.5 minimum, and could be executed by simply issuing the
 following command from the project's root directory:
 
-    python3.6 bootstrap.py
+    python3.5 bootstrap.py
 
 
 # Surviveler server
