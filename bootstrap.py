@@ -67,19 +67,19 @@ TARGETS = [
     {
         'name': 'datalib',
         'url': 'git@github.com:RookieGameDevs/datalib.git',
-        'ref': 'master',
+        'ref': 'b7ad087aef26e5d3dda3d6021e03ba1d43a8871d',
         'build': build_datalib,
     },
     {
         'name': 'matlib',
         'url': 'git@github.com:RookieGameDevs/matlib.git',
-        'ref': 'master',
+        'ref': 'ac5d3489442a0e82571d441b94c7212dc68b6a43',
         'build': build_matlib,
     },
     {
         'name': 'renderlib',
         'url': 'git@github.com:RookieGameDevs/renderlib.git',
-        'ref': 'master',
+        'ref': 'b4b8eb77158d8785260663448d2ccc46531d5ba9',
         'build': build_renderlib,
     },
 ]
