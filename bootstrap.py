@@ -5,6 +5,7 @@ This script eases the project setup for development and running. It takes care
 of downloading needed dependencies and building them locally.
 """
 import os
+import stat
 import subprocess as sp
 import sys
 
@@ -138,7 +139,7 @@ def clone_or_checkout(url, ref, path):
         return 1, '{}'.format(err)
 
 
-def pip_install(inst_path):
+def pip_install(python_path, inst_path):
     inst_path = os.path.abspath(inst_path)
     env = dict(os.environ)
     env.update({
@@ -146,12 +147,42 @@ def pip_install(inst_path):
         'LDFLAGS': '-L{inst_path}/lib'.format(inst_path=inst_path),
     })
     proc = sp.run(
-        [sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'],
+        [python_path, '-m', 'pip', 'install', '-r', 'requirements.txt'],
         env=env)
-    return proc.returncode, proc.stderr.decode('utf8') if proc.stderr else ''
+    return proc.returncode, proc.stderr.decode('utf8') if proc.returncode else ''
+
+
+def venv_setup(venv_path, inst_path):
+    proc = sp.run([sys.executable, '-m', 'venv', venv_path])
+    if proc.returncode != 0:
+        return proc.returncode, proc.stderr.decode('utf8')
+
+    launcher_tmpl = (
+        '#!/bin/sh\n'
+        'LD_LIBRARY_PATH={library_path} {python_path} src/client/main.py "$@"'
+    ).format(
+        library_path=os.path.abspath(os.path.join(inst_path, 'lib')),
+        python_path=os.path.abspath(os.path.join(venv_path, 'bin', 'python')))
+
+    launcher_path = os.path.join(venv_path, 'bin', 'client')
+    with open(launcher_path, 'w') as fp:
+        fp.write(launcher_tmpl)
+
+    st = os.stat(launcher_path)
+    os.chmod(launcher_path, st.st_mode | stat.S_IEXEC)
+
+    return 0, ''
 
 
 if __name__ == '__main__':
+    # setup virtualenv
+    venv_path = os.getcwd()
+    python_path = os.path.join(venv_path, 'bin', 'python')
+    if not os.path.exists(venv_path) or not os.path.exists(python_path):
+        returncode, error = venv_setup(venv_path, BUILD_DIR)
+        if returncode != 0:
+            print('Failed to setup virtualenv: {}'.format(error))
+
     # create build directory, if it doesn't exist
     if not os.path.exists(BUILD_DIR):
         os.makedirs(BUILD_DIR)
@@ -174,4 +205,6 @@ if __name__ == '__main__':
             exit(returncode)
 
     # install packages via PIP
-    pip_install(BUILD_DIR)
+    returncode, error = pip_install(python_path, BUILD_DIR)
+    if returncode != 0:
+        print('Failed to install packages via PIP: {}'.format(error))
