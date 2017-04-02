@@ -79,7 +79,7 @@ TARGETS = [
     {
         'name': 'renderlib',
         'url': 'git@github.com:RookieGameDevs/renderlib.git',
-        'ref': 'b4b8eb77158d8785260663448d2ccc46531d5ba9',
+        'ref': 'ff9d966f55fbf1a70bfd1ede31ca84eba41605bd',
         'build': build_renderlib,
     },
 ]
