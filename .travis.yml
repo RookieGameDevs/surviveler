@@ -10,10 +10,17 @@ addons:
       - python3.5 python3.5-dev python3.5-venv check libglew-dev
 
 
-before_script:
+before_install:
   # get Go 1.8 and installs it as current Go version
   - eval "$(curl -sL https://raw.githubusercontent.com/travis-ci/gimme/master/gimme | GIMME_GO_VERSION=1.8 bash)"
   - go version
 
-script:
+install:
   - python3.5 bootstrap.py --git-http
+
+
+script:
+  # echo 'Client tests'
+  - echo $GOPATH
+  - export GOPATH=$PWD
+  - cd src/server && go test ./...
