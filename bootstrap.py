@@ -4,11 +4,11 @@
 This script eases the project setup for development and running. It takes care
 of downloading needed dependencies and building them locally.
 """
+import argparse
 import os
 import stat
 import subprocess as sp
 import sys
-import argparse
 
 
 BUILD_DIR = 'build'
