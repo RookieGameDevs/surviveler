@@ -4,6 +4,7 @@
 This script eases the project setup for development and running. It takes care
 of downloading needed dependencies and building them locally.
 """
+import argparse
 import os
 import stat
 import subprocess as sp
@@ -66,20 +67,23 @@ def build_matlib(name, path):
 TARGETS = [
     {
         'name': 'datalib',
-        'url': 'git@github.com:RookieGameDevs/datalib.git',
-        'ref': 'b7ad087aef26e5d3dda3d6021e03ba1d43a8871d',
+        'url_ssh': 'git@github.com:RookieGameDevs/datalib.git',
+        'url_http': 'https://github.com/RookieGameDevs/datalib.git',
+        'ref': '4c5e707a2a0e4f34d9632f37f0e37614c4fdb36f',
         'build': build_datalib,
     },
     {
         'name': 'matlib',
-        'url': 'git@github.com:RookieGameDevs/matlib.git',
+        'url_ssh': 'git@github.com:RookieGameDevs/matlib.git',
+        'url_http': 'https://github.com/RookieGameDevs/matlib.git',
         'ref': 'ac5d3489442a0e82571d441b94c7212dc68b6a43',
         'build': build_matlib,
     },
     {
         'name': 'renderlib',
-        'url': 'git@github.com:RookieGameDevs/renderlib.git',
-        'ref': 'b4b8eb77158d8785260663448d2ccc46531d5ba9',
+        'url_ssh': 'git@github.com:RookieGameDevs/renderlib.git',
+        'url_http': 'https://github.com/RookieGameDevs/renderlib.git',
+        'ref': 'ff9d966f55fbf1a70bfd1ede31ca84eba41605bd',
         'build': build_renderlib,
     },
 ]
@@ -146,6 +150,7 @@ def pip_install(python_path, inst_path):
         'CFLAGS': '-I{inst_path}/include -I{inst_path}/include/renderlib'.format(inst_path=inst_path),
         'LDFLAGS': '-L{inst_path}/lib'.format(inst_path=inst_path),
     })
+
     proc = sp.run(
         [python_path, '-m', 'pip', 'install', '-r', 'requirements.txt'],
         env=env)
@@ -181,7 +186,14 @@ def server_install(root_path):
     return proc.returncode, proc.stderr.decode('utf8') if proc.returncode else ''
 
 
-if __name__ == '__main__':
+def main():
+    parser = argparse.ArgumentParser(description='Bootstrap Surviveler environment')
+    parser.add_argument('--git-http', action='store_true',
+                        help='clone repos with http, instead of ssh (default)')
+    parser.add_argument('--no-venv', action='store_true',
+                        help='do not set up virtualenv')
+    args = parser.parse_args()
+
     # setup virtualenv
     venv_path = os.getcwd()
     python_path = os.path.join(venv_path, 'bin', 'python')
@@ -197,7 +209,7 @@ if __name__ == '__main__':
     # clone targets
     for tgt in TARGETS:
         returncode, error = clone_or_checkout(
-            tgt['url'],
+            tgt['url_http' if args.git_http else 'url_ssh'],
             tgt['ref'],
             os.path.join(BUILD_DIR, tgt['name']))
         if returncode != 0:
@@ -217,6 +229,11 @@ if __name__ == '__main__':
         print('Failed to install packages via PIP: {}'.format(error))
 
     # build server
+    print('Installing server')
     returncode, error = server_install(os.getcwd())
     if returncode != 0:
         print('Failed to install server: {}'.format(error))
+    print('Server installed successfully')
+
+if __name__ == '__main__':
+    main()
