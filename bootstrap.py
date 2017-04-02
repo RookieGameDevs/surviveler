@@ -8,9 +8,11 @@ import os
 import stat
 import subprocess as sp
 import sys
+import argparse
 
 
 BUILD_DIR = 'build'
+ARGS = None
 
 
 def waf_is_configured(path):
@@ -66,19 +68,22 @@ def build_matlib(name, path):
 TARGETS = [
     {
         'name': 'datalib',
-        'url': 'git@github.com:RookieGameDevs/datalib.git',
+        'url_ssh': 'git@github.com:RookieGameDevs/datalib.git',
+        'url_http': 'https://github.com/RookieGameDevs/datalib.git',
         'ref': 'b7ad087aef26e5d3dda3d6021e03ba1d43a8871d',
         'build': build_datalib,
     },
     {
         'name': 'matlib',
-        'url': 'git@github.com:RookieGameDevs/matlib.git',
+        'url_ssh': 'git@github.com:RookieGameDevs/matlib.git',
+        'url_http': 'https://github.com/RookieGameDevs/matlib.git',
         'ref': 'ac5d3489442a0e82571d441b94c7212dc68b6a43',
         'build': build_matlib,
     },
     {
         'name': 'renderlib',
-        'url': 'git@github.com:RookieGameDevs/renderlib.git',
+        'url_ssh': 'git@github.com:RookieGameDevs/renderlib.git',
+        'url_http': 'https://github.com/RookieGameDevs/renderlib.git',
         'ref': 'b4b8eb77158d8785260663448d2ccc46531d5ba9',
         'build': build_renderlib,
     },
@@ -182,13 +187,24 @@ def server_install(root_path):
 
 
 if __name__ == '__main__':
-    # setup virtualenv
-    venv_path = os.getcwd()
-    python_path = os.path.join(venv_path, 'bin', 'python')
-    if not os.path.exists(venv_path) or not os.path.exists(python_path):
-        returncode, error = venv_setup(venv_path, BUILD_DIR)
-        if returncode != 0:
-            print('Failed to setup virtualenv: {}'.format(error))
+
+    parser = argparse.ArgumentParser(description='Bootstrap Surviveler environment')
+    parser.add_argument('--git-http', action='store_true',
+                        help='clone repos with http, instead of ssh (default)')
+    parser.add_argument('--no-venv', action='store_true',
+                        help='do not set up virtualen')
+    global ARGS
+    ARGS = parser.parse_args()
+    url_key = 'url_http' if ARGS.git_http else 'url_ssh'
+
+    if not ARGS.no_venv:
+        # setup virtualenv
+        venv_path = os.getcwd()
+        python_path = os.path.join(venv_path, 'bin', 'python')
+        if not os.path.exists(venv_path) or not os.path.exists(python_path):
+            returncode, error = venv_setup(venv_path, BUILD_DIR)
+            if returncode != 0:
+                print('Failed to setup virtualenv: {}'.format(error))
 
     # create build directory, if it doesn't exist
     if not os.path.exists(BUILD_DIR):
@@ -197,7 +213,7 @@ if __name__ == '__main__':
     # clone targets
     for tgt in TARGETS:
         returncode, error = clone_or_checkout(
-            tgt['url'],
+            tgt[url_key],
             tgt['ref'],
             os.path.join(BUILD_DIR, tgt['name']))
         if returncode != 0:
