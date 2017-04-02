@@ -182,6 +182,7 @@ def venv_setup(venv_path, inst_path):
 def server_install(root_path):
     env = dict(os.environ)
     env['GOPATH'] = os.path.abspath(root_path)
+    print('Installing server')
     proc = sp.run(['go', 'install', 'server'], env=env)
     return proc.returncode, proc.stderr.decode('utf8') if proc.returncode else ''
 
@@ -232,7 +233,7 @@ def main():
     returncode, error = server_install(os.getcwd())
     if returncode != 0:
         print('Failed to install server: {}'.format(error))
-
+    print('Server installed successfully')
 
 if __name__ == '__main__':
     main()
