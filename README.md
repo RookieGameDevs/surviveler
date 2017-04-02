@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/RookieGameDevs/surviveler.svg?branch=master)](https://travis-ci.org/RookieGameDevs/surviveler)
+
 Surviveler
 ==========
 Surviveler is a real-time role playing game in which players face a zombie
@@ -38,7 +40,7 @@ and in another terminal:
 ## Requirements
 
 ### Go Version
-Go 1.6 is preferred, or Go 1.5 with [**Vendor Experiment**](https://medium.com/@freeformz/go-1-5-s-vendor-experiment-fd3e830f52c3#.ks6p4locq).
+Go 1.8 is required.
 
 ### Go dependencies management
 It is the developer responsibility to maintain the content of the *version
