@@ -24,6 +24,14 @@ following command from the project's root directory:
 
     python3.5 bootstrap.py
 
+On success, server and client can be launched from project's root as simple as:
+
+    bin/server
+
+and in another terminal:
+
+    bin/client
+
 
 # Surviveler server
 
