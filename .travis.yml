@@ -7,7 +7,7 @@ addons:
     packages:
       # packahe list:
       # https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
-      - python3.5 python3.5-dev python3.5-venv check libglew-dev
+      - python3.5 python3.5-dev python3.5-venv libglew-dev
 
 
 before_install:
