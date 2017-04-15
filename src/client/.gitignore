@@ -1,8 +1,0 @@
-bin/
-include/
-lib/
-local/
-pip-selfcheck.json
-*.lprof
-
-*.pyc
