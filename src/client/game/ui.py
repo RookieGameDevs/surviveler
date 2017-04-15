@@ -258,12 +258,14 @@ from ui import UI as Layout
 from ui.item import Anchor
 
 
-class AvatarItem(Item):
+class ImageItem(Item):
 
-    def __init__(self, scene, texture, **kwargs):
+    def __init__(self, scene, image, **kwargs):
         super().__init__(**kwargs)
         self.props = QuadProps()
-        self.props.texture = texture
+        self.props.texture = Texture.from_image(
+            image,
+            Texture.TextureType.texture_rectangle)
         self.quad = Quad(0, 0)
         self.obj = scene.add_quad(self.quad, self.props)
 
@@ -306,16 +308,12 @@ class GameUI:
             0,            # near
             1)            # far
 
-        texture = Texture.from_image(
-            player_data['avatar_res'][player_data['avatar']],
-            Texture.TextureType.texture_rectangle)
-
         self.ui = Layout(width, height)
         self.ui.add_child(
             'avatar',
-            AvatarItem(
+            ImageItem(
                 self.scene,
-                texture,
+                player_data['avatar_res'][player_data['avatar']],
                 anchor=Anchor(
                     left='parent.left',
                     top='parent.top'),
