@@ -285,8 +285,7 @@ class HealthbarItem(Item):
 
     def __init__(self, scene, resource, **kwargs):
         super().__init__(**kwargs)
-        # self.width = resource.data['width']
-        # self.height = resource.data['height']
+
         left, right, top, bottom = resource.data['borders']
         borders = {
             'left': left,
