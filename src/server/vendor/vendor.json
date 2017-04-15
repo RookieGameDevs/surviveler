@@ -15,34 +15,40 @@
 			"revisionTime": "2016-11-04T20:33:57Z"
 		},
 		{
-			"checksumSHA1": "NxZydgYYACVzHUCOQz0PpKLVuKs=",
+			"checksumSHA1": "JlO58kiw99C+3L8tEC6MM4F0Nts=",
 			"path": "github.com/aurelien-rainone/go-detour",
-			"revision": "870c09206b91318365950557453c3aee4ff6300c",
-			"revisionTime": "2017-03-12T13:58:08Z"
+			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
+			"revisionTime": "2017-04-15T12:14:34Z"
 		},
 		{
-			"checksumSHA1": "WuabGEWyzAHqW/z1FldHggjHjXs=",
+			"checksumSHA1": "NmdbzMi6plt52Ch8ohM5Mslfk3s=",
 			"path": "github.com/aurelien-rainone/go-detour/detour",
-			"revision": "e1b4db9181f94d6166c70a280223f38cd887406a",
-			"revisionTime": "2017-02-11T02:04:58Z"
+			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
+			"revisionTime": "2017-04-15T12:14:34Z"
 		},
 		{
-			"checksumSHA1": "nmnXxnpDFDRxe4JOZWsBbYeCw0k=",
+			"checksumSHA1": "pLIH0yPj+WM0/4drdL4MEoc75F8=",
 			"path": "github.com/aurelien-rainone/go-detour/recast",
-			"revision": "870c09206b91318365950557453c3aee4ff6300c",
-			"revisionTime": "2017-03-12T13:58:08Z"
+			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
+			"revisionTime": "2017-04-15T12:14:34Z"
 		},
 		{
 			"checksumSHA1": "bvJwypffhogdVFMNKZc+2HjSBBA=",
 			"path": "github.com/aurelien-rainone/go-detour/sample",
-			"revision": "870c09206b91318365950557453c3aee4ff6300c",
-			"revisionTime": "2017-03-12T13:58:08Z"
+			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
+			"revisionTime": "2017-04-15T12:14:34Z"
 		},
 		{
-			"checksumSHA1": "BG4IN140EY6ZT6P7F8UJyZuRFYA=",
+			"checksumSHA1": "M7b6BU1RpjBd7Y5BolDF47q0EMg=",
 			"path": "github.com/aurelien-rainone/go-detour/sample/solomesh",
-			"revision": "870c09206b91318365950557453c3aee4ff6300c",
-			"revisionTime": "2017-03-12T13:58:08Z"
+			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
+			"revisionTime": "2017-04-15T12:14:34Z"
+		},
+		{
+			"checksumSHA1": "KuZBhZ71CtenAvt8P1N/tZQr8io=",
+			"path": "github.com/aurelien-rainone/go-detour/sample/tilemesh",
+			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
+			"revisionTime": "2017-04-15T12:14:34Z"
 		},
 		{
 			"checksumSHA1": "Q4CN2Q4fpoJNgWMDkI5jsdDZfGY=",
