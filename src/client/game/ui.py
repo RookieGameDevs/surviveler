@@ -162,9 +162,9 @@ class UI:
         self.transform(self.fps_counter, self.w * 0.85, 0)
 
         # clock
-        self.clock_text = Text(font, '--:--')
-        self.clock = self.scene.add_text(self.clock_text, props)
-        self.transform(self.clock, self.w * 0.5, 0)
+        # self.clock_text = Text(font, '--:--')
+        # self.clock = self.scene.add_text(self.clock_text, props)
+        # self.transform(self.clock, self.w * 0.5, 0)
 
         # avatar
         # avatar_res = player_data['avatar_res']
@@ -227,7 +227,7 @@ class UI:
 @subscriber(TimeUpdate)
 def update_time(evt):
     """Updates the UI clock."""
-    evt.context.ui.set_clock(evt.hour, evt.minute)
+    # evt.context.ui.set_clock(evt.hour, evt.minute)
 
 
 @subscriber(GameModeChange)
@@ -279,6 +279,34 @@ class ImageItem(Item):
         self.quad.height = self.height
         self.obj.position.x = self.position.x
         self.obj.position.y = self.position.y
+
+
+class TextItem(Item):
+
+    def __init__(self, scene, font, string='', **kwargs):
+        super().__init__(width=0, height=0, **kwargs)
+        self.props = TextProps()
+        self.text = Text(font, string)
+        self.obj = scene.add_text(self.text, self.props)
+        self._string = string
+
+    @property
+    def string(self):
+        return self._string
+
+    @string.setter
+    def string(self, s):
+        self._string = self.text.string = s
+
+    def update(self):
+        self.obj.position.x = self.position.x
+        self.obj.position.y = self.position.y
+
+    def compute_width(self):
+        return self.text.width
+
+    def compute_height(self):
+        return self.text.height
 
 
 class HealthbarItem(Item):
@@ -346,7 +374,7 @@ class GameUI:
             0,            # near
             1)            # far
 
-        avatar = ImageItem(
+        self.avatar = ImageItem(
             self.scene,
             player_data['avatar_res'][player_data['avatar']],
             anchor=Anchor(
@@ -358,7 +386,7 @@ class GameUI:
             width=player_data['avatar_res'].data['width'],
             height=player_data['avatar_res'].data['height'])
 
-        healthbar = HealthbarItem(
+        self.healthbar = HealthbarItem(
             self.scene,
             resource['health_bar'],
             anchor=Anchor(
@@ -369,9 +397,18 @@ class GameUI:
                 top=5),
             height=resource['health_bar'].data['height'])
 
+        self.clock = TextItem(
+            self.scene,
+            resource['font'].get_size(16),
+            '--:--',
+            anchor=Anchor(
+                hcenter='parent.hcenter',
+                top='parent.top'))
+
         self.ui = Layout(width, height)
-        self.ui.add_child('avatar', avatar)
-        self.ui.add_child('healthbar', healthbar)
+        self.ui.add_child('avatar', self.avatar)
+        self.ui.add_child('healthbar', self.healthbar)
+        self.ui.add_child('clock', self.clock)
         self.ui.bind_item()
 
     def update(self):
