@@ -157,9 +157,9 @@ class UI:
         self.transform(self.game_mode, self.w * 0.85, 20)
 
         # FPS counter
-        self.fps_counter_text = Text(font, 'FPS')
-        self.fps_counter = self.scene.add_text(self.fps_counter_text, props)
-        self.transform(self.fps_counter, self.w * 0.85, 0)
+        # self.fps_counter_text = Text(font, 'FPS')
+        # self.fps_counter = self.scene.add_text(self.fps_counter_text, props)
+        # self.transform(self.fps_counter, self.w * 0.85, 0)
 
         # clock
         # self.clock_text = Text(font, '--:--')
@@ -198,7 +198,7 @@ class UI:
         :param number: Number of frames per second to visualize.
         :type number: int
         """
-        self.fps_counter_text.string = 'FPS: {}'.format(number)
+        # self.fps_counter_text.string = 'FPS: {}'.format(number)
 
     def set_mode(self, mode=None):
         """Set the current game mode on the game mode widget.
@@ -206,7 +206,7 @@ class UI:
         :param number: The game mode: None in case of default
         :type number: :enum:`context.Context.GameMode`
         """
-        self.game_mode_text.string = '{}'.format(mode.value)
+        # self.game_mode_text.string = '{}'.format(mode.value)
 
     def set_clock(self, hour, minute):
         """Set the time in clock widget.
@@ -217,7 +217,7 @@ class UI:
         :param minute: Minute.
         :type minute: int
         """
-        self.clock_text.string = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
+        # self.clock_text.string = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
 
     def render(self):
         """Render the user interface."""
@@ -227,7 +227,7 @@ class UI:
 @subscriber(TimeUpdate)
 def update_time(evt):
     """Updates the UI clock."""
-    # evt.context.ui.set_clock(evt.hour, evt.minute)
+    evt.context.ui.set_clock(evt.hour, evt.minute)
 
 
 @subscriber(GameModeChange)
@@ -405,10 +405,21 @@ class GameUI:
                 hcenter='parent.hcenter',
                 top='parent.top'))
 
+        self.fps_counter = TextItem(
+            self.scene,
+            resource['font'].get_size(16),
+            'FPS: n/a',
+            anchor=Anchor(
+                left='parent.right',
+                top='parent.top'),
+            margin=Margin(
+                left=-100))
+
         self.ui = Layout(width, height)
         self.ui.add_child('avatar', self.avatar)
         self.ui.add_child('healthbar', self.healthbar)
         self.ui.add_child('clock', self.clock)
+        self.ui.add_child('fps_counter', self.fps_counter)
         self.ui.bind_item()
 
     def update(self):
