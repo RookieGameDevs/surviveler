@@ -541,21 +541,39 @@ class Item(metaclass=ABCMeta):
 
     @property
     def width(self):
-        """Readonly width of the item.
+        """Computed width of the item.
 
         :returns: The width of the item
         :rtype: :class:`..util.point.Point`
         """
         return self._width
 
+    @width.setter
+    def width(self, w):
+        """Item width setter.
+
+        Note that anchors take precedence and could override the final width
+        value.
+        """
+        self._width = w
+
     @property
     def height(self):
-        """Readonly height of the item.
+        """Computed height of the item.
 
         :returns: The height of the item
         :rtype: :class:`..util.point.Point`
         """
         return self._height
+
+    @height.setter
+    def height(self, h):
+        """Item height setter.
+
+        Note that anchors take precedence and could override the final height
+        value.
+        """
+        self._height = h
 
     @property
     def anchor(self):

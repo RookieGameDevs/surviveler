@@ -151,11 +151,6 @@ class UI:
         props = TextProps()
         props.color = Vec(1, 1, 1, 1)
 
-        # Mode node
-        self.game_mode_text = Text(font, Context.GameMode.default.value)
-        self.game_mode = self.scene.add_text(self.game_mode_text, props)
-        self.transform(self.game_mode, self.w * 0.85, 20)
-
         # FPS counter
         # self.fps_counter_text = Text(font, 'FPS')
         # self.fps_counter = self.scene.add_text(self.fps_counter_text, props)
@@ -200,14 +195,6 @@ class UI:
         """
         # self.fps_counter_text.string = 'FPS: {}'.format(number)
 
-    def set_mode(self, mode=None):
-        """Set the current game mode on the game mode widget.
-
-        :param number: The game mode: None in case of default
-        :type number: :enum:`context.Context.GameMode`
-        """
-        # self.game_mode_text.string = '{}'.format(mode.value)
-
     def set_clock(self, hour, minute):
         """Set the time in clock widget.
 
@@ -230,16 +217,6 @@ def update_time(evt):
     evt.context.ui.set_clock(evt.hour, evt.minute)
 
 
-@subscriber(GameModeChange)
-def show_gamemode(evt):
-    """In case we are in a gamemode different from the default one shows it."""
-    context = evt.context
-    if evt.cur != context.GameMode.default:
-        context.ui.set_mode(evt.cur)
-    else:
-        context.ui.set_mode(context.GameMode.default)
-
-
 @subscriber(ActorStatusChange)
 def player_health_change(evt):
     """Updates the number of hp of the actor.
@@ -250,7 +227,7 @@ def player_health_change(evt):
     if srv_id == context.player_id and srv_id in context.server_entities_map:
         e_id = context.server_entities_map[evt.srv_id]
         actor = context.entities[e_id]
-        context.ui.health_bar.value = evt.new / actor.resource.data['tot_hp']
+        context.ui.set_health(evt.new / actor.resource.data['tot_hp'])
 
 
 from ui.item import Item
@@ -314,6 +291,8 @@ class HealthbarItem(Item):
     def __init__(self, scene, resource, **kwargs):
         super().__init__(**kwargs)
 
+        self._value = 1.0
+
         left, right, top, bottom = resource.data['borders']
         borders = {
             'left': left,
@@ -322,24 +301,36 @@ class HealthbarItem(Item):
             'bottom': bottom,
         }
 
-        background = ImageItem(
+        self.background = ImageItem(
             scene,
             resource['bg_texture'],
             borders,
             anchor=Anchor.fill())
-        background.obj.position.z = -0.5
+        self.background.obj.position.z = -0.5
 
-        foreground = ImageItem(
+        self.foreground = ImageItem(
             scene,
             resource['fg_texture'],
             borders,
-            anchor=Anchor.fill())
+            anchor=Anchor(
+                top='parent.top',
+                bottom='parent.bottom',
+                left='parent.left'),
+            width=0)
 
-        self.add_child('healthbar-bg', background)
-        self.add_child('healthbar-fg', foreground)
+        self.add_child('healthbar-bg', self.background)
+        self.add_child('healthbar-fg', self.foreground)
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, v):
+        self._value = v
 
     def update(self):
-        pass
+        self.foreground.width = self.width * self._value
 
 
 class GameUI:
@@ -434,3 +425,30 @@ class GameUI:
 
     def render(self):
         self.scene.render(self.camera)
+
+    def set_fps(self, number):
+        """Set the current frame rate in FPS widget.
+
+        :param number: Number of frames per second to visualize.
+        :type number: int
+        """
+        self.fps_counter.string = 'FPS: {}'.format(number)
+
+    def set_clock(self, hour, minute):
+        """Set the time in clock widget.
+
+        :param hour: Hour.
+        :type hour: int
+
+        :param minute: Minute.
+        :type minute: int
+        """
+        self.clock.string = '{h:02d}:{m:02d}'.format(h=hour, m=minute)
+
+    def set_health(self, value):
+        """Set the normalized health value in [0, 1] range.
+
+        :param value: Health value.
+        :type value: float
+        """
+        self.healthbar.value = value

@@ -9,7 +9,6 @@ from game.events import CharacterLeave
 from game.events import PlayerJoin
 from game.gamestate import process_gamestate
 from game.ui import GameUI
-from game.ui import UI
 from itertools import count
 from matlib.vec import Vec
 from network import Message
@@ -91,8 +90,7 @@ class Client:
             'avatar': context.character_avatar,
             'avatar_res': c_res['avatar'],
         }
-        context.ui = UI(ui_res, self.renderer.width, self.renderer.height, player_data)
-        self.ui = GameUI(ui_res, self.renderer.width, self.renderer.height, player_data)
+        context.ui = GameUI(ui_res, self.renderer.width, self.renderer.height, player_data)
         self.context = context
 
         # Client status variable
@@ -291,13 +289,12 @@ class Client:
                 ent.update(dt)
 
             # Update UI
-            self.ui.update()
+            self.context.ui.update()
 
             # Render everything
             self.renderer.clear()
             self.context.scene.render(self.context.camera, self.context.light)
             self.context.ui.render()
-            self.ui.render()
             self.renderer.present()
 
             # Enqueue messages in context and emtpy the queue
