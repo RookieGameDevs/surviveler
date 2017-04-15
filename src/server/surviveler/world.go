@@ -17,7 +17,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/go-detour/detour"
 	"github.com/aurelien-rainone/go-detour/recast"
-	"github.com/aurelien-rainone/go-detour/sample/solomesh"
+	"github.com/aurelien-rainone/go-detour/sample/tilemesh"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
 	"github.com/aurelien-rainone/gogeo/f32/d3"
 )
@@ -27,7 +27,7 @@ import (
  */
 type World struct {
 	NavMesh               *detour.NavMesh             // navigation mesh
-	soloMesh              *solomesh.SoloMesh          // solo nav mesh container/rebuilder
+	tileMesh              *tilemesh.TileMesh          // tile nav mesh container/rebuilder
 	Grid                                              // the embedded map
 	GridWidth, GridHeight int                         // grid dimensions
 	Width, Height         float32                     // world dimensions
@@ -51,7 +51,7 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 		ok                         bool
 		r1, r2                     io.ReadCloser
 		buf                        []byte
-		settings                   solomesh.Settings
+		settings                   recast.BuildSettings
 		navMesh                    *detour.NavMesh
 	)
 
@@ -81,9 +81,9 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 	}
 
 	ctx := recast.NewBuildContext(true)
-	soloMesh := solomesh.New(ctx)
+	tileMesh := tilemesh.New(ctx)
 
-	soloMesh.SetSettings(settings)
+	tileMesh.SetSettings(settings)
 
 	// load geometry
 	if item, err = pkg.Open(mapURI); err != nil {
@@ -94,11 +94,11 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 		return nil, err
 	}
 	defer r2.Close()
-	if err = soloMesh.LoadGeometry(r2); err != nil {
+	if err = tileMesh.LoadGeometry(r2); err != nil {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't load mesh %v, %s", mapURI, err)
 	}
-	if navMesh, ok = soloMesh.Build(); !ok {
+	if navMesh, ok = tileMesh.Build(); !ok {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't build navmesh for %v", mapURI)
 	}
@@ -109,7 +109,7 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 		return nil, st
 	}
 	w := World{
-		soloMesh:    soloMesh,
+		tileMesh:    tileMesh,
 		NavMesh:     navMesh,
 		MeshQuery:   q,
 		QueryFilter: detour.NewStandardQueryFilter(),
