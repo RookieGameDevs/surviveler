@@ -140,12 +140,12 @@ class UI:
         self.h = height
         self.scene = Scene()
         self.camera = OrthographicCamera(
-            -self.w / 2, # left
-            +self.w / 2, # right
-            +self.h / 2, # top
-            -self.h / 2, # bottom
-            0,           # near
-            1)           # far
+            -self.w / 2,  # left
+            +self.w / 2,  # right
+            +self.h / 2,  # top
+            -self.h / 2,  # bottom
+            0,            # near
+            1)            # far
 
         font = resource['font'].get_size(16)
         props = TextProps()
