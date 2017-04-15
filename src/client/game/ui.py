@@ -194,7 +194,9 @@ class UI:
             '--:--',
             anchor=Anchor(
                 hcenter='parent.hcenter',
-                top='parent.top'))
+                top='parent.top'),
+            margin=Margin(
+                top=5))
 
         self.fps_counter = TextItem(
             self.scene,
@@ -204,6 +206,7 @@ class UI:
                 left='parent.right',
                 top='parent.top'),
             margin=Margin(
+                top=5,
                 left=-100))
 
         self.ui = Layout(width, height)
