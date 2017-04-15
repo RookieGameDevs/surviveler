@@ -167,9 +167,10 @@ class UI:
         self.transform(self.clock, self.w * 0.5, 0)
 
         # avatar
-        avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
-        self.avatar = Avatar(self.scene, avatar_res, avatar)
-        self.transform(self.avatar.obj, 0, 0)
+        avatar_res = player_data['avatar_res']
+        # avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
+        # self.avatar = Avatar(self.scene, avatar_res, avatar)
+        # self.transform(self.avatar.obj, 0, 0)
 
         # healthbar
         self.health_bar = HealthBar(self.scene, resource['health_bar'])
@@ -267,10 +268,10 @@ class AvatarItem(Item):
         self.obj = scene.add_quad(self.quad, self.props)
 
     def update(self):
+        self.quad.width = self.width
+        self.quad.height = self.height
         self.obj.position.x = self.position.x
         self.obj.position.y = self.position.y
-        self.quad.right = self.width
-        self.quad.bottom = self.height
 
 
 class GameUI:
@@ -325,3 +326,13 @@ class GameUI:
 
     def update(self):
         self.ui.update()
+
+        # transform each item's graphical object
+        for item in self.ui.traverse():
+            obj = getattr(item, 'obj', None)
+            if obj:
+                item.obj.position.x = item.position.x - self.w / 2
+                item.obj.position.y = self.h / 2 - item.position.y
+
+    def render(self):
+        self.scene.render(self.camera)

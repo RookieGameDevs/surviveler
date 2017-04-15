@@ -42,6 +42,17 @@ class UI:
         """
         return self._root.bind_item()
 
+    def update(self, **kwargs):
+        """Update recursively all UI items.
+        """
+        for item in self.traverse():
+            item.update(**kwargs)
+
+    def traverse(self, listen_to=None, pos=None):
+        """Forward the traverse call as it is to the root item.
+        """
+        return self._root.traverse()
+
     def dispatch(self, event_type, pos=None, payload=None):
         """Traverses the item tree and dispatches the event properly.
 

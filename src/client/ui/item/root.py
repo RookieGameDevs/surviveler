@@ -47,5 +47,5 @@ class RootItem(Item):
         for ref, item in self.children.items():
             item.bind_item()
 
-    def update(self, dt):
+    def update(self, **kwargs):
         pass

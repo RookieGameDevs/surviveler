@@ -628,13 +628,12 @@ class Item(metaclass=ABCMeta):
         return child
 
     @abstractmethod
-    def update(self, dt):
+    def update(self, **kwargs):
         """Item update method.
 
         This method should be implemented by subclasses of Item. It describes
         the behavior the class should have during updates.
 
-        :param dt: The time delta since last update(in seconds)
-        :type dt: :class:`float`
+        :param kwargs: Update parameters.
+        :type kwargs: dict
         """
-        pass
