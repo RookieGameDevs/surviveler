@@ -4,3 +4,4 @@ Pillow==4.0.0
 PySDL2==0.9.5
 matlib==0.1.7
 renderlib==0.1.6
+wheel==0.29.0
