@@ -167,15 +167,15 @@ class UI:
         self.transform(self.clock, self.w * 0.5, 0)
 
         # avatar
-        avatar_res = player_data['avatar_res']
+        # avatar_res = player_data['avatar_res']
         # avatar_res, avatar = player_data['avatar_res'], player_data['avatar']
         # self.avatar = Avatar(self.scene, avatar_res, avatar)
         # self.transform(self.avatar.obj, 0, 0)
 
         # healthbar
-        self.health_bar = HealthBar(self.scene, resource['health_bar'])
-        self.transform(self.health_bar.bg_obj, 0, avatar_res.data['width'] + 5)
-        self.transform(self.health_bar.fg_obj, 0, avatar_res.data['width'] + 5)
+        # self.health_bar = HealthBar(self.scene, resource['health_bar'])
+        # self.transform(self.health_bar.bg_obj, 0, avatar_res.data['width'] + 5)
+        # self.transform(self.health_bar.fg_obj, 0, avatar_res.data['width'] + 5)
 
     def transform(self, obj, x, y):
         """Transform the UI scene node from screen space to scene space.
@@ -256,16 +256,21 @@ def player_health_change(evt):
 from ui.item import Item
 from ui import UI as Layout
 from ui.item import Anchor
+from ui.item import Margin
 
 
 class ImageItem(Item):
 
-    def __init__(self, scene, image, **kwargs):
+    def __init__(self, scene, image, borders=None, **kwargs):
         super().__init__(**kwargs)
         self.props = QuadProps()
         self.props.texture = Texture.from_image(
             image,
             Texture.TextureType.texture_rectangle)
+        if borders:
+            for border, value in borders.items():
+                if border in {'left', 'top', 'right', 'bottom'}:
+                    setattr(self.props.borders, border, value)
         self.quad = Quad(0, 0)
         self.obj = scene.add_quad(self.quad, self.props)
 
@@ -274,6 +279,40 @@ class ImageItem(Item):
         self.quad.height = self.height
         self.obj.position.x = self.position.x
         self.obj.position.y = self.position.y
+
+
+class HealthbarItem(Item):
+
+    def __init__(self, scene, resource, **kwargs):
+        super().__init__(**kwargs)
+        # self.width = resource.data['width']
+        # self.height = resource.data['height']
+        left, right, top, bottom = resource.data['borders']
+        borders = {
+            'left': left,
+            'right': right,
+            'top': top,
+            'bottom': bottom,
+        }
+
+        background = ImageItem(
+            scene,
+            resource['bg_texture'],
+            borders,
+            anchor=Anchor.fill())
+        background.obj.position.z = -0.5
+
+        foreground = ImageItem(
+            scene,
+            resource['fg_texture'],
+            borders,
+            anchor=Anchor.fill())
+
+        self.add_child('healthbar-bg', background)
+        self.add_child('healthbar-fg', foreground)
+
+    def update(self):
+        pass
 
 
 class GameUI:
@@ -308,18 +347,32 @@ class GameUI:
             0,            # near
             1)            # far
 
-        self.ui = Layout(width, height)
-        self.ui.add_child(
-            'avatar',
-            ImageItem(
-                self.scene,
-                player_data['avatar_res'][player_data['avatar']],
-                anchor=Anchor(
-                    left='parent.left',
-                    top='parent.top'),
-                width=player_data['avatar_res'].data['width'],
-                height=player_data['avatar_res'].data['height']))
+        avatar = ImageItem(
+            self.scene,
+            player_data['avatar_res'][player_data['avatar']],
+            anchor=Anchor(
+                left='parent.left',
+                top='parent.top'),
+            margin=Margin(
+                left=5,
+                top=5),
+            width=player_data['avatar_res'].data['width'],
+            height=player_data['avatar_res'].data['height'])
 
+        healthbar = HealthbarItem(
+            self.scene,
+            resource['health_bar'],
+            anchor=Anchor(
+                left='avatar.left',
+                right='avatar.right',
+                top='avatar.bottom'),
+            margin=Margin(
+                top=5),
+            height=resource['health_bar'].data['height'])
+
+        self.ui = Layout(width, height)
+        self.ui.add_child('avatar', avatar)
+        self.ui.add_child('healthbar', healthbar)
         self.ui.bind_item()
 
     def update(self):
