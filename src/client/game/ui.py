@@ -133,7 +133,7 @@ class HealthbarItem(Item):
         self.foreground.width = self.width * self._value
 
 
-class GameUI:
+class UI:
     """User interface.
 
     This class encapsulates the user interface creation and management.

@@ -8,7 +8,7 @@ from game.events import CharacterJoin
 from game.events import CharacterLeave
 from game.events import PlayerJoin
 from game.gamestate import process_gamestate
-from game.ui import GameUI
+from game.ui import UI
 from itertools import count
 from matlib.vec import Vec
 from network import Message
@@ -90,7 +90,7 @@ class Client:
             'avatar': context.character_avatar,
             'avatar_res': c_res['avatar'],
         }
-        context.ui = GameUI(ui_res, self.renderer.width, self.renderer.height, player_data)
+        context.ui = UI(ui_res, self.renderer.width, self.renderer.height, player_data)
         self.context = context
 
         # Client status variable
