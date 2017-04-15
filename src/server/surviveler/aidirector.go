@@ -120,22 +120,20 @@ func (ai *AIDirector) Update(curTime time.Time) {
 		return
 	}
 
-	/*
-		freq := FrequencyAddZombie
-		if time.Since(ai.lastTime) > freq && ai.IsNight() && ai.zombieCount < MaxZombieCount {
-			if ai.intensity >= 5 {
-				n := MaxZombieCount - ai.zombieCount
-				if n > MobZombieCount {
-					n = MobZombieCount
-				}
-				ai.summonZombieMob(n)
-				ai.intensity -= 5
-			} else {
-				ai.SummonZombie()
+	freq := FrequencyAddZombie
+	if time.Since(ai.lastTime) > freq && ai.IsNight() && ai.zombieCount < MaxZombieCount {
+		if ai.intensity >= 5 {
+			n := MaxZombieCount - ai.zombieCount
+			if n > MobZombieCount {
+				n = MobZombieCount
 			}
-			ai.lastTime = time.Now()
+			ai.summonZombieMob(n)
+			ai.intensity -= 5
+		} else {
+			ai.SummonZombie()
 		}
-	*/
+		ai.lastTime = time.Now()
+	}
 }
 
 /*
