@@ -162,6 +162,16 @@ def venv_setup(venv_path, inst_path):
     if proc.returncode != 0:
         return proc.returncode, proc.stderr.decode('utf8')
 
+    # ensure pip installed
+    proc = sp.run([os.path.join(venv_path, 'bin', 'python'), '-m', 'ensurepip', '--upgrade'])
+    if proc.returncode != 0:
+        return proc.returncode, proc.stderr.decode('utf8')
+
+    # upgrade pip
+    proc = sp.run([os.path.join(venv_path, 'bin', 'pip'), 'install', '--upgrade', 'pip'])
+    if proc.returncode != 0:
+        return proc.returncode, proc.stderr.decode('utf8')
+
     launcher_tmpl = (
         '#!/bin/sh\n'
         'LD_LIBRARY_PATH={library_path} {python_path} src/client/main.py "$@"'
