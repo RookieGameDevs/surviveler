@@ -250,3 +250,78 @@ def player_health_change(evt):
         e_id = context.server_entities_map[evt.srv_id]
         actor = context.entities[e_id]
         context.ui.health_bar.value = evt.new / actor.resource.data['tot_hp']
+
+
+from ui.item import Item
+from ui import UI as Layout
+from ui.item import Anchor
+
+
+class AvatarItem(Item):
+
+    def __init__(self, scene, texture, **kwargs):
+        super().__init__(**kwargs)
+        self.props = QuadProps()
+        self.props.texture = texture
+        self.quad = Quad(0, 0)
+        self.obj = scene.add_quad(self.quad, self.props)
+
+    def update(self):
+        self.obj.position.x = self.position.x
+        self.obj.position.y = self.position.y
+        self.quad.right = self.width
+        self.quad.bottom = self.height
+
+
+class GameUI:
+    """User interface.
+
+    This class encapsulates the user interface creation and management.
+    """
+
+    def __init__(self, resource, width, height, player_data):
+        """Constructor.
+
+        :param resource: The UI resource.
+        :type resource: :class:`loaders.Resource`
+
+        :param width: UI width in pixels.
+        :type width: int
+
+        :param height: UI height in pixels.
+        :type height: int
+
+        :param player_data: Player resource.
+        :type player_ddata: :class:`loaders.Resource`
+        """
+        self.w = width
+        self.h = height
+        self.scene = Scene()
+        self.camera = OrthographicCamera(
+            -self.w / 2,  # left
+            +self.w / 2,  # right
+            +self.h / 2,  # top
+            -self.h / 2,  # bottom
+            0,            # near
+            1)            # far
+
+        texture = Texture.from_image(
+            player_data['avatar_res'][player_data['avatar']],
+            Texture.TextureType.texture_rectangle)
+
+        self.ui = Layout(width, height)
+        self.ui.add_child(
+            'avatar',
+            AvatarItem(
+                self.scene,
+                texture,
+                anchor=Anchor(
+                    left='parent.left',
+                    top='parent.top'),
+                width=player_data['avatar_res'].data['width'],
+                height=player_data['avatar_res'].data['height']))
+
+        self.ui.bind_item()
+
+    def update(self):
+        self.ui.update()
