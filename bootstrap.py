@@ -69,7 +69,7 @@ TARGETS = [
         'name': 'datalib',
         'url_ssh': 'git@github.com:RookieGameDevs/datalib.git',
         'url_http': 'https://github.com/RookieGameDevs/datalib.git',
-        'ref': '4c5e707a2a0e4f34d9632f37f0e37614c4fdb36f',
+        'ref': 'ca382c9130df4289a9733131de0f8a2e63f8585f',
         'build': build_datalib,
     },
     {
