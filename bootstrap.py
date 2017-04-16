@@ -69,7 +69,7 @@ TARGETS = [
         'name': 'datalib',
         'url_ssh': 'git@github.com:RookieGameDevs/datalib.git',
         'url_http': 'https://github.com/RookieGameDevs/datalib.git',
-        'ref': 'ca382c9130df4289a9733131de0f8a2e63f8585f',
+        'ref': '4c5e707a2a0e4f34d9632f37f0e37614c4fdb36f',
         'build': build_datalib,
     },
     {
@@ -83,7 +83,7 @@ TARGETS = [
         'name': 'renderlib',
         'url_ssh': 'git@github.com:RookieGameDevs/renderlib.git',
         'url_http': 'https://github.com/RookieGameDevs/renderlib.git',
-        'ref': 'ff9d966f55fbf1a70bfd1ede31ca84eba41605bd',
+        'ref': 'ca382c9130df4289a9733131de0f8a2e63f8585f',
         'build': build_renderlib,
     },
 ]
