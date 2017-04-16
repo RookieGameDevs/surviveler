@@ -1,4 +1,5 @@
 from events import subscriber
+from game.entities.actor import ActorType
 from game.events import ActorStatusChange
 from game.events import TimeUpdate
 from renderlib.camera import OrthographicCamera
@@ -134,6 +135,52 @@ class HealthbarItem(Item):
         self.foreground.width = self.width * self._value
 
 
+class ButtonItem(Item):
+
+    def __init__(self, scene, frame_image, icon_image, label_font, label, **kwargs):
+        super().__init__(**kwargs)
+
+        frame = ImageItem(
+            scene,
+            frame_image,
+            borders={
+                'left': 6,
+                'top': 22,
+                'right': 6,
+                'bottom': 23,
+            },
+            anchor=Anchor.fill())
+        frame.obj.position.z = -0.1
+
+        icon = ImageItem(
+            scene,
+            icon_image,
+            anchor=Anchor(
+                vcenter='parent.vcenter',
+                hcenter='parent.hcenter'),
+            width=icon_image.width,
+            height=icon_image.height)
+        icon.obj.position.z = -0.05
+
+        label = TextItem(
+            scene,
+            label_font,
+            label,
+            anchor=Anchor(
+                top='parent.top',
+                left='parent.left'),
+            margin=Margin(
+                top=4,
+                left=4))
+
+        self.add_child('button_frame', frame)
+        self.add_child('button_icon', icon)
+        self.add_child('button_label', label)
+
+    def update(self):
+        pass
+
+
 class UI:
     """User interface.
 
@@ -210,11 +257,31 @@ class UI:
                 top=5,
                 left=-100))
 
-        self.ui = Layout(width, height)
+        controls = {}
+        if player_data['type'] == ActorType.engineer:
+            controls['toggle_mode_button'] = ButtonItem(
+                self.scene,
+                resource['button_frame_image'],
+                resource['build_icon'],
+                resource['font'].get_size(16),
+                'B',
+                anchor=Anchor(
+                    left='healthbar.left',
+                    top='healthbar.bottom'),
+                margin=Margin(
+                    top=10),
+                width=48,
+                height=48)
+
+        self.ui = Layout(self.w, self.h)
         self.ui.add_child('avatar', self.avatar)
         self.ui.add_child('healthbar', self.healthbar)
         self.ui.add_child('clock', self.clock)
         self.ui.add_child('fps_counter', self.fps_counter)
+
+        for ref, item in controls.items():
+            self.ui.add_child(ref, item)
+
         self.ui.bind_item()
 
     def update(self):
