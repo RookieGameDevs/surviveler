@@ -8,6 +8,7 @@ from renderlib.scene import Scene
 from renderlib.text import Text
 from renderlib.text import TextProps
 from renderlib.texture import Texture
+from renderlib.core import RenderTarget
 from ui import UI as Layout
 from ui.item import Anchor
 from ui.item import Item
@@ -227,7 +228,7 @@ class UI:
                 item.obj.position.y = self.h / 2 - item.position.y
 
     def render(self):
-        self.scene.render(self.camera)
+        self.scene.render(RenderTarget.overlay, self.camera)
 
     def set_fps(self, number):
         """Set the current frame rate in FPS widget.

@@ -16,6 +16,7 @@ from network import MessageField as MF
 from network import MessageType as MT
 from network import get_message_handlers
 from network import message_handler
+from renderlib.core import RenderTarget
 from renderlib.camera import PerspectiveCamera
 from renderlib.light import Light
 from renderlib.scene import Scene
@@ -293,7 +294,10 @@ class Client:
 
             # Render everything
             self.renderer.clear()
-            self.context.scene.render(self.context.camera, self.context.light)
+            self.context.scene.render(
+                RenderTarget.framebuffer,
+                self.context.camera,
+                self.context.light)
             self.context.ui.render()
             self.renderer.present()
 
