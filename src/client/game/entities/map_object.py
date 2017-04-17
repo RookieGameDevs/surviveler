@@ -61,8 +61,6 @@ class MapObject(Entity):
 
         self.obj = scene.add_mesh(mesh, props)
         self.obj.position = to_scene(*parameters['pos'])
-        # FIXME: an added offset to match the level displacement
-        self.obj.position.z += 1
 
         if 'rotation' in parameters:
             self.obj.rotation.rotatev(
@@ -80,8 +78,6 @@ class MapObject(Entity):
     def bounding_box(self):
         l, m = self._bounding_box
         pos = self.position
-        # FIXME: this offset here is due to the calculation of the walkable
-        # matrix that adds one more walkable line on top of the scenario.
         return l + Vec(pos[0], 0, pos[1]), m + Vec(pos[0], 0, pos[1])
 
     @property
