@@ -650,7 +650,7 @@ class UI(UI):
             controls['terminal'] = self.terminal
             self.terminal.visible = False
             # prevent the click on the terminal from being propagated further
-            self.terminal.on(EventType.mouse_click, lambda _: True)
+            self.terminal.on(EventType.mouse_click, lambda _: self.terminal.visible)
 
         self.add_child('avatar', self.avatar)
         self.add_child('healthbar', self.healthbar)
