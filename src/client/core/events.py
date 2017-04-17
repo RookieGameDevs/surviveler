@@ -66,8 +66,8 @@ class MouseMoveEvent(Event):
         return '<MouseMoveEvent({}, {})>'.format(self.x, self.y)
 
 
-class KeyPressEvent(Event):
-    """Key press event."""
+class KeyEvent(Event):
+    """Keyboard event."""
 
     @unique
     class State(Enum):
@@ -75,13 +75,17 @@ class KeyPressEvent(Event):
         up = 'Up'
         down = 'Down'
 
-    def __init__(self, key):
+    def __init__(self, key, state):
         """Constructor.
 
-        :param key:
-        :type key:
+        :param key: Key that triggered the event.
+        :type key: str
+
+        :param state: State of the key.
+        :type state: :enum:`core.events.KeyEvent.State`
         """
         self.key = key
+        self.state = state
 
     def __str__(self):
-        return '<KeyPressEvent({})>'.format(self.key)
+        return '<KeyEvent({}, {})>'.format(self.key, self.state)

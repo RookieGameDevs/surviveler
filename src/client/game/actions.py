@@ -1,4 +1,3 @@
-from core.events import KeyPressEvent
 from core.events import MouseClickEvent
 from core.events import MouseMoveEvent
 from events import send_event
@@ -13,7 +12,7 @@ from ui.util.point import Point
 from utils import clamp_to_grid
 from utils import to_world
 import logging
-import sdl2 as sdl
+
 
 LOG = logging.getLogger(__name__)
 
@@ -179,17 +178,3 @@ def handle_mouse_move(evt):
     context = evt.context
     if context.game_mode == context.GameMode.building:
         place_building_template(context, evt.x, evt.y)
-
-
-@subscriber(KeyPressEvent)
-def handle_key_press(evt):
-    """Handles the B key pressed event.
-
-    Toggles the building game mode.
-
-    :param evt: The key press event.
-    :type evt: :class:`core.events.KeyPressEvent`
-    """
-    context = evt.context
-    if evt.key == sdl.SDLK_b:
-        send_event(GameModeToggle(context.GameMode.building))

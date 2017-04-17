@@ -9,7 +9,7 @@ class EventType(Enum):
     """
     mouse_click = 'mouse_click'
     mouse_move = 'mouse_move'
-    key_press = 'key_press'
+    key = 'key'
 
 
 class UI:
@@ -114,20 +114,18 @@ class UI:
             self.dispatch(ET.mouse_move, pos=pos)
         )
 
-    def key_press_event_handler(self):
-        """Returns the key press event handler function.
+    def key_event_handler(self):
+        """Returns the key press/release event handler function.
 
         To dispatch properly the events to the user interface, the caller needs
         to get a event handler and call it with the appropriate arguments.
 
-        The key press event handler accepts two arguments: the pressed key and
-        the state.
+        The key event handler accepts two arguments: the key and the state.
 
-        :returns: The mouse move event handler
-        :rtype: :class:`function`
+        :returns: The keyboard event handler :rtype: :class:`function`
         """
         ET = EventType
         return (
             lambda key, state:
-            self.dispatch(ET.key_press, key=key, payload={'state': state})
+            self.dispatch(ET.key, payload={'key': key, 'state': state})
         )

@@ -1,10 +1,14 @@
 from abc import abstractproperty
 from context import Context
+from core.events import KeyEvent
 from core.events import MouseClickEvent
+from enum import Enum
+from enum import unique
 from events import send_event
 from events import subscriber
 from game.entities.actor import ActorType
 from game.events import ActorStatusChange
+from game.events import GameModeChange
 from game.events import GameModeToggle
 from game.events import TimeUpdate
 from matlib.vec import Vec
@@ -43,6 +47,18 @@ def player_health_change(evt):
         e_id = context.server_entities_map[evt.srv_id]
         actor = context.entities[e_id]
         context.ui.set_health(evt.new / actor.resource.data['tot_hp'])
+
+
+@subscriber(KeyEvent)
+def dispatch_key_event_to_ui(evt):
+    """Dispatches keyboard events to UI instance."""
+    evt.context.ui.key_event_handler()(evt.key, evt.state)
+
+
+@subscriber(GameModeChange)
+def change_ui_build_mode_state(evt):
+    """Changes the state of build UI controls."""
+    evt.context.ui.set_building_mode_enabled(evt.cur == Context.GameMode.building)
 
 
 class UIItem(Item):
@@ -235,6 +251,12 @@ class HealthbarItem(UIItem):
 
 class ButtonItem(UIItem):
 
+    @unique
+    class State(Enum):
+
+        normal = 'normal'
+        pressed = 'pressed'
+
     def __init__(self, scene, icon, label, **kwargs):
         super().__init__(**kwargs)
 
@@ -243,10 +265,16 @@ class ButtonItem(UIItem):
 
         resource = Context.get_instance().res_mgr.get('/ui/button')
 
-        self.frame = ImageItem(
+        self.frame_normal = ImageItem(
             scene,
             resource[resource.data['states']['normal']['ref']],
             borders=resource.data['states']['normal']['borders'],
+            anchor=Anchor.fill())
+
+        self.frame_pressed = ImageItem(
+            scene,
+            resource[resource.data['states']['pressed']['ref']],
+            borders=resource.data['states']['pressed']['borders'],
             anchor=Anchor.fill())
 
         self.icon = ImageItem(
@@ -270,13 +298,16 @@ class ButtonItem(UIItem):
                 top=4,
                 left=4))
 
-        self.items = [self.frame, self.icon, self.label]
-        self.z_offsets = [-0.2, -0.1, 0]
+        self.items = [self.frame_normal, self.frame_pressed, self.icon, self.label]
+        self.z_offsets = [-0.2, -0.2, -0.1, 0]
         self.z_index = 0  # recompute absolute indices
 
-        self.add_child('button_frame', self.frame)
+        self.add_child('button_frame_normal', self.frame_normal)
+        self.add_child('button_frame_pressed', self.frame_pressed)
         self.add_child('button_icon', self.icon)
         self.add_child('button_label', self.label)
+
+        self.set_state(ButtonItem.State.normal)
 
     @property
     def objects(self):
@@ -301,6 +332,21 @@ class ButtonItem(UIItem):
         for item, offset in zip(self.items, self.z_offsets):
             item.z_index = z + offset
         self._z_index = z
+
+    def set_state(self, state):
+        hide, show = None, None
+        if state == ButtonItem.State.pressed:
+            hide = self.frame_normal
+            show = self.frame_pressed
+        else:
+            hide = self.frame_pressed
+            show = self.frame_normal
+
+        for obj in hide.objects:
+            obj.visible = False
+
+        for obj in show.objects:
+            obj.visible = True
 
     def update(self):
         pass
@@ -436,6 +482,7 @@ class UI(UI):
                 left=-100))
 
         controls = {}
+        self.build_button = None
         if player_data['type'] == ActorType.engineer:
             # create toolbar
             toolbar = ToolbarItem(
@@ -448,7 +495,7 @@ class UI(UI):
             toolbar.on(EventType.mouse_click, lambda _: True)
 
             # add build mode toggle button
-            build_button = ButtonItem(
+            self.build_button = ButtonItem(
                 self.scene,
                 resource['build_icon'],
                 'B',
@@ -459,9 +506,9 @@ class UI(UI):
                     left=10),
                 width=52,
                 height=52)
-            build_button.on(EventType.mouse_click, self.handle_build_button_click)
+            self.build_button.on(EventType.mouse_click, self.handle_build_button_click)
 
-            toolbar.add_child('build_button', build_button)
+            toolbar.add_child('build_button', self.build_button)
             controls['toolbar'] = toolbar
 
         self.add_child('avatar', self.avatar)
@@ -473,6 +520,9 @@ class UI(UI):
             self.add_child(ref, item)
 
         self.bind_item()
+
+        # subscribe event handlers
+        self.root.on(EventType.key, self.handle_key)
 
     def update(self):
         super().update()
@@ -514,9 +564,20 @@ class UI(UI):
         """
         self.healthbar.value = value
 
+    def set_building_mode_enabled(self, enabled):
+        if self.build_button:
+            self.build_button.set_state(
+                ButtonItem.State.pressed if enabled else ButtonItem.State.normal)
+
     def handle_build_button_click(self, payload):
         btn, state = payload['button'], payload['state']
         if btn == MouseClickEvent.Button.left and state == MouseClickEvent.State.up:
+            context = Context.get_instance()
+            send_event(GameModeToggle(context.GameMode.building))
+        return True
+
+    def handle_key(self, payload):
+        if payload['key'].upper() == 'B' and payload['state'] == KeyEvent.State.up:
             context = Context.get_instance()
             send_event(GameModeToggle(context.GameMode.building))
         return True
