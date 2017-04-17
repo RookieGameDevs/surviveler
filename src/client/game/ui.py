@@ -1,5 +1,6 @@
 from abc import abstractproperty
 from context import Context
+from core.events import MouseClickEvent
 from events import subscriber
 from game.entities.actor import ActorType
 from game.events import ActorStatusChange
@@ -13,6 +14,7 @@ from renderlib.scene import Scene
 from renderlib.text import Text
 from renderlib.text import TextProps
 from renderlib.texture import Texture
+from ui import EventType
 from ui import UI
 from ui.item import Anchor
 from ui.item import Item
@@ -302,6 +304,59 @@ class ButtonItem(UIItem):
         pass
 
 
+class ToolbarItem(UIItem):
+
+    def __init__(self, scene, **kwargs):
+        resource = Context.get_instance().res_mgr.get('/ui/toolbar')
+
+        super().__init__(
+            width=resource.data['width'],
+            height=resource.data['height'],
+            **kwargs)
+
+        self._visible = True
+        self._z_index = 0
+
+        self.panel = ImageItem(
+            scene,
+            resource['panel'],
+            borders=resource.data['borders'],
+            anchor=Anchor.fill())
+
+        self.items = [self.panel]
+        self.z_offsets = [0]
+        self.z_index = 0
+
+        self.add_child('toolbar-panel', self.panel)
+
+    @property
+    def objects(self):
+        return []
+
+    @property
+    def visible(self):
+        return self._visible
+
+    @visible.setter
+    def visible(self, v):
+        for item in self.items:
+            item.visible = v
+        self._visible = v
+
+    @property
+    def z_index(self):
+        return self._z_index
+
+    @z_index.setter
+    def z_index(self, z):
+        for item, offset in zip(self.items, self.z_offsets):
+            item.z_index = z + offset
+        self._z_index = z
+
+    def update(self):
+        pass
+
+
 class UI(UI):
     """User interface.
 
@@ -380,17 +435,32 @@ class UI(UI):
 
         controls = {}
         if player_data['type'] == ActorType.engineer:
-            controls['toggle_mode_button'] = ButtonItem(
+            # create toolbar
+            toolbar = ToolbarItem(
+                self.scene,
+                anchor=Anchor(
+                    hcenter='parent.hcenter',
+                    bottom='parent.bottom'))
+            toolbar.z_index = -1
+            # prevent the click on the toolbar from being propagated further
+            toolbar.on(EventType.mouse_click, lambda _: True)
+
+            # add build mode toggle button
+            build_button = ButtonItem(
                 self.scene,
                 resource['build_icon'],
                 'B',
                 anchor=Anchor(
-                    left='healthbar.left',
-                    top='healthbar.bottom'),
+                    left='parent.left',
+                    vcenter='parent.vcenter'),
                 margin=Margin(
-                    top=10),
+                    left=10),
                 width=52,
                 height=52)
+            build_button.on(EventType.mouse_click, self.handle_build_button_click)
+
+            toolbar.add_child('build_button', build_button)
+            controls['toolbar'] = toolbar
 
         self.add_child('avatar', self.avatar)
         self.add_child('healthbar', self.healthbar)
@@ -441,3 +511,9 @@ class UI(UI):
         :type value: float
         """
         self.healthbar.value = value
+
+    def handle_build_button_click(self, payload):
+        btn, state = payload['button'], payload['state']
+        if btn == MouseClickEvent.Button.left and state == MouseClickEvent.State.up:
+            print("BUILD!")
+        return True

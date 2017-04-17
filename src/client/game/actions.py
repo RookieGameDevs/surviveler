@@ -9,6 +9,7 @@ from matlib.vec import Vec
 from network import Message
 from network import MessageField
 from network import MessageType
+from ui.util.point import Point
 from utils import clamp_to_grid
 from utils import to_world
 import logging
@@ -106,6 +107,10 @@ def entity_picked(context, entity):
 @subscriber(MouseClickEvent)
 def handle_mouse_click(evt):
     context = evt.context
+
+    if context.ui.mouse_click_event_handler()(evt.button, evt.state, Point(evt.x, evt.y)):
+        return
+
     if evt.state == MouseClickEvent.State.up and context.player:
 
         LOG.debug('Action: {}'.format(evt))
