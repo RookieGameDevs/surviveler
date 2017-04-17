@@ -21,16 +21,16 @@
 			"revisionTime": "2017-04-15T12:14:34Z"
 		},
 		{
-			"checksumSHA1": "NmdbzMi6plt52Ch8ohM5Mslfk3s=",
+			"checksumSHA1": "FDy6DxcF0VJjsik/dgADvQPEGww=",
 			"path": "github.com/aurelien-rainone/go-detour/detour",
-			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
-			"revisionTime": "2017-04-15T12:14:34Z"
+			"revision": "aa2968f020f6975f6c65339c65a1c8a954ec8772",
+			"revisionTime": "2017-04-17T23:00:07Z"
 		},
 		{
-			"checksumSHA1": "pLIH0yPj+WM0/4drdL4MEoc75F8=",
+			"checksumSHA1": "vqKIXF5hQ2IRmuCa+AqC+qRm6gg=",
 			"path": "github.com/aurelien-rainone/go-detour/recast",
-			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
-			"revisionTime": "2017-04-15T12:14:34Z"
+			"revision": "aa2968f020f6975f6c65339c65a1c8a954ec8772",
+			"revisionTime": "2017-04-17T23:00:07Z"
 		},
 		{
 			"checksumSHA1": "bvJwypffhogdVFMNKZc+2HjSBBA=",

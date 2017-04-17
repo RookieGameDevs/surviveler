@@ -175,7 +175,7 @@ func rasterizeTri(v0, v1, v2 []float32,
 	for y := y0; y <= y1; y++ {
 		// Clip polygon to row. Store the remaining polygon as well
 		cz := bmin[2] + float32(y)*cs
-		dividePoly(in, nvIn, inrow, &nvrow, p1, &nvIn, cz+cs, 2)
+		nvrow, nvIn = dividePoly(in, nvIn, inrow, p1, cz+cs, 2)
 		in, p1 = p1, in
 		if nvrow < 3 {
 			continue
@@ -202,7 +202,7 @@ func rasterizeTri(v0, v1, v2 []float32,
 		for x := x0; x <= x1; x++ {
 			// Clip polygon to column. store the remaining polygon as well
 			cx := bmin[0] + float32(x)*cs
-			dividePoly(inrow, nv2, p1, &nv, p2, &nv2, cx+cs, 0)
+			nv, nv2 = dividePoly(inrow, nv2, p1, p2, cx+cs, 0)
 			inrow, p2 = p2, inrow
 			if nv < 3 {
 				continue
@@ -279,54 +279,54 @@ func int32Clamp(a, low, high int32) int32 {
 
 // divides a convex polygons into two convex polygons on both sides of a line
 func dividePoly(in []float32, nin int32,
-	out1 []float32, nout1 *int32,
-	out2 []float32, nout2 *int32,
-	x float32, axis int32) {
+	out1 []float32, out2 []float32,
+	x float32, axis int32) (nout1, nout2 int32) {
 	var d [12]float32
 	for i := int32(0); i < nin; i++ {
 		d[i] = x - in[i*3+axis]
 	}
 
-	var m, n int32
-	j := nin - 1
-	for i := int32(0); i < nin; /*j=i, */ i++ {
-		ina := d[j] >= 0
-		inb := d[i] >= 0
+	var (
+		m, n     int32
+		s        float32
+		ina, inb bool
+	)
+	for i, j := int32(0), nin-1; i < nin; j, i = i, i+1 {
+		ina = d[j] >= 0
+		inb = d[i] >= 0
 		if ina != inb {
-			s := d[j] / (d[j] - d[i])
+			s = d[j] / (d[j] - d[i])
 			out1[m*3+0] = in[j*3+0] + (in[i*3+0]-in[j*3+0])*s
 			out1[m*3+1] = in[j*3+1] + (in[i*3+1]-in[j*3+1])*s
 			out1[m*3+2] = in[j*3+2] + (in[i*3+2]-in[j*3+2])*s
 
-			copy(out2[n*3:n*3+3], out1[m*3:m*3+3])
+			copy(out2[n*3:], out1[m*3:(m+1)*3])
 			m++
 			n++
 			// add the i'th point to the right polygon. Do NOT add points that
 			// are on the dividing line since these were already added above
 			if d[i] > 0 {
-				copy(out1[m*3:m*3+3], in[i*3:i*3+3])
+				copy(out1[m*3:], in[i*3:(i+1)*3])
 				m++
 			} else if d[i] < 0 {
-				copy(out2[n*3:n*3+3], in[i*3:i*3+3])
+				copy(out2[n*3:], in[i*3:(i+1)*3])
 				n++
 			}
 		} else {
 			// same side add the i'th point to the right polygon. Addition is
 			// done even for points on the dividing line
 			if d[i] >= 0 {
-				copy(out1[m*3:m*3+3], in[i*3:i*3+3])
+				copy(out1[m*3:], in[i*3:(i+1)*3])
 				m++
 				if d[i] != 0 {
 					j = i
 					continue
 				}
 			}
-			copy(out2[n*3:n*3+3], in[i*3:i*3+3])
+			copy(out2[n*3:], in[i*3:(i+1)*3])
 			n++
 		}
-		j = i
 	}
 
-	*nout1 = m
-	*nout2 = n
+	return m, n
 }
