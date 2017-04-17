@@ -111,11 +111,11 @@ class ImageItem(UIItem):
 
     @property
     def visible(self):
-        return self.props.visible
+        return self.obj.visible
 
     @visible.setter
     def visible(self, v):
-        self.props.visible = v
+        self.obj.visible = v
 
     @property
     def z_index(self):
@@ -147,11 +147,11 @@ class TextItem(UIItem):
 
     @property
     def visible(self):
-        return self.props.visible
+        return self.obj.visible
 
     @visible.setter
     def visible(self, v):
-        self.props.visible = v
+        self.obj.visible = v
 
     @property
     def z_index(self):
@@ -334,19 +334,12 @@ class ButtonItem(UIItem):
         self._z_index = z
 
     def set_state(self, state):
-        hide, show = None, None
         if state == ButtonItem.State.pressed:
-            hide = self.frame_normal
-            show = self.frame_pressed
+            self.frame_normal.visible = False
+            self.frame_pressed.visible = True
         else:
-            hide = self.frame_pressed
-            show = self.frame_normal
-
-        for obj in hide.objects:
-            obj.visible = False
-
-        for obj in show.objects:
-            obj.visible = True
+            self.frame_normal.visible = True
+            self.frame_pressed.visible = False
 
     def update(self):
         pass
