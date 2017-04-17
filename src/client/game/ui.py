@@ -161,31 +161,25 @@ class TextItem(UIItem):
 
 class HealthbarItem(UIItem):
 
-    def __init__(self, scene, resource, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, scene, **kwargs):
+        resource = Context.get_instance().res_mgr.get('/ui/healthbar')
+
+        super().__init__(**kwargs, height=resource.data['height'])
 
         self._value = 1.0
         self._visible = True
         self._z_index = 0
 
-        left, right, top, bottom = resource.data['borders']
-        borders = {
-            'left': left,
-            'right': right,
-            'top': top,
-            'bottom': bottom,
-        }
-
         self.background = ImageItem(
             scene,
-            resource['bg_texture'],
-            borders,
+            resource['background'],
+            resource.data['borders'],
             anchor=Anchor.fill())
 
         self.foreground = ImageItem(
             scene,
-            resource['fg_texture'],
-            borders,
+            resource['foreground'],
+            resource.data['borders'],
             anchor=Anchor(
                 top='parent.top',
                 bottom='parent.bottom',
@@ -354,14 +348,12 @@ class UI:
 
         self.healthbar = HealthbarItem(
             self.scene,
-            resource['health_bar'],
             anchor=Anchor(
                 left='avatar.left',
                 right='avatar.right',
                 top='avatar.bottom'),
             margin=Margin(
-                top=5),
-            height=resource['health_bar'].data['height'])
+                top=5))
 
         self.clock = TextItem(
             self.scene,
