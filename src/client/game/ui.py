@@ -1,15 +1,18 @@
+from abc import abstractproperty
+from context import Context
 from events import subscriber
 from game.entities.actor import ActorType
 from game.events import ActorStatusChange
 from game.events import TimeUpdate
+from matlib.vec import Vec
 from renderlib.camera import OrthographicCamera
+from renderlib.core import RenderTarget
 from renderlib.quad import Quad
 from renderlib.quad import QuadProps
 from renderlib.scene import Scene
 from renderlib.text import Text
 from renderlib.text import TextProps
 from renderlib.texture import Texture
-from renderlib.core import RenderTarget
 from ui import UI as Layout
 from ui.item import Anchor
 from ui.item import Item
@@ -38,7 +41,36 @@ def player_health_change(evt):
         context.ui.set_health(evt.new / actor.resource.data['tot_hp'])
 
 
-class ImageItem(Item):
+class UIItem(Item):
+    """Base class for surviveler user interface items.
+
+    This class defines an interface for user interface items and exposes
+    properties and methods which are needed for their integration with the
+    rendering system.
+    """
+
+    @abstractproperty
+    def objects(self):
+        """List of scene objects which make up the item."""
+
+    @abstractproperty
+    def visible(self):
+        """Item's visibility flag."""
+
+    @visible.setter
+    def visible(self, v):
+        """Sets item's visibility."""
+
+    @abstractproperty
+    def z_index(self):
+        """Item's Z index."""
+
+    @z_index.setter
+    def z_index(self, z):
+        """Sets item's Z index."""
+
+
+class ImageItem(UIItem):
 
     def __init__(self, scene, image, borders=None, **kwargs):
         super().__init__(**kwargs)
@@ -53,21 +85,61 @@ class ImageItem(Item):
         self.quad = Quad(0, 0)
         self.obj = scene.add_quad(self.quad, self.props)
 
+    @property
+    def objects(self):
+        return [self.obj]
+
+    @property
+    def visible(self):
+        return self.props.visible
+
+    @visible.setter
+    def visible(self, v):
+        self.props.visible = v
+
+    @property
+    def z_index(self):
+        return self.obj.position.z
+
+    @z_index.setter
+    def z_index(self, z):
+        self.obj.position.z = z
+
     def update(self):
         self.quad.width = self.width
         self.quad.height = self.height
-        self.obj.position.x = self.position.x
-        self.obj.position.y = self.position.y
 
 
-class TextItem(Item):
+class TextItem(UIItem):
 
-    def __init__(self, scene, font, string='', **kwargs):
+    def __init__(self, scene, font, string='', color=None, **kwargs):
         super().__init__(width=0, height=0, **kwargs)
         self.props = TextProps()
+        if color:
+            self.props.color = color
         self.text = Text(font, string)
         self.obj = scene.add_text(self.text, self.props)
         self._string = string
+
+    @property
+    def objects(self):
+        return [self.obj]
+
+    @property
+    def visible(self):
+        return self.props.visible
+
+    @visible.setter
+    def visible(self, v):
+        self.props.visible = v
+
+    @property
+    def z_index(self):
+        return self.obj.position.z
+
+    @z_index.setter
+    def z_index(self, z):
+        self.obj.position.z = z
 
     @property
     def string(self):
@@ -78,8 +150,7 @@ class TextItem(Item):
         self._string = self.text.string = s
 
     def update(self):
-        self.obj.position.x = self.position.x
-        self.obj.position.y = self.position.y
+        pass
 
     def compute_width(self):
         return self.text.width
@@ -88,12 +159,14 @@ class TextItem(Item):
         return self.text.height
 
 
-class HealthbarItem(Item):
+class HealthbarItem(UIItem):
 
     def __init__(self, scene, resource, **kwargs):
         super().__init__(**kwargs)
 
         self._value = 1.0
+        self._visible = True
+        self._z_index = 0
 
         left, right, top, bottom = resource.data['borders']
         borders = {
@@ -108,7 +181,6 @@ class HealthbarItem(Item):
             resource['bg_texture'],
             borders,
             anchor=Anchor.fill())
-        self.background.obj.position.z = -0.5
 
         self.foreground = ImageItem(
             scene,
@@ -120,8 +192,36 @@ class HealthbarItem(Item):
                 left='parent.left'),
             width=0)
 
+        self.items = [self.background, self.foreground]
+        self.z_offsets = [-0.1, 0]
+        self.z_index = 0  # recompute absolute indices
+
         self.add_child('healthbar-bg', self.background)
         self.add_child('healthbar-fg', self.foreground)
+
+    @property
+    def objects(self):
+        return []
+
+    @property
+    def visible(self):
+        return self._visible
+
+    @visible.setter
+    def visible(self, v):
+        for item in self.items:
+            item.visible = v
+        self._visible = v
+
+    @property
+    def z_index(self):
+        return self._z_index
+
+    @z_index.setter
+    def z_index(self, z):
+        for item, offset in zip(self.items, self.z_offsets):
+            item.z_index = z + offset
+        self._z_index = z
 
     @property
     def value(self):
@@ -135,37 +235,36 @@ class HealthbarItem(Item):
         self.foreground.width = self.width * self._value
 
 
-class ButtonItem(Item):
+class ButtonItem(UIItem):
 
-    def __init__(self, scene, frame_image, icon_image, label_font, label, **kwargs):
+    def __init__(self, scene, icon, label, **kwargs):
         super().__init__(**kwargs)
 
-        frame = ImageItem(
-            scene,
-            frame_image,
-            borders={
-                'left': 6,
-                'top': 22,
-                'right': 6,
-                'bottom': 23,
-            },
-            anchor=Anchor.fill())
-        frame.obj.position.z = -0.1
+        self._visible = True
+        self._z_index = 0
 
-        icon = ImageItem(
+        resource = Context.get_instance().res_mgr.get('/ui/button')
+
+        self.frame = ImageItem(
             scene,
-            icon_image,
+            resource[resource.data['states']['normal']['ref']],
+            borders=resource.data['states']['normal']['borders'],
+            anchor=Anchor.fill())
+
+        self.icon = ImageItem(
+            scene,
+            icon,
             anchor=Anchor(
                 vcenter='parent.vcenter',
                 hcenter='parent.hcenter'),
-            width=icon_image.width,
-            height=icon_image.height)
-        icon.obj.position.z = -0.05
+            width=icon.width,
+            height=icon.height)
 
-        label = TextItem(
+        self.label = TextItem(
             scene,
-            label_font,
+            resource['font'].get_size(resource.data['text_size']),
             label,
+            Vec(*resource.data['text_color']),
             anchor=Anchor(
                 top='parent.top',
                 left='parent.left'),
@@ -173,9 +272,37 @@ class ButtonItem(Item):
                 top=4,
                 left=4))
 
-        self.add_child('button_frame', frame)
-        self.add_child('button_icon', icon)
-        self.add_child('button_label', label)
+        self.items = [self.frame, self.icon, self.label]
+        self.z_offsets = [-0.2, -0.1, 0]
+        self.z_index = 0  # recompute absolute indices
+
+        self.add_child('button_frame', self.frame)
+        self.add_child('button_icon', self.icon)
+        self.add_child('button_label', self.label)
+
+    @property
+    def objects(self):
+        return []
+
+    @property
+    def visible(self):
+        return self._visible
+
+    @visible.setter
+    def visible(self, v):
+        for item in self.items:
+            item.visible = v
+        self._visible = v
+
+    @property
+    def z_index(self):
+        return self._z_index
+
+    @z_index.setter
+    def z_index(self, z):
+        for item, offset in zip(self.items, self.z_offsets):
+            item.z_index = z + offset
+        self._z_index = z
 
     def update(self):
         pass
@@ -261,17 +388,15 @@ class UI:
         if player_data['type'] == ActorType.engineer:
             controls['toggle_mode_button'] = ButtonItem(
                 self.scene,
-                resource['button_frame_image'],
                 resource['build_icon'],
-                resource['font'].get_size(16),
                 'B',
                 anchor=Anchor(
                     left='healthbar.left',
                     top='healthbar.bottom'),
                 margin=Margin(
                     top=10),
-                width=48,
-                height=48)
+                width=52,
+                height=52)
 
         self.ui = Layout(self.w, self.h)
         self.ui.add_child('avatar', self.avatar)
@@ -289,10 +414,10 @@ class UI:
 
         # transform each item's graphical object
         for item in self.ui.traverse():
-            obj = getattr(item, 'obj', None)
-            if obj:
-                item.obj.position.x = item.position.x - self.w / 2
-                item.obj.position.y = self.h / 2 - item.position.y
+            if isinstance(item, UIItem):
+                for obj in item.objects:
+                    item.obj.position.x = item.position.x - self.w / 2
+                    item.obj.position.y = self.h / 2 - item.position.y
 
     def render(self):
         self.scene.render(RenderTarget.overlay, self.camera)
