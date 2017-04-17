@@ -1,9 +1,11 @@
 from abc import abstractproperty
 from context import Context
 from core.events import MouseClickEvent
+from events import send_event
 from events import subscriber
 from game.entities.actor import ActorType
 from game.events import ActorStatusChange
+from game.events import GameModeToggle
 from game.events import TimeUpdate
 from matlib.vec import Vec
 from renderlib.camera import OrthographicCamera
@@ -515,5 +517,6 @@ class UI(UI):
     def handle_build_button_click(self, payload):
         btn, state = payload['button'], payload['state']
         if btn == MouseClickEvent.Button.left and state == MouseClickEvent.State.up:
-            print("BUILD!")
+            context = Context.get_instance()
+            send_event(GameModeToggle(context.GameMode.building))
         return True
