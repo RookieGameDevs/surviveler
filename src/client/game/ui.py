@@ -11,6 +11,7 @@ from game.events import ActorStatusChange
 from game.events import GameModeChange
 from game.events import GameModeToggle
 from game.events import TimeUpdate
+from itertools import chain
 from matlib.vec import Vec
 from renderlib.camera import OrthographicCamera
 from renderlib.core import RenderTarget
@@ -177,6 +178,40 @@ class TextItem(UIItem):
 
     def compute_height(self):
         return self.text.height
+
+
+class RectItem(UIItem):
+
+    def __init__(self, scene, color, **kwargs):
+        super().__init__(**kwargs)
+        self.quad = Quad(0, 0)
+        self.props = QuadProps()
+        self.props.color = color
+        self.obj = scene.add_quad(self.quad, self.props)
+
+    @property
+    def objects(self):
+        return [self.obj]
+
+    @property
+    def visible(self):
+        return self.obj.visible
+
+    @visible.setter
+    def visible(self, v):
+        self.obj.visible = v
+
+    @property
+    def z_index(self):
+        return self.obj.position.z
+
+    @z_index.setter
+    def z_index(self, z):
+        self.obj.position.z = z
+
+    def update(self):
+        self.quad.width = self.width
+        self.quad.height = self.height
 
 
 class HealthbarItem(UIItem):
@@ -398,6 +433,105 @@ class ToolbarItem(UIItem):
         pass
 
 
+class TerminalItem(UIItem):
+
+    def __init__(self, scene, **kwargs):
+        resource = Context.get_instance().res_mgr.get('/ui/terminal')
+
+        super().__init__(
+            width=resource.data['width'],
+            height=resource.data['height'],
+            **kwargs)
+
+        self._visible = False
+        self._z_index = 0
+
+        self.background = RectItem(
+            scene,
+            Vec(*resource.data['background_color']),
+            anchor=Anchor.fill(),
+            margin=Margin(**resource.data['background_margins']))
+
+        self.panel = ImageItem(
+            scene,
+            resource['panel'],
+            resource.data['borders'],
+            anchor=Anchor.fill())
+
+        self.title = TextItem(
+            scene,
+            resource['font'].get_size(resource.data['title_size']),
+            resource.data['title'],
+            Vec(*resource.data['title_color']),
+            anchor=Anchor(
+                top='parent.top',
+                left='parent.left'),
+            margin=Margin(**resource.data['title_margins']))
+
+        self.content = TextItem(
+            scene,
+            resource['font'].get_size(resource.data['text_size']),
+            color=Vec(*resource.data['text_color']),
+            anchor=Anchor(
+                left='parent.left',
+                top='parent.top'),
+            margin=Margin(**resource.data['text_margins']))
+
+        self.items = [self.background, self.panel, self.title, self.content]
+
+        self.z_offsets = [-0.1, -0.2, 0, 0]
+        self.z_index = 0
+
+        self.add_child('terminal-panel', self.panel)
+        self.add_child('terminal-background', self.background)
+        self.add_child('terminal-title', self.title)
+        self.background.add_child('terminal-content', self.content)
+
+        self.prompt = resource.data['text_prompt']
+        self.set_content(self.prompt)
+
+    @property
+    def objects(self):
+        return []
+
+    @property
+    def visible(self):
+        return self._visible
+
+    @visible.setter
+    def visible(self, v):
+        for item in self.items:
+            item.visible = v
+        self._visible = v
+
+    @property
+    def z_index(self):
+        return self._z_index
+
+    @z_index.setter
+    def z_index(self, z):
+        for item, offset in zip(self.items, self.z_offsets):
+            item.z_index = z + offset
+        self._z_index = z
+
+    def set_content(self, text):
+        self.content.string = text
+
+    def handle_key(self, key, state):
+        content = self.content.string
+
+        alphanum = {chr(c) for c in chain(range(48, 58), range(97, 123))}
+        if key.lower() in alphanum:
+            content = content + key.lower()
+        elif key == 'SPACE':
+            content = content + ' '
+
+        self.set_content(content)
+
+    def update(self, **kwargs):
+        pass
+
+
 class UI(UI):
     """User interface.
 
@@ -476,6 +610,8 @@ class UI(UI):
 
         controls = {}
         self.build_button = None
+        self.terminal = None
+
         if player_data['type'] == ActorType.engineer:
             # create toolbar
             toolbar = ToolbarItem(
@@ -503,6 +639,18 @@ class UI(UI):
 
             toolbar.add_child('build_button', self.build_button)
             controls['toolbar'] = toolbar
+
+        elif player_data['type'] == ActorType.programmer:
+            # create terminal
+            self.terminal = TerminalItem(
+                self.scene,
+                anchor=Anchor(
+                    hcenter='parent.hcenter',
+                    vcenter='parent.vcenter'))
+            controls['terminal'] = self.terminal
+            self.terminal.visible = False
+            # prevent the click on the terminal from being propagated further
+            self.terminal.on(EventType.mouse_click, lambda _: True)
 
         self.add_child('avatar', self.avatar)
         self.add_child('healthbar', self.healthbar)
@@ -570,7 +718,28 @@ class UI(UI):
         return True
 
     def handle_key(self, payload):
-        if payload['key'].upper() == 'B' and payload['state'] == KeyEvent.State.up:
-            context = Context.get_instance()
+        key, state = payload['key'].upper(), payload['state']
+        if state is not KeyEvent.State.down:
+            return False
+
+        context = Context.get_instance()
+
+        if self.terminal:
+            # show terminal by pressing `T` key and hide it with `ESCAPE`
+            if not self.terminal.visible and key == 'T':
+                self.terminal.visible = True
+                return True
+            elif self.terminal.visible:
+                if key == 'ESCAPE':
+                    self.terminal.visible = False
+                else:
+                    # forward keypress to the terminal item
+                    self.terminal.handle_key(key, state)
+                return True
+
+        # toggle build mode by pressing `B` key
+        if key == 'B':
             send_event(GameModeToggle(context.GameMode.building))
-        return True
+            return True
+
+        return False
