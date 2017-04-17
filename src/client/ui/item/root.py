@@ -38,7 +38,7 @@ class RootItem(Item):
             AT.right: width,
             AT.top: 0,
             AT.vcenter: height / 2,
-            AT.bottom: width,
+            AT.bottom: height,
         }
 
     def bind_item(self):
