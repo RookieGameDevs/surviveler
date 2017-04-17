@@ -13,7 +13,7 @@ from renderlib.scene import Scene
 from renderlib.text import Text
 from renderlib.text import TextProps
 from renderlib.texture import Texture
-from ui import UI as Layout
+from ui import UI
 from ui.item import Anchor
 from ui.item import Item
 from ui.item import Margin
@@ -302,7 +302,7 @@ class ButtonItem(UIItem):
         pass
 
 
-class UI:
+class UI(UI):
     """User interface.
 
     This class encapsulates the user interface creation and management.
@@ -323,6 +323,8 @@ class UI:
         :param player_data: Player resource.
         :type player_ddata: :class:`loaders.Resource`
         """
+        super().__init__(width, height)
+
         self.w = width
         self.h = height
         self.scene = Scene()
@@ -390,22 +392,21 @@ class UI:
                 width=52,
                 height=52)
 
-        self.ui = Layout(self.w, self.h)
-        self.ui.add_child('avatar', self.avatar)
-        self.ui.add_child('healthbar', self.healthbar)
-        self.ui.add_child('clock', self.clock)
-        self.ui.add_child('fps_counter', self.fps_counter)
+        self.add_child('avatar', self.avatar)
+        self.add_child('healthbar', self.healthbar)
+        self.add_child('clock', self.clock)
+        self.add_child('fps_counter', self.fps_counter)
 
         for ref, item in controls.items():
-            self.ui.add_child(ref, item)
+            self.add_child(ref, item)
 
-        self.ui.bind_item()
+        self.bind_item()
 
     def update(self):
-        self.ui.update()
+        super().update()
 
         # transform each item's graphical object
-        for item in self.ui.traverse():
+        for item in self.traverse():
             if isinstance(item, UIItem):
                 for obj in item.objects:
                     item.obj.position.x = item.position.x - self.w / 2
