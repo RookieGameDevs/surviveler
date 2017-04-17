@@ -32,7 +32,7 @@ class Terrain(Entity):
         self.obj = scene.add_mesh(mesh, props)
         # FIXME: this offset here is due to the calculation of the walkable
         # matrix that adds one more walkable line on top of the scenario.
-        self.obj.position.z = 1.0
+        # self.obj.position.z = 1.0
 
     def update(self, dt):
         # NOTE: nothing to do here

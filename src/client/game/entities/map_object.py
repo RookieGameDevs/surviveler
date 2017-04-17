@@ -82,7 +82,7 @@ class MapObject(Entity):
         pos = self.position
         # FIXME: this offset here is due to the calculation of the walkable
         # matrix that adds one more walkable line on top of the scenario.
-        return l + Vec(pos[0], 0, pos[1] + 1), m + Vec(pos[0], 0, pos[1] + 1)
+        return l + Vec(pos[0], 0, pos[1]), m + Vec(pos[0], 0, pos[1])
 
     @property
     def position(self):
