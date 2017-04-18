@@ -35,12 +35,15 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found 
 	var (
 		orgRef, dstRef detour.PolyRef // references of org/dst polygon refs
 		extents        d3.Vec3        // search distance for polygon search (3 axis)
-		st             detour.Status
-		org3d, dst3d   d3.Vec3
+		st             detour.Status  // detour API status code
+		org3d, dst3d   d3.Vec3        // actual org and dst positions in 3D
+		closest        d3.Vec3        // used for polygon checking
+		posOverPoly    bool           // indicate if a specified point is in or out a poly
 	)
 
 	org3d = d3.NewVec3XYZ(org[0], 0, org[1])
 	dst3d = d3.NewVec3XYZ(dst[0], 0, dst[1])
+	closest = d3.NewVec3()
 
 	// define the extents vector for the nearest polygon query
 	extents = d3.NewVec3XYZ(0, 2, 0)
@@ -54,6 +57,18 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found 
 		log.WithField("org", org).Debug("org doesn't intersect any polygons")
 		return
 	}
+
+	// check origin point lies in a polygon of the navmesh (it should be!)
+	st = world.MeshQuery.ClosestPointOnPoly(orgRef, org3d, closest, &posOverPoly)
+	if detour.StatusFailed(st) {
+		log.WithError(st).Errorf("ClosestPointOnPoly failed with %v\n", st)
+	}
+	if !posOverPoly {
+		log.WithFields(log.Fields{
+			"org3d": org3d,
+		}).Errorf("FindPath destination doesn't lie in a polygon")
+	}
+
 	if !world.NavMesh.IsValidPolyRef(orgRef) {
 		log.WithField("orgRef", org).Debug("orgRef is not a valid polyRef")
 		return
@@ -68,6 +83,18 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found 
 		log.WithField("dst", org).Debug("dst doesn't intersect any polygons")
 		return
 	}
+
+	// check destination point lies in a polygon of the navmesh (it should be!)
+	st = world.MeshQuery.ClosestPointOnPoly(dstRef, dst3d, closest, &posOverPoly)
+	if detour.StatusFailed(st) {
+		log.WithError(st).Errorf("ClosestPointOnPoly failed with %v\n", st)
+	}
+	if !posOverPoly {
+		log.WithFields(log.Fields{
+			"org3d": org3d,
+		}).Errorf("FindPath destination doesn't lie in a polygon")
+	}
+
 	if !world.NavMesh.IsValidPolyRef(dstRef) {
 		log.WithField("dstRef", org).Debug("dstRef is not a valid polyRef")
 		return
@@ -83,6 +110,8 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found 
 	if detour.StatusFailed(st) {
 		log.WithError(st).Info("query.FindPath failed")
 	}
+
+	log.WithField("path3d", path3d[:pathCount]).Debug("3d path found")
 
 	// Find a straight path
 	var (
