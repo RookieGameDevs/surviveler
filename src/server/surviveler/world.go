@@ -17,6 +17,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/aurelien-rainone/go-detour/detour"
 	"github.com/aurelien-rainone/go-detour/recast"
+	"github.com/aurelien-rainone/go-detour/sample"
 	"github.com/aurelien-rainone/go-detour/sample/tilemesh"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
 	"github.com/aurelien-rainone/gogeo/f32/d3"
@@ -108,13 +109,28 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 	if detour.StatusFailed(st) {
 		return nil, st
 	}
-	w := World{
+
+	//
+	// setup query filter
+	//
+
+	filter := detour.NewStandardQueryFilter()
+
+	// set area flags
+	filter.SetIncludeFlags(sample.PolyFlagsAll ^ (sample.PolyFlagsDisabled | sample.PolyFlagsDoor))
+	filter.SetExcludeFlags(sample.PolyFlagsDoor)
+	log.Debugf("navmesh query filter flags 0x%x 0x%x\n", filter.IncludeFlags(), filter.ExcludeFlags())
+
+	// set area costs
+	filter.SetAreaCost(int32(sample.PolyAreaGround), 1.0)
+	filter.SetAreaCost(int32(sample.PolyAreaDoor), 10.0)
+
+	return &World{
 		tileMesh:    tileMesh,
 		NavMesh:     navMesh,
 		MeshQuery:   q,
-		QueryFilter: detour.NewStandardQueryFilter(),
-	}
-	return &w, nil
+		QueryFilter: filter,
+	}, nil
 }
 
 /*
