@@ -27,28 +27,44 @@
 			"revisionTime": "2017-04-17T23:00:07Z"
 		},
 		{
-			"checksumSHA1": "vqKIXF5hQ2IRmuCa+AqC+qRm6gg=",
-			"path": "github.com/aurelien-rainone/go-detour/recast",
-			"revision": "aa2968f020f6975f6c65339c65a1c8a954ec8772",
-			"revisionTime": "2017-04-17T23:00:07Z"
+			"path": "github.com/aurelien-rainone/go-detour/gogeo",
+			"revision": ""
 		},
 		{
-			"checksumSHA1": "bvJwypffhogdVFMNKZc+2HjSBBA=",
+			"path": "github.com/aurelien-rainone/go-detour/gogeo/f32",
+			"revision": ""
+		},
+		{
+			"path": "github.com/aurelien-rainone/go-detour/gogeo/f32/d2",
+			"revision": ""
+		},
+		{
+			"path": "github.com/aurelien-rainone/go-detour/gogeo/f32/d3",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "Hfn+8jDPBY/OqBH2WAyJ9veV8EE=",
+			"path": "github.com/aurelien-rainone/go-detour/recast",
+			"revision": "4d32f3f9eb7623ebbfa0ead86309e9c3adc38c72",
+			"revisionTime": "2017-04-25T22:29:55Z"
+		},
+		{
+			"checksumSHA1": "IwpUcfW/ObG8BU8SJAGWcSh9jDc=",
 			"path": "github.com/aurelien-rainone/go-detour/sample",
-			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
-			"revisionTime": "2017-04-15T12:14:34Z"
+			"revision": "4d32f3f9eb7623ebbfa0ead86309e9c3adc38c72",
+			"revisionTime": "2017-04-25T22:29:55Z"
 		},
 		{
 			"checksumSHA1": "M7b6BU1RpjBd7Y5BolDF47q0EMg=",
 			"path": "github.com/aurelien-rainone/go-detour/sample/solomesh",
-			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
-			"revisionTime": "2017-04-15T12:14:34Z"
+			"revision": "aa2968f020f6975f6c65339c65a1c8a954ec8772",
+			"revisionTime": "2017-04-17T23:00:07Z"
 		},
 		{
 			"checksumSHA1": "KuZBhZ71CtenAvt8P1N/tZQr8io=",
 			"path": "github.com/aurelien-rainone/go-detour/sample/tilemesh",
-			"revision": "101e2a319d28554231065df97700318a2dea1bb8",
-			"revisionTime": "2017-04-15T12:14:34Z"
+			"revision": "aa2968f020f6975f6c65339c65a1c8a954ec8772",
+			"revisionTime": "2017-04-17T23:00:07Z"
 		},
 		{
 			"checksumSHA1": "Q4CN2Q4fpoJNgWMDkI5jsdDZfGY=",
