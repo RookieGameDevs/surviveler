@@ -23,9 +23,12 @@ type (
 )
 
 type MapObject struct {
-	Ref      string  `json:"ref"`      // uri of the object inside the package
-	Pos      d2.Vec2 `json:"pos"`      // position of the object on the map
-	Rotation int     `json:"rotation"` // rotation of the object on the map
+	Ref      string  `json:"ref"`            // uri of the object inside the package
+	Pos      d2.Vec2 `json:"pos"`            // position of the object on the map
+	Rotation int     `json:"rotation"`       // rotation of the object on the map
+	Note     string  `json:"note,omitEmpty"` // note on the object
+	// TODO: remove the omitEmpty
+	BoundingBox2D d2.Vec2 `json:"bounding_box_2d,omitEmpty"` // 2d bounding box
 }
 
 type MapUsableObject struct {
