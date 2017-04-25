@@ -95,10 +95,49 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 		return nil, err
 	}
 	defer r2.Close()
+
+	// load geometry
 	if err = tileMesh.LoadGeometry(r2); err != nil {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't load mesh %v, %s", mapURI, err)
 	}
+
+	// add map objects to the geometry as convex volumes
+	geom := tileMesh.InputGeom()
+	for _, obj := range mapData.Objects {
+		if obj.BoundingBox2D == nil {
+			continue
+		}
+
+		// TODO: take rotation into account
+		log.WithFields(log.Fields{
+			"ref":  obj.Ref,
+			"pos":  obj.Pos,
+			"bb2D": obj.BoundingBox2D,
+			"rot":  obj.Rotation,
+		}).Debug("adding convex volume for")
+
+		var x, y, w, h float32
+		x, y = obj.Pos[0], obj.Pos[1]
+		w, h = obj.BoundingBox2D[0], obj.BoundingBox2D[1]
+
+		// Create vertices
+		verts := []float32{
+			x, 0, y,
+			x + w, 0, y,
+			x + w, 0, y + h,
+			x, 0, y + h,
+		}
+		log.WithField("verts", verts).Debug("")
+		const height = 3
+		geom.AddConvexVolume(verts[:], 0, height, sample.PolyAreaDoor)
+	}
+
+	for i, vol := range tileMesh.InputGeom().ConvexVolumes()[:tileMesh.InputGeom().ConvexVolumesCount()] {
+		log.WithField("vol", vol).Debugf("Convex Volume %d\n", i)
+	}
+
+	// build the navigation mesh
 	if navMesh, ok = tileMesh.Build(); !ok {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't build navmesh for %v", mapURI)
