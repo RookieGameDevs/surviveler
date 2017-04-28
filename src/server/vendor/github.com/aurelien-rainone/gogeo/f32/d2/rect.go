@@ -49,6 +49,7 @@ func RectFromCircle(c Vec2, r float32) Rectangle {
 	return RectWH(c[0]-r, c[1]-r, 2*r, 2*r)
 }
 
+// NewRect creates a zero Rectangle
 func NewRect() Rectangle {
 	return Rectangle{
 		Min: Vec2{0, 0},
@@ -64,7 +65,7 @@ func CopyRect(r Rectangle) Rectangle {
 	return r1
 }
 
-// Returns the center of r.
+// Center returns the center of r.
 func (r Rectangle) Center() Vec2 {
 	return r.Size().Scale(0.5).Add(r.Min)
 }

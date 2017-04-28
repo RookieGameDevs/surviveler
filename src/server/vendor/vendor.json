@@ -81,20 +81,20 @@
 		{
 			"checksumSHA1": "rwCZrvXWJz+PEVH8nS4PPZp/uN0=",
 			"path": "github.com/aurelien-rainone/gogeo/f32",
-			"revision": "608286594ee8612452f7c0c67240dc57c3560d9a",
-			"revisionTime": "2016-11-17T18:28:38Z"
+			"revision": "15f5929290236824b9a6edd5ccdfbe28fe4a2412",
+			"revisionTime": "2017-04-28T22:37:44Z"
 		},
 		{
-			"checksumSHA1": "o7DHO00gwHvaRsmTVRxup/pPVuc=",
+			"checksumSHA1": "IrYBtgFpQOqKNkYcyT7tfIR/RZs=",
 			"path": "github.com/aurelien-rainone/gogeo/f32/d2",
-			"revision": "9e8ee7cedfca88d069730b593b5364dd450eaa57",
-			"revisionTime": "2017-03-18T17:12:25Z"
+			"revision": "15f5929290236824b9a6edd5ccdfbe28fe4a2412",
+			"revisionTime": "2017-04-28T22:37:44Z"
 		},
 		{
-			"checksumSHA1": "GY+Rnjjg6lOtCxF2imyBwrbLuR4=",
+			"checksumSHA1": "e2vPO8tP3mntsj3oKGHnyNI6oPg=",
 			"path": "github.com/aurelien-rainone/gogeo/f32/d3",
-			"revision": "9e8ee7cedfca88d069730b593b5364dd450eaa57",
-			"revisionTime": "2017-03-18T17:12:25Z"
+			"revision": "15f5929290236824b9a6edd5ccdfbe28fe4a2412",
+			"revisionTime": "2017-04-28T22:37:44Z"
 		},
 		{
 			"checksumSHA1": "Ix2Ggp+phumB/fV+t647J2ufLXo=",

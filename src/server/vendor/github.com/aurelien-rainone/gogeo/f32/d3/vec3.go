@@ -47,22 +47,39 @@ func (v Vec3) Z() float32 {
 	return v[2]
 }
 
-// X sets the X component of v.
+// SetX sets the X component of v.
 func (v Vec3) SetX(x float32) {
 	v[0] = x
 }
 
-// Y sets the Y component of v.
+// SetY sets the Y component of v.
 func (v Vec3) SetY(y float32) {
 	v[1] = y
 }
 
-// Z sets the Z component of v.
+// SetZ sets the Z component of v.
 func (v Vec3) SetZ(z float32) {
 	v[2] = z
 }
 
+// SetXYZ sets the 3 components at once.
+func (v Vec3) SetXYZ(x, y, z float32) {
+	v[0] = x
+	v[1] = y
+	v[2] = z
+}
+
 // Vec3 functions
+
+// Vec3Copy performs a vector copy. dst = src
+//
+//     dst   [out] The destination vector.
+//     src    [in]  The source vector.
+func Vec3Copy(dst, src Vec3) {
+	dst[0] = src[0]
+	dst[1] = src[1]
+	dst[2] = src[2]
+}
 
 // Vec3Add performs a vector addition. dest = v1 + v2
 //
@@ -164,7 +181,24 @@ func Vec3Cross(dest, v1, v2 Vec3) {
 	dest[2] = v1[0]*v2[1] - v1[1]*v2[0]
 }
 
+// Vec3Dist2DSqr derives the square of the distance between v1 and v2 on the
+// xz-plane.
+//
+// The vectors are projected onto the xz-plane, so the y-values are ignored.
+func Vec3Dist2DSqr(v1, v2 Vec3) float32 {
+	dx := v1[0] - v2[0]
+	dz := v1[2] - v2[2]
+	return dx*dx + dz*dz
+}
+
 // Vec3 methods
+
+// Copy copies the 3 vector components into dst.
+func (v Vec3) Copy(dst Vec3) {
+	dst[0] = v[0]
+	dst[1] = v[1]
+	dst[2] = v[2]
+}
 
 // Add returns a new vector that is the result of v + v1.
 //
@@ -215,7 +249,7 @@ func (v Vec3) Assign(v1 Vec3) {
 	v[2] = v1[2]
 }
 
-// LenSqr derives the scalar scalar length of the vector. (len)
+// Len derives the scalar scalar length of the vector. (len)
 func (v Vec3) Len() float32 {
 	return math32.Sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2])
 }
@@ -295,7 +329,7 @@ func (v Vec3) Dot(v1 Vec3) float32 {
 	return v[0]*v1[0] + v[1]*v1[1] + v[2]*v1[2]
 }
 
-// Vec3Dot2D derives the dot product of two vectors on the xz-plane. u . v
+// Dot2D derives the dot product of two vectors on the xz-plane. u . v
 //
 // The vectors are projected onto the xz-plane, so the y-values are ignored.
 func (v Vec3) Dot2D(u Vec3) float32 {
@@ -326,15 +360,17 @@ func (v Vec3) String() string {
 	return fmt.Sprintf("(%f,%f,%f)", v[0], v[1], v[2])
 }
 
+// Set sets the components of the vector from a string of the form
+// "float,float,float"
 func (v *Vec3) Set(s string) error {
 	cur := 0
 	for _, ss := range strings.Split(s, ",") {
-		if f, err := strconv.ParseFloat(ss, 32); err != nil {
+		f, err := strconv.ParseFloat(ss, 32)
+		if err != nil {
 			return fmt.Errorf("error parsing %v, %v", ss, err)
-		} else {
-			(*v)[cur] = float32(f)
-			cur++
 		}
+		(*v)[cur] = float32(f)
+		cur++
 	}
 	return nil
 }

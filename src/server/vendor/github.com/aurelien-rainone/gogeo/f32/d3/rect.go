@@ -49,11 +49,12 @@ func RectWHD(x, y, z, w, h, d float32) Rectangle {
 }
 
 // RectFromSphere returns the minimum rectangle that contains the circle of
-// center c and radius r
+// center c and radius r.
 func RectFromSphere(c Vec3, r float32) Rectangle {
 	return RectWHD(c[0]-r, c[1]-r, c[2]-r, 2*r, 2*r, 2*r)
 }
 
+// NewRect returns a new Rectangle.
 func NewRect() Rectangle {
 	return Rectangle{
 		Min: Vec3{0, 0, 0},
@@ -69,7 +70,7 @@ func CopyRect(r Rectangle) Rectangle {
 	return r1
 }
 
-// Returns the center of r.
+// Center returns the center of r.
 func (r Rectangle) Center() Vec3 {
 	return r.Size().Scale(0.5).Add(r.Min)
 }

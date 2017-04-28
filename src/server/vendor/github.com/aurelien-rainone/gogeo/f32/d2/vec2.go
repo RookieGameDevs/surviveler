@@ -42,12 +42,12 @@ func (v Vec2) Y() float32 {
 	return v[1]
 }
 
-// X sets the X component of v.
+// SetX sets the X component of v.
 func (v Vec2) SetX(x float32) {
 	v[0] = x
 }
 
-// Y sets the Y component of v.
+// SetY sets the Y component of v.
 func (v Vec2) SetY(y float32) {
 	v[1] = y
 }
@@ -170,7 +170,7 @@ func (v Vec2) Assign(v1 Vec2) {
 	v[1] = v1[1]
 }
 
-// LenSqr derives the scalar scalar length of the vector. (len)
+// Len derives the scalar scalar length of the vector. (len)
 func (v Vec2) Len() float32 {
 	return math32.Sqrt(v[0]*v[0] + v[1]*v[1])
 }
@@ -213,6 +213,20 @@ func (v Vec2) Lerp(dest, v1 Vec2, t float32) Vec2 {
 	}
 }
 
+// PerpCW returns the vector perpendicular to v
+//
+// (result of the clockwise 90° rotation of v through the origin)
+func (v Vec2) PerpCW() Vec2 {
+	return Vec2{v[1], -v[0]}
+}
+
+// PerpCCW returns the vector perpendicular to v
+//
+// (result of the counter-clockwise 90° rotation of v through the origin)
+func (v Vec2) PerpCCW() Vec2 {
+	return Vec2{-v[1], v[0]}
+}
+
 // Dot derives the dot product of two vectors. v . v1
 func (v Vec2) Dot(v1 Vec2) float32 {
 	return v[0]*v1[0] + v[1]*v1[1]
@@ -234,16 +248,16 @@ func (v Vec2) String() string {
 	return fmt.Sprintf("(%.4g,%.4g)", v[0], v[1])
 }
 
+// Set sets the components of the vector from a string of the form "float,float"
 func (v *Vec2) Set(s string) error {
 	cur := 0
 	for _, ss := range strings.Split(s, ",") {
-		fmt.Println("ss", ss)
-		if f, err := strconv.ParseFloat(ss, 32); err != nil {
+		f, err := strconv.ParseFloat(ss, 32)
+		if err != nil {
 			return fmt.Errorf("error parsing %v, %v", ss, err)
-		} else {
-			(*v)[cur] = float32(f)
-			cur++
 		}
+		(*v)[cur] = float32(f)
+		cur++
 	}
 	return nil
 }
