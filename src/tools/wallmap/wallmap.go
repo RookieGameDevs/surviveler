@@ -95,8 +95,11 @@ func main() {
 	fmt.Println("Resulting image details")
 
 	if *dbg {
-		fmt.Println("original mesh bounding box: ", obj.AABB())
-		fmt.Println("scaled mesh bounding box: ", aabb)
+		oaabb := obj.AABB()
+		fmt.Printf("original mesh bounding box: min(%v %v %v) max(%v %v %v)\n",
+			oaabb.MinX, oaabb.MinY, oaabb.MinZ, oaabb.MaxX, oaabb.MaxY, oaabb.MaxZ)
+		fmt.Printf("scaled mesh bounding box: min(%v %v %v) max(%v %v %v)\n",
+			aabb.MinX, aabb.MinY, aabb.MinZ, aabb.MaxX, aabb.MaxY, aabb.MaxZ)
 	}
 	fmt.Println("x, y offset: ", offx, offy)
 	fmt.Println("scale: ", *scale)
