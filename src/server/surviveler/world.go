@@ -21,6 +21,7 @@ import (
 	"github.com/aurelien-rainone/go-detour/sample/tilemesh"
 	"github.com/aurelien-rainone/gogeo/f32/d2"
 	"github.com/aurelien-rainone/gogeo/f32/d3"
+	"github.com/aurelien-rainone/math32"
 )
 
 /*
@@ -58,15 +59,20 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 
 	// package must contain the path to wall+floors mesh
 	if mapURI, ok = mapData.Resources["walls+floor_mesh"]; !ok {
-		return nil, errors.New("'walls+floor_mesh' field not found in map assets")
+		return nil,
+			errors.New("'walls+floor_mesh' field not found in map assets")
 	}
 
 	navmeshSettingsURI, ok = mapData.Resources["walls+floor_meshsettings"]
 	if !ok {
-		return nil, errors.New("'walls+floor_meshsettings' field not found in map assets")
+		return nil,
+			errors.New("'walls+floor_meshsettings' field not found in map assets")
 	}
 
-	// load settings from yaml file
+	//
+	// load settings
+	//
+
 	if item, err = pkg.Open(navmeshSettingsURI); err != nil {
 		return nil, err
 	}
@@ -86,7 +92,10 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 
 	tileMesh.SetSettings(settings)
 
+	//
 	// load geometry
+	//
+
 	if item, err = pkg.Open(mapURI); err != nil {
 		return nil, err
 	}
@@ -96,45 +105,61 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 	}
 	defer r2.Close()
 
-	// load geometry
 	if err = tileMesh.LoadGeometry(r2); err != nil {
 		ctx.DumpLog("")
 		return nil, fmt.Errorf("couldn't load mesh %v, %s", mapURI, err)
 	}
 
-	// add map objects to the geometry as convex volumes
+	//
+	// add convex volumes to the input geomtry
+	//
+
 	geom := tileMesh.InputGeom()
+	const minh, maxh = -1, 5
 	for _, obj := range mapData.Objects {
 		if obj.BoundingBox2D == nil {
+			// we can't consider the object without its bounding box
 			continue
 		}
 
-		// TODO: take rotation into account
-		log.WithFields(log.Fields{
-			"ref":  obj.Ref,
-			"pos":  obj.Pos,
-			"bb2D": obj.BoundingBox2D,
-			"rot":  obj.Rotation,
-		}).Debug("adding convex volume for")
-
-		var x, y, w, h float32
-		x, y = obj.Pos[0], obj.Pos[1]
-		w, h = obj.BoundingBox2D[0], obj.BoundingBox2D[1]
-
-		// Create vertices
-		verts := []float32{
-			x, 0, y,
-			x + w, 0, y,
-			x + w, 0, y + h,
-			x, 0, y + h,
+		// assert rotation value validity
+		if obj.Rotation < 0 || obj.Rotation > 359 {
+			log.WithField("rot", obj.Rotation).Panic("Invalid rotation value")
 		}
-		log.WithField("verts", verts).Debug("")
-		const height = 3
-		geom.AddConvexVolume(verts[:], 0, height, sample.PolyAreaDoor)
-	}
 
-	for i, vol := range tileMesh.InputGeom().ConvexVolumes()[:tileMesh.InputGeom().ConvexVolumesCount()] {
-		log.WithField("vol", vol).Debugf("Convex Volume %d\n", i)
+		// apply rotation to the bounding box
+		var (
+			cosφ        = math32.CosTable[obj.Rotation]
+			sinφ        = math32.SinTable[obj.Rotation]
+			topLeft     = obj.BoundingBox2D[0]
+			bottomRight = obj.BoundingBox2D[1]
+		)
+		topLeft[0] = topLeft[0]*cosφ - topLeft[1]*sinφ
+		topLeft[1] = topLeft[1]*cosφ + topLeft[0]*sinφ
+		bottomRight[0] = bottomRight[0]*cosφ - bottomRight[1]*sinφ
+		bottomRight[1] = bottomRight[1]*cosφ + bottomRight[0]*sinφ
+
+		// eventually swap vector components so that bottom-right
+		// is the max and top-left the min
+		if bottomRight[0] < topLeft[0] {
+			bottomRight[0], topLeft[0] = topLeft[0], bottomRight[0]
+		}
+		if bottomRight[1] < topLeft[1] {
+			bottomRight[1], topLeft[1] = topLeft[1], bottomRight[1]
+		}
+		// translate those points by the vector describing the object center
+		topLeft = obj.Pos.Add(topLeft)
+		bottomRight = obj.Pos.Add(bottomRight)
+
+		// create vertices and the volume to the input geometry
+		geom.AddConvexVolume(
+			[]float32{
+				topLeft[0], 0, topLeft[1],
+				bottomRight[0], 0, topLeft[1],
+				bottomRight[0], 0, bottomRight[1],
+				topLeft[0], 0, bottomRight[1],
+			},
+			minh, maxh, sample.PolyAreaGround)
 	}
 
 	// build the navigation mesh
@@ -156,8 +181,8 @@ func NewWorld(pkg resource.Package, mapData *MapData) (*World, error) {
 	filter := detour.NewStandardQueryFilter()
 
 	// set area flags
-	filter.SetIncludeFlags(sample.PolyFlagsAll ^ (sample.PolyFlagsDisabled | sample.PolyFlagsDoor))
-	filter.SetExcludeFlags(sample.PolyFlagsDoor)
+	filter.SetIncludeFlags(sample.PolyFlagsAll ^ (sample.PolyFlagsDisabled))
+	filter.SetExcludeFlags(0)
 	log.Debugf("navmesh query filter flags 0x%x 0x%x\n", filter.IncludeFlags(), filter.ExcludeFlags())
 
 	// set area costs
