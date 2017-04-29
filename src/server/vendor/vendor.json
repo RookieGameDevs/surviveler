@@ -97,9 +97,10 @@
 			"revisionTime": "2017-04-28T22:37:44Z"
 		},
 		{
-			"checksumSHA1": "Ix2Ggp+phumB/fV+t647J2ufLXo=",
+			"checksumSHA1": "K6o7esTMFFWkTXTA2hLJKReFpJk=",
 			"path": "github.com/aurelien-rainone/math32",
-			"revision": ""
+			"revision": "916b0759cb4ba8be4faf5fdb74dc8598e13c6f04",
+			"revisionTime": "2017-04-29T00:32:09Z"
 		},
 		{
 			"checksumSHA1": "hC+IHTGZmpW5OhvttqcYhowRSFY=",
