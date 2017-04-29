@@ -34,72 +34,25 @@ func (pf Pathfinder) FindPath(org, dst d2.Vec2) (path Path, dist float32, found 
 
 	var (
 		orgRef, dstRef detour.PolyRef // references of org/dst polygon refs
-		extents        d3.Vec3        // search distance for polygon search (3 axis)
 		st             detour.Status  // detour API status code
 		org3d, dst3d   d3.Vec3        // actual org and dst positions in 3D
-		closest        d3.Vec3        // used for polygon checking
-		posOverPoly    bool           // indicate if a specified point is in or out a poly
+		err            error
 	)
 
-	org3d = d3.NewVec3XYZ(org[0], 0, org[1])
-	dst3d = d3.NewVec3XYZ(dst[0], 0, dst[1])
-	closest = d3.NewVec3()
-
-	// define the extents vector for the nearest polygon query
-	extents = d3.NewVec3XYZ(0, 2, 0)
-
 	// check origin polygon
-	st, orgRef, _ = world.MeshQuery.FindNearestPoly(org3d, extents, world.QueryFilter)
-	if detour.StatusFailed(st) {
-		log.WithError(st).Debug("FindNearestPoly failed with %v\n", st)
-		return
-	} else if orgRef == 0 {
-		log.WithField("org", org).Debug("org doesn't intersect any polygons")
-		return
-	}
-
-	// check origin point lies in a polygon of the navmesh (it should be!)
-	st = world.MeshQuery.ClosestPointOnPoly(orgRef, org3d, closest, &posOverPoly)
-	if detour.StatusFailed(st) {
-		log.WithError(st).Errorf("ClosestPointOnPoly failed with %v\n", st)
-	}
-	if !posOverPoly {
-		log.WithFields(log.Fields{
-			"org3d": org3d,
-		}).Errorf("FindPath destination doesn't lie in a polygon")
-	}
-
-	if !world.NavMesh.IsValidPolyRef(orgRef) {
-		log.WithField("orgRef", org).Debug("orgRef is not a valid polyRef")
+	if orgRef, err = world.PointInBounds(org); err != nil {
+		log.WithError(err).Errorf("FindPath: origin %v not in bounds", org)
 		return
 	}
 
 	// check destination polygon
-	st, dstRef, _ = world.MeshQuery.FindNearestPoly(dst3d, extents, world.QueryFilter)
-	if detour.StatusFailed(st) {
-		log.WithError(st).Debug("FindNearestPoly failed with %v\n", st)
-		return
-	} else if dstRef == 0 {
-		log.WithField("dst", org).Debug("dst doesn't intersect any polygons")
+	if dstRef, err = world.PointInBounds(dst); err != nil {
+		log.WithError(err).Errorf("FindPath: destination %v not in bounds", dst)
 		return
 	}
 
-	// check destination point lies in a polygon of the navmesh (it should be!)
-	st = world.MeshQuery.ClosestPointOnPoly(dstRef, dst3d, closest, &posOverPoly)
-	if detour.StatusFailed(st) {
-		log.WithError(st).Errorf("ClosestPointOnPoly failed with %v\n", st)
-	}
-	if !posOverPoly {
-		log.WithFields(log.Fields{
-			"org3d": org3d,
-		}).Errorf("FindPath destination doesn't lie in a polygon")
-	}
-
-	if !world.NavMesh.IsValidPolyRef(dstRef) {
-		log.WithField("dstRef", org).Debug("dstRef is not a valid polyRef")
-		return
-	}
-
+	org3d = d3.NewVec3XYZ(org[0], 0, org[1])
+	dst3d = d3.NewVec3XYZ(dst[0], 0, dst[1])
 	// Find a path from origin polygon to destination polygon
 	var (
 		path3d    []detour.PolyRef
