@@ -237,17 +237,34 @@ func (w World) TileFromWorldVec(pt d2.Vec2) *Tile {
  * PointInBounds indicates if specific point lies in a valid polygon of the
  * navmesh.
  */
-func (w World) PointInBounds(pt d2.Vec2) bool {
+func (w World) PointInBounds(pt d2.Vec2) (detour.PolyRef, error) {
 	pt3 := d3.Vec3{pt[0], 0, pt[1]}
 	ext := d3.Vec3{0.1, 1, 0.1}
+	closest := d3.NewVec3()
+	var posOverPoly bool
+
 	st, ref, _ := w.MeshQuery.FindNearestPoly(pt3, ext, w.QueryFilter)
 	if detour.StatusFailed(st) {
-		log.WithError(st).Debug("Point not in bounds")
+		return ref, fmt.Errorf("FindNearestPoly failed %v", st)
 	}
+
+	if ref == 0 {
+		return ref, fmt.Errorf("invalid ref 0")
+	}
+
+	st = w.MeshQuery.ClosestPointOnPoly(ref, pt3, closest, &posOverPoly)
+	if detour.StatusFailed(st) {
+		return ref, fmt.Errorf("ClosestPointOnPoly failed %v", st)
+	}
+	if !posOverPoly {
+		return ref, fmt.Errorf("ClosestPointOnPoly, point is not over polygon")
+	}
+
 	if !w.NavMesh.IsValidPolyRef(ref) {
-		log.WithField("ref", ref).Debug("Invalid poly ref")
+		return ref, fmt.Errorf("invalid polyref: 0x%x", ref)
 	}
-	return detour.StatusSucceed(st) && w.NavMesh.IsValidPolyRef(ref)
+
+	return ref, nil
 }
 
 /*

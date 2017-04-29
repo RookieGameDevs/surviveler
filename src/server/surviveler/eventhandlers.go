@@ -80,9 +80,9 @@ func (gs *GameState) onPlayerMove(event *events.Event) {
 	ctxLog := log.WithFields(log.Fields{"evt": evt, "dst": dst})
 	ctxLog.Info("Received PlayerMove event")
 
-	if !gs.world.PointInBounds(dst) {
+	if _, err := gs.world.PointInBounds(dst); err != nil {
 		// do not forward a request with out-of-bounds destination
-		ctxLog.Error("Can't plan path to out-of-bounds destination")
+		ctxLog.WithError(err).Error("out-of-bounds destination")
 		return
 	}
 
