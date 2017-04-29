@@ -28,7 +28,7 @@ type MapObject struct {
 	Rotation int     `json:"rotation"`       // rotation of the object on the map
 	Note     string  `json:"note,omitEmpty"` // note on the object
 	// TODO: remove the omitEmpty
-	BoundingBox2D d2.Vec2 `json:"bounding_box_2d,omitEmpty"` // 2d bounding box
+	BoundingBox2D []d2.Vec2 `json:"bounding_box_2d,omitEmpty"` // 2d bounding box
 }
 
 type MapUsableObject struct {
