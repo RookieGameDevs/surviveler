@@ -6,3 +6,4 @@ Pillow==4.0.0
 PySDL2==0.9.5
 pytest==2.9.1
 renderlib==0.1.8
+revived==0.1.4
