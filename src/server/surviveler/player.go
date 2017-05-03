@@ -90,7 +90,7 @@ func (p *Player) Update(dt time.Duration) {
 			// build and repair actions actually end up being the same
 			p.induceBuildPower()
 
-		case actions.DrinkCoffeeId:
+		case actions.DrinkCoffeeId, actions.UseComputerId:
 			p.curObject.Operate(p)
 			p.actions.Pop()
 
@@ -247,7 +247,6 @@ func (p *Player) State() EntityState {
 	case actions.RepairId:
 		actionData = actions.Repair{}
 	case actions.IdleId:
-		actionType = actions.IdleId
 		actionData = actions.Idle{}
 	case actions.AttackId:
 		dist := p.target.Position().Sub(p.Pos).Len()
@@ -261,6 +260,8 @@ func (p *Player) State() EntityState {
 	case actions.DrinkCoffeeId:
 		actionType = actions.IdleId
 		actionData = actions.Idle{}
+	case actions.UseComputerId:
+		actionData = actions.UseComputer{}
 	}
 
 	return MobileEntityState{
@@ -378,6 +379,12 @@ func (p *Player) Operate(o Object, path Path) {
  * It removes all actions but the last one: `IdleAction`.
  */
 func (p *Player) emptyActions() {
+	// release currently operated object
+	if p.curObject != nil {
+		p.curObject.Operate(nil)
+		p.curObject = nil
+	}
+
 	// empty the action stack, just let the bottommost (idle)
 	for ; p.actions.Len() > 1; p.actions.Pop() {
 	}

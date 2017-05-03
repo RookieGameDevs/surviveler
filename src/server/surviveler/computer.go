@@ -89,11 +89,6 @@ func (cm *Computer) OperatedBy() Entity {
 }
 
 func (cm *Computer) Operate(ent Entity) (res bool) {
-	res = true
-	if cm.operatedBy == nil {
-		cm.operatedBy = ent
-	} else {
-		res = false
-	}
-	return
+	cm.operatedBy = ent
+	return true
 }
