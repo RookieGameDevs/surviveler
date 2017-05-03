@@ -214,6 +214,14 @@ func (gs *GameState) onPlayerOperate(event *events.Event) {
 		return
 	}
 
+	// assert that if the target object is a computer, only a programmer can
+	// operate it
+	if object.Type() == ComputerObject && player.Type() != ProgrammerEntity {
+		gs.game.clients.Kick(evt.Id,
+			"illegal action: only programmers can use computers!")
+		return
+	}
+
 	var (
 		tile, draft *Tile
 		position    *d2.Vec2
