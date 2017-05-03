@@ -42,6 +42,7 @@ const (
  */
 const (
 	CoffeeMachineObject EntityType = iota
+	ComputerObject
 )
 
 const (

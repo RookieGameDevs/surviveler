@@ -358,6 +358,8 @@ func (p *Player) Operate(o Object, path Path) {
 	case CoffeeMachineObject:
 		action = actions.New(actions.DrinkCoffeeId, actions.DrinkCoffee{})
 		p.lastCoffeeDrink = time.Time{}
+	case ComputerObject:
+		action = actions.New(actions.UseComputerId, actions.UseComputer{})
 	default:
 		log.WithField("type", o.Type).Error("Player.Operate not implemented for this type of game object")
 		return

@@ -14,6 +14,7 @@ const (
 	RepairId
 	AttackId
 	DrinkCoffeeId
+	UseComputerId
 )
 
 /*
@@ -42,6 +43,11 @@ type Attack struct {
  * Drink coffee action payload
  */
 type DrinkCoffee struct{}
+
+/*
+ * Computer use action payload.
+ */
+type UseComputer struct{}
 
 /*
  * Movement action payload

@@ -53,6 +53,9 @@ func (gs *GameState) init(gameData *gameData) error {
 		case CoffeeMachineObject:
 			obj := NewCoffeeMachine(gs.game, objdata.Pos, CoffeeMachineObject)
 			gs.AddEntity(obj)
+		case ComputerObject:
+			obj := NewComputer(gs.game, objdata.Pos, ComputerObject)
+			gs.AddEntity(obj)
 		}
 	}
 

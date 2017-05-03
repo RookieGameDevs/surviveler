@@ -26,6 +26,7 @@ LOG = logging.getLogger(__name__)
 class ObjectType(IntEnum):
     """Enumeration of the possible static objects"""
     coffee = 0
+    computer = 1
 
 
 class MapObject(Entity):
