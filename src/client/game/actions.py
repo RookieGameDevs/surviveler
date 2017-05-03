@@ -77,7 +77,7 @@ def start_build_action(context, position):
     :param context: The game context.
     :type context: :class:`context.Context`
 
-    :param position: The position in world ccoordinates
+    :param position: The position in world coordinates
     :type position: :class:`tuple`
     """
     building_type = context.building_type
