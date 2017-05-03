@@ -7,9 +7,11 @@ from enum import unique
 from events import send_event
 from events import subscriber
 from game.entities.actor import ActorType
+from game.entities.map_object import ObjectType
 from game.events import ActorStatusChange
 from game.events import GameModeChange
 from game.events import GameModeToggle
+from game.events import ObjectUserChange
 from game.events import TimeUpdate
 from itertools import chain
 from matlib.vec import Vec
@@ -60,6 +62,18 @@ def dispatch_key_event_to_ui(evt):
 def change_ui_build_mode_state(evt):
     """Changes the state of build UI controls."""
     evt.context.ui.set_building_mode_enabled(evt.cur == Context.GameMode.building)
+
+
+@subscriber(ObjectUserChange)
+def toggle_terminal(evt):
+    """Toggles the terminal based on player interaction with it."""
+    context = evt.context
+    if evt.object_type != ObjectType.computer:
+        return
+    elif evt.old == context.player_id:
+        evt.context.ui.set_terminal_visible(False)
+    elif evt.new == context.player_id:
+        evt.context.ui.set_terminal_visible(True)
 
 
 class UIItem(Item):
@@ -710,6 +724,15 @@ class UI(UI):
             self.build_button.set_state(
                 ButtonItem.State.pressed if enabled else ButtonItem.State.normal)
 
+    def set_terminal_visible(self, visible):
+        """Set the terminal visibility.
+
+        :param visible: Should the terminal be visible or hidden.
+        :type active: bool
+        """
+        if self.terminal:
+            self.terminal.visible = visible
+
     def handle_build_button_click(self, payload):
         btn, state = payload['button'], payload['state']
         if btn == MouseClickEvent.Button.left and state == MouseClickEvent.State.up:
@@ -724,18 +747,10 @@ class UI(UI):
 
         context = Context.get_instance()
 
-        if self.terminal:
-            # show terminal by pressing `T` key and hide it with `ESCAPE`
-            if not self.terminal.visible and key == 'T':
-                self.terminal.visible = True
-                return True
-            elif self.terminal.visible:
-                if key == 'ESCAPE':
-                    self.terminal.visible = False
-                else:
-                    # forward keypress to the terminal item
-                    self.terminal.handle_key(key, state)
-                return True
+        if self.terminal and self.terminal.visible:
+            # forward keypress to the terminal item
+            self.terminal.handle_key(key, state)
+            return True
 
         # toggle build mode by pressing `B` key
         if key == 'B':

@@ -14,6 +14,7 @@ from game.events import BuildingStatusChange
 from game.events import CharacterBuildingStart
 from game.events import CharacterBuildingStop
 from game.events import ObjectSpawn
+from game.events import ObjectUserChange
 from game.events import TimeUpdate
 from network import MessageField as MF
 import logging
@@ -368,3 +369,15 @@ def handle_object_spawn(gs_mgr):
             pos = obj[MF.x_pos], obj[MF.y_pos]
             operated_by = obj[MF.operated_by]
             send_event(ObjectSpawn(o_id, obj_type, pos, operated_by))
+
+
+@processor
+def handle_object_use(gs_mgr):
+    """Check for an object user changes."""
+    n, o = gs_mgr.get(2)
+    o = o or {}
+    new, old = n[MF.objects], o.get(MF.objects, {})
+    for o_id, obj in new.items():
+        if o_id in old and obj[MF.operated_by] != old[o_id][MF.operated_by]:
+            send_event(ObjectUserChange(
+                o_id, obj[MF.object_type], old[o_id][MF.operated_by], obj[MF.operated_by]))

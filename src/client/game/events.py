@@ -334,3 +334,34 @@ class ObjectSpawn(Event):
     def __str__(self):
         return '<ObjectSpawn({}, {}, {}, {})>'.format(
             self.srv_id, self.obj_type, self.pos, self.operated_by)
+
+
+class ObjectUserChange(Event):
+    """Object user change.
+
+    Event emitted when an object user is changed.
+    """
+
+    def __init__(self, srv_id, object_type, old, new):
+        """Constructor.
+
+        :param srv_id: The server id
+        :type srv_id: int
+
+        :param object_type: Object type identifier
+        :type object_type: int
+
+        :param old: Server id of the old user, or 0 if the object was unused.
+        :type old: int
+
+        :param new: Server id of the new user, or 0 if the object is unused.
+        :type new: int
+        """
+        self.srv_id = srv_id
+        self.object_type = object_type
+        self.old = old
+        self.new = new
+
+    def __str__(self):
+        return '<ObjectUserChange({}, {}, {})>'.format(
+            self.srv_id, self.object_type, self.old, self.new)
