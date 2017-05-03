@@ -67,7 +67,7 @@ def change_ui_build_mode_state(evt):
 
 
 @subscriber(ObjectUserChange)
-def toggle_terminal(evt):
+def toggle_terminal_sub(evt):
     """Toggles the terminal based on player interaction with it."""
     context = evt.context
     if evt.object_type != ObjectType.computer:
