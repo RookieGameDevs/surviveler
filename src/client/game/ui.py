@@ -13,6 +13,8 @@ from game.events import GameModeChange
 from game.events import GameModeToggle
 from game.events import ObjectUserChange
 from game.events import TimeUpdate
+from game.store import STORE
+from game.store.modules.ui import toggle_terminal
 from itertools import chain
 from matlib.vec import Vec
 from renderlib.camera import OrthographicCamera
@@ -71,9 +73,9 @@ def toggle_terminal(evt):
     if evt.object_type != ObjectType.computer:
         return
     elif evt.old == context.player_id:
-        evt.context.ui.set_terminal_visible(False)
+        STORE.dispatch(toggle_terminal(False))
     elif evt.new == context.player_id:
-        evt.context.ui.set_terminal_visible(True)
+        STORE.dispatch(toggle_terminal(True))
 
 
 class UIItem(Item):
@@ -679,6 +681,8 @@ class UI(UI):
         # subscribe event handlers
         self.root.on(EventType.key, self.handle_key)
 
+        STORE.subscribe(self.toggle_terminal)
+
     def update(self):
         super().update()
 
@@ -724,21 +728,22 @@ class UI(UI):
             self.build_button.set_state(
                 ButtonItem.State.pressed if enabled else ButtonItem.State.normal)
 
-    def set_terminal_visible(self, visible):
-        """Set the terminal visibility.
-
-        :param visible: Should the terminal be visible or hidden.
-        :type active: bool
-        """
-        if self.terminal:
-            self.terminal.visible = visible
-
     def handle_build_button_click(self, payload):
         btn, state = payload['button'], payload['state']
         if btn == MouseClickEvent.Button.left and state == MouseClickEvent.State.up:
             context = Context.get_instance()
             send_event(GameModeToggle(context.GameMode.building))
         return True
+
+    def toggle_terminal(self):
+        state = STORE.get_state()
+        is_visible = (
+            state
+            .get('ui', {})
+            .get('terminal', {})
+            .get('is_visible', False))
+
+        self.terminal.visible = is_visible
 
     def handle_key(self, payload):
         key, state = payload['key'].upper(), payload['state']
