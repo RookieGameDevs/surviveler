@@ -5,5 +5,4 @@ PySDL2==0.9.5
 matlib==0.1.7
 mypy
 renderlib==0.1.6
-triangle==20160203
 wheel==0.29.0
