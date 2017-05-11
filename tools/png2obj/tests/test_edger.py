@@ -3,10 +3,10 @@
 Tests for the edge detection.
 (But not only - TODO: fix filename or move tests)
 """
-from png2obj import build_walls
-from png2obj import load_png
-from png2obj import mat2map
-from png2obj import png2obj
+from png2obj.png2obj import build_walls
+from png2obj.png2obj import load_png
+from png2obj.png2obj import mat2map
+from png2obj.png2obj import png2obj
 import os
 import pytest
 
