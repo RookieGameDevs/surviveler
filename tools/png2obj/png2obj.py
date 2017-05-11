@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Main module to create a Wavefront obj file from a png one.
+Find perimeter/edges and extrude walls vertically.
 
 Involved steps:
     1 - convert a png to a walkable matrix;
@@ -161,6 +162,10 @@ def remove_internal_edge_points(vertices: List[Vertex2D]) -> List[Vertex2D]:
 
 def remove_contiguous_values(lst: List[Tuple[float, float]]) -> None:
     """
+    Removes *in place* multiple values if they are contiguous.
+
+    :param lst: the list of 2D points.
+
     >>> lst = [1, 2, 8, 8, 8, 0, 0, 5]
     >>> remove_contiguous_values(lst)
     >>> lst
@@ -194,6 +199,8 @@ def normalized_perimeter(wall_perimeter: WallPerimeter) -> WallPerimeter:
 
 
 def list_to_index_map(the_list: list) -> OrderedDict:
+    """Basically convert a list into a dictionary.
+    """
     ret = OrderedDict()
     assert len(set(the_list)) == len(the_list), 'Error: the list contains duplicated elements'
     for i, element in enumerate(the_list):
@@ -387,6 +394,12 @@ def load_png(filepath: str) -> WalkableMatrix:
 
 
 def matrix2obj(matrix, dst, height=1, turtle=False):
+    """
+    Given a walkability matrix return an obj.
+
+    :param matrix: the walkability matrix.
+    :type matrix: list.
+    """
     blocks_map, map_size = mat2map(matrix)
     print('Detecting edges...')
     t0 = time.time()

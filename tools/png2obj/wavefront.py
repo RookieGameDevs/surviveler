@@ -66,32 +66,6 @@ def export_face_indices(face_indices: Iterable[int], zero_index: bool=False) -> 
 def mesh2vertices(mesh: Mesh) -> Dict[Vertex, int]:
     """
     Extracts unique vertices from mesh faces.
-
-    >>> v1 = (0.0, 0.0, 0.0)  # 1
-    >>> v2 = (0.0, 0.0, 5.0)  # 2
-    >>> v3 = (3.0, 0.0, 5.0)  # 6
-    >>> v4 = (3.0, 0.0, 0.0)  # 5
-    >>> v5 = (1.0, 1.0, 0.0)  # 3
-    >>> v6 = (1.0, 1.0, 5.0)  # 4
-    >>> mesh = [(v1, v2, v3, v4), (v3, v4, v5, v6)]
-    >>> vertices = mesh2vertices(mesh)
-    >>> set(vertices) == set([v1, v2, v3, v4, v5, v6])
-    True
-
-    Checks vertex ordering.
-
-    >>> vertices[v1]
-    1
-    >>> vertices[v2]
-    2
-    >>> vertices[v5]
-    3
-    >>> vertices[v6]
-    4
-    >>> vertices[v4]
-    5
-    >>> vertices[v3]
-    6
     """
     ret = OrderedDict()  # type: Dict[Vertex, int]
 
@@ -111,32 +85,6 @@ def export_mesh(
         readable_export_settings: Tuple[str, str, str]=DEFAULT_EXPORT_SETTINGS) -> str:
     """
     Returns a Wavefront representation of a mesh (list of faces).
-
-    >>> v1 = (0.0, 0.0, 0.0)
-    >>> v2 = (0.0, 0.0, 5.0)
-    >>> v3 = (3.0, 0.0, 5.0)
-    >>> v4 = (3.0, 0.0, 0.0)
-    >>> v5 = (1.0, 1.0, 0.0)
-    >>> v6 = (1.0, 1.0, 5.0)
-    >>> mesh = [(v1, v2, v3, v4), (v3, v4, v5, v6)]
-    >>> print(export_mesh(mesh, readable_export_settings=('+x', '+y', '+z')))
-    v 0.000000 0.000000 0.000000
-    v 0.000000 0.000000 5.000000
-    v 1.000000 1.000000 0.000000
-    v 1.000000 1.000000 5.000000
-    v 3.000000 0.000000 0.000000
-    v 3.000000 0.000000 5.000000
-    f 1 2 6 5
-    f 6 5 3 4
-    >>> print(export_mesh(mesh, readable_export_settings=('+x', '-z', '+y')))
-    v 0.000000 -0.000000 0.000000
-    v 0.000000 -5.000000 0.000000
-    v 1.000000 -0.000000 1.000000
-    v 1.000000 -5.000000 1.000000
-    v 3.000000 -0.000000 0.000000
-    v 3.000000 -5.000000 0.000000
-    f 1 2 6 5
-    f 6 5 3 4
     """
     ret = []
 
@@ -161,21 +109,8 @@ def create_wavefront(
         readable_export_settings: Tuple[str, str, str]=DEFAULT_EXPORT_SETTINGS,
         dst: str=None) -> str:
     """
-    >>> vertices = [(0, 0, 0), (2, 0, 0), (2, 1, 0), (2, 0, 1)]
-    >>> faces = [(0, 1, 2), (0, 1, 3)]
-    >>> print(create_wavefront(vertices=vertices, faces=faces, zero_index=True, dst='mesh.obj'))
-    Vertex 0: (0, 0, 0)
-    Vertex 1: (2, 0, 0)
-    Vertex 2: (2, 1, 0)
-    Vertex 3: (2, 0, 1)
-    Face 0: (0, 1, 2)
-    Face 1: (0, 1, 3)
-    v 0.000000 0.000000 0.000000
-    v 2.000000 0.000000 0.000000
-    v 2.000000 0.000000 1.000000
-    v 2.000000 1.000000 0.000000
-    f 1 2 3
-    f 1 2 4
+    Create a wavefront given a list of vertices and faces.
+    Save to `dst` if given, else return a string.
     """
 
     ret_list = []
