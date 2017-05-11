@@ -4,7 +4,7 @@ Main module to create a Wavefront obj file from a png one.
 Find perimeter/edges and extrude walls vertically.
 
 Involved steps:
-    1 - convert a png to a walkable matrix;
+    1 - convert a png to a walkability matrix;
     2 - find wall perimeters -> list of 2D edges;
     3 - extrude vertically the wall perimeters -> list of 3D faces;
     4 - export faces to obj.
@@ -12,7 +12,7 @@ Involved steps:
 Python-3 only due to the type hinting (and 'super') syntax.
 
 Glossary (to try to make some clearness):
-    * cell - an element in the walkable matrix, with coordinates (x, y)
+    * cell - an element in the walkability matrix, with coordinates (x, y)
     * block - a non-walkable cell
     * vertex - a 2/3D point in a 2/3D space (used to describe wall perimeters and meshes)
     * wall perimeter - a 2D closed planar (z=0) polygon which corresponds to the wall borders
@@ -51,7 +51,7 @@ Vertex2D = Tuple[float, float]
 Vector2D = Vertex2D
 Vertex3D = Tuple[float, float, float]
 WallPerimeter = List[Vertex2D]
-WalkableMatrix = List[List[int]]
+WalkabilityMatrix = List[List[int]]
 VertexCells = NamedTuple('NearCells',
     [
         ('upleft', Pos),
@@ -244,7 +244,7 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], cell_size: int=1,
     """
     Main function (edge detection): builds the list of wall perimeters.
 
-    TODO: Use a walkable matrix instead of walls_map.
+    TODO: Use a walkability matrix instead of walls_map.
     """
 
     def get_grid_vertices() -> Iterable[Vertex2D]:
@@ -353,8 +353,8 @@ def build_walls(walls_map: Mapping, map_size: Tuple[int, int], cell_size: int=1,
     return ret
 
 
-def mat2map(matrix: WalkableMatrix) -> Mapping:
-    """Creates a blocks map from a walkable matrix.
+def mat2map(matrix: WalkabilityMatrix) -> Mapping:
+    """Creates a blocks map from a walkability matrix.
     """
     ret = {}
     for y, row in enumerate(matrix):
@@ -364,8 +364,8 @@ def mat2map(matrix: WalkableMatrix) -> Mapping:
     return ret, (x + 1, y + 1)
 
 
-def load_png(filepath: str) -> WalkableMatrix:
-    """Builds a walkable matrix from an image.
+def load_png(filepath: str) -> WalkabilityMatrix:
+    """Builds a walkability matrix from an image.
     """
     ret = []
     img = Image.open(filepath)

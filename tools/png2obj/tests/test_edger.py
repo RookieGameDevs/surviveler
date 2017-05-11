@@ -325,7 +325,7 @@ EXAMPLES = [
 @pytest.mark.parametrize('case', EXAMPLES, ids=lambda s: s['name'])
 def test_detect_edges(case: dict) -> None:
     """
-    Test the correct "edge detection" of a walkable matrix.
+    Test the correct "edge detection" of a walkability matrix.
     These are the main test cases of the module.
     """
     matrix = case['matrix']
@@ -338,7 +338,7 @@ def test_detect_edges(case: dict) -> None:
 @pytest.mark.parametrize('case', EXAMPLES, ids=lambda s: s['name'])
 def test_png2matrix(case: dict) -> None:
     """
-    Test that a png gives a correct walkable matrix.
+    Test that a png gives a correct walkability matrix.
 
     NB: make sure that the case 'name' value mathes the relative filename.
     If the relative png is not found, the test case is skipped
