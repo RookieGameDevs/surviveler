@@ -13,7 +13,8 @@ from game.events import GameModeChange
 from game.events import GameModeToggle
 from game.events import ObjectUserChange
 from game.events import TimeUpdate
-from game.store import STORE
+from game.store import connect
+from game.store import dispatch
 from game.store.modules.ui import toggle_terminal
 from itertools import chain
 from matlib.vec import Vec
@@ -73,9 +74,9 @@ def toggle_terminal_sub(evt):
     if evt.object_type != ObjectType.computer:
         return
     elif evt.old == context.player_id:
-        STORE.dispatch(toggle_terminal(False))
+        dispatch(toggle_terminal(False))
     elif evt.new == context.player_id:
-        STORE.dispatch(toggle_terminal(True))
+        dispatch(toggle_terminal(True))
 
 
 class UIItem(Item):
@@ -548,6 +549,9 @@ class TerminalItem(UIItem):
         pass
 
 
+@connect(lambda state: {
+    'terminal_visible': state['ui']['terminal']['is_visible'],
+})
 class UI(UI):
     """User interface.
 
@@ -681,8 +685,6 @@ class UI(UI):
         # subscribe event handlers
         self.root.on(EventType.key, self.handle_key)
 
-        STORE.subscribe(self.toggle_terminal)
-
     def update(self):
         super().update()
 
@@ -735,14 +737,10 @@ class UI(UI):
             send_event(GameModeToggle(context.GameMode.building))
         return True
 
-    def toggle_terminal(self):
-        state = STORE.get_state()
-        is_visible = (
-            state
-            .get('ui', {})
-            .get('terminal', {})
-            .get('is_visible', False))
+    def on_state_change(self, new_props):
+        self.toggle_terminal(new_props['terminal_visible'])
 
+    def toggle_terminal(self, is_visible):
         self.terminal.visible = is_visible
 
     def handle_key(self, payload):
