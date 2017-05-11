@@ -105,33 +105,15 @@ def create_wavefront(
         vertices: List[Vertex]=[],
         faces: List[Tuple[int, ...]]=[],
         zero_index: bool=False,
-        triangulate_result: dict=None,
         readable_export_settings: Tuple[str, str, str]=DEFAULT_EXPORT_SETTINGS,
         dst: str=None) -> str:
     """
     Create a wavefront given a list of vertices and faces.
     Save to `dst` if given, else return a string.
     """
-
     ret_list = []
     errors = []
     unique_vertices = []  # type: List[Vertex]
-
-    if triangulate_result:
-        # Use `vertices` and `faces` from the result of triangulation
-        # overwriting `vertices` and `faces` with `vertices` and `triangles`,
-        # and setting `zero_index` to True.
-        faces = triangulate_result['triangles']
-        vertices = []
-        for v in triangulate_result['vertices']:
-            if len(v) == 3:
-                vertices.append(v)
-            elif len(v) == 2:
-                vertices.append((v[0], v[1], 0.0))
-            else:
-                raise Exception('Invalid length vertex: {}'.format(v))
-
-        zero_index = True
 
     export_settings = parse_readable_export_settings(readable_export_settings)
 
