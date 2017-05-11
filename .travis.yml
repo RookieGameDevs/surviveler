@@ -24,3 +24,11 @@ script:
   - echo $GOPATH
   - export GOPATH=$PWD
   - cd src/server && go test ./...
+  # png2obj tests
+  - pwd
+  - ls
+  - cd ../..
+  - pwd
+  - ls
+  - export PYTHONPATH=$PWD/tools/png2obj
+  - cd tools/png2obj && py.test
