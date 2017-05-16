@@ -32,6 +32,7 @@ from ui.item import Anchor
 from ui.item import Item
 from ui.item import Margin
 import logging
+import time
 
 LOG = logging.getLogger(__name__)
 
@@ -505,7 +506,12 @@ class TerminalItem(UIItem):
         self.background.add_child('terminal-content', self.content)
 
         self.prompt = resource.data['text_prompt']
-        self.set_content(self.prompt)
+        self.text = ''
+        self.cursor = resource.data['text_cursor']
+        self.cursor_interval = resource.data['cursor_interval']
+        # Initial reset of the cursor
+        self.cursor_visible = None, True
+        self.set_content(self.prompt + self.cursor)
 
     @property
     def objects(self):
@@ -535,18 +541,41 @@ class TerminalItem(UIItem):
         self.content.string = text
 
     def handle_key(self, key, state):
-        content = self.content.string
-
+        content = self.text
         alphanum = {chr(c) for c in chain(range(48, 58), range(97, 123))}
         if key.lower() in alphanum:
-            content = content + key.lower()
+            content = content + key.upper()
         elif key == 'SPACE':
             content = content + ' '
+        elif key == 'BACKSPACE':
+            content = content[:-1]
+        elif key == 'RETURN':
+            # TODO: handle return key properly
+            pass
 
-        self.set_content(content)
+        # Resets cursor visibility
+        self.cursor_visible = None, True
+        self.update_text(content)
+
+    def update_text(self, text=None):
+        self.text = text if text is not None else self.text
+        self.set_content(
+            self.prompt +
+            self.text +
+            (self.cursor if self.cursor_visible[1] else ''))
 
     def update(self, **kwargs):
-        pass
+        if self.visible:
+            t, visible = self.cursor_visible
+            # After a reset, the cursor timer is None
+            if not t:
+                t = time.time()
+                self.cursor_visible = t, True
+            nt = time.time()
+            # Toggle the cursor every <self.cursor_interval> seconds
+            if not t or nt - t > self.cursor_interval:
+                self.cursor_visible = nt, not visible
+                self.update_text()
 
 
 @connect(lambda state: {
