@@ -23,7 +23,6 @@ def waf_configure(path, options):
 
 
 def waf_build_and_install(path):
-    print(path)
     return sp.run(['./waf', 'build', 'install'], cwd=path, stderr=sp.PIPE)
 
 
