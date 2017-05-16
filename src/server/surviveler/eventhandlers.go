@@ -214,6 +214,12 @@ func (gs *GameState) onPlayerOperate(event *events.Event) {
 		return
 	}
 
+	// do nothing if the object is already operated by someone
+	if object.OperatedBy() != nil {
+		ctxLog.Info("Ignored PlayerOperate event on a busy object")
+		return
+	}
+
 	// assert that if the target object is a computer, only a programmer can
 	// operate it
 	if object.Type() == ComputerObject && player.Type() != ProgrammerEntity {
