@@ -19,11 +19,12 @@ def waf_is_configured(path):
 
 
 def waf_configure(path, options):
-    return sp.run(['./waf', 'configure'] + options.split(), cwd=path)
+    return sp.run(['./waf', 'configure'] + options.split(), cwd=path, stderr=sp.PIPE)
 
 
 def waf_build_and_install(path):
-    return sp.run(['./waf', 'build', 'install'], cwd=path)
+    print(path)
+    return sp.run(['./waf', 'build', 'install'], cwd=path, stderr=sp.PIPE)
 
 
 def build_datalib(name, path):
@@ -90,7 +91,9 @@ TARGETS = [
 
 
 class InvalidGitRepo(Exception):
+
     """Invalid Git repository."""
+
     def __init__(self, path):
         self.path = path
 
@@ -133,7 +136,7 @@ def git_checkout(ref, path):
 def clone_or_checkout(url, ref, path):
     # if the path does not exist, try to clone the repository
     if not os.path.exists(path):
-        proc = sp.run(['git', 'clone', url, path])
+        proc = sp.run(['git', 'clone', url, path], stderr=sp.PIPE)
         if proc.returncode != 0:
             return proc.returncode, proc.stderr.decode('utf8')
 
@@ -153,22 +156,27 @@ def pip_install(python_path, inst_path):
 
     proc = sp.run(
         [python_path, '-m', 'pip', 'install', '-r', 'requirements.txt'],
-        env=env)
+        env=env,
+        stderr=sp.PIPE)
     return proc.returncode, proc.stderr.decode('utf8') if proc.returncode else ''
 
 
 def venv_setup(venv_path, inst_path):
-    proc = sp.run([sys.executable, '-m', 'venv', venv_path])
+    proc = sp.run([sys.executable, '-m', 'venv', venv_path], stderr=sp.PIPE)
     if proc.returncode != 0:
         return proc.returncode, proc.stderr.decode('utf8')
 
     # ensure pip installed
-    proc = sp.run([os.path.join(venv_path, 'bin', 'python'), '-m', 'ensurepip', '--upgrade'])
+    proc = sp.run(
+        [os.path.join(venv_path, 'bin', 'python'), '-m', 'ensurepip', '--upgrade'], stderr=sp.PIPE
+    )
     if proc.returncode != 0:
         return proc.returncode, proc.stderr.decode('utf8')
 
     # upgrade pip
-    proc = sp.run([os.path.join(venv_path, 'bin', 'pip'), 'install', '--upgrade', 'pip'])
+    proc = sp.run(
+        [os.path.join(venv_path, 'bin', 'pip'), 'install', '--upgrade', 'pip'], stderr=sp.PIPE
+    )
     if proc.returncode != 0:
         return proc.returncode, proc.stderr.decode('utf8')
 
@@ -192,7 +200,7 @@ def venv_setup(venv_path, inst_path):
 def server_install(root_path):
     env = dict(os.environ)
     env['GOPATH'] = os.path.abspath(root_path)
-    proc = sp.run(['go', 'install', 'server'], env=env)
+    proc = sp.run(['go', 'install', 'server'], env=env, stderr=sp.PIPE)
     return proc.returncode, proc.stderr.decode('utf8') if proc.returncode else ''
 
 
