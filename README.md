@@ -186,6 +186,9 @@ To use the fish shell at your best you should install globally virtualfish with
 
 Congratulations, you have a working environment using virtualfish.
 
+## External dependencies
+On certain systems, such as Linux, you may need to install `libjpeg-dev` and
+`libglew-dev`.
 
 ## Installing dependencies with pip
 Once the environment is set up and active, the following command should do the
